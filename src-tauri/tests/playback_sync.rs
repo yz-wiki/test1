@@ -1,0 +1,355 @@
+use skald_lib::api::AbsClient;
+use skald_lib::models::{MeResponse, MediaProgress};
+use std::fs;
+use std::path::{Path, PathBuf};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpListener;
+use tokio::time::{sleep, Duration};
+
+async fn capture_next_request_with_response(listener: &TcpListener, status: &str, response_body: &str) -> String {
+    let (mut stream, _) = listener.accept().await.expect("accept test request");
+    let mut request = Vec::new();
+    let mut chunk = [0_u8; 4096];
+    let target_len = loop {
+        let read = stream.read(&mut chunk).await.expect("read test request");
+        assert!(read > 0, "connection closed before request was complete");
+        request.extend_from_slice(&chunk[..read]);
+
+        let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n") else {
+            continue;
+        };
+        let header_end = header_end + 4;
+        let content_length = {
+            let headers = String::from_utf8_lossy(&request[..header_end]);
+            headers
+                .lines()
+                .find_map(|line| {
+                    let (name, value) = line.split_once(':')?;
+                    name.eq_ignore_ascii_case("content-length")
+                        .then(|| value.trim().parse::<usize>().expect("valid content-length"))
+                })
+                .unwrap_or(0)
+        };
+        break header_end + content_length;
+    };
+
+    while request.len() < target_len {
+        let read = stream.read(&mut chunk).await.expect("read request body");
+        assert!(
+            read > 0,
+            "connection closed before request body was complete"
+        );
+        request.extend_from_slice(&chunk[..read]);
+    }
+
+    let response = format!(
+        "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response_body}",
+        response_body.len(),
+    );
+    stream
+        .write_all(response.as_bytes())
+        .await
+        .expect("write test response");
+
+    String::from_utf8(request[..target_len].to_vec()).expect("request is UTF-8")
+}
+
+async fn capture_one_request_with_response(listener: TcpListener, status: &str, response_body: &str) -> String {
+    capture_next_request_with_response(&listener, status, response_body).await
+}
+
+async fn capture_one_request(listener: TcpListener) -> String {
+    capture_one_request_with_response(listener, "200 OK", "").await
+}
+
+#[tokio::test]
+async fn open_session_sends_stable_device_identity() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind test server");
+    let address = listener.local_addr().expect("test server address");
+    let request_task = tokio::spawn(capture_one_request_with_response(
+        listener,
+        "200 OK",
+        r#"{"id":"session-123","currentTime":45,"audioTracks":[]}"#,
+    ));
+
+    let session = AbsClient::new(format!("http://{address}"))
+        .with_token("test-token".to_string())
+        .open_session("item-123", None, None, "install-device-123")
+        .await
+        .expect("open request succeeds");
+    assert_eq!(session.id, "session-123");
+
+    let request = request_task.await.expect("capture task succeeds");
+    let (headers, body) = request.split_once("\r\n\r\n").expect("body boundary");
+    assert_eq!(headers.lines().next(), Some("POST /api/items/item-123/play HTTP/1.1"));
+    let payload: serde_json::Value = serde_json::from_str(body).expect("valid JSON body");
+    assert_eq!(payload["deviceInfo"]["deviceId"], "install-device-123");
+    assert_eq!(payload["deviceInfo"]["clientName"], "Skald");
+}
+
+#[tokio::test]
+async fn owned_session_cleanup_closes_without_stale_progress_and_accepts_missing() {
+    for (status, session_id) in [("200 OK", "owned-open"), ("404 Not Found", "already-gone")] {
+        let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind test server");
+        let address = listener.local_addr().expect("test server address");
+        let request_task = tokio::spawn(capture_one_request_with_response(listener, status, ""));
+
+        AbsClient::new(format!("http://{address}"))
+            .with_token("test-token".to_string())
+            .close_session_without_sync(session_id)
+            .await
+            .expect("owned close is idempotent");
+
+        let request = request_task.await.expect("capture task succeeds");
+        let (headers, body) = request.split_once("\r\n\r\n").expect("body boundary");
+        assert_eq!(headers.lines().next(), Some(format!("POST /api/session/{session_id}/close HTTP/1.1").as_str()));
+        assert_eq!(serde_json::from_str::<serde_json::Value>(body).unwrap(), serde_json::json!({}));
+    }
+}
+
+#[tokio::test]
+async fn sync_session_posts_expected_payload() {
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind test server");
+    let address = listener.local_addr().expect("test server address");
+    let request_task = tokio::spawn(capture_one_request(listener));
+
+    AbsClient::new(format!("http://{address}"))
+        .with_token("test-token".to_string())
+        .sync_session("session-123", 123.5, 9.25)
+        .await
+        .expect("sync request succeeds");
+
+    let request = request_task.await.expect("capture task succeeds");
+    let (headers, body) = request
+        .split_once("\r\n\r\n")
+        .expect("request has a body boundary");
+    assert_eq!(
+        headers.lines().next(),
+        Some("POST /api/session/session-123/sync HTTP/1.1")
+    );
+    assert!(
+        headers.lines().any(|line| {
+            line.split_once(':').is_some_and(|(name, value)| {
+                name.eq_ignore_ascii_case("authorization") && value.trim() == "Bearer test-token"
+            })
+        }),
+        "sync request must authenticate with the configured bearer token"
+    );
+
+    let payload: serde_json::Value = serde_json::from_str(body).expect("valid JSON body");
+    assert_eq!(payload["currentTime"], serde_json::json!(123.5));
+    assert_eq!(payload["timeListened"], serde_json::json!(9.25));
+}
+
+#[tokio::test]
+async fn progress_write_can_be_read_back_with_its_new_revision() {
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind test server");
+    let address = listener.local_addr().expect("test server address");
+    let server = tokio::spawn(async move {
+        let body = r#"{"id":"progress","libraryItemId":"item-123","episodeId":null,"duration":1000.0,"progress":0.12,"currentTime":120.0,"isFinished":false,"lastUpdate":101}"#;
+        (
+            capture_next_request_with_response(&listener, "200 OK", "").await,
+            capture_next_request_with_response(&listener, "200 OK", body).await,
+        )
+    });
+
+    let client = AbsClient::new(format!("http://{address}"))
+        .with_token("test-token".to_string());
+    client.update_progress("item-123", None, 120.0, 1000.0, false)
+        .await.expect("progress patch succeeds");
+    let confirmed = client.get_media_progress("item-123", None)
+        .await.expect("confirmation read succeeds");
+    assert_eq!(confirmed.current_time, 120.0);
+    assert_eq!(confirmed.last_update, 101);
+
+    let (patch, get) = server.await.expect("test server succeeds");
+    assert_eq!(patch.lines().next(), Some("PATCH /api/me/progress/item-123 HTTP/1.1"));
+    assert_eq!(get.lines().next(), Some("GET /api/me/progress/item-123 HTTP/1.1"));
+}
+
+const LIVE_TEST_CONFIG_NAME: &str = "Playback Sync Test.md";
+
+#[derive(Debug, PartialEq)]
+struct LiveTestConfig {
+    server_url: String,
+    token: String,
+    item_id: String,
+}
+
+fn live_test_config_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("src-tauri must have a project-root parent")
+        .join(LIVE_TEST_CONFIG_NAME)
+}
+
+fn config_value(contents: &str, label: &str) -> Result<String, String> {
+    let prefix = format!("{label}:");
+    let value = contents
+        .lines()
+        .map(str::trim)
+        .find_map(|line| line.strip_prefix(&prefix))
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| format!("{label} is missing or blank"))?;
+
+    if value.starts_with('<') || value.starts_with("replace-") {
+        return Err(format!("{label} still contains a placeholder"));
+    }
+    Ok(value.to_string())
+}
+
+fn parse_live_test_config(contents: &str) -> Result<LiveTestConfig, String> {
+    Ok(LiveTestConfig {
+        server_url: config_value(contents, "ABS Server URL")?,
+        token: config_value(contents, "ABS Test Token")?,
+        item_id: config_value(contents, "ABS Audiobook Item ID")?,
+    })
+}
+
+fn load_live_test_config() -> Result<LiveTestConfig, String> {
+    let path = live_test_config_path();
+    let contents = fs::read_to_string(&path).map_err(|error| {
+        format!(
+            "read {}: {error}; copy Playback Sync Test.example.md and fill in its values",
+            path.display()
+        )
+    })?;
+    parse_live_test_config(&contents)
+}
+
+#[test]
+fn parses_live_test_markdown_config() {
+    let config = parse_live_test_config(
+        "# Playback Sync Live Test\n\
+         ABS Server URL: https://abs.example.test\n\
+         ABS Test Token: secret-test-token\n\
+         ABS Audiobook Item ID: item-123\n",
+    )
+    .expect("parse the documented configuration format");
+
+    assert_eq!(config.server_url, "https://abs.example.test");
+    assert_eq!(config.token, "secret-test-token");
+    assert_eq!(config.item_id, "item-123");
+}
+
+fn item_progress<'a>(me: &'a MeResponse, item_id: &str) -> Option<&'a MediaProgress> {
+    me.media_progress
+        .iter()
+        .find(|progress| progress.library_item_id == item_id && progress.episode_id.is_none())
+}
+
+fn choose_marker(duration: f64, original: Option<&MediaProgress>) -> Result<f64, String> {
+    if !duration.is_finite() || duration < 120.0 {
+        return Err(format!(
+            "test item duration must be at least 120 seconds; received {duration}"
+        ));
+    }
+
+    let candidates = [duration * 0.23, duration * 0.37, duration * 0.51];
+    candidates
+        .into_iter()
+        .map(|candidate| candidate.clamp(30.0, duration - 60.0))
+        .find(|candidate| {
+            original.is_none_or(|progress| (progress.current_time - candidate).abs() > 2.0)
+        })
+        .ok_or_else(|| "could not choose a marker distinct from existing progress".to_string())
+}
+
+/// Writes a distinctive playback position through the real session-sync route, reads it back
+/// from `/api/me`, and restores the original progress. This is ignored by default because it
+/// deliberately mutates a live server and requires a dedicated account and audiobook.
+#[tokio::test]
+#[ignore = "requires a completed, git-ignored Playback Sync Test.md"]
+async fn live_abs_persists_session_progress() {
+    let config = load_live_test_config().expect("load live ABS test configuration");
+    let client = AbsClient::new(config.server_url).with_token(config.token);
+
+    let before = client.get_me().await.expect("read original ABS progress");
+    let original = item_progress(&before, &config.item_id).cloned();
+    let session = client
+        .open_session(
+            &config.item_id,
+            None,
+            None,
+            "00000000-0000-4000-8000-000000000001",
+        )
+        .await
+        .expect("open ABS playback session");
+    let duration = session
+        .audio_tracks
+        .iter()
+        .map(|track| track.duration)
+        .sum::<f64>();
+    let marker = match choose_marker(duration, original.as_ref()) {
+        Ok(marker) => marker,
+        Err(error) => {
+            let _ = client
+                .close_session(&session.id, session.current_time, 0.0)
+                .await;
+            let _ = client.delete_session(&session.id).await;
+            panic!("choose test marker: {error}");
+        }
+    };
+
+    // Keep validation fallible until after cleanup so a failed assertion cannot strand test data.
+    let validation = async {
+        client
+            .sync_session(&session.id, marker, 1.0)
+            .await
+            .map_err(|error| format!("ABS rejected the sync request: {error}"))?;
+
+        for _ in 0..20 {
+            let me = client
+                .get_me()
+                .await
+                .map_err(|error| format!("failed to read progress back from ABS: {error}"))?;
+            if let Some(progress) = item_progress(&me, &config.item_id) {
+                if (progress.current_time - marker).abs() <= 0.5 {
+                    return Ok(progress.clone());
+                }
+            }
+            sleep(Duration::from_millis(250)).await;
+        }
+
+        Err(format!(
+            "ABS did not report the synced marker {marker:.3} within five seconds"
+        ))
+    }
+    .await;
+
+    let close_result = client.close_session(&session.id, marker, 1.0).await;
+    let restore_result = match original.as_ref() {
+        Some(progress) => {
+            client
+                .update_progress(
+                    &config.item_id,
+                    None,
+                    progress.current_time,
+                    progress.duration,
+                    progress.is_finished,
+                )
+                .await
+        }
+        None => match client.get_me().await {
+            Ok(me) => match item_progress(&me, &config.item_id) {
+                Some(created) => client.delete_progress(&created.id).await,
+                None => Ok(()),
+            },
+            Err(error) => Err(error),
+        },
+    };
+
+    // Admin test accounts can remove the listening-history row too; progress restoration above
+    // is still the required cleanup when the account intentionally has ordinary user privileges.
+    let _ = client.delete_session(&session.id).await;
+
+    close_result.expect("close the live test session during cleanup");
+    restore_result.expect("restore the original ABS progress during cleanup");
+    let observed = validation.expect("ABS persists session sync and returns it through /api/me");
+    assert_eq!(observed.library_item_id, config.item_id);
+}

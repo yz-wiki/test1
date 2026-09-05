@@ -1,0 +1,77 @@
+# Node
+node_modules/
+dist/
+.pnpm-store/
+
+# Rust
+src-tauri/target/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local backups
+*.bak
+*.bak-*
+
+# Tauri
+src-tauri/WixTools/
+
+# Code-signing certificates and secrets — never commit these
+*.pfx
+*.p12
+.env
+# Server addresses / API tokens kept locally for testing — never commit.
+# (Covers the root testing-tokens file and the login prototype's tokens.jsx.)
+Skald API Tokens.txt
+*tokens*.txt
+*tokens*.jsx
+/Playback Sync Test.md
+
+# Bundled VLC runtime — populated locally from the VLC installation.
+# Not committed; build.rs copies these to the binary output directory.
+src-tauri/vlc-dist/
+
+# Linux AppImage staging — populated from the build host's matching VLC install
+# immediately before bundling.
+src-tauri/linux-runtime/*
+!src-tauri/linux-runtime/plugins/
+src-tauri/linux-runtime/plugins/*
+!src-tauri/linux-runtime/plugins/placeholder.txt
+
+# Bundled helper binaries (ffprobe = read metadata/chapters, tone = write).
+# Not committed; fetched locally, build.rs copies them next to the binary.
+src-tauri/bin/
+
+# Personal notes / Obsidian vault
+Vault/
+
+# Review documents kept at the repo root (the vault holds the working copies).
+# Anchored to the root (critical lesson 13 — unanchored rules match anywhere).
+/code review-GPT/
+
+# Memory profiling artifacts
+Mrmory/
+
+# Windows App Certification Kit output (local test run artifacts)
+/App Cert Kit/
+
+# Raw upstream font distributions (unused — only the subsetted -latin builds
+# in src/assets/fonts/ are referenced by index.css). Leading slash anchors this
+# to the repo root so it does NOT match src/assets/fonts/ (Git is case-
+# insensitive on Windows, so an unanchored "Fonts/" would catch "fonts/" too).
+/Fonts/
+# Local captures kept for reference while chasing a bug. They show real library
+# contents and account details, and this repo is public — anchored so it cannot
+# also swallow a "screenshots/" elsewhere in the tree (see the /Fonts/ note above).
+/Screenshots/
+Product Screenshots/Hero Shot.png
+Product Screenshots/Player Shot.png
+Product Screenshots/Podcasts Library.png
+Product Screenshots/Settings - Appearance.png
+Product Screenshots/Settings Audio.png
+src/assets/lyre-original.png

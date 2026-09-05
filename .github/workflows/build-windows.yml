@@ -1,0 +1,211 @@
+# =============================================================================
+# build-windows.yml — Windows 产物"按需构建"工作流
+#
+# 触发方式(均为按需,不会每次 push 都构建):
+#   1) Actions 页面 → 手动 Run workflow(workflow_dispatch),可勾选要哪种产物;
+#   2) 推送 v* 标签(push tags)时自动构建全部产物(用于发版)。
+#
+# 产物:
+#   * NSIS 安装器  Skald_<version>_x64-setup.exe   (Windows 11/10 安装包)
+#   * MSI 安装器   Skald_<version>_x64_en-US.msi    (需要时)
+#   * 便携版       Skald_<version>_portable_win-x64.zip
+#
+# 日志与排错设计(便于在云编译日志里定位错误):
+#   * 每个阶段都是独立 step,失败时 GitHub 直接高亮该 step;
+#   * 每步输出同时 Tee 到 .gha-logs/<阶段>.log,并作为 artifact 上传
+#     (成功/失败都会上传,if: always());
+#   * RUST_BACKTRACE=full + tauri build --verbose,保留最详细输出;
+#   * 运行时暂存脚本会打印"从哪下载 / 找到什么 / 缺哪个文件",失败原因一眼可见。
+#
+# 规则遵循仓库约定:全部用 pnpm(不用 npm)、冻结 lockfile、
+# beforeBuildCommand 仍由 tauri 自行执行(pnpm build)。
+# =============================================================================
+
+name: Windows 构建(按需)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundles:
+        description: 需要构建哪些产物
+        type: choice
+        options:
+          - all
+          - nsis
+          - msi
+          - portable
+        default: all
+      run_verify:
+        description: 构建前先跑完整仓库校验(pnpm verify,较慢)
+        type: boolean
+        default: false
+      vlc_version:
+        description: 用于暂存 LibVLC 运行时的官方 VideoLAN 3.0.x 版本
+        type: string
+        default: "3.0.21"
+  push:
+    tags:
+      - "v*"
+
+env:
+  RUST_BACKTRACE: full        # Rust panic 时打印完整回溯,便于定位
+  CARGO_TERM_COLOR: always    # cargo 错误输出带颜色,日志里更好辨认
+  CARGO_NET_RETRY: "5"        # 依赖下载失败自动重试
+  CI: "true"
+  # 推送标签触发时 inputs 为空,统一回退到 'all'
+  BUNDLES: ${{ (inputs.bundles != '' && inputs.bundles) || 'all' }}
+  VLC_VERSION: ${{ (inputs.vlc_version != '' && inputs.vlc_version) || '3.0.21' }}
+
+jobs:
+  build-windows:
+    name: Windows x64 产物
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: 0 · 检出代码
+        uses: actions/checkout@v4
+
+      - name: 1 · 环境信息
+        run: |
+          Write-Host "::group::环境信息"
+          Write-Host "请求产物       = $env:BUNDLES"
+          Write-Host "VLC 版本       = $env:VLC_VERSION"
+          Write-Host "操作系统        = $([System.Environment]::OSVersion.VersionString)"
+          Write-Host "工作目录        = $env:GITHUB_WORKSPACE"
+          Write-Host "::endgroup::"
+
+      - name: 2 · Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 3 · cargo 依赖缓存(加速重复按需构建)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock') }}
+
+      - name: 4 · pnpm 10 + Node.js 22
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 5 · pnpm install(冻结 lockfile)
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          & pnpm install --frozen-lockfile 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\05-pnpm-install.log"
+          exit $LASTEXITCODE
+
+      # 仓库里 vlc-dist/ 与 bin/ 是 git-ignored 的运行时(见 README),云编译必须现场补齐。
+      - name: 6 · 暂存打包运行时(VLC + ffprobe + tone)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\stage-windows-runtime.ps1') -VlcVersion $env:VLC_VERSION 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\06-stage-runtime.log"
+          exit $LASTEXITCODE
+
+      - name: 7 · 仓库校验套件(可选,run_verify=true 时)
+        if: ${{ inputs.run_verify == true }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          & pnpm verify 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\07-verify.log"
+          exit $LASTEXITCODE
+
+      # all / nsis / msi → 走 tauri build 出安装器;tauri 会自动下载 NSIS/WiX 工具链。
+      # --ci 关闭交互;--verbose 输出 bundler(NSIS makensis / WiX)细节以便排错。
+      - name: 8 · tauri build 安装器(NSIS / MSI)
+        if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'nsis' || env.BUNDLES == 'msi' }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          $list = switch ($env:BUNDLES) {
+            'nsis' { @('nsis') }
+            'msi'  { @('msi') }
+            default { @('nsis', 'msi') }
+          }
+          Write-Host "tauri bundles: $($list -join ', ')"
+          & pnpm exec tauri build --ci --verbose --bundles $list 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\08-tauri-installers.log"
+          exit $LASTEXITCODE
+
+      # 只选了 portable 时不需要装安装器,直接 --no-bundle 编译 exe + 运行时即可。
+      - name: 9 · tauri build --no-bundle(仅便携版场景)
+        if: ${{ env.BUNDLES == 'portable' }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          & pnpm exec tauri build --ci --verbose --no-bundle 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\09-tauri-nobundle.log"
+          exit $LASTEXITCODE
+
+      # 便携 zip 从 target\release 的可运行布局打包(见 scripts/package-portable.ps1)。
+      - name: 10 · 打包便携版 ZIP
+        if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'portable' }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\package-portable.ps1') 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\10-portable.log"
+          exit $LASTEXITCODE
+
+      - name: 11 · 产物清单与 SHA256
+        if: always()
+        run: |
+          Write-Host "::group::产物清单"
+          $files = @()
+          if (Test-Path 'src-tauri\target\release\bundle') {
+            $files += Get-ChildItem 'src-tauri\target\release\bundle' -Recurse -File |
+              Where-Object { $_.Extension -in '.exe', '.msi' }
+          }
+          if (Test-Path 'dist') {
+            $files += Get-ChildItem 'dist' -File -Filter '*.zip'
+          }
+          if ($files.Count -eq 0) {
+            Write-Host '没有生成任何产物(上面的构建步骤可能已失败)。请下载 build 日志 artifact 排查。'
+          }
+          foreach ($f in $files) {
+            $rel = $f.FullName.Substring($env:GITHUB_WORKSPACE.Length + 1)
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            Write-Host ("{0}`t{1:N1} MB`tsha256={2}" -f $rel, ($f.Length / 1MB), $hash)
+          }
+          Write-Host "::endgroup::"
+
+      # 关键:即使某一步失败也把全部阶段日志上传,便于定位错误。
+      - name: 12 · 上传构建日志(成功/失败都会上传)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-build-logs-${{ github.run_id }}
+          path: .gha-logs
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 13 · 上传安装器(NSIS/MSI)
+        if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'nsis' || env.BUNDLES == 'msi' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-installers-${{ github.run_id }}
+          path: |
+            src-tauri/target/release/bundle/nsis/**
+            src-tauri/target/release/bundle/msi/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 14 · 上传便携版 ZIP
+        if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'portable' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-portable-${{ github.run_id }}
+          path: dist/*.zip
+          if-no-files-found: ignore
+          retention-days: 14

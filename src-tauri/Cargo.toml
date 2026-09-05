@@ -1,0 +1,97 @@
+[package]
+name = "skald"
+version = "1.2.0"
+description = "A native audiobook client for Audiobookshelf"
+authors = ["fireb"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "skald_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# No `devtools` feature: Tauri enables devtools automatically in debug builds;
+# the cargo feature would ALSO enable them in release/Store builds, expanding
+# the inspection surface of a shipped app that renders remote metadata.
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream", "multipart"] } # "stream" for download_item; "multipart" for cover upload
+tokio = { version = "1", features = ["full"] }
+directories = "5"
+fs2 = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+vlc-rs = "0.3"
+tauri-plugin-global-shortcut = "2.3.2"
+tauri-plugin-dialog = "2"
+# Unified diagnostic logging — Rust `log::*` macros + the frontend
+# @tauri-apps/plugin-log API both write to one rotated file (app_log_dir) plus
+# stdout. The `log` facade crate provides the info!/warn!/error! macros.
+tauri-plugin-log = "2"
+log = "0.4"
+# Socket.IO client — async feature pulls in the tokio-backed async runtime.
+# Used in socket.rs for the live sync WebSocket transport (Phase B+).
+rust_socketio = { version = "0.6", features = ["async"] }
+# Required for .boxed() on async blocks in rust_socketio callbacks
+futures-util = "0.3"
+# CancellationToken — used in download_item / upload_media to support
+# user-initiated cancel. CancellationToken lives in the "rt" feature, not "sync".
+# "io" adds ReaderStream, which upload_media uses to stream file bodies.
+tokio-util = { version = "0.7", features = ["rt", "io"] }
+# zip: extract downloaded audiobook archives from the ABS server.
+# deflate is the compression codec ABS uses; bzip2/zstd are not needed.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+# Used temporarily in connect_socket to decode JWT payload for expiry diagnostics
+base64 = "0.21"
+
+# ── Local library: scanner / catalog / ingest / providers ────────────────────
+# (Local Library & Split Libraries roadmap.) Added together so the dependency
+# fetch is a single rebuild even though the modules land across several phases.
+# rusqlite: local catalog DB (items, progress, sessions, bookmarks, collections,
+# playlists). "bundled" compiles SQLite in-tree so no system sqlite3 is required.
+rusqlite = { version = "0.31", features = ["bundled"] }
+# lofty: read embedded audio tags, cover art, (and where available) chapters
+# across ID3v2 / MP4·M4B / Vorbis. The scanner's primary metadata source.
+lofty = "0.21"
+# symphonia: pure-Rust format probe / duration fallback when tags lack it.
+symphonia = { version = "0.5", features = ["all"] }
+# walkdir: recursive directory traversal for the scanner.
+walkdir = "2"
+# notify: file-system watcher for the staging folder (Phase 7).
+notify = "6"
+# image: decode + resize embedded/sidecar cover art locally (no server resizer; Phase 8).
+image = "0.25"
+# quick-xml: event-based RSS/Atom + OPML parsing for local podcasts. Chosen over
+# feed-rs for full control of the iTunes/podcast: namespaced tags ABS extracts
+# (Local Podcasts roadmap — see podcast_feed.rs).
+quick-xml = "0.36"
+
+[target.'cfg(windows)'.dependencies]
+# Keep Windows Credential Manager isolated from Linux builds so Cargo never
+# selects keyring's mock store merely because the wrong native backend was enabled.
+keyring = { version = "3", default-features = false, features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# The persistent synchronous backend matches auth.rs's existing Entry API.
+# crypto-rust encrypts secrets while they cross the Secret Service D-Bus.
+keyring = { version = "3", default-features = false, features = ["linux-native-sync-persistent", "crypto-rust"] }
+
+[dev-dependencies]
+# Temp dirs for persistence tests (downloads registry, offline queue) — tests
+# must never touch the user's real Skald data (Testing Suite plan).
+tempfile = "3"
+# Mock ABS server for HTTP contract tests: asserts the exact paths, methods and
+# headers Skald sends against fixtures captured while verifying the ABS source.
+# Introduced by the Auth Token Refresh roadmap for the /auth/refresh contract.
+wiremock = "0.6"

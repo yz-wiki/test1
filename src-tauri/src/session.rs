@@ -1,0 +1,1890 @@
+use std::sync::{
+    atomic::{AtomicBool, AtomicU64, Ordering},
+    Arc, Mutex,
+};
+use std::time::Duration;
+
+use tauri::Emitter;
+
+use crate::{api::AbsClient, audio::AudioPlayer};
+
+// ── Pure tick decisions (Test Seams roadmap) ─────────────────────────────────
+// The per-tick position/persistence rules, extracted from the two tick loops so
+// they are unit-testable without a LibVLC player. Values in, decision out — no
+// I/O may creep in here (that would break the seam).
+
+/// The position the player should load at: an explicit caller start (chapter/
+/// bookmark jump) always beats the server-selected resume currentTime.
+fn resolve_load_time(start_time: Option<f64>, server_current_time: f64) -> f64 {
+    start_time.unwrap_or(server_current_time)
+}
+
+/// End-of-media / pre-buffer guard: on a true end commit the exact duration (so
+/// the server marks the item finished instead of resetting it to 0%); while
+/// steadily playing commit the live position; through transient Opening/
+/// Buffering states hold the last good value, so the UI never flashes 0:00 and
+/// progress never regresses on a transient 0.
+fn commit_position(prev: f64, pos: f64, dur: f64, live: bool, ended: bool) -> f64 {
+    if ended && dur > 0.0 {
+        dur
+    } else if live {
+        pos
+    } else {
+        prev
+    }
+}
+
+/// Lifecycle syncs run immediately after pause/seek/background transitions,
+/// where LibVLC may no longer report a "live" state. Keep the transient-zero
+/// guard while accepting a real paused/seeked position from the backend player.
+fn lifecycle_position(prev: f64, pos: f64, dur: f64, ended: bool) -> f64 {
+    if ended && dur > 0.0 { dur }
+    else if pos > 0.0 || prev <= 1.0 { pos.max(0.0) }
+    else { prev }
+}
+
+pub(crate) struct SyncClaim(Arc<AtomicBool>);
+
+impl SyncClaim {
+    fn acquire(flag: Arc<AtomicBool>) -> Option<Self> {
+        flag.compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
+            .ok()
+            .map(|_| Self(flag))
+    }
+}
+
+impl Drop for SyncClaim {
+    fn drop(&mut self) { self.0.store(false, Ordering::Release); }
+}
+
+async fn wait_for_sync_claim(
+    flag: Arc<AtomicBool>,
+    timeout: Duration,
+) -> Result<SyncClaim, String> {
+    tokio::time::timeout(timeout, async move {
+        loop {
+            if let Some(claim) = SyncClaim::acquire(Arc::clone(&flag)) {
+                return claim;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .map_err(|_| "Timed out waiting for the active progress sync to finish".to_string())
+}
+
+/// Throttle state for the offline persist loop (play_local's tick task).
+#[derive(Default)]
+struct PersistState {
+    ticks: u32,
+    /// Most recent (pos, dur) not yet persisted; the loop-end flush writes it
+    /// on stop/book-switch so a throttled write is never lost.
+    pending: Option<(f64, f64)>,
+    /// Set once the completed book is recorded so the finished row isn't
+    /// rewritten every tick while the player sits in Ended.
+    finished_recorded: bool,
+}
+
+/// A progress write the loop should perform on this tick.
+struct PersistRecord {
+    pos: f64,
+    dur: f64,
+    finished: bool,
+}
+
+/// The offline loop's per-tick persistence decision — three cases mirroring the
+/// position guard: a true end records completion exactly once; a live tick
+/// buffers into `pending` and flushes every `every`th tick (1 Hz ticks, but
+/// 1 Hz disk writes are needless for a resume position); transient states leave
+/// `pending` intact for the loop-end flush. A live position after an end means
+/// the book was restarted, so the finished latch re-arms.
+fn persist_decision(
+    st: &mut PersistState,
+    report: f64,
+    dur: f64,
+    live: bool,
+    ended: bool,
+    every: u32,
+) -> Option<PersistRecord> {
+    if ended && dur > 0.0 {
+        if !st.finished_recorded {
+            st.finished_recorded = true;
+            st.pending = None;
+            return Some(PersistRecord { pos: dur, dur, finished: true });
+        }
+        None
+    } else if live {
+        st.finished_recorded = false;
+        st.pending = Some((report, dur));
+        st.ticks += 1;
+        if st.ticks.is_multiple_of(every) {
+            st.pending = None;
+            return Some(PersistRecord { pos: report, dur, finished: false });
+        }
+        None
+    } else {
+        None
+    }
+}
+
+/// Latch for the end-of-item announcement (`playback-ended`, the auto-play-next
+/// trigger). Separate from `PersistState::finished_recorded` because that latch
+/// lives in the offline loop only, while this one must behave identically for
+/// streamed, downloaded, and local-library playback.
+#[derive(Default)]
+struct EndState {
+    announced: bool,
+}
+
+/// Whether this tick should announce that the item reached its natural end.
+///
+/// The distinction the auto-advance depends on: only a *natural* end announces.
+/// `ended` comes from `AudioPlayer::book_ended()`, which is true solely when the
+/// player sits in `State::Ended` on the final track — a user stop leaves it in
+/// `State::Stopped`, and a middle track ending is not the end of the book, so
+/// neither reaches here. Ended is a resting state the player stays in, so the
+/// latch keeps the announcement to one per end; a live position afterwards means
+/// the listener restarted or seeked back, which re-arms it.
+fn end_decision(st: &mut EndState, dur: f64, live: bool, ended: bool) -> bool {
+    if ended && dur > 0.0 {
+        if st.announced {
+            return false;
+        }
+        st.announced = true;
+        return true;
+    }
+    if live {
+        st.announced = false;
+    }
+    false
+}
+
+/// Announce the natural end of an item so the frontend can resolve what plays
+/// next. Deliberately fired from the tick loop *after* the tick has committed the
+/// end position (`commit_position` pins it at the duration): the advance that
+/// follows routes through the normal play path, whose session close syncs that
+/// committed position — so the final interval is accounted for before ABS is
+/// asked to open the next session.
+fn announce_end<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    item_id: &str,
+    episode_id: Option<&str>,
+    duration: f64,
+) {
+    log::info!(target: "skald::playback", "playback reached the end of the item item={item_id} episode={episode_id:?}");
+    let _ = app.emit(
+        "playback-ended",
+        serde_json::json!({
+            "itemId":    item_id,
+            "episodeId": episode_id,
+            "duration":  duration,
+        }),
+    );
+}
+
+/// Watch a spawned playback task and make its death observable (review H5): a
+/// panic inside a tick/sync loop is otherwise swallowed by tokio and progress
+/// tracking silently stops for the rest of the session. The watcher logs the
+/// panic and emits `sync-failed` so the frontend can tell the user to restart
+/// playback. Normal task exit (session teardown via the active flag) is not an
+/// error and passes through silently.
+fn watch_task<R: tauri::Runtime>(
+    app: tauri::AppHandle<R>,
+    task: &'static str,
+    handle: tokio::task::JoinHandle<()>,
+) {
+    tokio::spawn(async move {
+        if let Err(e) = handle.await {
+            if e.is_panic() {
+                log::error!(target: "skald::sync", "{task} task panicked — progress tracking stopped: {e}");
+                let _ = app.emit("sync-failed", serde_json::json!({ "task": task }));
+            }
+        }
+    });
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DownloadedProgressRevision {
+    pub baseline_captured: bool,
+    pub server_last_update: Option<i64>,
+}
+
+pub type SharedDownloadedProgressRevision = Arc<Mutex<DownloadedProgressRevision>>;
+
+/// Queue a downloaded-book position while holding its revision lock. The flush
+/// path uses the same lock while acknowledging an ABS write, preventing a tick
+/// that captured the old revision from landing after the durable rebase.
+// Mirrors the complete durable progress payload at this persistence boundary.
+#[allow(clippy::too_many_arguments)]
+pub fn queue_downloaded_progress(
+    downloads_dir: &std::path::Path,
+    item_id: &str,
+    episode_id: Option<&str>,
+    current_time: f64,
+    duration: f64,
+    is_finished: bool,
+    recorded_at: i64,
+    revision: &SharedDownloadedProgressRevision,
+) -> Result<(), String> {
+    let revision = revision.lock().unwrap_or_else(|error| error.into_inner());
+    crate::downloads::upsert_progress_entry(downloads_dir, crate::downloads::OfflineProgressEntry {
+        item_id: item_id.to_string(),
+        episode_id: episode_id.map(str::to_string),
+        current_time,
+        duration,
+        progress: if duration > 0.0 { current_time / duration } else { 0.0 },
+        is_finished,
+        recorded_at,
+        baseline_captured: revision.baseline_captured,
+        server_last_update: revision.server_last_update,
+        pending_confirmation_current_time: None,
+    })
+}
+
+pub struct SessionManager {
+    pub client: AbsClient,
+    pub session_id: Option<String>,
+    // Server identity for the active session. Session sync itself is keyed by
+    // session_id, but a failed sync/close must fall back to the durable progress
+    // queue, whose key is (library item, optional podcast episode).
+    pub online_item_id: Option<String>,
+    pub online_episode_id: Option<String>,
+    pub online_duration: f64,
+    pub current_time: Arc<Mutex<f64>>,
+    pub time_listened: Arc<Mutex<f64>>,
+    // None until start_session is first called — avoids loading libvlc.dll at
+    // app startup before the user has a chance to see the window.
+    pub player: Arc<Mutex<Option<AudioPlayer>>>,
+    active: Arc<AtomicBool>,
+    sync_degraded: Arc<AtomicBool>,
+    sync_in_flight: Arc<AtomicBool>,
+    seek_sync_generation: Arc<AtomicU64>,
+    // True while playing from a local file (no server session).
+    // Set by play_local(); cleared by start_session() when returning to online playback.
+    // The sync task is never spawned during local playback, so this flag is
+    // primarily an observability marker for the shutdown handler and future phases.
+    pub is_local: bool,
+    // ABS library item ID of the locally-playing book. Set by play_local() and
+    // used by the shutdown handler to write a final offline progress entry on exit.
+    pub local_item_id: Option<String>,
+    // When the player was last paused, for the adaptive rewind-on-resume curve.
+    // Wall-clock elapsed time is the input, so this is the one thing that must
+    // survive between the pause command and the resume command. Cleared on
+    // resume so a second resume without an intervening pause rewinds nothing.
+    pub paused_at: Option<std::time::Instant>,
+    // Adaptive rewind settings, pushed down from Settings → Playback.
+    pub auto_rewind: crate::auto_rewind::AutoRewindCfg,
+    // True when the locally-playing item is a *local-library* item (no server
+    // counterpart) rather than a downloaded ABS book. Local-library progress goes
+    // to the SQLite catalog; downloaded-book progress goes to the offline queue
+    // (which later flushes to the server). Set by play_local().
+    pub is_local_library: bool,
+    // For a local *podcast episode*, the episode id whose progress is written to
+    // the catalog (keyed per (item, episode)). Empty/None for a whole-item book.
+    // Set by play_local(); used by the tick loop and the shutdown handler.
+    pub local_episode_id: Option<String>,
+    // Mutable ABS revision for downloaded playback. Successful flushes advance
+    // this shared cell so later ticks do not mistake Skald's own write for a
+    // foreign update.
+    pub local_downloaded_revision: Option<SharedDownloadedProgressRevision>,
+    // ── Local listening stats (Local Listening Stats roadmap) ────────────────
+    // Listening not yet flushed to its destination. The 1-second tick adds to
+    // it; flush_listen_time() drains it every LISTEN_FLUSH_EVERY seconds, at
+    // loop end, and from the shutdown handler. Shared (Arc) because the tick
+    // task and the shutdown path both drain it — mem::take-style draining makes
+    // a concurrent double-flush harmless.
+    pub local_listen_pending: Arc<Mutex<PendingListen>>,
+    // Where the CURRENT local playback's listening is credited, or None during
+    // online playback (an ABS `/play` session already reports it).
+    pub local_listen_credit: Option<ListenCredit>,
+}
+
+/// Where a second of playback is credited. Exactly one channel is ever chosen
+/// for a given playback, which is what makes double-reporting structurally
+/// impossible: online listening is reported by the ABS `/play` session and
+/// therefore takes no credit here at all, local-library listening goes only to
+/// the catalog, and downloaded-ABS listening goes only to a local session.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ListenCredit {
+    /// Local-library item — the `listen_sessions` row id for one continuous
+    /// play of one item/episode (`catalog.db`). Never reported to ABS: the
+    /// server has never heard of the item.
+    Catalog { session_id: String },
+    /// Downloaded ABS item — a client-built `playMethod: 3` session, flushed to
+    /// the server on reconnect so offline listening reaches its listening stats
+    /// on the day it happened.
+    LocalSession { context: crate::offline_sessions::SessionContext },
+}
+
+/// Listening counted but not yet written out: the seconds themselves, plus the
+/// position the last counted tick observed. A local session records *where* you
+/// were as well as *how long*, so the position travels with the counter rather
+/// than being re-read from a player that may already hold the next book.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct PendingListen {
+    pub seconds: f64,
+    pub current_time: f64,
+    pub duration: f64,
+    /// Epoch ms of the most recent second counted into this bucket — *when* the
+    /// listening happened, as opposed to when the bucket is drained. A session
+    /// is dated from this, so an evening's last seconds stay on the evening's
+    /// day even though the drain lands after midnight. Zero until the first
+    /// second is counted.
+    pub last_counted_ms: i64,
+    /// Set when this playback's books have been closed (`close_local_listen_credit`).
+    /// A closed bucket is inert to its tick task: no further second may be
+    /// counted into it. See `count_listen_second` for why that matters.
+    pub closed: bool,
+}
+
+impl PendingListen {
+    /// Take the counted listening, leaving the bucket's *closed* state behind.
+    /// A plain `mem::take` would reopen it, and the straggler tick this whole
+    /// mechanism exists to stop would simply refill it after the closing drain.
+    fn drain(&mut self) -> PendingListen {
+        let closed = self.closed;
+        let drained = std::mem::take(self);
+        self.closed = closed;
+        drained
+    }
+}
+
+/// What became of one played second offered to the listening bucket.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) enum ListenTick {
+    /// The bucket belongs to a playback that has already been closed off, so
+    /// this second is not this tick's to count.
+    Refused,
+    /// Counted; `flush` once the bucket is big enough to be worth writing out.
+    Counted { flush: bool },
+}
+
+/// Count one played second into the bucket.
+///
+/// The refusal is the point. A tick task is only *asked* to stop (an atomic
+/// flag), so the outgoing item's task can already be past its active check —
+/// and about to count another second — when the switch drains and closes its
+/// books. That straggler second would drain later under the *previous* item's
+/// credit, and `offline_sessions::accrue` would then find the next item's
+/// session in the store's single active slot and retire a listen that is still
+/// growing, splitting one continuous listen across two sessions. Refusing it
+/// under the same mutex the closing drain takes leaves no window: a second
+/// either lands before the close and is drained by it, or never lands at all.
+fn count_listen_second(
+    pending: &mut PendingListen,
+    current_time: f64,
+    duration: f64,
+    now_ms: i64,
+) -> ListenTick {
+    if pending.closed {
+        return ListenTick::Refused;
+    }
+    pending.seconds += 1.0;
+    pending.current_time = current_time;
+    pending.duration = duration;
+    pending.last_counted_ms = now_ms;
+    ListenTick::Counted { flush: pending.seconds >= LISTEN_FLUSH_EVERY }
+}
+
+/// Whether the bucket's counted seconds and `now_ms` fall on different local
+/// days — the tick's signal to drain before counting, so an evening's seconds
+/// are not dated from a drain that lands after midnight. A closed bucket is
+/// never rolled over: whatever it still holds is the closing drain's to retry
+/// (or the tick's own loop-end drain), not a straggler's to file.
+fn bucket_rolled_over(pending: &PendingListen, now_ms: i64) -> bool {
+    !pending.closed
+        && pending.seconds > 0.0
+        && pending.last_counted_ms > 0
+        && crate::offline_sessions::day_changed(pending.last_counted_ms, now_ms)
+}
+
+/// How many accumulated local listening seconds trigger a catalog flush. The
+/// tail below this is captured by the loop-end / shutdown drains.
+const LISTEN_FLUSH_EVERY: f64 = 30.0;
+
+/// Acknowledge only the interval accepted by ABS. The server adds
+/// `timeListened` to the session on every sync, so this counter is pending
+/// time—not a cumulative session total. Subtraction preserves seconds accrued
+/// by the 1 Hz tick while the HTTP request was in flight.
+fn acknowledge_listened(counter: &Arc<Mutex<f64>>, sent: f64) {
+    let mut pending = counter.lock().unwrap_or_else(|e| e.into_inner());
+    *pending = (*pending - sent).max(0.0);
+}
+
+/// Drain the pending listen counter into whichever channel this playback is
+/// credited to — the SQLite catalog for a local-library item, or the offline
+/// local-session store for a downloaded ABS item. Shared by the tick loop
+/// (periodic + loop-end flush) and lib.rs's ExitRequested handler (final flush —
+/// the tick task may never fire again once the runtime is shutting down). On a
+/// failed write the drained seconds are put back so the next flush retries
+/// instead of losing them.
+pub fn flush_listen_time(
+    credit: Option<&ListenCredit>,
+    item_id: &str,
+    episode_id: Option<&str>,
+    pending: &Arc<Mutex<PendingListen>>,
+) {
+    let Some(credit) = credit else { return };
+    let drained = {
+        // Poison-tolerant like the tick's player lock — stats must never be the
+        // thing that blocks a flush during teardown.
+        let mut p = pending.lock().unwrap_or_else(|e| e.into_inner());
+        p.drain()
+    };
+    if drained.seconds < 1.0 {
+        return;
+    }
+    let (what, result) = match credit {
+        ListenCredit::Catalog { session_id } => (
+            format!("catalog session={session_id}"),
+            crate::catalog::add_listen_time(session_id, item_id, episode_id, drained.seconds),
+        ),
+        ListenCredit::LocalSession { context } => {
+            // Resolving the directory here (rather than caching it) keeps the
+            // shutdown drain honest if the user relocated downloads mid-run.
+            let accrued = crate::downloads::downloads_dir().and_then(|dir| {
+                crate::offline_sessions::accrue(
+                    &dir,
+                    context,
+                    drained.seconds,
+                    drained.current_time,
+                    drained.duration,
+                    // Dated by the last second counted, not by this drain: a
+                    // bucket flushed at 00:00:05 — or hours later at shutdown —
+                    // still belongs to the day it was listened on.
+                    crate::offline_sessions::local_instant(drained.last_counted_ms),
+                )
+            });
+            (format!("local session item={}", context.item_id), accrued)
+        }
+    };
+    if let Err(e) = result {
+        log::warn!(target: "skald::playback", "listen flush failed ({what}): {e}");
+        // Put the seconds back, preserving whatever position a concurrent tick
+        // has since recorded — only the unwritten time needs to survive.
+        let mut p = pending.lock().unwrap_or_else(|p| p.into_inner());
+        p.seconds += drained.seconds;
+        if p.duration <= 0.0 {
+            p.current_time = drained.current_time;
+            p.duration = drained.duration;
+        }
+        // Keep the earlier stamp when nothing newer has been counted, so a retry
+        // still dates the seconds to the day they were listened on.
+        if p.last_counted_ms == 0 {
+            p.last_counted_ms = drained.last_counted_ms;
+        }
+    } else {
+        log::debug!(target: "skald::playback", "listen flush {what} secs={}", drained.seconds);
+    }
+}
+
+/// Build the local-session identity for a downloaded ABS item. Title and author
+/// come from the download registry so the ABS "Listening Sessions" page names
+/// the book; ABS fills both from the library item when they arrive empty, so a
+/// pruned or hand-edited registry costs display polish, never the session.
+fn downloaded_session_context(
+    item_id: &str,
+    episode_id: Option<&str>,
+    server_url: &str,
+    user_id: &str,
+) -> crate::offline_sessions::SessionContext {
+    let record = crate::downloads::downloads_dir()
+        .map(|dir| crate::downloads::load_registry(&dir))
+        .unwrap_or_default()
+        .into_iter()
+        .find(|record| record.item_id == item_id);
+    crate::offline_sessions::SessionContext {
+        item_id: item_id.to_string(),
+        episode_id: episode_id.map(str::to_string),
+        // ABS keys episode sessions off mediaType; offline episode downloads are
+        // still deferred, so this resolves to "book" today and stays correct if
+        // they land.
+        media_type: if episode_id.is_some() { "podcast" } else { "book" }.to_string(),
+        display_title: record.as_ref().map(|r| r.title.clone()).unwrap_or_default(),
+        display_author: record.map(|r| r.author).unwrap_or_default(),
+        // Captured now, at playback start, because that is the last moment the
+        // account is reliably known: the flush may run days later, after a
+        // logout, and ABS credits whoever is authenticated then.
+        server_key: crate::offline_sessions::server_key(server_url),
+        user_id: user_id.to_string(),
+    }
+}
+
+/// Park the accruing offline session so the next flush can send it. Called when
+/// downloaded playback stops, switches item, or the app exits; harmless (and a
+/// no-op) for every other credit channel.
+pub fn retire_local_session(credit: Option<&ListenCredit>) {
+    let Some(ListenCredit::LocalSession { context }) = credit else {
+        return;
+    };
+    // Retire only *this* credit's session. A tick task is stopped asynchronously,
+    // so the previous item's task can reach here after the next item has already
+    // started accruing — and the store's active slot would then belong to a
+    // session that is still growing.
+    let retired = crate::downloads::downloads_dir()
+        .and_then(|dir| crate::offline_sessions::retire_active_for(&dir, context));
+    if let Err(e) = retired {
+        log::warn!(target: "skald::sync", "offline listening session retire failed: {e}");
+    }
+}
+
+/// Save a server-bound position locally when session sync cannot reach ABS.
+/// The regular reconnect/startup queue flush later sends it through the direct
+/// progress endpoint, so a failed session request never becomes silent loss.
+pub fn queue_server_progress_fallback(
+    item_id: &str,
+    episode_id: Option<&str>,
+    current_time: f64,
+    duration: f64,
+) -> Result<(), String> {
+    let downloads_dir = crate::downloads::downloads_dir()?;
+    crate::downloads::queue_server_progress(
+        &downloads_dir,
+        item_id,
+        episode_id,
+        current_time,
+        duration,
+    )
+}
+
+impl SessionManager {
+    pub fn new(client: AbsClient) -> Self {
+        Self {
+            client,
+            session_id: None,
+            online_item_id: None,
+            online_episode_id: None,
+            online_duration: 0.0,
+            current_time: Arc::new(Mutex::new(0.0)),
+            time_listened: Arc::new(Mutex::new(0.0)),
+            player: Arc::new(Mutex::new(None)),
+            active: Arc::new(AtomicBool::new(false)),
+            sync_degraded: Arc::new(AtomicBool::new(false)),
+            sync_in_flight: Arc::new(AtomicBool::new(false)),
+            seek_sync_generation: Arc::new(AtomicU64::new(0)),
+            is_local: false,
+            local_item_id: None,
+            paused_at: None,
+            auto_rewind: crate::auto_rewind::AutoRewindCfg::default(),
+            is_local_library: false,
+            local_episode_id: None,
+            local_downloaded_revision: None,
+            local_listen_pending: Arc::new(Mutex::new(PendingListen::default())),
+            local_listen_credit: None,
+        }
+    }
+
+    /// Drop transient state that belongs to the media being replaced rather than
+    /// to the manager. `paused_at` is the whole of it today: it is written by
+    /// `pause_audio` and read exactly once by `resume_audio`, so a pause measured
+    /// on the *previous* item must not survive into the next one — otherwise a new
+    /// book whose first resume beats a fresh pause (a failed start, an early
+    /// resume) is rewound for time the listener spent paused on something else.
+    /// Called at the top of both load paths, online and local.
+    fn begin_media_load(&mut self) {
+        self.paused_at = None;
+        self.close_local_listen_credit();
+    }
+
+    /// Drain and close the outgoing local listening credit *before* the next item
+    /// is allowed to accrue.
+    ///
+    /// The previous item's tick task is only asked to stop (an atomic flag); it
+    /// finishes asynchronously and does its own drain-and-retire on the way out.
+    /// If the next item mints its session first, that late drain would find a
+    /// stranger's session in the store's single active slot. Closing the books
+    /// here, synchronously, means the late task has nothing left to drain and its
+    /// retire is a no-op — the identity check in `retire_active_for` then covers
+    /// what remains.
+    ///
+    /// Draining is not enough on its own: the outgoing task can be *mid*-iteration,
+    /// already past its active check and about to count one more second into the
+    /// bucket this is draining. So the bucket is marked closed first, under the
+    /// same mutex the tick counts through — `count_listen_second` then refuses
+    /// that second rather than letting it drain later under a dead credit.
+    fn close_local_listen_credit(&mut self) {
+        let Some(credit) = self.local_listen_credit.take() else {
+            return;
+        };
+        {
+            let mut pending = self
+                .local_listen_pending
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            pending.closed = true;
+        }
+        let Some(item_id) = self.local_item_id.clone() else {
+            return;
+        };
+        flush_listen_time(
+            Some(&credit),
+            &item_id,
+            self.local_episode_id.as_deref(),
+            &self.local_listen_pending,
+        );
+        retire_local_session(Some(&credit));
+    }
+
+    /// Open a playback session for `item_id`, spawn the 1-second tick loop
+    /// (position updates + `playback-tick` events) and the 10-second sync loop.
+    /// Returns the server's `currentTime` so the caller can seek after play starts.
+    ///
+    /// `episode_id` selects an individual podcast episode (cluster E); for a book
+    /// it is `None`. It only affects which `/play` route is opened — the session
+    /// id drives all subsequent sync, so episode progress persists like a book's.
+    pub async fn start_session<R: tauri::Runtime>(
+        &mut self,
+        item_id: &str,
+        episode_id: Option<&str>,
+        app: tauri::AppHandle<R>,
+        start_time: Option<f64>,
+        user_id: &str,
+    ) -> Result<f64, String> {
+        // Stop any tasks from a previous session (online or local).
+        self.active.store(false, Ordering::Relaxed);
+        // New media — the previous item's pause clock does not carry over.
+        self.begin_media_load();
+        // Clear the local flag — this is an online session, sync is required.
+        self.is_local = false;
+        self.is_local_library = false;
+        // Clear the local item ID — no longer tracking offline progress.
+        self.local_item_id = None;
+        self.local_episode_id = None;
+        self.local_downloaded_revision = None;
+        self.online_item_id = None;
+        self.online_episode_id = None;
+        self.online_duration = 0.0;
+        // Online playback is reported by the ABS `/play` session itself, so this
+        // playback takes no local credit at all — that is the mutual exclusion
+        // that keeps an interval from being counted twice. Any outgoing local
+        // credit was already drained and closed by begin_media_load above.
+
+        // Initialize the audio player on first call (deferred to avoid
+        // requiring libvlc.dll on PATH at startup).
+        let player_newly_created = {
+            let mut p = self.player.lock().unwrap();
+            if p.is_none() {
+                *p = Some(AudioPlayer::new()?);
+                true
+            } else {
+                false
+            }
+        };
+        // Restore persisted EQ settings outside the mutex so the file I/O and
+        // FFI cost don't extend the same lock that holds Instance::new().
+        if player_newly_created {
+            let guard = self.player.lock().unwrap();
+            if let Some(p) = guard.as_ref() {
+                p.restore_eq();
+            }
+        }
+
+        let device_id = crate::session_ownership::device_id()?;
+        let session = self.client.open_session(item_id, episode_id, start_time, &device_id).await?;
+        let owner_user_id = if session.user_id.is_empty() { user_id } else { &session.user_id };
+        if let Err(error) = crate::session_ownership::record_owned(
+            &self.client.base_url,
+            owner_user_id,
+            &session.id,
+        ) {
+            // An unjournaled session would recreate the original leak. Close it
+            // without a stale progress payload and fail the open visibly.
+            let _ = self.client.close_session_without_sync(&session.id).await;
+            return Err(format!("Could not journal opened playback session: {error}"));
+        }
+        // ABS has already closed an older same-user/same-device session while
+        // opening this one. Reconcile the durable journal afterward so orphan
+        // cleanup latency and local prune failures never block playback start.
+        let cleanup_client = self.client.clone();
+        let cleanup_user_id = owner_user_id.to_string();
+        let cleanup_exclude = session.id.clone();
+        tokio::spawn(async move {
+            if let Err(error) = crate::session_ownership::retry_owned(
+                &cleanup_client,
+                &cleanup_user_id,
+                Some(&cleanup_exclude),
+            ).await {
+                log::warn!(target: "skald::sync", "background owned-session cleanup deferred: {error}");
+            }
+        });
+        self.session_id = Some(session.id.clone());
+        self.online_item_id = Some(item_id.to_string());
+        self.online_episode_id = episode_id.filter(|id| !id.is_empty()).map(str::to_string);
+        self.online_duration = session.audio_tracks.iter().map(|track| track.duration).sum();
+        // Prefer the caller-supplied start_time so LibVLC loads at the exact
+        // chapter position even if the server's currentTime differs slightly.
+        let load_time = resolve_load_time(start_time, session.current_time);
+        *self.current_time.lock().unwrap() = load_time;
+        // Each session owns its pending listen-time counter. A slow response
+        // from the previous session must never acknowledge seconds accrued by
+        // the newly opened book.
+        self.time_listened = Arc::new(Mutex::new(0.0));
+
+        // Load the audio track(s) into the player.
+        // Token-in-URL pattern (CLAUDE.md critical lesson 2): LibVLC HTTP headers are
+        // unreliable on Windows — never use Authorization headers for media URLs.
+        // A book with >1 audioTrack is multi-track: load them ALL as one contiguous
+        // timeline (ABS's model — each track carries a startOffset). The single ABS
+        // session keeps driving sync with the GLOBAL currentTime, so advancing tracks
+        // client-side needs no new server session.
+        let token = self.client.token.as_deref().unwrap_or("").to_string();
+        let base = self.client.base_url.trim_end_matches('/').to_string();
+        let online_multitrack = session.audio_tracks.len() > 1;
+        let load_result = {
+            let player_guard = self.player.lock().unwrap();
+            if let Some(p) = player_guard.as_ref() {
+                if online_multitrack {
+                    let tracks: Vec<(String, f64)> = session
+                        .audio_tracks
+                        .iter()
+                        .map(|t| (format!("{base}{}?token={token}", t.content_url), t.duration))
+                        .collect();
+                    p.load_tracks(tracks, load_time)
+                } else if let Some(track) = session.audio_tracks.first() {
+                    let url = format!("{base}{}?token={token}", track.content_url);
+                    p.load(&url, load_time)
+                } else {
+                    Ok(())
+                }
+            } else {
+                Ok(())
+            }
+        };
+        if let Err(error) = load_result {
+            if self.client.close_session_without_sync(&session.id).await.is_ok() {
+                let _ = crate::session_ownership::remove_owned(&session.id);
+            }
+            self.clear_server_identity();
+            return Err(error);
+        }
+
+        let active = Arc::new(AtomicBool::new(true));
+        self.active = Arc::clone(&active);
+        let sync_degraded = Arc::new(AtomicBool::new(false));
+        self.sync_degraded = Arc::clone(&sync_degraded);
+        let sync_in_flight = Arc::new(AtomicBool::new(false));
+        self.sync_in_flight = Arc::clone(&sync_in_flight);
+
+        // ── Tick task: every 1 second ────────────────────────────────────────
+        let ct_tick = Arc::clone(&self.current_time);
+        let tl_tick = Arc::clone(&self.time_listened);
+        let player_tick = Arc::clone(&self.player);
+        let active_tick = Arc::clone(&active);
+        let app_tick = app.clone();
+        // Identity for the end-of-item announcement — captured, so an announcement
+        // always names the item this task was started for.
+        let item_id_tick = item_id.to_string();
+        let episode_id_tick = episode_id.map(str::to_string);
+
+        let tick_handle = tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(1));
+            let mut end_state = EndState::default();
+            loop {
+                interval.tick().await;
+                if !active_tick.load(Ordering::Relaxed) {
+                    break;
+                }
+                let (pos, dur, playing, live, ended) = {
+                    // Poison-tolerant: a panic elsewhere holding the player lock must
+                    // not kill progress capture for the rest of the session.
+                    let guard = player_tick.lock().unwrap_or_else(|e| e.into_inner());
+                    match guard.as_ref() {
+                        Some(p) => (p.position(), p.duration(), p.is_playing(), p.position_is_live(), p.book_ended()),
+                        None => (0.0, 0.0, false, false, false),
+                    }
+                };
+                // Guard the shared position against the end-of-media / pre-buffer
+                // collapse to 0 (see commit_position).
+                {
+                    // Poison-tolerant like the player lock (review H5): these plain
+                    // f64 cells can't be left in a broken state, so inheriting a
+                    // poison here would only kill progress capture for no benefit.
+                    let mut ct = ct_tick.lock().unwrap_or_else(|e| e.into_inner());
+                    *ct = commit_position(*ct, pos, dur, live, ended);
+                }
+                if playing {
+                    *tl_tick.lock().unwrap_or_else(|e| e.into_inner()) += 1.0;
+                }
+                // Report the committed position (held through transient states), not
+                // the raw `pos`, so the UI never flashes 0:00 at the end / during buffer.
+                let report = *ct_tick.lock().unwrap_or_else(|e| e.into_inner());
+                let _ = app_tick.emit(
+                    "playback-tick",
+                    serde_json::json!({
+                        "currentTime": report,
+                        "duration":    dur,
+                        "isPlaying":   playing,
+                    }),
+                );
+                if end_decision(&mut end_state, dur, live, ended) {
+                    announce_end(&app_tick, &item_id_tick, episode_id_tick.as_deref(), dur);
+                }
+            }
+        });
+        watch_task(app.clone(), "online tick", tick_handle);
+
+        // ── Sync task: every 10 seconds (CLAUDE.md critical lesson 3) ─────────
+        let ct_sync = Arc::clone(&self.current_time);
+        let tl_sync = Arc::clone(&self.time_listened);
+        let client_sync = self.client.clone();
+        let session_id_sync = session.id.clone();
+        let item_id_sync = item_id.to_string();
+        let episode_id_sync = episode_id.map(str::to_string);
+        let known_duration_sync = self.online_duration;
+        let player_sync = Arc::clone(&self.player);
+        let active_sync = Arc::clone(&active);
+        let app_sync = app.clone();
+
+        let sync_handle = tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(
+                crate::sync_config::playback_sync_cadence().online_session_seconds,
+            ));
+            let mut last_queue_state: Option<bool> = None;
+            interval.tick().await; // skip the immediate first tick
+            loop {
+                interval.tick().await;
+                if !active_sync.load(Ordering::Relaxed) {
+                    break;
+                }
+                let Some(_claim) = SyncClaim::acquire(Arc::clone(&sync_in_flight)) else {
+                    log::debug!(target: "skald::sync", "periodic session sync skipped because another write is in flight item={item_id_sync}");
+                    continue;
+                };
+                // Poison-tolerant (review H5): a stale read is strictly better
+                // than the sync loop dying and progress never persisting again.
+                let ct = *ct_sync.lock().unwrap_or_else(|e| e.into_inner());
+                let tl = *tl_sync.lock().unwrap_or_else(|e| e.into_inner());
+                match client_sync.sync_session(&session_id_sync, ct, tl).await {
+                    Ok(()) => {
+                        acknowledge_listened(&tl_sync, tl);
+                        last_queue_state = None;
+                        let _ = app_sync.emit(
+                            "session-sync-success",
+                            serde_json::json!({ "currentTime": ct, "reason": "periodic", "at": chrono::Utc::now().timestamp_millis() }),
+                        );
+                        if sync_degraded.swap(false, Ordering::Relaxed) {
+                            log::info!(target: "skald::sync", "server session sync restored item={item_id_sync}");
+                            let _ = app_sync.emit(
+                                "session-sync-restored",
+                                serde_json::json!({ "currentTime": ct }),
+                            );
+                        }
+                    }
+                    Err(error) => {
+                        let player_duration = player_sync
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .as_ref()
+                            .map(AudioPlayer::duration)
+                            .unwrap_or(0.0);
+                        let duration = known_duration_sync.max(player_duration);
+                        let queued = match queue_server_progress_fallback(
+                            &item_id_sync,
+                            episode_id_sync.as_deref(),
+                            ct,
+                            duration,
+                        ) {
+                            Ok(()) => true,
+                            Err(queue_error) => {
+                                log::error!(target: "skald::sync", "server sync fallback persist failed item={item_id_sync}: {queue_error}");
+                                false
+                            }
+                        };
+                        let first_failure = !sync_degraded.swap(true, Ordering::Relaxed);
+                        if first_failure || last_queue_state != Some(queued) {
+                            log::warn!(target: "skald::sync", "server session sync failed item={item_id_sync} queued_locally={queued}: {error}");
+                            let _ = app_sync.emit(
+                                "session-sync-warning",
+                                serde_json::json!({ "currentTime": ct, "queued": queued }),
+                            );
+                        }
+                        last_queue_state = Some(queued);
+                    }
+                }
+            }
+        });
+        watch_task(app.clone(), "session sync", sync_handle);
+
+        // Multi-track ABS book → chain its tracks (see spawn_advance_task).
+        if online_multitrack {
+            self.spawn_advance_task(Arc::clone(&active));
+        }
+
+        // Return the position the player actually loaded at (honours a caller
+        // start_time override) — the frontend seeds st.position from this, and
+        // returning the server's stale currentTime made the UI open a chapter/
+        // bookmark jump at the wrong spot until the first playback tick.
+        Ok(load_time)
+    }
+
+    /// Spawn the track-advance loop for the currently-loaded multi-track book. The
+    /// MediaPlayerEndReached callback (audio.rs) wakes the player's `advance` Notify
+    /// when a track finishes; this task performs the actual switch to the next track
+    /// OFF the libvlc event thread (calling libvlc from within the callback risks a
+    /// deadlock). try_advance() is a no-op unless the current track has really ended
+    /// and another remains, so the 2s fallback tick — which also lets the task notice
+    /// session teardown (active=false) and exit — is harmless. Shared by the local
+    /// (play_local) and online (start_session) multi-track paths.
+    fn spawn_advance_task(&self, active: Arc<AtomicBool>) {
+        let advance = {
+            let guard = self.player.lock().unwrap();
+            guard.as_ref().map(|p| p.advance_signal())
+        };
+        let Some(advance) = advance else { return };
+        let player_adv = Arc::clone(&self.player);
+        tokio::spawn(async move {
+            loop {
+                tokio::select! {
+                    _ = advance.notified() => {}
+                    _ = tokio::time::sleep(Duration::from_secs(2)) => {}
+                }
+                if !active.load(Ordering::Relaxed) {
+                    break;
+                }
+                if let Ok(guard) = player_adv.lock() {
+                    if let Some(p) = guard.as_ref() {
+                        let _ = p.try_advance();
+                    }
+                }
+            }
+        });
+    }
+
+    /// Load a local audio file into LibVLC and start playback without opening a
+    /// server session. Used by the offline playback path introduced in Phase D.
+    ///
+    /// Behaviour differences from start_session:
+    /// - No server call is made; session_id stays None.
+    /// - Only the 1-second tick task is spawned (no 10-second sync task).
+    /// - is_local is set to true so the shutdown handler skips the HTTP close.
+    /// - item_id is stored so the tick task can queue progress entries to disk
+    ///   and the shutdown handler can write a final entry on app close.
+    // Mirrors the Tauri local-playback boundary, including conflict-baseline
+    // metadata that must stay adjacent to the item/episode identity.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn play_local<R: tauri::Runtime>(
+        &mut self,
+        file_path: &str,
+        item_id: &str,
+        start_time: f64,
+        local_library: bool,
+        // For a local podcast episode, its id (progress keyed per episode). None
+        // for a downloaded ABS book or a whole-item local book.
+        episode_id: Option<&str>,
+        baseline_captured: bool,
+        server_last_update: Option<i64>,
+        // The rate this item should play at (its remembered speed, or the global
+        // default). Applied here rather than by a separate frontend call because
+        // this method starts playback itself — see the apply site below. `None`
+        // leaves whatever rate the player already had.
+        speed: Option<f32>,
+        // The account this playback belongs to. Offline listening is reported to
+        // ABS later, and ABS credits whoever is authenticated *then*, so the
+        // identity has to be captured now and travel with the session.
+        server_url: &str,
+        user_id: &str,
+        app: tauri::AppHandle<R>,
+    ) -> Result<(), String> {
+        // Kill any background tasks from a previous online or local session so
+        // stale sync or tick loops do not race with the new local playback.
+        self.active.store(false, Ordering::Relaxed);
+        // New media — the previous item's pause clock does not carry over.
+        self.begin_media_load();
+
+        // No server session — clear the ID so the shutdown handler and
+        // close_active_session both exit early without an HTTP call.
+        self.session_id = None;
+        self.online_item_id = None;
+        self.online_episode_id = None;
+        self.online_duration = 0.0;
+        self.sync_degraded.store(false, Ordering::Relaxed);
+
+        // Mark as local so any code that inspects this flag knows we are offline.
+        self.is_local = true;
+        // Distinguish a local-library item (catalog progress) from a downloaded
+        // ABS book (offline queue → server flush).
+        self.is_local_library = local_library;
+        // Store the ABS item ID so the tick task and shutdown handler can key
+        // offline progress queue entries to the correct library item.
+        self.local_item_id = Some(item_id.to_string());
+        // Remember the episode (if any) so catalog progress is written per episode.
+        self.local_episode_id = episode_id.filter(|s| !s.is_empty()).map(|s| s.to_string());
+        self.local_downloaded_revision = (!local_library).then(|| Arc::new(Mutex::new(
+            DownloadedProgressRevision { baseline_captured, server_last_update },
+        )));
+
+        // New local playback = a new listening-credit channel. A local-library
+        // item opens a `listen_sessions` row (Local Listening Stats roadmap); a
+        // downloaded ABS item accrues a client-built local session that reaches
+        // the server's own stats on reconnect (Offline Local Sessions roadmap).
+        // The pending counter gets a FRESH Arc (same pattern as the active flag)
+        // so the previous tick task's loop-end flush drains its own counter
+        // under its own credit, never racing this playback's accumulation.
+        self.local_listen_credit = Some(if local_library {
+            let started = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis();
+            ListenCredit::Catalog { session_id: format!("local-{item_id}-{started}") }
+        } else {
+            ListenCredit::LocalSession {
+                context: downloaded_session_context(
+                    item_id,
+                    self.local_episode_id.as_deref(),
+                    server_url,
+                    user_id,
+                ),
+            }
+        });
+        self.local_listen_pending = Arc::new(Mutex::new(PendingListen::default()));
+
+        // Initialize the audio player on first call (deferred init matches start_session).
+        let player_newly_created = {
+            let mut p = self.player.lock().unwrap();
+            if p.is_none() {
+                *p = Some(AudioPlayer::new()?);
+                true
+            } else {
+                false
+            }
+        };
+        if player_newly_created {
+            let guard = self.player.lock().unwrap();
+            if let Some(p) = guard.as_ref() {
+                p.restore_eq();
+            }
+        }
+
+        // Resolve what to load. A directory is a (potentially) multi-file book:
+        // list its audio files in playback order. We sort the full paths with
+        // `.sort()` — the SAME ordering the scanner uses when it builds this book's
+        // per-file chapters — so each track's global offset lines up exactly with
+        // its chapter. >1 file → true multi-track playback (ABS's model: one player,
+        // one contiguous timeline across the tracks, auto-advancing). 1 file (or a
+        // single-file path) → the original single-media path, untouched.
+        let audio_ext = ["m4b", "mp3", "aac", "ogg", "flac", "opus", "m4a", "wav"];
+        let dir_files: Option<Vec<std::path::PathBuf>> = if std::path::Path::new(file_path).is_dir() {
+            let mut files: Vec<std::path::PathBuf> = std::fs::read_dir(file_path)
+                .map_err(|e| format!("Failed to read book directory: {e}"))?
+                .filter_map(|e| e.ok())
+                .map(|e| e.path())
+                .filter(|p| {
+                    p.extension()
+                        .and_then(|x| x.to_str())
+                        .map(|x| audio_ext.contains(&x.to_lowercase().as_str()))
+                        .unwrap_or(false)
+                })
+                .collect();
+            files.sort();
+            if files.is_empty() {
+                return Err("No audio files found in book directory".to_string());
+            }
+            Some(files)
+        } else {
+            None
+        };
+
+        // A true multi-file book drives the track-advance task spawned below.
+        let multitrack = matches!(&dir_files, Some(files) if files.len() > 1);
+
+        // Probe each file's duration to build the global timeline (the scanner uses
+        // the same ffprobe durations to derive this book's chapters, so offsets line
+        // up). Done OUTSIDE the player lock — ffprobe spawns are slow and holding the
+        // lock across them would stall the tick loop / transport controls.
+        let multitrack_tracks: Option<Vec<(String, f64)>> = if multitrack {
+            dir_files.as_ref().map(|files| {
+                files
+                    .iter()
+                    .map(|f| {
+                        let uri = format!("file:///{}", f.to_string_lossy().replace('\\', "/"));
+                        (uri, crate::probe::probe_file(f).duration_secs)
+                    })
+                    .collect()
+            })
+        } else {
+            None
+        };
+
+        {
+            let guard = self.player.lock().unwrap();
+            if let Some(p) = guard.as_ref() {
+                if let Some(tracks) = multitrack_tracks {
+                    p.load_tracks(tracks, start_time)?;
+                } else {
+                    // Single file (bare path, or the lone file inside a directory).
+                    // AudioPlayer::load() applies :start-time so no post-play seek.
+                    let uri = match &dir_files {
+                        Some(files) => format!("file:///{}", files[0].to_string_lossy().replace('\\', "/")),
+                        None => format!("file:///{}", file_path.replace('\\', "/")),
+                    };
+                    p.load(&uri, start_time)?;
+                }
+                // Apply the resolved rate while the media is loaded but before
+                // play() at the end of this method. A local item is the one case
+                // the frontend cannot handle on its own: it does not call
+                // play_audio here, so a separate set_speed would land *after*
+                // playback had already started at the previous item's rate.
+                if let Some(rate) = speed.filter(|r| r.is_finite() && *r > 0.0) {
+                    if let Err(error) = p.set_speed(rate) {
+                        // A wrong rate is not worth refusing to play over.
+                        log::warn!(target: "skald::playback", "could not apply local playback rate {rate}: {error}");
+                    }
+                }
+            }
+        }
+
+        // Create a fresh active flag for the new tick task. The old flag was set to
+        // false above, so any previous tick task exits on its next iteration.
+        let active = Arc::new(AtomicBool::new(true));
+        self.active = Arc::clone(&active);
+
+        // Reset progress counters for the new local playback session.
+        *self.current_time.lock().unwrap() = start_time;
+        // Detach from any old online sync task before local playback begins.
+        self.time_listened = Arc::new(Mutex::new(0.0));
+
+        // ── Tick task: every 1 second ────────────────────────────────────────
+        // Identical to start_session's tick task — emits playback-tick events so
+        // the waveform, chapter indicator, and transport controls all stay live.
+        // No sync task is spawned because there is no server session to sync to.
+        // After each tick, progress is also queued to disk so no position is lost
+        // if the app closes before the device comes back online.
+        let ct_tick         = Arc::clone(&self.current_time);
+        let tl_tick         = Arc::clone(&self.time_listened);
+        let player_tick     = Arc::clone(&self.player);
+        let active_tick     = Arc::clone(&active);
+        let app_tick        = app.clone();
+        // Clone the item_id string into the task — it outlives this method call.
+        let item_id_tick    = item_id.to_string();
+        // Episode id (if any) for per-episode catalog progress writes.
+        let episode_id_tick = self.local_episode_id.clone();
+        // Resolve the downloads dir once before spawning; propagate None if it
+        // fails (unlikely) so the tick loop still runs without queue writes.
+        let dl_dir_tick     = crate::downloads::downloads_dir().ok();
+        // Local-library items persist progress to the SQLite catalog; downloaded
+        // ABS books persist to the offline queue (which later flushes to the server).
+        let local_library_tick = local_library;
+        let downloaded_revision_tick = self.local_downloaded_revision.clone();
+        // Listening-stats accumulation — the credit channel decides where the
+        // drained seconds land (catalog vs. offline local session).
+        let listen_pending_tick = Arc::clone(&self.local_listen_pending);
+        let listen_credit_tick = self.local_listen_credit.clone();
+
+        let local_tick_handle = tokio::spawn(async move {
+            // Persist resume progress at most every PERSIST_EVERY seconds — the UI
+            // tick stays at 1 Hz, but 1 Hz disk writes are needless for a resume
+            // position. The exact final position is still captured on book-switch /
+            // stop (the `pending` flush when the loop ends) and on app exit (the
+            // ExitRequested handler in lib.rs writes current_time directly).
+            const PERSIST_EVERY: u32 = 5;
+            // Write the latest position to the catalog (local-library item) or the
+            // offline queue (downloaded ABS book). Uses the CAPTURED id/pos — never a
+            // re-read of the shared player — so a flush after a book-switch still
+            // records THIS book, even though the player may already hold the next one.
+            let persist = |pos: f64, dur: f64, finished: bool| {
+                if local_library_tick {
+                    if let Err(e) = crate::catalog::set_progress(&item_id_tick, episode_id_tick.as_deref(), pos, dur, finished) {
+                        // Silent loss here is indistinguishable from a desync bug in the
+                        // field — log it so skald.log captures the failure boundary.
+                        log::warn!(target: "skald::library", "local progress persist failed: {e}");
+                    }
+                } else if let (Some(ref dl_dir), Some(revision)) = (&dl_dir_tick, &downloaded_revision_tick) {
+                    let revision = revision.lock().unwrap_or_else(|error| error.into_inner());
+                    let entry = crate::downloads::OfflineProgressEntry {
+                        item_id: item_id_tick.clone(),
+                        episode_id: None,
+                        current_time: pos,
+                        duration: dur,
+                        progress: if dur > 0.0 { pos / dur } else { 0.0 },
+                        is_finished: finished,
+                        // Stable timestamp without pulling in chrono — same
+                        // precision as chrono::Utc::now().timestamp_millis().
+                        recorded_at: std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_millis() as i64,
+                        baseline_captured: revision.baseline_captured,
+                        server_last_update: revision.server_last_update,
+                        pending_confirmation_current_time: None,
+                    };
+                    if let Err(e) = crate::downloads::upsert_progress_entry(dl_dir, entry) {
+                        log::warn!(target: "skald::downloads", "offline progress persist failed: {e}");
+                    }
+                }
+            };
+
+            let mut interval = tokio::time::interval(Duration::from_secs(1));
+            // Throttle/latch state for persist_decision. Its pending pair is flushed
+            // when the loop ends so a throttled write is never lost on book-switch/
+            // stop. A stop is not a finish, so the flush always writes finished = false.
+            let mut pstate = PersistState::default();
+            let mut end_state = EndState::default();
+            loop {
+                interval.tick().await;
+                if !active_tick.load(Ordering::Relaxed) {
+                    if let Some((pos, dur)) = pstate.pending.take() { persist(pos, dur, false); }
+                    // Book-switch/stop: drain the listen tail so short sessions
+                    // (< LISTEN_FLUSH_EVERY) still register in the stats.
+                    flush_listen_time(listen_credit_tick.as_ref(), &item_id_tick, episode_id_tick.as_deref(), &listen_pending_tick);
+                    // Then close the offline session: it has stopped growing, so
+                    // it becomes flushable now rather than waiting for the next
+                    // play of the same book.
+                    retire_local_session(listen_credit_tick.as_ref());
+                    break;
+                }
+                let (pos, dur, playing, live, ended) = {
+                    // Poison-tolerant (see online tick) so progress capture survives a
+                    // panic that poisoned the player lock elsewhere.
+                    let guard = player_tick.lock().unwrap_or_else(|e| e.into_inner());
+                    match guard.as_ref() {
+                        Some(p) => (p.position(), p.duration(), p.is_playing(), p.position_is_live(), p.book_ended()),
+                        None    => (0.0, 0.0, false, false, false),
+                    }
+                };
+                // Same end-of-media / pre-buffer guard as the online tick (see
+                // commit_position).
+                {
+                    // Poison-tolerant f64 cells (review H5) — same reasoning as the
+                    // online tick: never let an inherited poison stop progress capture.
+                    let mut ct = ct_tick.lock().unwrap_or_else(|e| e.into_inner());
+                    *ct = commit_position(*ct, pos, dur, live, ended);
+                }
+                // Report the committed position (never the raw 0 from Ended/buffering).
+                let report = *ct_tick.lock().unwrap_or_else(|e| e.into_inner());
+                if playing {
+                    *tl_tick.lock().unwrap_or_else(|e| e.into_inner()) += 1.0;
+                    // Listening stats: count the second, flush once enough accrue
+                    // (1 Hz SQLite/JSON writes for stats would be needless churn —
+                    // same reasoning as PERSIST_EVERY). The position rides along
+                    // so a local session records where the listening reached.
+                    if listen_credit_tick.is_some() {
+                        let now_ms = chrono::Local::now().timestamp_millis();
+                        // Drain before counting this second when the calendar day
+                        // has rolled over mid-bucket. Otherwise the whole bucket —
+                        // up to LISTEN_FLUSH_EVERY seconds of it — would be dated
+                        // from the drain and land entirely on the new day, which
+                        // is precisely the attribution this feature exists to get
+                        // right. The drain uses the bucket's own last stamp, so
+                        // yesterday's seconds stay on yesterday.
+                        let rolled_over = {
+                            let pend = listen_pending_tick.lock().unwrap_or_else(|e| e.into_inner());
+                            bucket_rolled_over(&pend, now_ms)
+                        };
+                        if rolled_over {
+                            flush_listen_time(listen_credit_tick.as_ref(), &item_id_tick, episode_id_tick.as_deref(), &listen_pending_tick);
+                        }
+                        // Refused when a book-switch has already closed this
+                        // playback's books — the second belongs to a listen that
+                        // is over, and draining it later would disturb the next
+                        // item's live session (see count_listen_second).
+                        let counted = {
+                            let mut pend = listen_pending_tick.lock().unwrap_or_else(|e| e.into_inner());
+                            count_listen_second(&mut pend, report, dur, now_ms)
+                        };
+                        if matches!(counted, ListenTick::Counted { flush: true }) {
+                            flush_listen_time(listen_credit_tick.as_ref(), &item_id_tick, episode_id_tick.as_deref(), &listen_pending_tick);
+                        }
+                    }
+                }
+                let _ = app_tick.emit(
+                    "playback-tick",
+                    serde_json::json!({
+                        "currentTime": report,
+                        "duration":    dur,
+                        "isPlaying":   playing,
+                    }),
+                );
+                // Persistence — the throttle/latch state machine lives in
+                // persist_decision (pure, unit-tested); this loop only does the write.
+                if let Some(rec) = persist_decision(&mut pstate, report, dur, live, ended, PERSIST_EVERY) {
+                    persist(rec.pos, rec.dur, rec.finished);
+                }
+                // Announced after the persist above, so the finished position is
+                // already on disk when the frontend acts on the end — offline
+                // advance must never race its own progress write.
+                if end_decision(&mut end_state, dur, live, ended) {
+                    announce_end(&app_tick, &item_id_tick, episode_id_tick.as_deref(), dur);
+                }
+            }
+        });
+        watch_task(app, "local tick", local_tick_handle);
+
+        // Multi-file book → chain its tracks (see spawn_advance_task).
+        if multitrack {
+            self.spawn_advance_task(Arc::clone(&active));
+        }
+
+        // Start playback after the tick task is spawned so the first tick fires
+        // while audio is already playing (avoids a spurious isPlaying=false tick).
+        {
+            let guard = self.player.lock().unwrap();
+            if let Some(p) = guard.as_ref() {
+                p.play()?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Return the live downloaded branch revision only when the requested queue
+    /// key is the item currently playing from disk.
+    pub fn downloaded_revision_for(
+        &self,
+        item_id: &str,
+        episode_id: Option<&str>,
+    ) -> Option<SharedDownloadedProgressRevision> {
+        (self.is_local
+            && !self.is_local_library
+            && self.local_item_id.as_deref() == Some(item_id)
+            && self.local_episode_id.as_deref() == episode_id)
+            .then(|| self.local_downloaded_revision.clone())
+            .flatten()
+    }
+
+    /// Read the backend player's position and persist it immediately. Frontend
+    /// lifecycle signals never supply a duplicate position counter.
+    pub async fn sync_now<R: tauri::Runtime>(&self, app: &tauri::AppHandle<R>, reason: &str) -> Result<(), String> {
+        let (player_pos, player_duration, ended) = {
+            let guard = self.player.lock().unwrap_or_else(|e| e.into_inner());
+            match guard.as_ref() {
+                Some(player) => (player.position(), player.duration(), player.book_ended()),
+                None => (0.0, 0.0, false),
+            }
+        };
+        let current_time = {
+            let mut current = self.current_time.lock().unwrap_or_else(|e| e.into_inner());
+            *current = lifecycle_position(*current, player_pos, player_duration, ended);
+            *current
+        };
+
+        if self.is_local {
+            let Some(item_id) = self.local_item_id.as_deref() else { return Ok(()) };
+            let duration = player_duration;
+            let finished = duration > 0.0 && current_time + 1.0 >= duration;
+            if self.is_local_library {
+                crate::catalog::set_progress(item_id, self.local_episode_id.as_deref(), current_time, duration, finished)?;
+            } else {
+                let downloads_dir = crate::downloads::downloads_dir()?;
+                let revision = self.local_downloaded_revision.as_ref()
+                    .ok_or_else(|| "Downloaded playback revision is unavailable".to_string())?;
+                queue_downloaded_progress(
+                    &downloads_dir,
+                    item_id,
+                    self.local_episode_id.as_deref(),
+                    current_time,
+                    duration,
+                    finished,
+                    chrono::Utc::now().timestamp_millis(),
+                    revision,
+                )?;
+            }
+            return Ok(());
+        }
+
+        let Some(session_id) = self.session_id.as_deref() else { return Ok(()) };
+        let Some(_claim) = SyncClaim::acquire(Arc::clone(&self.sync_in_flight)) else {
+            return Ok(());
+        };
+        let listened = *self.time_listened.lock().unwrap_or_else(|e| e.into_inner());
+        match self.client.sync_session(session_id, current_time, listened).await {
+            Ok(()) => {
+                acknowledge_listened(&self.time_listened, listened);
+                let _ = app.emit("session-sync-success", serde_json::json!({
+                    "currentTime": current_time, "reason": reason,
+                    "at": chrono::Utc::now().timestamp_millis(),
+                }));
+                if self.mark_sync_restored() {
+                    log::info!(target: "skald::sync", "server session sync restored reason={reason}");
+                    let _ = app.emit("session-sync-restored", serde_json::json!({ "currentTime": current_time }));
+                }
+                Ok(())
+            }
+            Err(error) => {
+                let queued = self.queue_current_server_progress().is_ok();
+                self.mark_sync_degraded();
+                log::warn!(target: "skald::sync", "immediate session sync failed reason={reason} queued_locally={queued}: {error}");
+                let _ = app.emit("session-sync-warning", serde_json::json!({ "currentTime": current_time, "queued": queued }));
+                Err(error)
+            }
+        }
+    }
+
+    pub fn next_seek_sync_generation(&self) -> u64 {
+        self.seek_sync_generation.fetch_add(1, Ordering::AcqRel) + 1
+    }
+
+    pub fn seek_sync_is_current(&self, generation: u64) -> bool {
+        self.seek_sync_generation.load(Ordering::Acquire) == generation
+    }
+
+    /// Signal the tick and sync background tasks to stop on their next iteration.
+    /// Called from the ExitRequested shutdown handler before the final close call
+    /// so no further sync fires between the lock release and the HTTP request.
+    pub fn cancel_tasks(&self) {
+        self.active.store(false, Ordering::Relaxed);
+    }
+
+    /// Serialize a final close with any periodic/lifecycle sync already in
+    /// flight. ABS treats timeListened as an additive interval, so allowing
+    /// close to submit the same captured seconds concurrently would double
+    /// count them.
+    pub(crate) async fn claim_final_sync(&self, timeout: Duration) -> Result<SyncClaim, String> {
+        wait_for_sync_claim(Arc::clone(&self.sync_in_flight), timeout).await
+    }
+
+    /// Persist the current online position into the durable reconnect queue.
+    pub fn queue_current_server_progress(&self) -> Result<(), String> {
+        let item_id = self
+            .online_item_id
+            .as_deref()
+            .ok_or_else(|| "No active server item".to_string())?;
+        let current_time = *self.current_time.lock().unwrap_or_else(|e| e.into_inner());
+        let player_duration = self
+            .player
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+            .map(AudioPlayer::duration)
+            .unwrap_or(0.0);
+        queue_server_progress_fallback(
+            item_id,
+            self.online_episode_id.as_deref(),
+            current_time,
+            self.online_duration.max(player_duration),
+        )
+    }
+
+    /// Returns true only on the transition into a degraded sync state.
+    pub fn mark_sync_degraded(&self) -> bool {
+        !self.sync_degraded.swap(true, Ordering::Relaxed)
+    }
+
+    /// Returns true when an earlier failure was active and is now recovered.
+    pub fn mark_sync_restored(&self) -> bool {
+        self.sync_degraded.swap(false, Ordering::Relaxed)
+    }
+
+    pub fn clear_server_identity(&mut self) {
+        self.session_id = None;
+        self.online_item_id = None;
+        self.online_episode_id = None;
+        self.online_duration = 0.0;
+    }
+
+    /// Close the session on the server and stop background tasks.
+    /// Called on shutdown (CLAUDE.md critical lesson 4).
+    pub async fn close(&self) -> Result<(), String> {
+        self.active.store(false, Ordering::Relaxed);
+        let _claim = self.claim_final_sync(Duration::from_secs(5)).await?;
+        let sid = self
+            .session_id
+            .as_deref()
+            .ok_or_else(|| "No active session".to_string())?;
+        // Exit and book-switch can happen between one-second ticks. Snapshot
+        // LibVLC here so the close request carries the actual final position.
+        let (player_pos, player_duration, ended) = self.player
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+            .map(|player| (player.position(), player.duration(), player.book_ended()))
+            .unwrap_or((0.0, 0.0, false));
+        let ct = {
+            let mut current = self.current_time.lock().unwrap_or_else(|e| e.into_inner());
+            *current = lifecycle_position(*current, player_pos, player_duration, ended);
+            *current
+        };
+        let tl = *self.time_listened.lock().unwrap();
+        let result = self.client.close_session(sid, ct, tl).await;
+        if result.is_ok() {
+            if let Err(error) = crate::session_ownership::remove_owned(sid) {
+                log::warn!(target: "skald::sync", "closed session but journal removal deferred session_id={sid}: {error}");
+            }
+        }
+        result
+    }
+
+    /// Close an active ABS session without publishing its local position.
+    /// Used only after a fresh preflight proves another device is ahead: sending
+    /// this session's older `currentTime` would replace the progress we are
+    /// about to resume from. ABS still saves the listening-session history it
+    /// already received through periodic syncs.
+    pub async fn close_without_sync(&self) -> Result<(), String> {
+        self.active.store(false, Ordering::Relaxed);
+        let _claim = self.claim_final_sync(Duration::from_secs(5)).await?;
+        let sid = self
+            .session_id
+            .as_deref()
+            .ok_or_else(|| "No active session".to_string())?;
+        let result = self.client.close_session_without_sync(sid).await;
+        if result.is_ok() {
+            if let Err(error) = crate::session_ownership::remove_owned(sid) {
+                log::warn!(target: "skald::sync", "closed stale session without sync but journal removal deferred session_id={sid}: {error}");
+            }
+        }
+        result
+    }
+}
+
+// Unit tests for the pure tick decisions (Test Seams roadmap) — no LibVLC, no
+// tokio runtime: the helpers take plain values and return decisions.
+#[cfg(test)]
+mod tick_tests {
+    use super::{acknowledge_listened, bucket_rolled_over, commit_position, count_listen_second, downloaded_session_context, end_decision, flush_listen_time, lifecycle_position, persist_decision, queue_downloaded_progress, resolve_load_time, wait_for_sync_claim, DownloadedProgressRevision, EndState, ListenCredit, ListenTick, PendingListen, PersistState, SessionManager, SyncClaim, LISTEN_FLUSH_EVERY};
+    use crate::api::AbsClient;
+    use std::sync::{atomic::AtomicBool, Arc, Mutex};
+
+    // An online `/play` session reports its own listening to ABS. If this
+    // playback also took local credit, the same interval would reach the server
+    // twice — once from the session sync and once as a local session. The
+    // manager therefore starts with no credit at all, and the drain is a no-op
+    // without one, so there is no path from online playback to a local session.
+    #[test]
+    fn online_playback_never_produces_a_local_session() {
+        let manager = SessionManager::new(AbsClient::new("http://localhost".to_string()));
+        assert!(manager.local_listen_credit.is_none(), "online playback takes no local credit");
+
+        let pending = Arc::new(Mutex::new(PendingListen {
+            seconds: 300.0,
+            current_time: 900.0,
+            duration: 3600.0,
+            last_counted_ms: 1_700_000_000_000,
+            closed: false,
+        }));
+        flush_listen_time(None, "li_abc", None, &pending);
+
+        assert_eq!(
+            pending.lock().unwrap().seconds,
+            300.0,
+            "with no credit channel the counter is neither written nor drained",
+        );
+    }
+
+    // A bucket counts freely until its playback's books are closed, and never
+    // again after — including for the day-roll drain, which would otherwise let
+    // a straggler file seconds the closing drain is still responsible for.
+    #[test]
+    fn a_closed_listen_bucket_refuses_every_further_second() {
+        let mut bucket = PendingListen::default();
+        let now_ms = 1_700_000_000_000;
+
+        assert_eq!(
+            count_listen_second(&mut bucket, 120.0, 3600.0, now_ms),
+            ListenTick::Counted { flush: false },
+        );
+        assert_eq!(bucket.seconds, 1.0);
+        assert_eq!(bucket.current_time, 120.0, "the position rides along with the second");
+
+        // The bucket asks to be written out once it is worth a disk trip.
+        bucket.seconds = LISTEN_FLUSH_EVERY - 1.0;
+        assert_eq!(
+            count_listen_second(&mut bucket, 150.0, 3600.0, now_ms),
+            ListenTick::Counted { flush: true },
+        );
+
+        // The switch closes the books; the drain must not reopen them.
+        bucket.closed = true;
+        let drained = bucket.drain();
+        assert_eq!(drained.seconds, LISTEN_FLUSH_EVERY, "the closing drain still takes everything");
+        assert!(bucket.closed, "a drained bucket stays closed");
+
+        // The straggler's second, and its day-roll drain, both find nothing to do.
+        assert_eq!(count_listen_second(&mut bucket, 999.0, 3600.0, now_ms), ListenTick::Refused);
+        assert_eq!(bucket.seconds, 0.0, "a refused second leaves no trace to drain later");
+        bucket.seconds = 5.0;
+        bucket.last_counted_ms = now_ms;
+        assert!(
+            !bucket_rolled_over(&bucket, now_ms + 24 * 60 * 60 * 1_000),
+            "a closed bucket is inert to its tick even across midnight",
+        );
+    }
+
+    /// The stale-task interleaving end to end, against a real session store.
+    ///
+    /// A tick task is only *asked* to stop, so the outgoing item's task can be
+    /// past its active check and about to count another second when the switch
+    /// drains and closes its books. Draining alone does not stop that second:
+    /// it would sit in the old bucket, drain on the task's way out under the
+    /// *previous* item's credit, and `accrue` — which cannot tell a straggler
+    /// from a legitimate item-switch — would retire the next item's still-growing
+    /// session, splitting one continuous listen across two. The closed flag is
+    /// what removes the window.
+    #[test]
+    fn a_straggler_second_cannot_disturb_the_next_items_live_session() {
+        use crate::offline_sessions::{accrue, load_store, retire_active_for, SessionContext};
+        use chrono::TimeZone;
+
+        let context = |item_id: &str| SessionContext {
+            item_id: item_id.to_string(),
+            episode_id: None,
+            media_type: "book".to_string(),
+            display_title: "The Red Knight".to_string(),
+            display_author: "Miles Cameron".to_string(),
+            server_key: "https://abs.example.com".to_string(),
+            user_id: "usr_listener".to_string(),
+        };
+        let dir = tempfile::tempdir().unwrap();
+        // One fixed instant throughout, so nothing here can day-split.
+        let at = chrono::Local.with_ymd_and_hms(2026, 7, 27, 9, 0, 0).single().unwrap();
+        let (first, second) = (context("li_first"), context("li_second"));
+
+        // The first book has been playing; the switch closes and drains its books.
+        let bucket = Arc::new(Mutex::new(PendingListen {
+            seconds: 12.0,
+            current_time: 612.0,
+            duration: 3600.0,
+            last_counted_ms: at.timestamp_millis(),
+            closed: false,
+        }));
+        let drained = {
+            let mut b = bucket.lock().unwrap();
+            b.closed = true;
+            b.drain()
+        };
+        accrue(dir.path(), &first, drained.seconds, drained.current_time, drained.duration, at).unwrap();
+        retire_active_for(dir.path(), &first).unwrap();
+
+        // The second book starts and mints its session.
+        accrue(dir.path(), &second, 30.0, 30.0, 1800.0, at).unwrap();
+        let live = load_store(dir.path()).active.expect("the new book is accruing").session.id;
+
+        // The straggler finally wakes. Its second is refused, so its loop-end
+        // drain has nothing to carry into the store under the dead credit.
+        let outcome = {
+            let mut b = bucket.lock().unwrap();
+            count_listen_second(&mut b, 613.0, 3600.0, at.timestamp_millis())
+        };
+        assert_eq!(outcome, ListenTick::Refused);
+        let straggler = bucket.lock().unwrap().drain();
+        assert!(straggler.seconds < 1.0, "nothing is left to reach accrue");
+
+        let store = load_store(dir.path());
+        assert_eq!(store.active.expect("still accruing").session.id, live, "the live listen is untouched");
+        assert_eq!(store.pending.len(), 1, "only the finished book is flushable");
+        assert_eq!(store.pending[0].session.library_item_id, "li_first");
+
+        // ...and this is precisely the damage the refusal prevents: had that one
+        // second drained under the previous item's credit, accrue would have
+        // closed off a listen that was still growing.
+        accrue(dir.path(), &first, 1.0, 613.0, 3600.0, at).unwrap();
+        let store = load_store(dir.path());
+        assert_eq!(store.active.unwrap().session.library_item_id, "li_first", "the dead item takes the slot");
+        assert!(
+            store.pending.iter().any(|s| s.session.id == live),
+            "the next item's live session would have been retired mid-listen",
+        );
+    }
+
+    // The two local channels are mutually exclusive by construction: a
+    // local-library item can only reach the catalog, a downloaded ABS item can
+    // only reach a local session.
+    #[test]
+    fn a_downloaded_item_is_credited_as_a_book_session() {
+        let context = downloaded_session_context("li_abc", None, "https://abs.example.com/", "usr_1");
+        assert_eq!(context.item_id, "li_abc");
+        assert_eq!(context.media_type, "book");
+        assert!(context.episode_id.is_none());
+        // The account travels with the credit — a flush days later has to be able
+        // to tell whose listening this was.
+        assert_eq!(context.server_key, "https://abs.example.com");
+        assert_eq!(context.user_id, "usr_1");
+
+        let credit = ListenCredit::LocalSession { context };
+        assert!(!matches!(credit, ListenCredit::Catalog { .. }));
+    }
+
+    #[test]
+    fn load_time_prefers_explicit_start_over_server_time() {
+        // Chapter/bookmark jump: the caller's position wins over the server's
+        // stale currentTime (Testing Suite plan regression #8).
+        assert_eq!(resolve_load_time(Some(120.5), 3000.0), 120.5);
+        // Explicit restart-from-zero is still an override.
+        assert_eq!(resolve_load_time(Some(0.0), 3000.0), 0.0);
+        // Plain resume: fall back to the server's saved position.
+        assert_eq!(resolve_load_time(None, 3000.0), 3000.0);
+    }
+
+    #[test]
+    fn successful_sync_acknowledges_only_the_captured_interval() {
+        let pending = Arc::new(Mutex::new(10.0));
+        // Two seconds arrive while the ten-second HTTP payload is in flight.
+        *pending.lock().unwrap() += 2.0;
+        acknowledge_listened(&pending, 10.0);
+        assert_eq!(*pending.lock().unwrap(), 2.0);
+
+        // Defensive saturation prevents floating-point drift from going negative.
+        acknowledge_listened(&pending, 3.0);
+        assert_eq!(*pending.lock().unwrap(), 0.0);
+    }
+
+    #[tokio::test]
+    async fn final_sync_waits_for_an_in_flight_periodic_sync() {
+        let flag = Arc::new(AtomicBool::new(false));
+        let periodic = SyncClaim::acquire(Arc::clone(&flag)).expect("periodic claim");
+        let release = tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+            drop(periodic);
+        });
+
+        let final_claim = wait_for_sync_claim(
+            Arc::clone(&flag),
+            std::time::Duration::from_secs(1),
+        )
+        .await
+        .expect("final sync acquires after periodic finishes");
+        assert!(flag.load(std::sync::atomic::Ordering::Acquire));
+        drop(final_claim);
+        assert!(!flag.load(std::sync::atomic::Ordering::Acquire));
+        release.await.unwrap();
+    }
+
+    #[test]
+    fn lifecycle_position_accepts_pause_seek_but_rejects_transient_zero() {
+        assert_eq!(lifecycle_position(120.0, 125.0, 3600.0, false), 125.0);
+        assert_eq!(lifecycle_position(120.0, 0.0, 3600.0, false), 120.0);
+        assert_eq!(lifecycle_position(120.0, 0.0, 3600.0, true), 3600.0);
+    }
+
+    #[test]
+    fn sync_claim_prevents_overlapping_writes() {
+        let flag = Arc::new(AtomicBool::new(false));
+        let first = SyncClaim::acquire(Arc::clone(&flag)).expect("first write claims slot");
+        assert!(SyncClaim::acquire(Arc::clone(&flag)).is_none());
+        drop(first);
+        assert!(SyncClaim::acquire(flag).is_some());
+    }
+
+    #[test]
+    fn settled_seek_generation_supersedes_earlier_debounce() {
+        let manager = SessionManager::new(AbsClient::new("http://abs.invalid".to_string()));
+        let first = manager.next_seek_sync_generation();
+        let second = manager.next_seek_sync_generation();
+        assert!(!manager.seek_sync_is_current(first));
+        assert!(manager.seek_sync_is_current(second));
+    }
+
+    #[test]
+    fn loading_new_media_forgets_the_previous_item_s_pause() {
+        // The pause clock is per-item transient state: an hour spent paused on
+        // book A must not buy book B an adaptive rewind on its first resume.
+        // With no pause recorded, resume_audio measures none and the curve
+        // rewinds nothing (auto_rewind::adaptive_without_a_measured_pause_*).
+        let mut manager = SessionManager::new(AbsClient::new("http://abs.invalid".to_string()));
+        manager.paused_at = Some(std::time::Instant::now());
+
+        manager.begin_media_load();
+
+        assert!(manager.paused_at.is_none());
+    }
+
+    #[test]
+    fn downloaded_ticks_use_the_revision_advanced_by_a_confirmed_flush() {
+        let dir = tempfile::tempdir().unwrap();
+        let revision = Arc::new(Mutex::new(DownloadedProgressRevision {
+            baseline_captured: true,
+            server_last_update: Some(100),
+        }));
+        queue_downloaded_progress(dir.path(), "book", None, 10.0, 1000.0, false, 1, &revision).unwrap();
+        let sent = crate::downloads::load_progress_queue(dir.path()).remove(0);
+        {
+            let mut revision = revision.lock().unwrap();
+            crate::downloads::acknowledge_progress_write(dir.path(), &sent, 101, 10.0).unwrap();
+            revision.server_last_update = Some(101);
+        }
+        queue_downloaded_progress(dir.path(), "book", None, 20.0, 1000.0, false, 2, &revision).unwrap();
+        assert_eq!(crate::downloads::load_progress_queue(dir.path())[0].server_last_update, Some(101));
+    }
+
+    #[test]
+    fn commit_position_guards_transient_zero_and_end_of_media() {
+        // Steady playback commits the live position.
+        assert_eq!(commit_position(100.0, 101.0, 3600.0, true, false), 101.0);
+        // Live zero is a genuine restart, not noise — commit it.
+        assert_eq!(commit_position(100.0, 0.0, 3600.0, true, false), 0.0);
+        // Transient Opening/Buffering (not live): hold the last good value so a
+        // transient 0 never resets UI/server progress.
+        assert_eq!(commit_position(100.0, 0.0, 3600.0, false, false), 100.0);
+        // True book end commits the exact duration (server marks it finished).
+        assert_eq!(commit_position(100.0, 0.0, 3600.0, false, true), 3600.0);
+        // Ended but duration unknown: nothing trustworthy to commit — hold.
+        assert_eq!(commit_position(100.0, 0.0, 0.0, false, true), 100.0);
+    }
+
+    #[test]
+    fn persist_throttles_to_every_nth_live_tick_and_buffers_between() {
+        let mut st = PersistState::default();
+        // Ticks 1-4 buffer into pending, no write.
+        for i in 1..5u32 {
+            let rec = persist_decision(&mut st, i as f64, 3600.0, true, false, 5);
+            assert!(rec.is_none(), "tick {i} must not write");
+            assert_eq!(st.pending, Some((i as f64, 3600.0)));
+        }
+        // Tick 5 writes the latest position and clears the buffer.
+        let rec = persist_decision(&mut st, 5.0, 3600.0, true, false, 5).expect("5th tick writes");
+        assert_eq!((rec.pos, rec.finished), (5.0, false));
+        assert_eq!(st.pending, None);
+        // A transient tick leaves pending untouched — the loop-end flush relies
+        // on it holding the last live position on stop/book-switch.
+        persist_decision(&mut st, 6.0, 3600.0, true, false, 5);
+        assert_eq!(st.pending, Some((6.0, 3600.0)));
+        assert!(persist_decision(&mut st, 6.0, 3600.0, false, false, 5).is_none());
+        assert_eq!(st.pending, Some((6.0, 3600.0)));
+    }
+
+    #[test]
+    fn persist_records_finish_once_and_rearms_on_restart() {
+        let mut st = PersistState::default();
+        // True end: exactly one finished write, even across repeated Ended ticks.
+        let rec = persist_decision(&mut st, 3600.0, 3600.0, false, true, 5).expect("end writes");
+        assert!((rec.finished, rec.pos, rec.dur) == (true, 3600.0, 3600.0));
+        assert!(persist_decision(&mut st, 3600.0, 3600.0, false, true, 5).is_none());
+        assert!(persist_decision(&mut st, 3600.0, 3600.0, false, true, 5).is_none());
+        // A live tick after the end is a restart: the latch re-arms so a
+        // re-listen can record completion again.
+        persist_decision(&mut st, 1.0, 3600.0, true, false, 5);
+        let rec = persist_decision(&mut st, 3600.0, 3600.0, false, true, 5).expect("re-finish writes");
+        assert!(rec.finished);
+        // An end with no known duration records nothing (mirror of the
+        // commit_position hold) — the latch stays armed for the real end.
+        let mut st = PersistState::default();
+        assert!(persist_decision(&mut st, 100.0, 0.0, false, true, 5).is_none());
+        assert!(!st.finished_recorded);
+    }
+
+    #[test]
+    fn only_a_natural_end_announces_the_item_finishing() {
+        let mut st = EndState::default();
+        // Playing, then paused: nothing to announce.
+        assert!(!end_decision(&mut st, 3600.0, true, false));
+        assert!(!end_decision(&mut st, 3600.0, true, false));
+        // A user stop leaves the player Stopped, not Ended — book_ended() is
+        // false, so the tick reports neither live nor ended. No announcement:
+        // this is the case that must never auto-advance.
+        assert!(!end_decision(&mut st, 3600.0, false, false));
+        // A middle track ending is likewise not a book end (book_ended() guards
+        // on the final track), so it arrives here as ended = false.
+        assert!(!end_decision(&mut st, 3600.0, false, false));
+        // The real end announces exactly once, though Ended is a resting state
+        // the player keeps reporting on every subsequent tick.
+        assert!(end_decision(&mut st, 3600.0, false, true));
+        assert!(!end_decision(&mut st, 3600.0, false, true));
+        assert!(!end_decision(&mut st, 3600.0, false, true));
+    }
+
+    #[test]
+    fn the_end_announcement_rearms_on_a_restart_and_waits_for_a_known_duration() {
+        let mut st = EndState::default();
+        assert!(end_decision(&mut st, 3600.0, false, true));
+        // Restarting or seeking back gives a live position again; finishing the
+        // re-listen must be able to advance just like the first time.
+        assert!(!end_decision(&mut st, 3600.0, true, false));
+        assert!(end_decision(&mut st, 3600.0, false, true));
+
+        // Ended with no known duration is the transient LibVLC state, not a
+        // finished item (mirrors commit_position holding its value): stay armed
+        // so the real end still announces once the duration is known.
+        let mut st = EndState::default();
+        assert!(!end_decision(&mut st, 0.0, false, true));
+        assert!(!st.announced);
+        assert!(end_decision(&mut st, 3600.0, false, true));
+    }
+}

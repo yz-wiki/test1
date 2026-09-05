@@ -1,0 +1,118 @@
+# =============================================================================
+# linux-appimage.yml — Linux AppImage 构建(按需)
+#
+# 触发:Actions 页面手动 Run workflow(workflow_dispatch),或推送 v* 标签时自动
+# 构建(用于发版)。普通 push / PR 不会触发。
+#
+# 产物:src-tauri/target/release/bundle/appimage/*.AppImage
+#
+# 日志:每个阶段独立 step 并 Tee 到 .gha-logs/,成功/失败都会上传,
+# 便于在云端定位错误。
+# =============================================================================
+
+name: Linux AppImage 构建(按需)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  RUST_BACKTRACE: full
+  CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: "5"
+  CI: "true"
+
+jobs:
+  appimage:
+    name: Linux x64 AppImage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: 0 · 检出代码
+        uses: actions/checkout@v4
+
+      - name: 1 · 环境信息
+        run: |
+          echo "::group::环境信息"
+          uname -a
+          rustc --version
+          cargo --version
+          echo "::endgroup::"
+
+      - name: 2 · Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 3 · pnpm 10 + Node.js 22
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 4 · 安装 Linux 构建/播放依赖(webkit2gtk、VLC、libsecret 等)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libsecret-1-dev \
+            patchelf \
+            vlc \
+            libvlc-dev
+
+      - name: 5 · pnpm install(冻结 lockfile)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          pnpm install --frozen-lockfile 2>&1 |
+            tee "$GITHUB_WORKSPACE/.gha-logs/05-pnpm-install.log"
+          exit ${PIPESTATUS[0]}
+
+      - name: 6 · 仓库校验套件(pnpm verify)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          pnpm verify 2>&1 |
+            tee "$GITHUB_WORKSPACE/.gha-logs/06-verify.log"
+          exit ${PIPESTATUS[0]}
+
+      # beforeBuildCommand = pnpm build:linux,会先用 system VLC 暂存
+      # linux-runtime/plugins(AppImage 打包需要,见 tauri.linux.conf.json)。
+      - name: 7 · tauri build(AppImage,--verbose 输出完整打包细节)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          pnpm exec tauri build --ci --verbose 2>&1 |
+            tee "$GITHUB_WORKSPACE/.gha-logs/07-tauri-appimage.log"
+          exit ${PIPESTATUS[0]}
+
+      - name: 8 · 产物清单
+        if: always()
+        run: |
+          echo "::group::产物清单"
+          ls -lh src-tauri/target/release/bundle/appimage/ || echo 'no appimage produced'
+          echo "::endgroup::"
+
+      - name: 9 · 上传构建日志(成功/失败都会上传)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-linux-logs-${{ github.run_id }}
+          path: .gha-logs
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 10 · 上传 AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-linux-appimage-${{ github.run_id }}
+          path: src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,1597 @@
+import { useState, useEffect, useCallback, useRef, Dispatch, SetStateAction } from 'react';
+import { listen } from '@tauri-apps/api/event';
+import type { LibraryItem, MediaProgress, ListeningStats, Bookmark as AbsBookmark, User, UserPermissions, DownloadRecord, ServerSettings, Task, Library, PodcastEpisode } from '../api/abs';
+import { type AdvFilter, type SearchScope, EMPTY_ADV_FILTER } from '../lib/shelfFilters';
+import { fetchLibraries, fetchLibraryItems, fetchItem, saveToken, fetchListeningStats, getMe, getDownloads, takeCorruptPersistenceNotices, saveLibraryCache, loadLibraryCache, flushOfflineProgress, saveChapterCache, loadChapterCache, pauseAudio, seekAudio, downloadItem, removeDownload, fetchServerSettings, getLocalLibraries, getLocalLibraryItems, getLocalLibraryProgress, scanLocalLibrary, getLocalPodcastItems } from '../api/abs';
+import { log } from '../lib/log';
+// The one paused→playing coordinator, shared with the transport controls. Safe
+// to import here: playbook.ts takes only the OnyxState *type* back, so nothing
+// of this module is needed at its runtime.
+import { resumeWithRewind } from '../api/playbook';
+import { skipSeconds } from '../lib/playbackPrefs';
+import { nextInSeries } from '../lib/series';
+import { ALL_LIBRARIES_ID, allLibrariesShelf, loadAllLibrarySources, type AllLibrariesLoadResult } from '../lib/allLibraries';
+import { useLiveSync, type PlaybackSyncConflict, type SyncHealth } from './useLiveSync';
+import { prependActivity } from '../lib/activity';
+import { readLastRefresh, writeLastRefresh } from '../lib/offlineFreshness';
+
+export type { ServerSettings };
+
+export type { User };
+import {
+  applyTheme,
+  ONYX_DARK_BASE,
+  ONYX_FOLIO_BASE,
+  Theme,
+} from './theme';
+
+// ─── Re-exported API types ────────────────────────────────────────────────────
+
+export type { LibraryItem, MediaProgress, ListeningStats, Library, PodcastEpisode };
+export type { AbsBookmark };
+export type { DownloadRecord };
+
+// ─── Pure book/chapter/time helpers (split to bookHelpers.ts) ────────────────
+// Re-exported so consumers keep importing from '../state/onyx' unchanged.
+export * from './bookHelpers';
+import { Chapter, patchLibraryItems, mergeProgress, bookChapters, bookAuthor, chapterStartAt } from './bookHelpers';
+
+// ─── Local-only interfaces ────────────────────────────────────────────────────
+
+export interface Bookmark {
+  ts: string;
+  secs: number;
+  ch: number;
+  label: string;
+  date: string;
+}
+
+export interface AudioDevice {
+  id: string;
+  name: string;
+  sub: string;
+  icon: string;
+}
+
+export interface ContextFilter {
+  kind: 'series' | 'author' | 'narrator' | 'collection' | 'playlist' | 'genre' | 'publisher';
+  value: string;
+  bookIds?: string[];
+  // For series filters: the ABS series ID used for exact book matching.
+  seriesId?: string;
+  // For playlist filters: the ABS playlist ID.
+  playlistId?: string;
+  // For collection filters: the ABS collection ID. Carried for the same reason
+  // as playlistId — a live `collection_updated` has to find the active filter by
+  // something stable, and `value` is the display name, which a rename changes.
+  collectionId?: string;
+}
+
+// ─── Library source routing (Local Library) ──────────────────────────────────
+// A library is either an ABS library (HTTP, needs serverUrl) or a local library
+// (SQLite catalog, no server). All item loads route through here so the rest of
+// the state layer is source-agnostic.
+async function loadItemsForLibrary(lib: Library, serverUrl: string): Promise<LibraryItem[]> {
+  if (lib.source === 'local') {
+    // Local podcast libraries come from the podcasts/episodes tables, not a
+    // folder-walk — list them directly (no book reconcile).
+    if (lib.mediaType === 'podcast') {
+      return getLocalPodcastItems(lib.id);
+    }
+    // Reconcile presence first (catalog is the source of truth for metadata, but
+    // disk is authoritative for *existence*): this drops books deleted on disk and
+    // picks up folders added outside Skald, without touching existing metadata.
+    // Cheap — a directory walk + diff, no metadata re-derive for known items.
+    await scanLocalLibrary(lib.id).catch(e => log.error('library', 'local reconcile failed', { err: String(e) }));
+    return getLocalLibraryItems(lib.id);
+  }
+  return fetchLibraryItems(serverUrl, lib.id);
+}
+
+// The combined shelf is deliberately client-side: load each real book library
+// through its established source router and preserve partial success. The
+// partial-success bookkeeping lives in loadAllLibrarySources so it stays
+// unit-testable; this wrapper adds the source routing and logging.
+async function loadAllLibraryItems(libraries: Library[], serverUrl: string): Promise<AllLibrariesLoadResult> {
+  const result = await loadAllLibrarySources(libraries, async library => {
+    try {
+      return await loadItemsForLibrary(library, serverUrl);
+    } catch (e) {
+      log.warn('library', 'all libraries source load failed', {
+        libraryId: library.id,
+        source: library.source ?? 'abs',
+        err: String(e),
+      });
+      throw e; // rethrow so loadAllLibrarySources records the failed source
+    }
+  });
+  log.info('library', 'all libraries load complete', {
+    libraries: result.totalSources,
+    failedSources: result.failedSources.map(l => l.name),
+    items: result.items.length,
+    localItems: result.items.filter(item => !!item.localPath).length,
+  });
+  return result;
+}
+
+// Partial-coverage marker for the combined shelf (review H1): set when at least
+// one source failed during an All Libraries load so the UI can say "Showing N
+// of M libraries" instead of presenting a partial composite as complete.
+export interface AllLibrariesPartial {
+  failedNames: string[];
+  loaded: number;
+  total: number;
+}
+
+// ─── Static mock data (chapters, bookmarks, devices) ─────────────────────────
+
+export const CHAPTERS: Chapter[] = [
+  { n: 1,  t: 'A Letter from the South',   dur: 2810 },
+  { n: 2,  t: 'The Inn at Harndon',         dur: 3014 },
+  { n: 3,  t: 'On the Road',               dur: 2780 },
+  { n: 4,  t: 'The First Skirmish',         dur: 3340 },
+  { n: 5,  t: 'Captain and Squire',         dur: 2950 },
+  { n: 6,  t: 'Pilgrims and Saints',        dur: 3120 },
+  { n: 7,  t: 'A Council of Knights',       dur: 2890 },
+  { n: 8,  t: 'Through the Forest',         dur: 3210 },
+  { n: 9,  t: 'The River Crossing',         dur: 2670 },
+  { n: 10, t: 'An Unexpected Embassy',      dur: 3450 },
+  { n: 11, t: 'The Wolves of Adrian',       dur: 3080 },
+  { n: 12, t: 'A Question of Honor',        dur: 3134 },
+  { n: 13, t: 'Through the Mist',           dur: 4462 },
+  { n: 14, t: 'The Long March Begins',      dur: 5887 },
+  { n: 15, t: 'Banners over Liviapolis',    dur: 3768 },
+  { n: 16, t: 'A Council of Wolves',        dur: 2853 },
+  { n: 17, t: "The Emperor's Gambit",       dur: 4869 },
+  { n: 18, t: 'Cold Iron',                  dur: 3527 },
+];
+
+export const BOOKMARKS: Bookmark[] = [
+  { ts: '0:38:17', secs: 38 * 60 + 17,             ch: 14, label: 'Cairn imagery again',               date: 'Today'     },
+  { ts: '1:12:04', secs: 60 * 60 + 12 * 60 + 4,   ch: 13, label: '"half a salute, half a question"',  date: 'Yesterday' },
+  { ts: '0:21:47', secs: 21 * 60 + 47,             ch: 11, label: 'First mention of the wolves',       date: 'Mon'       },
+];
+
+export const AUDIO_DEVICES: AudioDevice[] = [
+  { id: 'sennheiser', name: 'Sennheiser HD 660S',      sub: 'USB · 48 kHz · 24-bit',      icon: 'headphones' },
+  { id: 'system',     name: 'System default',           sub: 'Realtek Audio',              icon: 'speaker'    },
+  { id: 'sonos',      name: 'Living Room — Sonos',      sub: 'AirPlay · 192.168.1.42',     icon: 'airplay'    },
+  { id: 'airpods',    name: 'AirPods Pro',              sub: 'Bluetooth · AAC',            icon: 'bluetooth'  },
+  { id: 'monitors',   name: 'Studio Monitors',          sub: 'Focusrite Scarlett 2i2',     icon: 'monitor'    },
+];
+
+export const SPEEDS = ['0.8', '1.0', '1.25', '1.5', '2.0'];
+
+// ─── OnyxState interface ──────────────────────────────────────────────────────
+
+export interface OnyxState {
+  // Server connection
+  serverUrl: string;
+  setServerUrl: (url: string) => void;
+  sessionId: string;
+  setSessionId: (id: string) => void;
+  sessionReady: boolean;
+  setSessionReady: (ready: boolean) => void;
+  username: string;
+  setUsername: (u: string) => void;
+  userId: string;
+  setUserId: (id: string) => void;
+  // Auth presence. Holds the real JWT in memory right after login and a
+  // sentinel after a relaunch — the keyring is the source of truth for the
+  // token value, so treat this as a boolean, never send it to the server.
+  authToken: string;
+  setAuthToken: (token: string) => void;
+  // Runtime-reactive live-sync preference. Keeping this in the shared state
+  // lets socket listeners subscribe/unsubscribe as soon as Settings changes it.
+  liveSyncEnabled: boolean;
+  setLiveSyncEnabled: (enabled: boolean) => void;
+  syncConflict: PlaybackSyncConflict | null;
+  setSyncConflict: Dispatch<SetStateAction<PlaybackSyncConflict | null>>;
+  syncHealth: SyncHealth;
+  // Auth
+  user: User | null;
+  setUser: (user: User | null) => void;
+  // True when the logged-in user is admin or root. Derived from user.type.
+  isAdmin: boolean;
+  // True when the user may upload media to the server (POST /api/upload).
+  // Admin/root always can (the server's canUpload getter returns true for them);
+  // other users need permissions.upload, captured from /api/me after load.
+  canUpload: boolean;
+  // Item-file capabilities from /api/me. Admin/root implicitly have all four;
+  // delegated users follow the server's permission object.
+  canDownload: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  refreshPermissions: () => Promise<void>;
+  // True when running without a server (local-only mode). Opens the app shell
+  // just like an auth token does, so non-ABS users can use local libraries.
+  localMode: boolean;
+  setLocalMode: (on: boolean) => void;
+  localDisplayName: string;
+  setLocalDisplayName: (name: string) => void;
+  // True once the first-launch onboarding flow has been completed (or skipped).
+  // Gates <Onboarding> ahead of the auth/local gate in App.tsx. Existing users
+  // (an auth token or local mode already present) are treated as onboarded so the
+  // flow never shows to upgraders. (First-Launch Onboarding roadmap, Phase 1.)
+  onboarded: boolean;
+  setOnboarded: (on: boolean) => void;
+  // Library
+  library: LibraryItem[];
+  // All libraries on the server (book + podcast), for the switcher. Populated
+  // alongside the first item fetch and kept fresh by refreshLibrary().
+  libraries: Library[];
+  // The currently-active library object (derived from libraries + currentLibraryId).
+  // Components read activeLibrary.mediaType to branch book vs podcast rendering.
+  activeLibrary: Library | undefined;
+  // Switch the active library and load its items. Resets the shelf view context.
+  setActiveLibrary: (id: string) => Promise<void>;
+  libraryLoading: boolean;
+  // True when the library was loaded from the disk cache because the server was unreachable.
+  // Used by the titlebar to display a persistent OFFLINE indicator.
+  isOffline: boolean;
+  lastLibraryRefresh: number | null;
+  // Non-null when the last All Libraries load lost at least one source library.
+  // The combined shelf shows a partial-coverage notice while this is set.
+  allLibrariesPartial: AllLibrariesPartial | null;
+  // Hide the partial-coverage notice until the next partial combined load.
+  dismissAllLibrariesPartial: () => void;
+  updateLibraryItem: (item: LibraryItem) => void;
+  // Resolves false when the ABS library list could not be fetched. Most callers
+  // fire and forget; anything reconciling against the server needs to tell a real
+  // answer from an unreachable one.
+  refreshLibrary: () => Promise<boolean>;
+  mediaProgress: MediaProgress[];
+  setMediaProgress: (progress: MediaProgress[]) => void;
+  // Apply a server mediaProgress payload while preserving local-library progress.
+  applyServerProgress: (serverProgress: MediaProgress[]) => void;
+  listeningStats: ListeningStats | null;
+  bookmarks: AbsBookmark[];
+  setBookmarks: (bookmarks: AbsBookmark[]) => void;
+  // Playback
+  screen: string;
+  setScreen: (screen: string) => void;
+  // Optional pane requested by shell-level Settings navigation. This lets a
+  // contextual CTA open Libraries directly instead of dropping users on Account.
+  settingsSection: string | null;
+  setSettingsSection: (section: string | null) => void;
+  // Podcast detail navigation: the podcast item shown on the 'podcast' screen.
+  podcastDetailId: string | null;
+  setPodcastDetailId: (id: string | null) => void;
+  // The episode currently loaded for playback (null when a book is playing).
+  // Lets the player/detail reflect what is playing; progress itself is tracked
+  // server-side via the episode-scoped session, so this is presentation-only.
+  currentEpisodeId: string | null;
+  setCurrentEpisodeId: (id: string | null) => void;
+  // The full episode object for the playing episode, so the Player can show
+  // episode title/description/date/duration without re-fetching the item.
+  currentEpisode: PodcastEpisode | null;
+  setCurrentEpisode: (e: PodcastEpisode | null) => void;
+  // Stable snapshot of the now-playing item (book, or the episode's parent
+  // podcast), persisted across library switches for the cross-library MiniPlayer.
+  playingItem: LibraryItem | undefined;
+  setPlayingItem: (i: LibraryItem | undefined) => void;
+  currentBook: LibraryItem | undefined;
+  focusedBook: LibraryItem | undefined;
+  focusedBookId: string | null;
+  setFocusedBookId: Dispatch<SetStateAction<string | null>>;
+  currentBookId: string;
+  setCurrentBookId: (id: string) => void;
+  currentBookChapters: Chapter[];
+  playing: boolean;
+  setPlaying: Dispatch<SetStateAction<boolean>>;
+  position: number;
+  setPosition: Dispatch<SetStateAction<number>>;
+  bookSecs: number;
+  volume: number;
+  setVolume: (vol: number) => void;
+  muted: boolean;
+  setMuted: (muted: boolean) => void;
+  speed: string;
+  setSpeed: (speed: string) => void;
+  device: string;
+  setDevice: (device: string) => void;
+  deviceOpen: boolean;
+  setDeviceOpen: (open: boolean) => void;
+  focusCollapsed: boolean;
+  setFocusCollapsed: (collapsed: boolean) => void;
+  filter: string;
+  setFilter: (filter: string) => void;
+  contextFilter: ContextFilter | null;
+  setContextFilter: (filter: ContextFilter | null) => void;
+  // Advanced shelf filters (tags / language / explicit). Session-only.
+  advFilter: AdvFilter;
+  setAdvFilter: (f: AdvFilter) => void;
+  search: string;
+  setSearch: (search: string) => void;
+  searchScope: SearchScope;
+  setSearchScope: (s: SearchScope) => void;
+  accentColor: string;
+  setAccentColor: (hex: string) => void;
+  theme: string;
+  setTheme: (theme: string) => void;
+  translucent: boolean;
+  setTranslucent: (on: boolean) => void;
+  librarySort: string;
+  setLibrarySort: (sort: string) => void;
+  coverSize: string;
+  setCoverSize: (size: string) => void;
+  // Browse-tab tile design language: 'stack' (fanned covers) or 'mosaic' (2×2 quilt).
+  browseTileStyle: 'stack' | 'mosaic';
+  setBrowseTileStyle: (s: 'stack' | 'mosaic') => void;
+  groupBySeries: boolean;
+  setGroupBySeries: (group: boolean) => void;
+  showFinished: boolean;
+  setShowFinished: (show: boolean) => void;
+  showProgressOverlay: boolean;
+  setShowProgressOverlay: (show: boolean) => void;
+  // Visibility of the optional shelf tabs (narrators/genres/publishers/playlists).
+  // Core tabs (Home/Series/Authors/Collections) are always shown.
+  optionalTabs: Record<string, boolean>;
+  setOptionalTab: (id: string, on: boolean) => void;
+  libraryView: string;
+  setLibraryView: (view: string) => void;
+  shelfTab: string;
+  setShelfTab: (tab: string) => void;
+  pickItUpCollapsed: boolean;
+  setPickItUpCollapsed: (collapsed: boolean) => void;
+  scale: number;
+  setScale: (scale: number) => void;
+  enableOpenLibrary: boolean;
+  setEnableOpenLibrary: (on: boolean) => void;
+  // Combine server + local listening stats in the greeting card (persisted as
+  // onyx.stats.combineLocal; Local Listening Stats roadmap).
+  combineStats: boolean;
+  setCombineStats: (on: boolean) => void;
+  toast: { message: string; type: 'success' | 'error' | 'info' } | null;
+  setToast: (t: { message: string; type: 'success' | 'error' | 'info' } | null) => void;
+  activity: ActivityEntry[];
+  recordActivity: (entry: Omit<ActivityEntry, 'id' | 'timestamp'>) => void;
+  clearActivity: () => void;
+  confirmDialog: { title: string; message: string; confirmLabel: string; onConfirm: () => void } | null;
+  setConfirmDialog: (d: { title: string; message: string; confirmLabel: string; onConfirm: () => void } | null) => void;
+  removeLibraryItem: (id: string) => void;
+  // ID of the currently loaded library — set when the library is first fetched
+  // and kept up-to-date by refreshLibrary(). Used by GreetingPane to call
+  // getLibraryStats() without needing to drill the ID through every call site.
+  currentLibraryId: string;
+  // Track which books are downloaded locally so the playback path can
+  // route LibVLC to the local file instead of the HTTP stream.
+  downloads: DownloadRecord[];
+  setDownloads: Dispatch<SetStateAction<DownloadRecord[]>>;
+  // Drain backend notices after any operation that may read/reset a corrupt
+  // downloads persistence file (especially the offline progress queue).
+  surfaceCorruptPersistenceNotices: () => Promise<void>;
+  // Tracks whether the current playback source is a local file rather than
+  // a server stream. When true, transport controls bypass session logic.
+  isLocalPlayback: boolean;
+  setIsLocalPlayback: (on: boolean) => void;
+  // Global server settings — captured from the login response and refreshable
+  // via Settings → Server Settings. Null until the first successful login.
+  serverSettings: ServerSettings | null;
+  setServerSettings: (s: ServerSettings) => void;
+  // Background-task list, fed live by ABS task_started/task_finished socket
+  // events so the Scheduled Tasks monitor stays current regardless of which pane
+  // is open. Seeded from GET /api/tasks when the monitor mounts.
+  tasks: Task[];
+  setTasks: (t: Task[]) => void;
+}
+
+export type ActivityCategory = 'downloads' | 'sync' | 'library' | 'podcasts' | 'app';
+
+export interface ActivityEntry {
+  id: string;
+  timestamp: number;
+  category: ActivityCategory;
+  outcome: 'success' | 'error' | 'info';
+  message: string;
+}
+
+// ─── Theme resolution ─────────────────────────────────────────────────────────
+
+function resolveToBase(mode: string): Theme {
+  if (mode === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? ONYX_DARK_BASE
+      : ONYX_FOLIO_BASE;
+  }
+  return mode === 'light' ? ONYX_FOLIO_BASE : ONYX_DARK_BASE;
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+const DEFAULT_ACCENT = '#d4a64a';
+
+// Placeholder authToken value for a relaunch: the OS keyring holds the real
+// session JWT (auth.rs) and every Rust command loads it from there, so the
+// frontend only ever needs auth *presence* — never the token value itself.
+const AUTH_FROM_KEYRING = '__keyring__';
+
+// ── One-time auth-material migration ─────────────────────────────────────────
+// Earlier builds persisted the raw ABS token (`skald.authToken`) — and defined
+// a `skald.password` slot — in WebView localStorage. The keyring is the source
+// of truth for the token; a localStorage copy weakens that boundary (any
+// renderer compromise could read it). Replace the raw token with the non-secret
+// `skald.hasAuth` presence flag and scrub both legacy keys. The saveToken call
+// heals profiles that predate keyring writes; failure is non-fatal (the user
+// just logs in again). Runs at module load so the useState initializers below
+// see the migrated flag on first render.
+{
+  const legacyToken = localStorage.getItem('skald.authToken');
+  if (legacyToken) {
+    localStorage.setItem('skald.hasAuth', 'true');
+    saveToken(legacyToken).catch(() => {});
+    localStorage.removeItem('skald.authToken');
+  }
+  localStorage.removeItem('skald.password');
+  // The persisted user profile (`skald.user`) used to carry the raw token too
+  // (User.token is a required field on the login response). Strip it in place —
+  // setUser below keeps it stripped for all future writes.
+  const storedUser = localStorage.getItem('skald.user');
+  if (storedUser && storedUser.includes('"token"')) {
+    try {
+      const u = JSON.parse(storedUser) as User;
+      if (u.token) localStorage.setItem('skald.user', JSON.stringify({ ...u, token: '' }));
+    } catch { /* unparseable — leave it; the next setUser overwrites it stripped */ }
+  }
+}
+
+export function useOnyxState(): OnyxState {
+  // ── Server connection (localStorage-persisted) ──────────────────────────────
+  const [serverUrl, setServerUrlRaw] = useState(
+    () => localStorage.getItem('skald.serverUrl') ?? '',
+  );
+  const [sessionId, setSessionIdRaw] = useState(
+    () => localStorage.getItem('skald.sessionId') ?? '',
+  );
+  const [username, setUsernameRaw] = useState(
+    () => localStorage.getItem('skald.username') ?? '',
+  );
+  const [userId, setUserIdRaw] = useState(
+    () => localStorage.getItem('skald.userId') ?? '',
+  );
+  // In-memory only after a fresh login; a sentinel on relaunch (see
+  // AUTH_FROM_KEYRING). Consumers treat it as an auth-presence flag.
+  const [authToken, setAuthTokenRaw] = useState(
+    () => localStorage.getItem('skald.hasAuth') === 'true' ? AUTH_FROM_KEYRING : '',
+  );
+  const [liveSyncEnabled, setLiveSyncEnabledRaw] = useState(
+    () => localStorage.getItem('onyx.sync.live') === 'true',
+  );
+  const [syncConflict, setSyncConflict] = useState<PlaybackSyncConflict | null>(null);
+  const [syncHealth, setSyncHealth] = useState<SyncHealth>({
+    lastSuccessfulServerSync: null,
+    queuedUpdates: 0,
+    degraded: false,
+  });
+
+  const setServerUrl = useCallback((v: string) => {
+    localStorage.setItem('skald.serverUrl', v); setServerUrlRaw(v);
+  }, []);
+  const setSessionId = useCallback((v: string) => {
+    localStorage.setItem('skald.sessionId', v); setSessionIdRaw(v);
+  }, []);
+  const setUsername = useCallback((v: string) => {
+    localStorage.setItem('skald.username', v); setUsernameRaw(v);
+  }, []);
+  const setUserId = useCallback((v: string) => {
+    localStorage.setItem('skald.userId', v); setUserIdRaw(v);
+  }, []);
+  const setLiveSyncEnabled = useCallback((enabled: boolean) => {
+    localStorage.setItem('onyx.sync.live', JSON.stringify(enabled));
+    setLiveSyncEnabledRaw(enabled);
+  }, []);
+  const setAuthToken = useCallback((v: string) => {
+    // Persist presence only — the raw token never touches localStorage again
+    // (it lives in the OS keyring, written by the login commands / saveToken).
+    if (v) localStorage.setItem('skald.hasAuth', 'true');
+    else localStorage.removeItem('skald.hasAuth');
+    setAuthTokenRaw(v);
+  }, []);
+
+  const [user, setUserRaw] = useState<User | null>(() => {
+    const stored = localStorage.getItem('skald.user');
+    if (!stored) return null;
+    try { return JSON.parse(stored) as User; } catch { return null; }
+  });
+  const setUser = useCallback((v: User | null) => {
+    // Strip the token before the profile goes anywhere: login/authorize
+    // responses carry it as a required field, but the keyring is the only
+    // sanctioned store — a copy inside skald.user would quietly undo the
+    // keyring migration. Nothing in the frontend reads user.token.
+    const clean = v ? { ...v, token: '' } : null;
+    localStorage.setItem('skald.user', clean ? JSON.stringify(clean) : '');
+    setUserRaw(clean);
+  }, []);
+
+  // The complete /api/me capability set gates upload and item-file actions.
+  // Keep it session-only so revoked permissions never linger across launches.
+  const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null);
+  // useLiveSync historically refreshes the upload gate on reconnect. Preserve
+  // that narrow callback while the initial /api/me load owns the full set.
+  const setUploadPerm = useCallback((upload: boolean) => {
+    setUserPermissions(current => current ? { ...current, upload } : current);
+  }, []);
+  const refreshPermissions = useCallback(async () => {
+    if (!serverUrl || !authToken) return;
+    const me = await getMe(serverUrl);
+    setUserPermissions(me.permissions ?? null);
+  }, [serverUrl, authToken]);
+
+  // Apply the account record ABS pushes on `user_updated` (Socket Event Coverage
+  // roadmap). Same shape as /api/me — both are User.toOldJSONForBrowser — so
+  // this is the push equivalent of refreshPermissions, and an admin revoking a
+  // permission or promoting an account takes effect without a relaunch.
+  //
+  // `type` drives isAdmin/canUpload and is merged into the stored user record,
+  // deliberately without the payload's `token`: that is the pre-2.26 non-expiring
+  // token, and the keyring is the only place a credential is kept.
+  const applyUserRecord = useCallback((record: {
+    id: string;
+    username?: string;
+    type?: string;
+    permissions?: UserPermissions | null;
+  }) => {
+    setUserPermissions(record.permissions ?? null);
+    if (record.type === undefined) return;
+    // Merge over the stored profile the same way the /api/me load below does,
+    // rather than over React state: this callback must stay dependency-free so
+    // the socket effect that closes over it never goes stale.
+    const storedRaw = localStorage.getItem('skald.user');
+    const base = storedRaw ? (JSON.parse(storedRaw) as User) : {} as User;
+    setUser({
+      ...base,
+      id: record.id || base.id,
+      username: record.username || base.username,
+      token: '',
+      type: record.type,
+    });
+  }, [setUser]);
+
+  // Local-only mode (no server). Persisted so the app re-opens straight into the
+  // shell on next launch without a login.
+  const [localMode, setLocalModeRaw] = useState(() => localStorage.getItem('skald.localMode') === 'true');
+  const setLocalMode = useCallback((on: boolean) => {
+    localStorage.setItem('skald.localMode', String(on));
+    setLocalModeRaw(on);
+  }, []);
+
+  // Local-only display name (no ABS account). Persisted to localStorage and held
+  // in shared state so the Account pane, the TopNav avatar, and the library
+  // greeting all reflect edits reactively.
+  const [localDisplayName, setLocalDisplayNameRaw] = useState(() => localStorage.getItem('onyx.local.displayName') ?? '');
+  const setLocalDisplayName = useCallback((name: string) => {
+    localStorage.setItem('onyx.local.displayName', name);
+    setLocalDisplayNameRaw(name);
+  }, []);
+
+  // First-launch onboarding completion. When no explicit flag is stored yet, we
+  // DERIVE it: any existing user (a saved auth token, or local mode already on)
+  // has clearly used Skald before, so they are considered onboarded and never see
+  // the flow. Only a genuinely fresh profile (no token, no local mode, no stored
+  // flag) falls through to false and triggers <Onboarding>.
+  const [onboarded, setOnboardedRaw] = useState(() => {
+    const explicit = localStorage.getItem('skald.onboarded');
+    if (explicit !== null) return explicit === 'true';
+    return localStorage.getItem('skald.hasAuth') === 'true' || localStorage.getItem('skald.localMode') === 'true';
+  });
+  const setOnboarded = useCallback((on: boolean) => {
+    localStorage.setItem('skald.onboarded', String(on));
+    setOnboardedRaw(on);
+  }, []);
+
+  // ── Library ─────────────────────────────────────────────────────────────────
+  const [library, setLibraryRaw] = useState<LibraryItem[]>([]);
+  // Full library list for the switcher (book + podcast).
+  const [libraries, setLibraries] = useState<Library[]>([]);
+  // Tracks the active library's ID so live sync handlers can filter events
+  // that belong to a different library (e.g., a podcast library vs. books).
+  // Declared here (above refreshLibrary) because refreshLibrary now reads it.
+  const [currentLibraryId, setCurrentLibraryId] = useState('');
+  const updateLibraryItem = useCallback((item: LibraryItem) => {
+    setLibraryRaw(prev => prev.map(x => x.id === item.id ? item : x));
+  }, []);
+  const removeLibraryItem = useCallback((id: string) => {
+    setLibraryRaw(prev => prev.filter(x => x.id !== id));
+  }, []);
+
+  // Choose which library to make active from a freshly-fetched list. Preference
+  // order: the user's last explicit selection (persisted) if it still exists,
+  // then the previously-active id, then the first book library, then anything.
+  // Keeping book-first preserves the original single-book-library behavior for
+  // users who never touch the switcher.
+  const pickActiveLibrary = useCallback((libs: Library[]): Library | undefined => {
+    const saved = localStorage.getItem('skald.activeLibraryId');
+    if (saved === ALL_LIBRARIES_ID) {
+      const combined = allLibrariesShelf(libs);
+      if (combined) return combined;
+    }
+    return libs.find(l => l.id === saved)
+      ?? libs.find(l => l.mediaType === 'book')
+      ?? libs[0];
+  }, []);
+
+  // Returns whether the ABS library list was actually retrieved. Callers that
+  // reconcile against the server need to tell "the server said this" from "the
+  // server could not be reached": the ABS fetch below degrades a failure to an
+  // empty list so local libraries still load, which on its own is indistinguishable
+  // from an account that genuinely has no ABS libraries.
+  const refreshLibrary = useCallback(async (): Promise<boolean> => {
+    let absReachable = true;
+    try {
+      // Merge ABS libraries (when a server is configured) with local libraries
+      // (always available — catalog read, no server). Either source may be empty.
+      const absLibs = serverUrl ? await fetchLibraries(serverUrl).catch(e => {
+        absReachable = false;
+        log.error('library', 'library list fetch failed during refresh', { err: String(e) });
+        return [] as Library[];
+      }) : [];
+      const localLibs = await getLocalLibraries().catch(() => [] as Library[]);
+      const libs = [...absLibs, ...localLibs];
+      setLibraries(libs);
+      // Reload whichever library is currently active; fall back to the picker if
+      // the active one vanished (deleted) or was never set.
+      const target = currentLibraryId === ALL_LIBRARIES_ID
+        ? allLibrariesShelf(libs) ?? pickActiveLibrary(libs)
+        : libs.find(l => l.id === currentLibraryId) ?? pickActiveLibrary(libs);
+      if (!target) return absReachable;
+      setCurrentLibraryId(target.id);
+      const items = target.id === ALL_LIBRARIES_ID
+        ? applyAllLibrariesResult(await loadAllLibraryItems(libs, serverUrl))
+        : await loadItemsForLibrary(target, serverUrl);
+      setLibraryRaw(patchLibraryItems(items));
+      // A successful refresh means the server is reachable — clear the OFFLINE
+      // indicator (it may have been set if the app launched from disk cache).
+      setIsOffline(false);
+      return absReachable;
+    } catch (e) {
+      log.error('library', 'refreshLibrary failed', { err: String(e) });
+      return false;
+    }
+  }, [serverUrl, currentLibraryId, pickActiveLibrary]);
+
+  // Switch the active library and load its items. View-context resets (search,
+  // contextFilter, shelfTab, focus) are done by the caller (TopNav) since those
+  // setters live further down the hook.
+  const setActiveLibrary = useCallback(async (id: string) => {
+    localStorage.setItem('skald.activeLibraryId', id);
+    setCurrentLibraryId(id);
+    setLibraryLoadingRaw(true);
+    // Leaving the combined shelf (or reloading it) invalidates any previous
+    // partial-coverage notice; a partial combined load below re-sets it.
+    setAllLibrariesPartial(null);
+    try {
+      // Route by source: local libraries read the catalog; ABS libraries fetch
+      // over HTTP. Look the library up in the already-loaded list.
+      const lib = id === ALL_LIBRARIES_ID ? allLibrariesShelf(libraries) : libraries.find(l => l.id === id);
+      const items = id === ALL_LIBRARIES_ID
+        ? applyAllLibrariesResult(await loadAllLibraryItems(libraries, serverUrl))
+        : lib ? await loadItemsForLibrary(lib, serverUrl) : [];
+      setLibraryRaw(patchLibraryItems(items));
+      setIsOffline(false);
+      // Only the ABS shelf is cached for offline launch; local items live in the
+      // catalog already, so caching them would just duplicate state.
+      if (lib?.source === 'all') {
+        const locals = libraries.filter(item => item.source === 'local' && item.mediaType !== 'podcast');
+        Promise.all(locals.map(item => getLocalLibraryProgress(item.id).catch(() => [] as MediaProgress[])))
+          .then(progress => setMediaProgress(prev => mergeProgress(prev, progress.flat())))
+          .catch(e => log.error('library', 'combined local progress load failed', { err: String(e) }));
+      } else if (lib?.source !== 'local') {
+        saveLibraryCache(items)
+          .then(() => setLastLibraryRefresh(writeLastRefresh(serverUrl, id)))
+          .catch(e => log.error('library', 'cache save failed', { err: String(e) }));
+      } else {
+        // Fold this local library's catalog progress into mediaProgress so cover
+        // overlays and Pick-it-up reflect local playback.
+        getLocalLibraryProgress(lib.id)
+          .then(lp => setMediaProgress(prev => mergeProgress(prev, lp)))
+          .catch(e => log.error('library', 'local progress load failed', { err: String(e) }));
+      }
+    } catch (e) {
+      log.error('library', 'setActiveLibrary failed', { err: String(e) });
+    } finally {
+      setLibraryLoadingRaw(false);
+    }
+  }, [serverUrl, libraries]);
+  const [libraryLoading, setLibraryLoadingRaw] = useState(
+    () => Boolean(localStorage.getItem('skald.serverUrl') && localStorage.getItem('skald.hasAuth') === 'true'),
+  );
+  // True when the library loaded from the disk cache (server unreachable).
+  // Reset to false on every successful server fetch.
+  const [isOffline, setIsOffline] = useState(false);
+  const [lastLibraryRefresh, setLastLibraryRefresh] = useState<number | null>(null);
+  // Non-null when the last All Libraries load lost at least one source. Drives
+  // the "Showing N of M libraries" notice on the combined shelf (review H1);
+  // cleared on a fully-successful combined load, a library switch, or dismissal.
+  const [allLibrariesPartial, setAllLibrariesPartial] = useState<AllLibrariesPartial | null>(null);
+  const dismissAllLibrariesPartial = useCallback(() => setAllLibrariesPartial(null), []);
+  // Record the coverage of a combined load and unwrap its items. Setting state
+  // here (rather than in loadAllLibraryItems) keeps the loader a plain function.
+  const applyAllLibrariesResult = useCallback((result: AllLibrariesLoadResult): LibraryItem[] => {
+    setAllLibrariesPartial(result.failedSources.length ? {
+      failedNames: result.failedSources.map(l => l.name),
+      loaded: result.totalSources - result.failedSources.length,
+      total: result.totalSources,
+    } : null);
+    return result.items;
+  }, []);
+  // Mirror for once-mounted socket listeners that need the current value without
+  // re-subscribing (avoids a stale closure when deciding whether to resync).
+  const isOfflineRef = useRef(isOffline);
+  useEffect(() => { isOfflineRef.current = isOffline; }, [isOffline]);
+  const [mediaProgress, setMediaProgress] = useState<MediaProgress[]>([]);
+  const [listeningStats, setListeningStats] = useState<ListeningStats | null>(null);
+  const [bookmarks, setBookmarks] = useState<AbsBookmark[]>([]);
+
+  // Live ref so applyServerProgress (stable, used from listener closures) always
+  // sees the current library list when deciding which local progress to re-merge.
+  const librariesRef = useRef<Library[]>([]);
+  librariesRef.current = libraries;
+  // Apply a server /api/me mediaProgress payload WITHOUT dropping local-library
+  // progress. The server payload only covers ABS items, so a wholesale replace
+  // wipes catalog-backed local progress — which makes local "Pick it up" entries
+  // appear on load and then vanish a couple seconds later when /api/me returns.
+  // This bites any time server creds are present (even while browsing a local
+  // library), so all server-progress writes route through here. Re-merge each
+  // local library's catalog progress on top of the server set to preserve it.
+  const applyServerProgress = useCallback((serverProgress: MediaProgress[]) => {
+    // Merge (not replace) synchronously so local rows never vanish for the
+    // frame(s) between this set and the async catalog re-merge below — a
+    // wholesale replace made local Pick-it-up entries flicker on every
+    // /api/me refresh. Cost: an ABS progress row deleted server-side lingers
+    // until the next launch (rare, and the next full reload clears it).
+    setMediaProgress(prev => mergeProgress(prev, serverProgress));
+    const locals = librariesRef.current.filter(l => l.source === 'local');
+    if (locals.length === 0) return;
+    Promise.all(locals.map(l => getLocalLibraryProgress(l.id).catch(() => [] as MediaProgress[])))
+      .then(lps => {
+        const flat = lps.flat();
+        if (flat.length) setMediaProgress(prev => mergeProgress(prev, flat));
+      })
+      .catch(e => log.error('library', 'local progress re-merge after server refresh failed', { err: String(e) }));
+  }, []);
+
+  // ── Downloads registry ──────────────────────────────────────────────────────
+  // Which books are stored on disk for offline playback. Loaded from the
+  // persistent JSON registry once on mount and refreshed after each completed
+  // download so playBook can immediately route to the local file.
+  const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
+
+  // True while LibVLC is playing a local file (no server session open).
+  // Cleared whenever an online session is started so transport controls
+  // revert to session-aware behaviour automatically.
+  const [isLocalPlayback, setIsLocalPlayback] = useState<boolean>(false);
+  const [serverSettings, setServerSettings] = useState<ServerSettings | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Backend persistence loaders queue a notice at the moment they preserve and
+  // reset a corrupt file. Drain after every frontend operation that can trigger
+  // one of those loaders; polling only after downloads.json missed corruption
+  // first discovered later by the offline-progress startup/playback paths.
+  const surfaceCorruptPersistenceNotices = useCallback(async () => {
+    try {
+      const notices = await takeCorruptPersistenceNotices();
+      if (notices.length === 0) return;
+      log.warn('downloads', 'corrupt persistence reset surfaced to user', { notices });
+      setToast({
+        message: `Damaged ${notices.join(' and ')} reset — the original was kept as a .corrupt file in the downloads folder.`,
+        type: 'info',
+      });
+    } catch (e) {
+      log.error('downloads', 'corrupt persistence notice poll failed', { err: String(e) });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initial load — reads the registry from disk; works before any server connection.
+    getDownloads()
+      .then(records => {
+        setDownloads(records);
+        // The registry load above is what trips the corrupt-file preservation
+        // path (review L2), so poll its notices right after: a damaged file was
+        // reset to empty and kept as *.corrupt — say so instead of letting the
+        // reset look like ordinary empty data.
+        return surfaceCorruptPersistenceNotices();
+      })
+      .catch(e => log.error('downloads', 'initial registry load failed', { err: String(e) }));
+
+    // Re-load whenever a download completes. The download-complete event fires
+    // after ZIP extraction and registry write, so getDownloads() returns the
+    // updated record immediately.
+    let unlisten: (() => void) | undefined;
+    listen('download-complete', () => {
+      getDownloads()
+        .then(records => {
+          setDownloads(records);
+          return surfaceCorruptPersistenceNotices();
+        })
+        .catch(e => log.error('downloads', 'registry refresh after complete failed', { err: String(e) }));
+    }).then(fn => { unlisten = fn; });
+
+    return () => { unlisten?.(); };
+  }, [surfaceCorruptPersistenceNotices]);
+
+  useEffect(() => {
+    // Whether we can talk to an ABS server this launch. Local libraries load
+    // regardless, so we no longer early-return when there are no server creds.
+    // authToken is presence-only here — the fetch commands load the real token
+    // from the OS keyring themselves.
+    const canQueryServer = !!serverUrl && !!authToken;
+    let cancelled = false;
+    setLibraryLoadingRaw(true);
+    (async () => {
+      // ── ABS libraries (only when a server is configured) ──────────────────
+      let absLibs: Library[] = [];
+      try {
+        if (canQueryServer) {
+          absLibs = await fetchLibraries(serverUrl);
+        }
+      } catch (e) {
+        // Server unreachable / auth failure — fall back to the cached ABS shelf,
+        // but still surface local libraries (they need no server) below.
+        log.warn('library', 'server fetch failed — attempting cache + local fallback', { err: String(e) });
+        try {
+          const cached = await loadLibraryCache();
+          if (cached.length > 0 && !cancelled) {
+            setLibraryRaw(cached as LibraryItem[]);
+            setIsOffline(true);
+            setLastLibraryRefresh(readLastRefresh(serverUrl, currentLibraryId));
+            if (authToken && screen !== 'login') {
+              setToast({ message: 'Server unreachable — showing cached library', type: 'info' });
+            }
+          }
+        } catch (ce) {
+          log.error('library', 'cache load also failed', { err: String(ce) });
+        }
+      }
+
+      // ── Local libraries (always — catalog read, no server needed) ─────────
+      let localLibs: Library[] = [];
+      try { localLibs = await getLocalLibraries(); }
+      catch (e) { log.error('library', 'local libraries load failed', { err: String(e) }); }
+      if (cancelled) return;
+
+      const allLibs = [...absLibs, ...localLibs];
+      setLibraries(allLibs);
+      // Nothing to show (no server libs reachable and no local libs) — stop here;
+      // any cached ABS shelf set above stays visible.
+      if (allLibs.length === 0) { setLibraryLoadingRaw(false); return; }
+
+      // Pick the active library (last selection → first book → first of any) and
+      // load it through the source router.
+      const activeLib = pickActiveLibrary(allLibs);
+      if (!activeLib) { setLibraryLoadingRaw(false); return; }
+      setCurrentLibraryId(activeLib.id);
+      try {
+        const items = activeLib.id === ALL_LIBRARIES_ID
+          ? applyAllLibrariesResult(await loadAllLibraryItems(allLibs, serverUrl))
+          : await loadItemsForLibrary(activeLib, serverUrl);
+        if (cancelled) return;
+        setLibraryRaw(patchLibraryItems(items));
+        log.info('library', 'library loaded', { libraryId: activeLib.id, items: items.length, source: activeLib.source ?? 'abs' });
+        setIsOffline(false);
+        // Cache only the ABS shelf for offline launch; local items already
+        // persist in the catalog.
+        if (activeLib.source === 'all') {
+          const locals = localLibs.filter(item => item.mediaType !== 'podcast');
+          Promise.all(locals.map(item => getLocalLibraryProgress(item.id).catch(() => [] as MediaProgress[])))
+            .then(progress => { if (!cancelled) setMediaProgress(prev => mergeProgress(prev, progress.flat())); })
+            .catch(e => log.error('library', 'combined local progress load failed', { err: String(e) }));
+        } else if (activeLib.source !== 'local') {
+          saveLibraryCache(items)
+            .then(() => setLastLibraryRefresh(writeLastRefresh(serverUrl, activeLib.id)))
+            .catch(e => log.error('library', 'cache save failed', { err: String(e) }));
+        } else {
+          getLocalLibraryProgress(activeLib.id)
+            .then(lp => { if (!cancelled) setMediaProgress(prev => mergeProgress(prev, lp)); })
+            .catch(e => log.error('library', 'local progress load failed', { err: String(e) }));
+        }
+      } catch (e) {
+        log.error('library', 'active library load failed', { err: String(e) });
+      }
+
+      // Flush any queued offline progress once a server is reachable.
+      if (canQueryServer) {
+        flushOfflineProgress(serverUrl)
+          .catch(e => log.error('sync', 'offline progress startup flush failed', { err: String(e) }))
+          .finally(surfaceCorruptPersistenceNotices);
+      }
+      if (!cancelled) setLibraryLoadingRaw(false);
+    })();
+    return () => { cancelled = true; };
+  }, [serverUrl, authToken, surfaceCorruptPersistenceNotices]);
+
+  // Fetch listeningStats + mediaProgress/bookmarks via /api/me once the library
+  // has loaded and we have valid credentials.
+  // getMe doesn't need userId; we derive it from the response so this works
+  // even when userId was never stored in localStorage from a prior session.
+  // Gated on libraryLoading (not library.length): an EMPTY library is a real,
+  // loaded state, and this fetch must still run for it — it's what captures
+  // permissions.upload, without which a delegated-upload user could never see
+  // the Upload button to bootstrap an empty library.
+  useEffect(() => {
+    if (!serverUrl || !authToken || libraryLoading) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const me = await getMe(serverUrl);
+        if (cancelled) return;
+        applyServerProgress(me.mediaProgress);
+        setBookmarks(me.bookmarks);
+        // Capture upload and item-file capabilities from the authoritative profile.
+        setUserPermissions(me.permissions ?? null);
+        // Refresh user type from server — merge into stored user record and persist.
+        // Deliberately does NOT carry me.token forward: the profile is tokenless
+        // (setUser strips it anyway); the keyring alone holds the session token.
+        if (me.type !== undefined) {
+          const storedRaw = localStorage.getItem('skald.user');
+          const base = storedRaw ? (JSON.parse(storedRaw) as User) : {} as User;
+          setUser({ ...base, id: me.id, username: me.username, token: '', type: me.type });
+        }
+        const resolvedId = me.id || userId;
+        if (me.id && userId !== me.id) setUserId(me.id);
+        const stats = await fetchListeningStats(serverUrl, resolvedId);
+        if (cancelled) return;
+        setListeningStats(stats);
+        // Refresh server settings on launch. On an already-logged-in start the
+        // login-time serverSettings payload is gone, so re-fetch via /api/authorize
+        // to keep the Server Settings panel populated and current.
+        try {
+          const ss = await fetchServerSettings(serverUrl);
+          if (!cancelled) setServerSettings(ss);
+        } catch (e) {
+          log.error('sync', 'server settings refresh failed', { err: String(e) });
+        }
+      } catch (e) {
+        log.error('sync', 'post-library /api/me fetch failed', { err: String(e) });
+      }
+    }, 2000);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [library, libraryLoading, serverUrl, authToken]);
+
+  // ── Playback ─────────────────────────────────────────────────────────────────
+  const [screen, setScreen] = useState('library');
+  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+  const [currentBookId, setCurrentBookId] = useState('');
+  // Podcast detail navigation + currently-playing episode (cluster E).
+  const [podcastDetailId, setPodcastDetailId] = useState<string | null>(null);
+  const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
+  const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
+  // A stable snapshot of the item currently loaded into the player (book OR the
+  // parent podcast of the playing episode), set when playback starts. Unlike
+  // `currentBook` — which is derived from the ACTIVE library's items and goes
+  // stale the moment you switch libraries — this persists across library
+  // switches so the cross-library MiniPlayer can always render the playing item.
+  const [playingItem, setPlayingItem] = useState<LibraryItem | undefined>(undefined);
+  // Focused book is scoped per library so switching libraries restores each
+  // one's own focus instead of carrying the other's. focusedByLib maps a
+  // library id → its focused item id; focusedBookId below derives the slot for
+  // the active library. Each slot starts unset and is seeded from that
+  // library's items on load by the effect below. No localStorage read: we want
+  // a clean state each session so the GreetingPane is the true default until
+  // the user starts playback.
+  const [focusedByLib, setFocusedByLib] = useState<Record<string, string | null>>({});
+  // Live ref so the stable setFocusedBookId below always writes the active
+  // library's slot, even from long-lived listener closures.
+  const focusedLibRef = useRef(currentLibraryId);
+  focusedLibRef.current = currentLibraryId;
+  const focusedBookId = focusedByLib[currentLibraryId] ?? null;
+  // Stable setter (value or updater form) that writes the active library's slot.
+  const setFocusedBookId = useCallback((value: SetStateAction<string | null>) => {
+    const lib = focusedLibRef.current;
+    setFocusedByLib(prev => {
+      const cur = prev[lib] ?? null;
+      const next = typeof value === 'function'
+        ? (value as (p: string | null) => string | null)(cur)
+        : value;
+      if (next === cur) return prev;
+      return { ...prev, [lib]: next };
+    });
+  }, []);
+  const [currentBookChapters, setCurrentBookChapters] = useState<Chapter[]>([]);
+
+  useEffect(() => {
+    if (!currentBookId) { setCurrentBookChapters([]); return; }
+    // Local-library items already carry their chapters from the scan — use them
+    // directly and skip the (server-bound, would-fail) fetchItem path entirely.
+    const localItem = library.find(b => b.id === currentBookId);
+    if (localItem?.localPath) { setCurrentBookChapters(bookChapters(localItem)); return; }
+    if (!serverUrl || !authToken) { setCurrentBookChapters([]); return; }
+    let cancelled = false;
+    fetchItem(serverUrl, currentBookId)
+      .then(item => {
+        if (cancelled) return;
+        // fetchItem returns the full item including detailed chapter data.
+        const chapters = bookChapters(item);
+        if (chapters.length > 0) {
+          // Server returned chapter data — use it (most accurate source).
+          setCurrentBookChapters(chapters);
+          // Persist chapters to disk after every successful online fetch so they
+          // are available for offline playback. The bulk library endpoint returns
+          // chapters: [] — only the single-item fetchItem endpoint has real data.
+          saveChapterCache(currentBookId, item.media.chapters)
+            .catch(e => log.error('playback', 'chapter cache save failed', { err: String(e) }));
+        } else {
+          // Server returned the item but with no chapters — unusual but possible
+          // on some ABS versions. The per-item cache may still have real data
+          // from a prior fetch, so attempt to load it before giving up.
+          loadChapterCache(currentBookId)
+            .then(cached => {
+              if (!cancelled && cached && Array.isArray(cached) && cached.length > 0) {
+                // Map raw ABS chapter objects to the onyx Chapter shape.
+                setCurrentBookChapters(bookChapters({ media: { chapters: cached } } as LibraryItem));
+              }
+            })
+            .catch(e => log.error('playback', 'chapter cache load (empty-response path) failed', { err: String(e) }));
+        }
+      })
+      .catch(async e => {
+        log.error('playback', 'chapter fetchItem failed', { err: String(e) });
+        if (cancelled) return;
+        // The bulk library endpoint sends chapters: [] — the per-item cache written
+        // by the online path above is the only source with real chapter data.
+        try {
+          const cached = await loadChapterCache(currentBookId);
+          if (cached && Array.isArray(cached) && cached.length > 0) {
+            // Map raw ABS chapter objects to the onyx Chapter shape.
+            setCurrentBookChapters(bookChapters({ media: { chapters: cached } } as LibraryItem));
+          }
+        } catch (ce) {
+          log.error('playback', 'chapter cache load failed', { err: String(ce) });
+        }
+      });
+    return () => { cancelled = true; };
+  }, [currentBookId, serverUrl, authToken, library]);
+
+  const [sessionReady, setSessionReady] = useState(false);
+
+  const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  // Duration last reported by LibVLC via playback-tick. Used only as the total
+  // for media that lacks an authoritative media.duration (podcast episodes).
+  const [tickDuration, setTickDuration] = useState(0);
+  const [volume, setVolume] = useState(0.68);
+  const [muted, setMuted] = useState(false);
+  const [speed, setSpeed] = useState('1.0');
+  const [device, setDevice] = useState('sennheiser');
+  const [deviceOpen, setDeviceOpen] = useState(false);
+
+  const [focusCollapsed, setFocusCollapsed] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [contextFilter, setContextFilter] = useState<ContextFilter | null>(null);
+  // Live ref for useLiveSync's active-filter reconciler: opening a collection or
+  // playlist unmounts the tab that fetched it, so the socket-driven update of the
+  // filter has to be owned by the always-mounted hook, which needs the current
+  // filter rather than the one present when it subscribed.
+  const contextFilterRef = useRef<ContextFilter | null>(null);
+  contextFilterRef.current = contextFilter;
+  const [advFilter, setAdvFilter] = useState<AdvFilter>(EMPTY_ADV_FILTER);
+  // Search belongs to a shelf, not to the entire app: restoring an author query
+  // in an unrelated library is more confusing than useful. Only query text is
+  // persisted; credentials and server data never enter this preference.
+  const [search, setSearchRaw] = useState(() => {
+    const id = localStorage.getItem('skald.activeLibraryId') ?? '';
+    return id ? localStorage.getItem(`onyx.search.${id}`) ?? '' : '';
+  });
+  useEffect(() => {
+    if (!currentLibraryId) return;
+    setSearchRaw(localStorage.getItem(`onyx.search.${currentLibraryId}`) ?? '');
+  }, [currentLibraryId]);
+  const setSearch = useCallback((value: string) => {
+    setSearchRaw(value);
+    if (currentLibraryId) localStorage.setItem(`onyx.search.${currentLibraryId}`, value);
+  }, [currentLibraryId]);
+  const [searchScope, setSearchScopeRaw] = useState<SearchScope>(
+    () => (localStorage.getItem('onyx.searchScope') as SearchScope) || 'all',
+  );
+  const setSearchScope = useCallback((s: SearchScope) => {
+    localStorage.setItem('onyx.searchScope', s); setSearchScopeRaw(s);
+  }, []);
+
+  const [accentColor, setAccentColorRaw] = useState(
+    () => localStorage.getItem('onyx.accent') ?? DEFAULT_ACCENT,
+  );
+  const [theme, setThemeRaw] = useState(() => localStorage.getItem('onyx.theme') ?? 'dark');
+  const [translucent, setTranslucentRaw] = useState(() => {
+    const v = localStorage.getItem('onyx.translucent');
+    return v === null ? true : v === 'true';
+  });
+
+  const [librarySort, setLibrarySortRaw] = useState(
+    // Default to title ascending (A→Z) on first launch.
+    // Returning users keep their saved preference via the localStorage value.
+    () => localStorage.getItem('onyx.lib.sort') ?? 'title',
+  );
+  const [coverSize, setCoverSizeRaw] = useState(
+    () => localStorage.getItem('onyx.lib.coverSize') ?? 'L',
+  );
+  const [browseTileStyle, setBrowseTileStyleRaw] = useState<'stack' | 'mosaic'>(
+    () => (localStorage.getItem('onyx.appearance.browseTileStyle') === 'mosaic' ? 'mosaic' : 'stack'),
+  );
+  const [groupBySeries, setGroupBySeriesRaw] = useState(
+    () => localStorage.getItem('onyx.lib.groupBySeries') === 'true',
+  );
+  const [showFinished, setShowFinishedRaw] = useState(() => {
+    const v = localStorage.getItem('onyx.lib.showFinished');
+    return v === null ? true : v === 'true';
+  });
+  const [showProgressOverlay, setShowProgressOverlayRaw] = useState(() => {
+    const v = localStorage.getItem('onyx.lib.progressOverlay');
+    return v === null ? true : v === 'true';
+  });
+  const [optionalTabs, setOptionalTabsRaw] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('onyx.lib.optionalTabs') || '{}'); } catch { return {}; }
+  });
+  const setOptionalTab = useCallback((id: string, on: boolean) => {
+    setOptionalTabsRaw(prev => {
+      const next = { ...prev, [id]: on };
+      localStorage.setItem('onyx.lib.optionalTabs', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const setLibrarySort = useCallback((v: string) => {
+    localStorage.setItem('onyx.lib.sort', v); setLibrarySortRaw(v);
+  }, []);
+  const setCoverSize = useCallback((v: string) => {
+    localStorage.setItem('onyx.lib.coverSize', v); setCoverSizeRaw(v);
+  }, []);
+  const setBrowseTileStyle = useCallback((v: 'stack' | 'mosaic') => {
+    localStorage.setItem('onyx.appearance.browseTileStyle', v); setBrowseTileStyleRaw(v);
+  }, []);
+  const setGroupBySeries = useCallback((v: boolean) => {
+    localStorage.setItem('onyx.lib.groupBySeries', String(v)); setGroupBySeriesRaw(v);
+  }, []);
+  const setShowFinished = useCallback((v: boolean) => {
+    localStorage.setItem('onyx.lib.showFinished', String(v)); setShowFinishedRaw(v);
+  }, []);
+  const setShowProgressOverlay = useCallback((v: boolean) => {
+    localStorage.setItem('onyx.lib.progressOverlay', String(v)); setShowProgressOverlayRaw(v);
+  }, []);
+
+  const [libraryView, setLibraryViewRaw] = useState(
+    () => localStorage.getItem('onyx.lib.view') ?? 'grid',
+  );
+  const setLibraryView = useCallback((v: string) => {
+    localStorage.setItem('onyx.lib.view', v); setLibraryViewRaw(v);
+  }, []);
+
+  const [shelfTab, setShelfTabRaw] = useState(
+    () => localStorage.getItem('onyx.shelfTab') ?? 'library',
+  );
+  const setShelfTab = useCallback((v: string) => {
+    localStorage.setItem('onyx.shelfTab', v); setShelfTabRaw(v);
+  }, []);
+
+
+  const [pickItUpCollapsed, setPickItUpCollapsedRaw] = useState(
+    () => localStorage.getItem('onyx.pickItUp.collapsed') === 'true',
+  );
+  const setPickItUpCollapsed = useCallback((v: boolean) => {
+    localStorage.setItem('onyx.pickItUp.collapsed', String(v)); setPickItUpCollapsedRaw(v);
+  }, []);
+
+  const [scale, setScaleRaw] = useState(() => {
+    const n = parseInt(localStorage.getItem('onyx.uiScale') ?? '100', 10);
+    return [90, 100, 110, 125].includes(n) ? n : 100;
+  });
+  const setScale = useCallback((v: number) => {
+    localStorage.setItem('onyx.uiScale', String(v)); setScaleRaw(v);
+  }, []);
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const activitySequence = useRef(0);
+  const recordActivity = useCallback((entry: Omit<ActivityEntry, 'id' | 'timestamp'>) => {
+    const timestamp = Date.now();
+    const id = `${timestamp}-${activitySequence.current++}`;
+    setActivity(current => prependActivity(current, { ...entry, id, timestamp }));
+  }, []);
+  const clearActivity = useCallback(() => setActivity([]), []);
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; confirmLabel: string; onConfirm: () => void } | null>(null);
+
+  // The backend emits auth-expired when a refresh token is spent, expired, or
+  // revoked — the one auth failure the app cannot recover from on its own. Route
+  // to Login rather than leaving the user on a shelf where every action 401s.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen('auth-expired', () => {
+      log.warn('auth', 'session expired — routing to sign-in');
+      // Clear presence only; the keyring is the backend's to manage, and the
+      // stored server address stays as a returning-user convenience.
+      setAuthToken('');
+      setScreen('login');
+      setToast({ message: 'Your session expired. Please sign in again.', type: 'error' });
+    }).then(fn => { unlisten = fn; });
+    return () => { unlisten?.(); };
+  }, [setAuthToken]);
+
+  const [enableOpenLibrary, setEnableOpenLibraryRaw] = useState(() => {
+    const v = localStorage.getItem('skald.enableOpenLibrary');
+    return v === null ? true : v === 'true';
+  });
+  const setEnableOpenLibrary = useCallback((v: boolean) => {
+    localStorage.setItem('skald.enableOpenLibrary', String(v)); setEnableOpenLibraryRaw(v);
+  }, []);
+
+  // Merge server + local listening stats into one "Your stats" view (Local
+  // Listening Stats roadmap). Off by default: the stat card follows the active
+  // library's source. Toggled in Settings → Appearance.
+  const [combineStats, setCombineStatsRaw] = useState(() => localStorage.getItem('onyx.stats.combineLocal') === 'true');
+  const setCombineStats = useCallback((v: boolean) => {
+    localStorage.setItem('onyx.stats.combineLocal', String(v)); setCombineStatsRaw(v);
+  }, []);
+
+  const accentRef = useRef(accentColor);
+  const themeRef  = useRef(theme);
+
+
+  useEffect(() => {
+    applyTheme(resolveToBase(themeRef.current), accentRef.current);
+    if (themeRef.current !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      applyTheme(mq.matches ? ONYX_DARK_BASE : ONYX_FOLIO_BASE, accentRef.current);
+      setThemeRaw(t => t + '');
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [theme, accentColor]);
+
+  const setTheme = useCallback((t: string) => {
+    themeRef.current = t;
+    applyTheme(resolveToBase(t), accentRef.current);
+    localStorage.setItem('onyx.theme', t);
+    setThemeRaw(t);
+  }, []);
+
+  const setTranslucent = useCallback((on: boolean) => {
+    localStorage.setItem('onyx.translucent', String(on));
+    setTranslucentRaw(on);
+  }, []);
+
+  const setAccentColor = useCallback((hex: string) => {
+    accentRef.current = hex;
+    applyTheme(resolveToBase(themeRef.current), hex);
+    localStorage.setItem('onyx.accent', hex);
+    setAccentColorRaw(hex);
+  }, []);
+
+  // When library first loads, seed focusedBookId so the shelf highlights a book
+  // on startup. currentBookId is intentionally NOT seeded here — it remains ''
+  // until the user explicitly starts playback via playBook(), which causes the
+  // GreetingPane to give way to FocusPanel.
+  useEffect(() => {
+    // Seed the active library's focus to its first item when unset. Never seed
+    // from currentBookId — the playing book may belong to a different library.
+    // Guard on library[0] actually belonging to the active library: during a
+    // switch, currentLibraryId updates before `library` reloads, so without this
+    // we'd briefly seed the new library's slot with the old library's first item.
+    if (library.length > 0 && !focusedBookId && library[0].libraryId === currentLibraryId) {
+      setFocusedBookId(library[0].id);
+    }
+  }, [library, focusedBookId, currentLibraryId]); // setFocusedBookId is stable
+
+  // Prefer the active library's copy; fall back to the playing-item snapshot when
+  // the playing item lives in another library (so the player/mini stay correct
+  // after a library switch), then to the first item as a last resort.
+  const currentBook  = library.find(b => b.id === currentBookId) ?? playingItem ?? library[0];
+  const focusedBook  = library.find(b => b.id === focusedBookId) ?? library[0];
+  // Total duration for the transport. Books carry an authoritative media.duration.
+  // Podcast items do not (duration is per-episode), so use the playing episode's
+  // duration, falling back to the duration LibVLC reports via playback-tick once
+  // the stream is loaded. Books never hit the fallbacks (media.duration > 0).
+  const bookSecs = (currentBook?.media.duration && currentBook.media.duration > 0)
+    ? currentBook.media.duration
+    : (currentEpisode?.duration && currentEpisode.duration > 0)
+    ? currentEpisode.duration
+    : tickDuration;
+  // The active library object, derived from the list + the active id.
+  const activeLibrary = currentLibraryId === ALL_LIBRARIES_ID
+    ? allLibrariesShelf(libraries)
+    : libraries.find(l => l.id === currentLibraryId);
+
+  // ── Live progress sync ──────────────────────────────────────────────────────
+  // Refs that let the event handlers read the current playback and library
+  // state without stale-closure issues. The sync effect runs after every
+  // render (no dep array) so handlers always see the latest values.
+  const currentBookIdRef    = useRef(currentBookId);
+  const currentEpisodeIdRef = useRef(currentEpisodeId);
+  const playingRef          = useRef(playing);
+  const sessionIdRef        = useRef(sessionId);
+  const sessionReadyRef     = useRef(sessionReady);
+  const currentLibraryIdRef = useRef(currentLibraryId);
+  const isLocalPlaybackRef  = useRef(isLocalPlayback);
+  // Live position for the global keyboard-seek handler (which is registered once
+  // with a stable dep array and would otherwise capture a stale position).
+  const positionRef         = useRef(position);
+  // Live refs for the book-finished observer (auto-download-next / remove-on-finish),
+  // which fires from the once-registered playback-tick listener below.
+  const libraryItemsRef     = useRef(library);
+  // The now-playing snapshot, for the same handler: after a library switch the
+  // playing book is no longer in `library`, and the chapter barrier still needs it.
+  const playingItemRef      = useRef(playingItem);
+  const downloadsRef        = useRef(downloads);
+  const serverUrlRef        = useRef(serverUrl);
+  // The item id whose finish we've already acted on, so the observer fires once
+  // per finish (the tick repeats while the player sits at the end). Re-armed when
+  // the position drops back below the end (a replay / new book).
+  const finishedHandledRef  = useRef<string>('');
+  useEffect(() => {
+    currentBookIdRef.current    = currentBookId;
+    currentEpisodeIdRef.current = currentEpisodeId;
+    playingRef.current          = playing;
+    sessionIdRef.current        = sessionId;
+    sessionReadyRef.current     = sessionReady;
+    currentLibraryIdRef.current = currentLibraryId;
+    isLocalPlaybackRef.current  = isLocalPlayback;
+    positionRef.current         = position;
+    libraryItemsRef.current     = library;
+    playingItemRef.current      = playingItem;
+    downloadsRef.current        = downloads;
+    serverUrlRef.current        = serverUrl;
+  });
+
+  // Book-finished observer (Settings → Downloads → Behaviour). Fired once when a
+  // book reaches its end (see the tick listener). Episodes are excluded (the
+  // download registry is book-only). Both actions are best-effort and gated on
+  // their opt-in toggles; failures are logged, never thrown.
+  const handleBookFinished = useCallback((itemId: string) => {
+    // A4 — remove the local download after finishing, unless the user keeps them.
+    // Default is KEEP (key absent or 'true'); only 'false' triggers removal.
+    const keep = localStorage.getItem('onyx.downloads.keepAfterFinish') !== 'false';
+    if (!keep && downloadsRef.current.some(d => d.itemId === itemId)) {
+      removeDownload(itemId)
+        .then(() => {
+          setDownloads(prev => prev.filter(d => d.itemId !== itemId));
+          setToast({ message: 'Removed finished download', type: 'info' });
+          log.info('downloads', 'auto-removed finished download', { itemId });
+        })
+        .catch(e => log.warn('downloads', 'auto-remove on finish failed', { err: String(e) }));
+    }
+
+    // A3 — auto-download the next book in the series (ABS books only; needs server).
+    if (localStorage.getItem('onyx.downloads.autoNextInSeries') === 'true') {
+      const finished = libraryItemsRef.current.find(b => b.id === itemId);
+      // Local-library items have no server counterpart to download from — skip.
+      if (finished && !finished.localPath) {
+        const next = nextInSeries(finished, libraryItemsRef.current);
+        if (next && !downloadsRef.current.some(d => d.itemId === next.id)) {
+          const title = next.media?.metadata?.title ?? next.id;
+          downloadItem(serverUrlRef.current, next.id, `${title}.zip`, title, bookAuthor(next))
+            .then(() => {
+              setToast({ message: `Downloading next in series: ${title}`, type: 'success' });
+              log.info('downloads', 'auto-download next in series', { from: itemId, next: next.id });
+            })
+            .catch(e => log.warn('downloads', 'auto-download next failed', { err: String(e) }));
+        }
+      }
+    }
+  // Reads everything via refs / localStorage / stable setters → safe to memoize once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<{ currentTime: number; duration: number; isPlaying: boolean }>(
+      'playback-tick',
+      ({ payload }) => {
+        setPosition(payload.currentTime);
+        setPlaying(payload.isPlaying);
+        if (payload.duration > 0) setTickDuration(payload.duration);
+
+        // Book-finished observer (auto-download-next / remove-on-finish). The tick
+        // commits currentTime = duration on a true end (see session.rs), giving one
+        // uniform finish signal across online / downloaded / local playback. Books
+        // only (episodes are not in the download registry); fire once per finish.
+        const finishId = currentBookIdRef.current;
+        if (finishId && !currentEpisodeIdRef.current && payload.duration > 0) {
+          const atEnd = payload.currentTime >= payload.duration - 1.5;
+          if (atEnd && finishedHandledRef.current !== finishId) {
+            finishedHandledRef.current = finishId;
+            handleBookFinished(finishId);
+          } else if (!atEnd && finishedHandledRef.current === finishId) {
+            finishedHandledRef.current = ''; // re-armed (restarted / scrubbed back)
+          }
+        }
+
+        // Local playback has no server `progress-updated` echo to refresh the
+        // in-memory progress store, so mirror the catalog write the Rust tick is
+        // making — keeps Pick-it-up and cover overlays current for local books.
+        const id = currentBookIdRef.current;
+        const epId = currentEpisodeIdRef.current; // non-null while a local episode plays
+        if (isLocalPlaybackRef.current && id) {
+          setMediaProgress(prev => {
+            // Key by (item, episode) so a podcast's episodes don't overwrite each
+            // other and a book row (episodeId null) stays distinct from episodes.
+            const idx = prev.findIndex(p => p.libraryItemId === id && (p.episodeId ?? null) === (epId ?? null));
+            const duration = payload.duration > 0
+              ? payload.duration
+              : (idx >= 0 ? prev[idx].duration : 0);
+            const rec: MediaProgress = {
+              id: idx >= 0 ? prev[idx].id : (epId ? `${id}-${epId}` : id),
+              libraryItemId: id,
+              episodeId: epId ?? (idx >= 0 ? prev[idx].episodeId : null),
+              duration,
+              currentTime: payload.currentTime,
+              progress: duration > 0 ? payload.currentTime / duration : 0,
+              // Mirror the Rust persist rule (session.rs local tick): finished on
+              // a true end, un-finished again while playing earlier (a restart).
+              // Same end threshold as the book-finished observer above.
+              isFinished: duration > 0 && payload.currentTime >= duration - 1.5,
+              lastUpdate: Date.now(),
+            };
+            if (idx >= 0) { const c = [...prev]; c[idx] = rec; return c; }
+            return [...prev, rec];
+          });
+        }
+      },
+    ).then(fn => { unlisten = fn; });
+    return () => { unlisten?.(); };
+  }, []);
+
+  // Socket-driven live sync (progress echo guard, library item events,
+  // reconnect resync, background-task stream, sync-failed toast) — composed
+  // from useLiveSync (God-File Decomposition roadmap, L3/L7). The effects read
+  // playback state through the refs above, so the listeners re-subscribe only
+  // on serverUrl/authToken changes, exactly as before the split.
+  useLiveSync({
+    serverUrl,
+    authToken,
+    liveSyncEnabled,
+    currentBookIdRef,
+    currentEpisodeIdRef,
+    playingRef,
+    sessionIdRef,
+    sessionReadyRef,
+    currentLibraryIdRef,
+    librariesRef,
+    isOfflineRef,
+    contextFilterRef,
+    setMediaProgress,
+    setPosition,
+    setSyncConflict,
+    setSyncHealth,
+    setLibraryRaw,
+    setCurrentBookId,
+    setFocusedBookId,
+    setDownloads,
+    setTasks,
+    setToast,
+    recordActivity,
+    surfaceCorruptPersistenceNotices,
+    setUploadPerm,
+    setContextFilter,
+    refreshLibrary,
+    applyServerProgress,
+    applyUserRecord,
+  });
+
+  useEffect(() => {
+    // Start of the chapter the listener is in, for the auto-rewind chapter
+    // barrier. Reads refs rather than state: this effect registers once, so
+    // captured values would be frozen at mount. Falls back to the now-playing
+    // snapshot because the book leaves `library` when the user switches
+    // libraries — and a barrier that silently disappears there is worse than no
+    // barrier, since the setting still reads as on.
+    const chapterStartHere = (): number | undefined => chapterStartAt(
+      libraryItemsRef.current.find(b => b.id === currentBookIdRef.current) ?? playingItemRef.current,
+      positionRef.current,
+    );
+
+    const onKey = (e: KeyboardEvent) => {
+      // Component-level controls (scrubbers, menus, sliders) own keys they
+      // prevent. Respect that contract even if a handler only prevents the
+      // default browser action and the event still reaches window.
+      if (e.defaultPrevented) return;
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      // Call the LibVLC pause/resume command directly.
+      // setPlaying alone only updates the React icon — LibVLC keeps running.
+      // Plain Space is the in-window transport key. Modified Space belongs to
+      // the configurable global shortcut (Ctrl+Alt+Space by default); handling
+      // it here as well sends pause twice while the window is focused, and
+      // LibVLC's pause call is a toggle, so the second command resumes it.
+      if (e.code === 'Space' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        if (playingRef.current) { pauseAudio().catch(e => log.error('playback', 'transport command failed', { err: String(e) })); setPlaying(false); }
+        else {
+          // Resume through the same coordinator the transport buttons use — not
+          // merely the same command. This handler used to own its half of the
+          // sequence, and had already drifted: it marked the UI playing outside
+          // the promise, so a rejected resume left a paused player showing a
+          // playing transport.
+          void resumeWithRewind(chapterStartHere(), setPosition, setPlaying);
+        }
+      }
+      // Arrow seek: move the audio engine too, not just the UI. Without the
+      // seekAudio call the playhead snapped back on the next playback-tick because
+      // LibVLC never actually moved. Gated on a loaded book so a stray arrow press
+      // on the shelf is a no-op. Read the live position from the ref (the handler
+      // is registered once, so a captured `position` would be stale).
+      if (e.code === 'ArrowLeft'  && !e.metaKey && !e.ctrlKey && currentBookIdRef.current) {
+        const np = Math.max(0, positionRef.current - skipSeconds());
+        setPosition(np);
+        seekAudio(np).catch(e => log.error('playback', 'transport command failed', { err: String(e) }));
+      }
+      if (e.code === 'ArrowRight' && !e.metaKey && !e.ctrlKey && currentBookIdRef.current) {
+        const np = Math.min(bookSecs, positionRef.current + skipSeconds());
+        setPosition(np);
+        seekAudio(np).catch(e => log.error('playback', 'transport command failed', { err: String(e) }));
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        (document.getElementById('onyx-search') as HTMLInputElement | null)?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [bookSecs]);
+
+  return {
+    serverUrl, setServerUrl,
+    sessionId, setSessionId,
+    sessionReady, setSessionReady,
+    username, setUsername,
+    userId, setUserId,
+    authToken, setAuthToken,
+    liveSyncEnabled, setLiveSyncEnabled,
+    syncConflict, setSyncConflict,
+    syncHealth,
+    user, setUser,
+    isAdmin: user?.type === 'admin' || user?.type === 'root',
+    // Server-side, the canUpload getter is true for admin/root regardless of the
+    // permissions object, so mirror that here rather than trusting me.permissions
+    // alone (it also covers the window before the /api/me fetch lands).
+    canUpload: user?.type === 'admin' || user?.type === 'root' || !!userPermissions?.upload,
+    canDownload: user?.type === 'admin' || user?.type === 'root' || !!userPermissions?.download,
+    canUpdate: user?.type === 'admin' || user?.type === 'root' || !!userPermissions?.update,
+    canDelete: user?.type === 'admin' || user?.type === 'root' || !!userPermissions?.delete,
+    refreshPermissions,
+    localMode, setLocalMode,
+    localDisplayName, setLocalDisplayName,
+    onboarded, setOnboarded,
+    library, libraries, activeLibrary, setActiveLibrary, libraryLoading, isOffline, lastLibraryRefresh, allLibrariesPartial, dismissAllLibrariesPartial, updateLibraryItem, removeLibraryItem, refreshLibrary, mediaProgress, setMediaProgress, applyServerProgress, listeningStats, bookmarks, setBookmarks, currentLibraryId,
+    downloads, setDownloads,
+    surfaceCorruptPersistenceNotices,
+    isLocalPlayback, setIsLocalPlayback,
+    serverSettings, setServerSettings,
+    tasks, setTasks,
+    screen, setScreen,
+    settingsSection, setSettingsSection,
+    podcastDetailId, setPodcastDetailId,
+    currentEpisodeId, setCurrentEpisodeId,
+    currentEpisode, setCurrentEpisode,
+    playingItem, setPlayingItem,
+    currentBook, currentBookId, setCurrentBookId, currentBookChapters,
+    focusedBook, focusedBookId, setFocusedBookId,
+    playing, setPlaying,
+    position, setPosition, bookSecs,
+    volume, setVolume, muted, setMuted,
+    speed, setSpeed,
+    device, setDevice, deviceOpen, setDeviceOpen,
+    focusCollapsed, setFocusCollapsed,
+    filter, setFilter,
+    contextFilter, setContextFilter,
+    advFilter, setAdvFilter,
+    search, setSearch,
+    searchScope, setSearchScope,
+    accentColor, setAccentColor,
+    theme, setTheme,
+    translucent, setTranslucent,
+    librarySort, setLibrarySort,
+    coverSize, setCoverSize,
+    browseTileStyle, setBrowseTileStyle,
+    groupBySeries, setGroupBySeries,
+    showFinished, setShowFinished,
+    showProgressOverlay, setShowProgressOverlay,
+    optionalTabs, setOptionalTab,
+    libraryView, setLibraryView,
+    shelfTab, setShelfTab,
+    pickItUpCollapsed, setPickItUpCollapsed,
+    scale, setScale,
+    enableOpenLibrary, setEnableOpenLibrary,
+    combineStats, setCombineStats,
+    toast, setToast,
+    activity, recordActivity, clearActivity,
+    confirmDialog, setConfirmDialog,
+  };
+}

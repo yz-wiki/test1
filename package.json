@@ -1,0 +1,48 @@
+{
+  "name": "skald",
+  "description": "A native audiobook client for Audiobookshelf",
+  "private": true,
+  "version": "1.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:linux": "node scripts/stage-linux-vlc.mjs && pnpm build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "stage:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stage-windows-runtime.ps1",
+    "bundle:portable": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-portable.ps1",
+    "notices": "node scripts/generate-notices.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:front": "vitest run",
+    "test:front:watch": "vitest",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "test:sync:contract": "cargo test --manifest-path src-tauri/Cargo.toml --test playback_sync sync_session_posts_expected_payload",
+    "test:sync:abs": "cargo test --manifest-path src-tauri/Cargo.toml --test playback_sync live_abs_persists_session_progress -- --ignored --nocapture",
+    "verify:commands": "node scripts/check-tauri-commands.mjs",
+    "verify:console": "node scripts/check-console.mjs",
+    "verify:clippy": "cargo clippy --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "verify": "pnpm typecheck && pnpm test:front && pnpm verify:commands && pnpm verify:console && pnpm verify:clippy && pnpm test:rust"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.2",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-global-shortcut": "^2.3.2",
+    "@tauri-apps/plugin-log": "^2.8.0",
+    "@tauri-apps/plugin-opener": "^2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "vitest": "^4.1.10"
+  }
+}

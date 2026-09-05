@@ -1,0 +1,365 @@
+import { useState, useEffect, useCallback } from 'react';
+import type { OnyxState } from '../../state/onyx';
+import {
+  getBackups,
+  createBackup,
+  deleteBackup,
+  applyBackup,
+  updateServerSettings,
+  type Backup,
+  type ServerSettings,
+} from '../../api/abs';
+import { SectionHead, Row, Toggle, MONO, Panel, DIM_GOLD } from './shared';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import CronEditor from './CronEditor';
+
+export interface BackupSectionProps { st: OnyxState; }
+
+// Default cron used when the user first enables automatic backups (01:30 daily).
+const DEFAULT_BACKUP_CRON = '30 1 * * *';
+
+// ── Helpers ─────────────────────────────────────────────────────────────────────
+
+function formatBytes(n: number): string {
+  if (!n || n < 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+  const v = n / Math.pow(1024, i);
+  return `${v.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function Btn({
+  children, onClick, variant = 'ghost', disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: 'ghost' | 'accent' | 'danger';
+  disabled?: boolean;
+}) {
+  const palette = {
+    ghost:  { bg: 'transparent',            border: 'var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' },
+    accent: { bg: 'var(--onyx-accent-dim)', border: 'var(--onyx-accent-edge)', color: 'var(--onyx-accent)' },
+    danger: { bg: 'rgba(220,80,80,0.12)',   border: 'rgba(220,80,80,0.35)',    color: '#e08a8a' },
+  }[variant];
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+        padding: '6px 13px', borderRadius: 6,
+        background: palette.bg, border: `1px solid ${palette.border}`,
+        color: palette.color, cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.45 : 1, whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Small gold outline pill (e.g. "Latest", "Admin only"). */
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span style={{
+      fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+      padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)',
+      border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', whiteSpace: 'nowrap',
+    }}>{children}</span>
+  );
+}
+
+// Numeric input that commits on blur (avoids a PATCH per keystroke).
+function NumField({
+  value, onCommit, min, max, suffix, step,
+}: {
+  value: number;
+  onCommit: (v: number) => void;
+  min?: number; max?: number; suffix?: string; step?: number;
+}) {
+  const [local, setLocal] = useState(String(value));
+  useEffect(() => setLocal(String(value)), [value]);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <input
+        type="number"
+        value={local}
+        min={min}
+        max={max}
+        step={step}
+        onChange={e => setLocal(e.target.value)}
+        onBlur={() => {
+          const n = parseFloat(local);
+          if (!isNaN(n) && n !== value) onCommit(n);
+        }}
+        style={{
+          fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
+          border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '5px 10px',
+          width: 80, textAlign: 'right' as const,
+        }}
+      />
+      {suffix && <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>{suffix}</span>}
+    </div>
+  );
+}
+
+// ── Main section ────────────────────────────────────────────────────────────────
+
+export default function BackupSection({ st }: BackupSectionProps) {
+  // Admin guard lives in this hook-free wrapper: an early return *between*
+  // hooks inside the component would change its hook count if isAdmin flips
+  // while mounted (React's "rendered fewer hooks than expected" crash). With
+  // the wrapper, the inner admin-only component simply unmounts instead.
+  if (!st.isAdmin) return null;
+  return <BackupSectionInner st={st} />;
+}
+
+function BackupSectionInner({ st }: BackupSectionProps) {
+  const [backups, setBackups] = useState<Backup[]>([]);
+  const [location, setLocation] = useState('');
+  const [pathEnvSet, setPathEnvSet] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  // Pending confirmation dialog (delete or restore), or null.
+  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'restore'; backup: Backup } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await getBackups(st.serverUrl);
+      setBackups(resp.backups);
+      setLocation(resp.backupLocation);
+      setPathEnvSet(resp.backupPathEnvSet);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [st.serverUrl]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  // ── Backup actions ────────────────────────────────────────────────────────
+
+  async function doCreate() {
+    setBusy(true);
+    st.setToast({ message: 'Creating backup…', type: 'info' });
+    try {
+      const resp = await createBackup(st.serverUrl);
+      setBackups(resp.backups);
+      st.setToast({ message: 'Backup created.', type: 'success' });
+    } catch (e) {
+      st.setToast({ message: `Backup failed: ${e}`, type: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function doDelete(backup: Backup) {
+    setBusy(true);
+    try {
+      const resp = await deleteBackup(st.serverUrl, backup.id);
+      setBackups(resp.backups);
+      st.setToast({ message: 'Backup deleted.', type: 'success' });
+    } catch (e) {
+      st.setToast({ message: `Failed to delete: ${e}`, type: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function doRestore(backup: Backup) {
+    setBusy(true);
+    st.setToast({ message: 'Restoring backup — the server will restart…', type: 'info' });
+    try {
+      await applyBackup(st.serverUrl, backup.id);
+      st.setToast({ message: 'Restore started. Audiobookshelf is restarting; reconnect shortly.', type: 'success' });
+    } catch (e) {
+      st.setToast({ message: `Restore failed: ${e}`, type: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // ── Schedule / retention config (lives in ServerSettings) ───────────────────
+
+  async function patchSettings(partial: Partial<ServerSettings>) {
+    try {
+      const updated = await updateServerSettings(st.serverUrl, partial);
+      st.setServerSettings(updated);
+      st.setToast({ message: 'Backup settings saved.', type: 'success' });
+    } catch (e) {
+      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+    }
+  }
+
+  // Current schedule state read from server settings. backupSchedule is a cron
+  // string when enabled, or `false`/null when disabled.
+  const schedule = st.serverSettings?.backupSchedule;
+  const scheduleEnabled = typeof schedule === 'string' && schedule.length > 0;
+  const cronValue = scheduleEnabled ? (schedule as string) : DEFAULT_BACKUP_CRON;
+
+  // Newest snapshot (by creation time) — flagged with a "Latest" pill.
+  const latestId = backups.reduce<Backup | null>(
+    (latest, b) => (!latest || b.createdAt > latest.createdAt ? b : latest), null,
+  )?.id;
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div>
+        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
+          Loading backups…
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <div style={{
+          fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
+          padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
+          border: '1px solid var(--onyx-glass-edge)',
+        }}>
+          Couldn't load backups: {error}.
+          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>Retry</Btn></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionHead
+        title="Backups"
+        subtitle="Database and metadata snapshots. Audio files are not included in backups."
+      />
+
+      {/* Admin-only badge */}
+      <div style={{ marginBottom: 4 }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6,
+          background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)',
+          fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
+        }}>★ Admin only</span>
+      </div>
+
+      {/* ── Snapshots ────────────────────────────────────────────────────── */}
+      <Panel
+        label="Snapshots"
+        action={<Btn variant="accent" onClick={() => void doCreate()} disabled={busy}>Create backup now</Btn>}
+      >
+        {/* Count + on-disk location */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--onyx-line)' }}>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>
+            {backups.length} snapshot{backups.length === 1 ? '' : 's'}
+          </span>
+          {location && (
+            <span style={{ fontFamily: MONO, fontSize: 11, color: DIM_GOLD, letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {location}{pathEnvSet ? ' (env)' : ''}
+            </span>
+          )}
+        </div>
+
+        {backups.length === 0 && (
+          <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0', letterSpacing: '0.04em' }}>
+            No snapshots yet.
+          </div>
+        )}
+
+        {backups.map((b, i) => (
+          <div
+            key={b.id}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 16, padding: '13px 0', borderBottom: i < backups.length - 1 ? '1px solid var(--onyx-line)' : 'none',
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)' }}>{b.datePretty || b.id}</span>
+                {b.id === latestId && <Tag>Latest</Tag>}
+              </div>
+              <div style={{ display: 'flex', gap: 14, marginTop: 4, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em' }}>
+                <span>{formatBytes(b.fileSize)}</span>
+                {b.serverVersion && <span>v{b.serverVersion}</span>}
+                {b.key && <span>{b.key}</span>}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <Btn variant="ghost" onClick={() => setConfirm({ kind: 'restore', backup: b })} disabled={busy}>Restore</Btn>
+              <Btn variant="danger" onClick={() => setConfirm({ kind: 'delete', backup: b })} disabled={busy}>Delete</Btn>
+            </div>
+          </div>
+        ))}
+      </Panel>
+
+      {/* ── Schedule & retention ─────────────────────────────────────────── */}
+      <Panel label="Schedule & retention">
+        <Row label="Automatic backups" hint="Run a backup on a recurring schedule.">
+          <Toggle
+            on={scheduleEnabled}
+            onChange={v => {
+              // Enable → set a default cron; disable → false.
+              void patchSettings({ backupSchedule: v ? DEFAULT_BACKUP_CRON : false });
+            }}
+          />
+        </Row>
+
+        {scheduleEnabled && (
+          <Row label="Schedule" hint="When automatic backups run." align="top">
+            <CronEditor
+              value={cronValue}
+              onChange={v => void patchSettings({ backupSchedule: v })}
+            />
+          </Row>
+        )}
+
+        <Row label="Snapshots to keep" hint="Older snapshots beyond this count are pruned automatically.">
+          <NumField
+            value={st.serverSettings?.backupsToKeep ?? 2}
+            min={1} max={100}
+            onCommit={v => void patchSettings({ backupsToKeep: v })}
+          />
+        </Row>
+
+        <Row label="Max backup size" hint="Safety limit — a backup larger than this is aborted. Set 0 to disable.">
+          <NumField
+            value={st.serverSettings?.maxBackupSize ?? 1}
+            min={0} max={1024} step={0.5} suffix="GB"
+            onCommit={v => void patchSettings({ maxBackupSize: v })}
+          />
+        </Row>
+      </Panel>
+
+      {/* ── Confirm dialogs ──────────────────────────────────────────────── */}
+      {confirm?.kind === 'delete' && (
+        <ConfirmDialog
+          title="Delete backup?"
+          message={`Permanently delete the backup from ${confirm.backup.datePretty || confirm.backup.id}? This cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { const b = confirm.backup; setConfirm(null); void doDelete(b); }}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+      {confirm?.kind === 'restore' && (
+        <ConfirmDialog
+          title="Restore this backup?"
+          message={`Restoring the backup from ${confirm.backup.datePretty || confirm.backup.id} overwrites the server's current database and metadata, then restarts Audiobookshelf. You will be disconnected. This cannot be undone.`}
+          confirmLabel="Restore & restart"
+          danger
+          onConfirm={() => { const b = confirm.backup; setConfirm(null); void doRestore(b); }}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+    </div>
+  );
+}
