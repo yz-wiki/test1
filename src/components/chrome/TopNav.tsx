@@ -15,10 +15,10 @@ export interface TopNavProps {
 
 // Search field-scope options (book libraries).
 const SCOPES: { value: SearchScope; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'title', label: 'Title' },
-  { value: 'author', label: 'Author' },
-  { value: 'series', label: 'Series' },
+  { value: 'all', label: '全部' },
+  { value: 'title', label: '书名' },
+  { value: 'author', label: '作者' },
+  { value: 'series', label: '系列' },
 ];
 
 export default function TopNav({ st }: TopNavProps) {
@@ -153,7 +153,7 @@ export default function TopNav({ st }: TopNavProps) {
               aria-haspopup={canSwitch ? 'listbox' : undefined}
               aria-expanded={canSwitch ? libMenuOpen : undefined}
               aria-controls={canSwitch ? 'onyx-library-listbox' : undefined}
-              title={canSwitch ? 'Switch library' : 'Your library'}
+              title={canSwitch ? '切换书库' : '你的书库'}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
@@ -165,10 +165,10 @@ export default function TopNav({ st }: TopNavProps) {
                 <Icon name="layers" size={15} />
               </span>
               <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0, textAlign: 'left' }}>
-                <span style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>Library</span>
+                <span style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>书库</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {activeLib ? libraryDisplayLabel(activeLib) : 'No library'}
+                    {activeLib ? libraryDisplayLabel(activeLib) : '无书库'}
                   </span>
                   {activeLib && (
                     <span style={{ flexShrink: 0, fontFamily: mono, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>
@@ -187,7 +187,7 @@ export default function TopNav({ st }: TopNavProps) {
             <div
               id="onyx-library-listbox"
               role="listbox"
-              aria-label="Choose library"
+              aria-label="选择书库"
               onKeyDown={(event) => handleListboxKey(event, libOptionRefs.current, () => setLibMenuOpen(false), libTriggerRef.current)}
               style={{
               position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 100, minWidth: 220,
@@ -248,7 +248,7 @@ export default function TopNav({ st }: TopNavProps) {
         {!st.libraries.some(l => l.source === 'local') && (
           <button
             onClick={openLocalLibrarySetup}
-            title="Create a library from audiobooks on this PC"
+            title="用这台电脑上的有声书创建书库"
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'transparent', color: 'var(--onyx-text-dim)',
@@ -257,7 +257,7 @@ export default function TopNav({ st }: TopNavProps) {
             }}
           >
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}><Icon name="plus" size={14} /></span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Add local library</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>添加本机书库</span>
           </button>
         )}
         {/* Local book libraries share the same Files / Folder / Staging import
@@ -265,7 +265,7 @@ export default function TopNav({ st }: TopNavProps) {
         {st.activeLibrary?.source === 'local' && st.activeLibrary?.mediaType !== 'podcast' && (
           <button
             onClick={() => setLocalImportOpen(true)}
-            title="Add books to this library"
+            title="向此书库添加图书"
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
@@ -276,7 +276,7 @@ export default function TopNav({ st }: TopNavProps) {
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
               <Icon name="plus" size={15} />
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Add books</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>添加图书</span>
           </button>
         )}
         {/* Upload — ABS libraries, users with the upload permission (admin/root
@@ -285,7 +285,7 @@ export default function TopNav({ st }: TopNavProps) {
         {st.activeLibrary && st.activeLibrary.source !== 'local' && st.activeLibrary.source !== 'all' && st.canUpload && (
           <button
             onClick={() => setUploadOpen(true)}
-            title="Upload audiobooks to the server"
+            title="向服务器上传有声书"
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
@@ -296,7 +296,7 @@ export default function TopNav({ st }: TopNavProps) {
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
               <Icon name="upload" size={15} />
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Upload</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>上传</span>
           </button>
         )}
       </div>
@@ -307,7 +307,7 @@ export default function TopNav({ st }: TopNavProps) {
         <input
           id="onyx-search"
           type="text"
-          placeholder={`Search ${st.library.length} titles…`}
+          placeholder={`搜索 ${st.library.length} 个标题…`}
           value={st.search}
           onChange={(e) => st.setSearch(e.target.value)}
           style={{
@@ -344,8 +344,8 @@ export default function TopNav({ st }: TopNavProps) {
               aria-haspopup="listbox"
               aria-expanded={scopeOpen}
               aria-controls="onyx-search-scope-listbox"
-              aria-label="Search field scope"
-              title="Search field scope"
+              aria-label="搜索范围"
+              title="搜索范围"
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 fontFamily: mono, fontSize: 10, letterSpacing: '0.04em',
@@ -353,7 +353,7 @@ export default function TopNav({ st }: TopNavProps) {
                 border: '1px solid var(--onyx-glass-edge)', borderRadius: 4, padding: '3px 6px', cursor: 'pointer',
               }}
             >
-              {SCOPES.find(s => s.value === st.searchScope)?.label ?? 'All'}
+              {SCOPES.find(s => s.value === st.searchScope)?.label ?? '全部'}
               <span style={{ display: 'inline-flex', transform: scopeOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
                 <Icon name="chevron-down" size={10} />
               </span>
@@ -362,7 +362,7 @@ export default function TopNav({ st }: TopNavProps) {
               <div
                 id="onyx-search-scope-listbox"
                 role="listbox"
-                aria-label="Search field scope"
+                aria-label="搜索范围"
                 onKeyDown={(event) => handleListboxKey(event, scopeOptionRefs.current, () => setScopeOpen(false), scopeTriggerRef.current)}
                 style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 100, minWidth: 130,
@@ -415,7 +415,7 @@ export default function TopNav({ st }: TopNavProps) {
       {/* User avatar — initial derived from logged-in username, not hardcoded */}
       <button
         onClick={() => { st.setSettingsSection('account'); st.setScreen('settings'); }}
-        title="Account & settings"
+        title="账户与设置"
         style={{
           width: 28, height: 28, borderRadius: '50%',
           background: 'var(--onyx-accent)', color: 'var(--onyx-bg)',

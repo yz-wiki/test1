@@ -74,7 +74,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        title="Jump to chapter"
+        title="跳转到章节"
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
@@ -84,7 +84,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Chapters</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>章节</div>
           <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {chapterCount}
           </div>
@@ -103,7 +103,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
           padding: 6, zIndex: 100, display: 'flex', flexDirection: 'column',
         }}>
           <div style={{ padding: '6px 8px 4px', fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Jump to chapter
+            跳转到章节
           </div>
           <div ref={listRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {chapters.map((c, i) => {
@@ -124,7 +124,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
                     {String(c.n).padStart(2, '0')}
                   </div>
                   <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: chState === 'playing' ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: chState === 'done' ? 'var(--onyx-text-mute)' : chState === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
-                    {c.t || `Chapter ${c.n}`}
+                    {c.t || `第 ${c.n} 章`}
                   </div>
                   {chState === 'done' && (
                     <span style={{ color: 'var(--onyx-text-mute)', flexShrink: 0, display: 'inline-flex' }}>
@@ -162,7 +162,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        title="Change playback speed"
+        title="更改播放倍速"
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
@@ -172,7 +172,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Speed</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>倍速</div>
           <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {st.speed}×
           </div>
@@ -190,7 +190,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
           padding: 6, zIndex: 100, minWidth: 130,
         }}>
           <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>
-            Playback Speed
+            播放倍速
           </div>
           {SPEEDS.map(s => (
             <button
@@ -228,7 +228,7 @@ function CollapseHandle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
   return (
     <button
       onClick={onToggle}
-      title={collapsed ? 'Expand panel' : 'Collapse panel'}
+      title={collapsed ? '展开面板' : '收起面板'}
       style={{
         position: 'absolute', top: 0, bottom: 0, right: -1, width: 22,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -355,7 +355,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
       <CollapseHandle collapsed={false} onToggle={() => st.setFocusCollapsed(true)} />
 
       <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.18em', color: 'var(--onyx-text-mute)', textTransform: 'uppercase', marginBottom: 16 }}>
-        In focus
+        焦点
       </div>
 
       <div onClick={() => openBook(focus.id)} style={{ cursor: 'pointer' }}>
@@ -365,7 +365,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
       {focusSeries && (
         <button
           onClick={() => toggleContext('series', seriesLabel)}
-          title={ctxIs('series', seriesLabel) ? 'Clear series filter' : `Show all books in ${seriesLabel}`}
+          title={ctxIs('series', seriesLabel) ? '清除系列筛选' : `显示 ${seriesLabel} 系列中的全部书`}
           style={{ marginTop: 22, alignSelf: 'flex-start', fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
           {focusSeries}
@@ -380,10 +380,10 @@ export default function FocusPanel({ st }: FocusPanelProps) {
       </div>
 
       <div style={{ marginTop: 8, fontSize: 14, color: 'var(--onyx-text-dim)', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 4px' }}>
-        <span>by</span>
+        <span>作者：</span>
         <button
           onClick={() => toggleContext('author', focusAuthor)}
-          title={ctxIs('author', focusAuthor) ? 'Clear author filter' : `Show all books by ${focusAuthor}`}
+          title={ctxIs('author', focusAuthor) ? '清除作者筛选' : `显示 ${focusAuthor} 的全部作品`}
           style={{
             background: 'none', border: 'none', padding: 0, cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 'inherit',
@@ -395,10 +395,10 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         </button>
         {focusNarrator && (
           <>
-            <span style={{ color: 'var(--onyx-text-mute)' }}>·</span>
+            <span style={{ color: 'var(--onyx-text-mute)' }}>讲述人：</span>
             <button
               onClick={() => toggleContext('narrator', focusNarrator)}
-              title={ctxIs('narrator', focusNarrator) ? 'Clear narrator filter' : `Show all books narrated by ${focusNarrator}`}
+              title={ctxIs('narrator', focusNarrator) ? '清除讲述人筛选' : `显示由 ${focusNarrator} 讲述的全部书`}
               style={{
                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
                 fontFamily: 'inherit', fontSize: 'inherit',
@@ -418,10 +418,10 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           style={{ flex: 1, height: 44, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', border: 'none', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <Icon name={st.playing && st.currentBookId === focus.id ? 'pause' : 'play'} size={14} />
-          {st.playing && st.currentBookId === focus.id ? 'Pause' : 'Play'}
+          {st.playing && st.currentBookId === focus.id ? '暂停' : '播放'}
         </button>
         <button
-          title="Bookmark this moment"
+          title="为此刻添加书签"
           onClick={async () => {
             try {
               const { chapter } = chapterAt(st.currentBookChapters, st.position);
@@ -446,7 +446,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
       </div>
 
       <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-        {Math.round(focusProgress * 100)}% · Ch. {chIdx + 1} / {chapterCount}
+        {Math.round(focusProgress * 100)}% · 第 {chIdx + 1} / {chapterCount} 章
       </div>
 
       <div style={{ marginTop: 14, display: 'flex', gap: 4 }}>
@@ -460,7 +460,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
             color: drawerTab === 'synopsis' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
           }}
         >
-          Synopsis
+          简介
         </button>
         <button
           onClick={() => setDrawerTab('bookmarks')}
@@ -474,7 +474,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           }}
         >
           <Icon name="bookmark" size={9} />
-          Bookmarks{focusBookmarks.length > 0 ? ` (${focusBookmarks.length})` : ''}
+          书签{focusBookmarks.length > 0 ? ` (${focusBookmarks.length})` : ''}
         </button>
       </div>
 
@@ -498,7 +498,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
               ))}
             </div>
           ) : (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '12px 0' }}>No bookmarks yet.</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '12px 0' }}>暂无书签。</div>
           )
         ) : focus.media.metadata.description ? (
           <div
@@ -508,13 +508,13 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           />
         ) : (
           <div style={{ fontFamily: SERIF, fontSize: 13.5, lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 4 }}>
-            No synopsis available.
+            暂无简介。
           </div>
         )}
       </div>
 
       <div style={{ marginTop: 0, paddingTop: 20, borderTop: '1px solid var(--onyx-line)', display: 'flex', gap: 24, overflow: 'visible' }}>
-        <Stat label="Duration" value={bookDur(focus)} />
+        <Stat label="时长" value={bookDur(focus)} />
         <ChaptersStat st={st} chIdx={chIdx} chapterCount={chapterCount} chapters={chapters} />
         <SpeedStat st={st} />
       </div>

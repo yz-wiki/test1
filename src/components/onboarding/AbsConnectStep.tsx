@@ -44,11 +44,11 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
   // calls onConnected() (advance the step) instead of setScreen('library').
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!host.trim()) return setError('A server address is required.');
+    if (!host.trim()) return setError('需要填写服务器地址。');
     const serverUrl = `${scheme}://${host.trim()}`;
 
     if (method === 'apikey') {
-      if (!apiKey.trim()) return setError('An API key is required.');
+      if (!apiKey.trim()) return setError('需要填写 API 密钥。');
       setError(''); setPending(true);
       try {
         const result = await loginWithApiKey(serverUrl, apiKey.trim());
@@ -70,8 +70,8 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
       return;
     }
 
-    if (!user.trim()) return setError('A username is required.');
-    if (!pass)        return setError('A password is required.');
+    if (!user.trim()) return setError('需要填写用户名。');
+    if (!pass)        return setError('需要填写密码。');
     setError(''); setPending(true);
     try {
       const { user: loggedInUser, serverSettings } = await login(serverUrl, user.trim(), pass);
@@ -111,11 +111,11 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
         }}>
           <span style={{ color: 'var(--onyx-accent)', fontSize: 18 }}>✓</span>
           <div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>Connected to your server</div>
+            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>已连接到你的服务器</div>
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(235,231,223,0.5)', marginTop: 2 }}>{st.serverUrl}</div>
           </div>
         </div>
-        <div><GoldButton onClick={onConnected}>Continue</GoldButton></div>
+        <div><GoldButton onClick={onConnected}>继续</GoldButton></div>
       </div>
     );
   }
@@ -134,7 +134,7 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
                 fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase',
                 padding: '5px 16px', cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
               }}
-            >{m === 'password' ? 'Password' : 'API Key'}</button>
+            >{m === 'password' ? '密码' : 'API 密钥'}</button>
           ))}
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* Server URL */}
         <label style={{ display: 'block' }}>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Where is your server?</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>你的服务器在哪里？</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
             <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button type="button" onClick={() => setSchemeOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', color: 'var(--onyx-accent)', fontFamily: SERIF, fontSize: 16, padding: '0 4px 9px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -167,19 +167,19 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
         {method === 'password' ? (
           <>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Username</div>
-              <input className="saga-input" style={underline} value={user} onChange={e => setUser(e.target.value)} placeholder="Username" spellCheck={false} />
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>用户名</div>
+              <input className="saga-input" style={underline} value={user} onChange={e => setUser(e.target.value)} placeholder="用户名" spellCheck={false} />
             </label>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Password</div>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>密码</div>
               <input className="saga-input" style={underline} type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••••" />
             </label>
           </>
         ) : (
           <label style={{ display: 'block' }}>
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Your API key</div>
-            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 4 }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Paste your API key here" spellCheck={false} autoComplete="off" />
-            <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.</div>
+            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>你的 API 密钥</div>
+            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 4 }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="在此粘贴你的 API 密钥" spellCheck={false} autoComplete="off" />
+            <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>可在 Audiobookshelf WebUI 的“设置 → 用户 → API 密钥”中生成密钥。</div>
           </label>
         )}
       </div>
@@ -189,7 +189,7 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
       )}
 
       <div style={{ marginTop: 28 }}>
-        <GoldButton type="submit" busy={pending}>{pending ? 'Connecting…' : 'Connect'}</GoldButton>
+        <GoldButton type="submit" busy={pending}>{pending ? '正在连接…' : '连接'}</GoldButton>
       </div>
     </form>
   );

@@ -51,30 +51,30 @@ function SkaldLogPanel() {
   const fmtTs = (ts: number) => `${new Date(ts).toLocaleTimeString(undefined, { hour12: false })}.${String(ts % 1000).padStart(3, '0')}`;
 
   return (
-    <Panel label="Skald app log">
+    <Panel label="Skald 应用日志">
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
         <select value={minRank} onChange={e => setMinRank(Number(e.target.value))} style={{ ...inputStyle, cursor: 'pointer' }}>
           {SKALD_LEVELS.map(l => <option key={l.value} value={l.rank}>{l.label}+</option>)}
         </select>
         <select value={cat} onChange={e => setCat(e.target.value as LogCategory | 'all')} style={{ ...inputStyle, cursor: 'pointer' }}>
-          {SKALD_CATS.map(c => <option key={c} value={c}>{c === 'all' ? 'All categories' : c}</option>)}
+          {SKALD_CATS.map(c => <option key={c} value={c}>{c === 'all' ? '全部分类' : c}</option>)}
         </select>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="filter text…" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="筛选文本…" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
-          Auto-scroll
+          自动滚动
         </label>
-        <button onClick={() => clearLogBuffer()} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>Clear</button>
+        <button onClick={() => clearLogBuffer()} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>清空</button>
         <button
           onClick={() => {
             if (fullFile !== null) { setFullFile(null); return; }
-            readSkaldLog().then(setFullFile).catch(err => setFullFile(`Failed to read log file: ${String(err)}`));
+            readSkaldLog().then(setFullFile).catch(err => setFullFile(`读取日志文件失败：${String(err)}`));
           }}
           style={{ ...inputStyle, cursor: 'pointer', color: fullFile !== null ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)', borderColor: fullFile !== null ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)' }}
         >
-          {fullFile !== null ? 'Live buffer' : 'Full file'}
+          {fullFile !== null ? '实时缓冲' : '完整文件'}
         </button>
-        <button onClick={() => { void openLogDir(); }} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>Open folder</button>
+        <button onClick={() => { void openLogDir(); }} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>打开文件夹</button>
       </div>
 
       <div
@@ -84,10 +84,10 @@ function SkaldLogPanel() {
       >
         {fullFile !== null ? (
           fullFile.trim() === ''
-            ? <div style={{ color: 'var(--onyx-text-mute)' }}>Log file is empty.</div>
+            ? <div style={{ color: 'var(--onyx-text-mute)' }}>日志文件为空。</div>
             : <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--onyx-text)' }}>{fullFile}</pre>
         ) : filtered.length === 0 ? (
-          <div style={{ color: 'var(--onyx-text-mute)' }}>No log entries this session.</div>
+          <div style={{ color: 'var(--onyx-text-mute)' }}>本次会话没有日志条目。</div>
         ) : filtered.map((e, i) => (
           <div key={i} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <span style={{ color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{fmtTs(e.ts)}</span>
@@ -100,8 +100,8 @@ function SkaldLogPanel() {
 
       <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 12, paddingBottom: 4 }}>
         {fullFile !== null
-          ? 'Showing the on-disk log file (skald.log).'
-          : `Showing ${filtered.length} of ${entries.length} buffered (current session). The full history is in the log file.`}
+          ? '正在显示磁盘上的日志文件（skald.log）。'
+          : `正在显示缓冲区中的 ${filtered.length} / ${entries.length} 条日志（当前会话）。完整历史记录在日志文件中。`}
       </div>
     </Panel>
   );
@@ -208,25 +208,25 @@ function LogsSectionInner({ st }: LogsSectionProps) {
 
   return (
     <div>
-      <SectionHead title="Logs" subtitle="Server and Skald app logs for diagnosing failures. Admin only." />
+      <SectionHead title="日志" subtitle="用于排查故障的服务器与 Skald 应用日志。仅管理员可用。" />
 
       {/* Source switcher: Audiobookshelf server log vs Skald's own app log */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-        <Seg active={subtab === 'server'} onClick={() => switchSubtab('server')}>Server</Seg>
+        <Seg active={subtab === 'server'} onClick={() => switchSubtab('server')}>服务器</Seg>
         <Seg active={subtab === 'skald'} onClick={() => switchSubtab('skald')}>Skald</Seg>
       </div>
 
       {subtab === 'skald' && <SkaldLogPanel />}
 
       {subtab === 'server' && (
-      <Panel label="Server log">
+      <Panel label="服务器日志">
       {/* Controls */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
         <select
           value={minLevel}
           onChange={e => setMinLevel(Number(e.target.value))}
           disabled={fatalOnly}
-          title={fatalOnly ? 'Disabled while FATAL only is active' : undefined}
+          title={fatalOnly ? '启用“仅 FATAL”时不可用' : undefined}
           style={{ ...inputStyle, cursor: fatalOnly ? 'default' : 'pointer', opacity: fatalOnly ? 0.5 : 1 }}
         >
           {LOGGER_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}+</option>)}
@@ -235,7 +235,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
             crash-log endpoint, so these surface via the normal daily log). */}
         <button
           onClick={() => setFatalOnly(v => !v)}
-          title="Show only FATAL (crash-level) entries"
+          title="仅显示 FATAL（崩溃级别）条目"
           style={{
             ...inputStyle, cursor: 'pointer',
             background: fatalOnly ? 'var(--onyx-accent-dim)' : 'var(--onyx-panel2)',
@@ -244,38 +244,38 @@ function LogsSectionInner({ st }: LogsSectionProps) {
             fontWeight: fatalOnly ? 600 : 400,
           }}
         >
-          FATAL only
+          仅 FATAL
         </button>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="filter text…"
+          placeholder="筛选文本…"
           style={{ ...inputStyle, flex: 1, minWidth: 160 }}
         />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
-          Auto-scroll
+          自动滚动
         </label>
         <button
           onClick={() => setLogs([])}
           style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}
         >
-          Clear
+          清空
         </button>
       </div>
 
       {!liveSyncOn && (
         <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', padding: '0 0 10px', lineHeight: 1.5 }}>
-          Live tail is off — showing the current day's recent log only. Enable live sync (Settings → Server) to stream new lines.
+          实时日志已关闭——仅显示当天最近的部分日志。启用实时同步（设置 → 服务器）即可流式查看新增日志行。
         </div>
       )}
 
       {loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>Loading logs…</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>正在加载日志…</div>
       )}
       {error && !loading && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-          Couldn't load logs: {error}
+          无法加载日志：{error}
         </div>
       )}
 
@@ -291,7 +291,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
           }}
         >
           {filtered.length === 0 && (
-            <div style={{ color: 'var(--onyx-text-mute)' }}>No log entries match.</div>
+            <div style={{ color: 'var(--onyx-text-mute)' }}>没有匹配的日志条目。</div>
           )}
           {filtered.map((l, i) => (
             <div key={`${l.timestamp}-${i}`} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={l.source}>
@@ -304,7 +304,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
       )}
 
       <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 12, paddingBottom: 4 }}>
-        Showing {filtered.length} of {logs.length} buffered. Log level and retention are configured in Settings → Server → Logging.
+        正在显示缓冲中的 {filtered.length} / {logs.length} 条日志。日志级别与保留策略在“设置 → 服务器 → 日志记录”中配置。
       </div>
       </Panel>
       )}

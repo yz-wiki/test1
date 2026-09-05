@@ -6,6 +6,9 @@ import { USER_PALETTE } from './helpers';
 /** Mono pill badge for account type. Brass-tinted for admin/root, muted for user/guest. */
 export function TypeBadge({ type }: { type: string }) {
   const brass = type === 'root' || type === 'admin';
+  // Account-type values are server data (compared/stored verbatim), so only the
+  // rendered label is localised; unknown values fall back to the raw type.
+  const label = { root: '超级管理员', admin: '管理员', user: '用户', guest: '访客' }[type] ?? type;
   return (
     <span style={{
       fontFamily: MONO,
@@ -19,7 +22,7 @@ export function TypeBadge({ type }: { type: string }) {
       border: `1px solid ${brass ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.24)' : 'rgba(255,255,255,0.08)'}`,
       whiteSpace: 'nowrap' as const,
     }}>
-      {type}
+      {label}
     </span>
   );
 }
@@ -86,7 +89,7 @@ export function UserAvatar({ color, initial, online, onClick }: {
   return (
     <button
       onClick={onClick}
-      title="Change colour"
+      title="更改颜色"
       style={{
         width: 34, height: 34, borderRadius: 9, flexShrink: 0, padding: 0, cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -152,7 +155,7 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
             style={{ position: 'absolute', inset: -4, width: 'calc(100% + 8px)', height: 'calc(100% + 8px)', border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
           />
         </label>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Custom</span>
+        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>自定义</span>
         <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-dim)', marginLeft: 'auto', textTransform: 'uppercase' }}>{value}</span>
       </div>
     </div>

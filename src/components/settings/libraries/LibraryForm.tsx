@@ -58,15 +58,15 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
   }
 
   async function handleSubmit() {
-    if (!form.name.trim()) return setError('Name is required.');
+    if (!form.name.trim()) return setError('需要填写名称。');
     const validFolders = form.folders.filter(p => p.trim());
-    if (!validFolders.length) return setError('At least one folder path is required.');
+    if (!validFolders.length) return setError('至少需要一个文件夹路径。');
     setError('');
     setSaving(true);
     try {
       await onSubmit({ ...form, folders: validFolders });
     } catch (e) {
-      setError(typeof e === 'string' ? e : (e as Error)?.message ?? 'An error occurred.');
+      setError(typeof e === 'string' ? e : (e as Error)?.message ?? '发生错误。');
       setSaving(false);
     }
   }
@@ -74,10 +74,18 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
   const providers = [
     ...(form.mediaType === 'podcast' ? LIBRARY_PROVIDERS_PODCAST : LIBRARY_PROVIDERS_BOOK).map(v => ({ value: v, label: v })),
     // Append registered custom providers for this media type (slug = custom-{id}).
-    ...customProviders.filter(p => p.mediaType === form.mediaType).map(p => ({ value: p.slug, label: `${p.name} (custom)` })),
+    ...customProviders.filter(p => p.mediaType === form.mediaType).map(p => ({ value: p.slug, label: `${p.name}（自定义）` })),
   ];
 
-  const iconOptions = LIBRARY_ICONS.map(v => ({ value: v, label: `${iconEmoji(v)}  ${v}` }));
+  // Icon slugs are stored verbatim; only their rendered labels are translated.
+  const ICON_LABEL: Record<string, string> = {
+    database: '数据库', book: '书籍', audiobook: '有声书', podcast: '播客', music: '音乐',
+    comic: '漫画', manga: '日漫', paper: '图书', magazine: '杂志', pirate: '海盗',
+    'crystal-ball': '水晶球', alien: '外星人', astronaut: '宇航员', cat: '猫', dog: '狗',
+    heart: '爱心', star: '星星', moon: '月亮',
+  };
+
+  const iconOptions = LIBRARY_ICONS.map(v => ({ value: v, label: `${iconEmoji(v)}  ${ICON_LABEL[v] ?? v}` }));
 
   // Label + content row reused throughout the form.
   const fRow = (label: string, content: ReactNode) => (
@@ -98,11 +106,11 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
   return (
     <div style={{ padding: '18px 20px', background: 'rgba(0,0,0,0.18)' }}>
 
-      {fRow('Name', (
-        <Field value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="Library name" />
+      {fRow('名称', (
+        <Field value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="书库名称" />
       ))}
 
-      {!lockMediaType && fRow('Media type', (
+      {!lockMediaType && fRow('媒体类型', (
         <div style={{ display: 'flex', gap: 6 }}>
           {(['book', 'podcast'] as const).map(mt => (
             <button
@@ -116,16 +124,16 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
                 fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em',
                 cursor: 'pointer', fontWeight: form.mediaType === mt ? 600 : 400,
               }}
-            >{mt}</button>
+            >{mt === 'book' ? '有声书' : '播客'}</button>
           ))}
         </div>
       ))}
 
-      {fRow('Icon', (
+      {fRow('图标', (
         <SelectInput value={form.icon} onChange={v => setForm(f => ({ ...f, icon: v }))} options={iconOptions} />
       ))}
 
-      {fRow('Provider', (
+      {fRow('提供方', (
         <SelectInput value={form.provider} onChange={v => setForm(f => ({ ...f, provider: v }))} options={providers} />
       ))}
 
@@ -136,7 +144,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
             flex: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            Folders
+            文件夹
           </div>
           <button
             onClick={addFolder}
@@ -145,7 +153,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.06em',
             }}
           >
-            + Add Folder
+            + 添加文件夹
           </button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -154,7 +162,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               <Field value={fp} onChange={v => updateFolder(i, v)} placeholder="/path/to/folder" mono />
               <button
                 onClick={() => browseFolder(i)}
-                title="Browse server filesystem"
+                title="浏览服务器文件系统"
                 style={{
                   flexShrink: 0, padding: '7px 10px',
                   background: 'rgba(255,255,255,0.05)',
@@ -164,12 +172,12 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
                   cursor: 'pointer', whiteSpace: 'nowrap',
                 }}
               >
-                Browse…
+                浏览…
               </button>
               {form.folders.length > 1 && (
                 <button
                   onClick={() => removeFolder(i)}
-                  title="Remove folder"
+                  title="移除文件夹"
                   style={{
                     width: 28, height: 28, flexShrink: 0, background: 'transparent',
                     border: 'none', color: 'var(--onyx-text-mute)', cursor: 'pointer',
@@ -189,31 +197,31 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
         marginTop: 14, marginBottom: 4, fontFamily: MONO, fontSize: 9,
         color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase',
       }}>
-        Settings
+        设置
       </div>
 
-      {fRow('File watcher', (
+      {fRow('文件监视', (
         <OnOff on={form.watcherEnabled} onChange={v => setForm(f => ({ ...f, watcherEnabled: v }))} />
       ))}
 
-      {form.mediaType === 'book' && fRow('Audiobooks only', (
+      {form.mediaType === 'book' && fRow('仅有声书', (
         <OnOff on={form.audiobooksOnly} onChange={v => setForm(f => ({ ...f, audiobooksOnly: v }))} />
       ))}
 
-      {form.mediaType === 'book' && fRow('Hide 1-book series', (
+      {form.mediaType === 'book' && fRow('隐藏单本系列', (
         <OnOff on={form.hideSingleBookSeries} onChange={v => setForm(f => ({ ...f, hideSingleBookSeries: v }))} />
       ))}
 
-      {fRow('Auto-scan cron', (
+      {fRow('自动扫描计划', (
         <Field
           value={form.autoScanCron}
           onChange={v => setForm(f => ({ ...f, autoScanCron: v }))}
-          placeholder="0 2 * * *  (leave blank to disable)"
+          placeholder="0 2 * * *  （留空以禁用）"
           mono
         />
       ))}
 
-      {fRow('Mark finished at', (
+      {fRow('判定听完', (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             value={form.markFinishedPercent}
@@ -225,7 +233,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               outline: 'none', textAlign: 'center',
             }}
           />
-          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>% complete  or</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>% 完成  或</span>
           <input
             value={form.markFinishedRemaining}
             onChange={e => setForm(f => ({ ...f, markFinishedRemaining: e.target.value }))}
@@ -236,7 +244,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               outline: 'none', textAlign: 'center',
             }}
           />
-          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>s remaining</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>秒剩余</span>
         </div>
       ))}
 
@@ -245,9 +253,9 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-        <SmallBtn muted onClick={onCancel}>Cancel</SmallBtn>
+        <SmallBtn muted onClick={onCancel}>取消</SmallBtn>
         <SmallBtn onClick={handleSubmit} disabled={saving}>
-          {saving ? 'Saving…' : submitLabel}
+          {saving ? '保存中…' : submitLabel}
         </SmallBtn>
       </div>
 

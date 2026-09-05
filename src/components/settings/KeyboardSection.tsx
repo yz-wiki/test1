@@ -6,12 +6,12 @@ import { SectionHead, MONO, SERIF, Panel } from './shared';
 import { log } from '../../lib/log';
 
 const ACTION_LABELS: Record<string, string> = {
-  play_pause:   'Play / Pause',
-  skip_forward: 'Skip Forward',
-  skip_back:    'Skip Back',
-  volume_up:    'Volume Up',
-  volume_down:  'Volume Down',
-  mute:         'Mute',
+  play_pause:   '播放 / 暂停',
+  skip_forward: '快进',
+  skip_back:    '快退',
+  volume_up:    '音量增大',
+  volume_down:  '音量减小',
+  mute:         '静音',
 };
 
 function loadBindings(): ShortcutBinding[] {
@@ -68,7 +68,7 @@ function ShortcutChord({ shortcut, active }: { shortcut: string; active: boolean
   if (active) {
     return (
       <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)', letterSpacing: '0.06em' }}>
-        Press a key combination…
+        按下组合键…
       </span>
     );
   }
@@ -140,16 +140,16 @@ export default function KeyboardSection() {
 
   return (
     <div>
-      <SectionHead title="Keyboard" subtitle="Global shortcuts — work even when Skald is in the background." />
+      <SectionHead title="键盘" subtitle="全局快捷键——即使 Skald 在后台也能生效。" />
 
-      <Panel label="Global shortcuts">
+      <Panel label="全局快捷键">
         {bindings.map(b => {
           const isListening = listeningFor === b.action;
           return (
             <div
               key={b.action}
               onClick={() => setListeningFor(isListening ? null : b.action)}
-              title={isListening ? 'Press Escape to cancel' : 'Click to remap'}
+              title={isListening ? '按 Esc 取消' : '点击以重新设置'}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
                 cursor: 'pointer', transition: 'background 0.1s',
@@ -165,7 +165,7 @@ export default function KeyboardSection() {
                 {ACTION_LABELS[b.action] ?? b.action}
               </span>
               <ShortcutChord shortcut={b.shortcut} active={isListening} />
-              {isListening && <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>Press a key · {secondsRemaining}s</span>}
+              {isListening && <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>按下按键 · {secondsRemaining}s</span>}
             </div>
           );
         })}
@@ -173,7 +173,7 @@ export default function KeyboardSection() {
         {/* Footer: system-wide note + reset */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 2px 6px' }}>
           <span style={{ fontSize: 12, color: 'var(--onyx-text-mute)', lineHeight: 1.4 }}>
-            Shortcuts are registered system-wide and may conflict with other apps.
+            快捷键在系统范围内注册，可能与其他应用冲突。
           </span>
           <button
             onClick={resetDefaults}
@@ -191,7 +191,7 @@ export default function KeyboardSection() {
               textTransform: 'uppercase' as const,
             }}
           >
-            Reset to defaults
+            恢复默认设置
           </button>
         </div>
       </Panel>

@@ -44,7 +44,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
   // Title/subtitle/eyebrow differ for books vs podcast episodes.
   let title: string;
   let subtitle: string;
-  let eyebrow = 'Now Playing';
+  let eyebrow = '正在播放';
   if (isPodcast) {
     title = ep!.title || bookTitle(item);
     subtitle = asPodcastItem(item).media?.metadata?.title ?? '';
@@ -52,7 +52,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
     const chapters = item.media?.chapters ?? [];
     const curChapter = chapters.find(c => st.position >= c.start && st.position < c.end) ?? null;
     const chapterNum = curChapter ? chapters.indexOf(curChapter) + 1 : 0;
-    eyebrow = chapterNum ? `Now Playing · Ch. ${chapterNum}` : 'Now Playing';
+    eyebrow = chapterNum ? `正在播放 · 第 ${chapterNum} 章` : '正在播放';
     title = bookTitle(item);
     subtitle = curChapter?.title || bookAuthor(item) || '';
   }
@@ -104,8 +104,8 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <button
           onClick={returnToNowPlaying}
-          aria-label={`Return to now playing: ${title}`}
-          title="Return to now playing"
+          aria-label={`返回正在播放：${title}`}
+          title="返回正在播放"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, lineHeight: 0 }}
         >
           <Cover item={item} size={40} serverUrl={st.serverUrl} style={{ borderRadius: 6 }} fallbackImageUrl={fallbackImageUrl} />
@@ -146,13 +146,13 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         }}
         role="slider"
         tabIndex={0}
-        aria-label={`Seek in ${title}`}
+        aria-label={`在 ${title} 中定位`}
         aria-valuemin={0}
         aria-valuemax={Math.max(0, st.bookSecs)}
         aria-valuenow={Math.max(0, Math.min(st.position, st.bookSecs))}
-        aria-valuetext={`${fmtTime(st.position)} of ${fmtTime(st.bookSecs)}`}
+        aria-valuetext={`${fmtTime(st.position)} / ${fmtTime(st.bookSecs)}`}
         style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}
-        title="Seek"
+        title="定位"
       >
         {Array.from({ length: BARS }).map((_, i) => (
           <div key={i} style={{
@@ -172,7 +172,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         </div>
         <button
           onClick={() => togglePlayback(st)} // togglePlayback syncs st.playing immediately
-          aria-label={playing ? 'Pause' : 'Play'}
+          aria-label={playing ? '暂停' : '播放'}
           style={{
             width: 40, height: 40, borderRadius: 20, flexShrink: 0,
             background: 'var(--onyx-accent)', border: 'none',
@@ -180,7 +180,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
             cursor: 'pointer', color: 'var(--onyx-bg)',
             boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
           }}
-          title={playing ? 'Pause' : 'Play'}
+          title={playing ? '暂停' : '播放'}
         >
           <Icon name={playing ? 'pause' : 'play'} size={16} />
         </button>

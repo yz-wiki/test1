@@ -111,8 +111,8 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
             </div>
             <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
             <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-              Let us<br />ready the{' '}
-              <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>hall</span>.
+              让我们<br />备好{' '}
+              <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>殿堂</span>。
             </div>
           </div>
 
@@ -125,9 +125,9 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
           </div>
 
           <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, lineHeight: 1.55, color: 'rgba(235,231,223,0.62)', maxWidth: 200 }}>
-            "First we set the table; then the telling begins."
+            “先设好案席，故事方才开场。”
             <div style={{ fontStyle: 'normal', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.38)', marginTop: 14 }}>
-              — the keeper's note
+              ——守卷人之语
             </div>
           </div>
         </div>

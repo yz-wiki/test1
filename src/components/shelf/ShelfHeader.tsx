@@ -20,25 +20,25 @@ const MONO = "'JetBrains Mono', ui-monospace, monospace";
 // Core tabs are always shown; optional ones are toggled in Settings → Library →
 // Display (st.optionalTabs), defaulting off to keep the bar short.
 const TABS: { id: string; label: string; optional?: boolean }[] = [
-  { id: 'library',     label: 'Home'        },
-  { id: 'recently-added', label: 'Recently Added' },
-  { id: 'series',      label: 'Series'      },
-  { id: 'authors',     label: 'Authors'     },
-  { id: 'narrators',   label: 'Narrators',   optional: true },
-  { id: 'genres',      label: 'Genres',      optional: true },
-  { id: 'publishers',  label: 'Publishers',  optional: true },
-  { id: 'collections', label: 'Collections' },
-  { id: 'playlists',   label: 'Playlists',   optional: true },
+  { id: 'library',     label: '首页'        },
+  { id: 'recently-added', label: '最近添加' },
+  { id: 'series',      label: '系列'      },
+  { id: 'authors',     label: '作者'     },
+  { id: 'narrators',   label: '讲述人',   optional: true },
+  { id: 'genres',      label: '类型',      optional: true },
+  { id: 'publishers',  label: '出版社',  optional: true },
+  { id: 'collections', label: '合集' },
+  { id: 'playlists',   label: '播放列表',   optional: true },
 ];
 
 // The optional tab ids — shared with the settings toggles and the fallback guard.
 export const OPTIONAL_TAB_IDS = ['narrators', 'genres', 'publishers', 'playlists'] as const;
 
 const FILTER_PILLS = [
-  { id: 'all',      l: 'All'      },
-  { id: 'reading',  l: 'Reading'  },
-  { id: 'unread',   l: 'Unread'   },
-  { id: 'finished', l: 'Finished' },
+  { id: 'all',      l: '全部'      },
+  { id: 'reading',  l: '收听中'  },
+  { id: 'unread',   l: '未开始'   },
+  { id: 'finished', l: '已听完' },
 ];
 
 // Extract series name from the full series object (preferred) or fall back to the flat seriesName string.
@@ -188,39 +188,39 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
     switch (st.shelfTab) {
       case 'recently-added': {
         const n = recentlyAddedItems(st.library).length;
-        return `${n} recently added title${n === 1 ? '' : 's'}`;
+        return `最近添加 ${n} 本`;
       }
       case 'series': {
         // Prefer the canonical count from the series endpoint; fall back to the
         // library-derived estimate only while that fetch is still in flight.
         const canonical = seriesCount?.libraryId === st.currentLibraryId ? seriesCount.count : null;
         const n = canonical ?? new Set(st.library.map(b => seriesNameOf(b)).filter(Boolean)).size;
-        return `${n} series`;
+        return `${n} 个系列`;
       }
       case 'authors': {
         const n = new Set(st.library.map(b => bookAuthor(b)).filter(Boolean)).size;
-        return `${n} authors`;
+        return `${n} 位作者`;
       }
       case 'narrators': {
         const n = new Set(st.library.map(b => bookNarrator(b)).filter(Boolean)).size;
-        return `${n} narrators`;
+        return `${n} 位讲述人`;
       }
       case 'genres': {
         const set = new Set<string>();
         st.library.forEach(b => bookGenres(b).forEach(g => { if (g) set.add(g); }));
-        return `${set.size} genres`;
+        return `${set.size} 个类型`;
       }
       case 'publishers': {
         const n = new Set(st.library.map(b => bookPublisher(b)).filter(Boolean)).size;
-        return `${n} publishers`;
+        return `${n} 家出版社`;
       }
       case 'collections':
-        return 'collections';
+        return '合集';
       case 'playlists':
-        return 'playlists';
+        return '播放列表';
       default: {
-        let t = `${filtered.length} title${filtered.length === 1 ? '' : 's'}`;
-        if (st.search) t += ` matching "${st.search}"`;
+        let t = `${filtered.length} 本`;
+        if (st.search) t += `匹配“${st.search}”`;
         return t;
       }
     }
@@ -246,7 +246,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
             <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {/* Always show "The shelf" — active filter is indicated by the pill row below */}
-              The shelf
+              书架
             </div>
           </div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -257,7 +257,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
               action set reads as a boundary rather than a missing feature. */}
           {isAllLibraries && (
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-              Search and play across sources · organize books from their source library
+              跨来源搜索与播放 · 在来源书库中管理藏书
             </div>
           )}
           {/* Context filter pill — own row beneath the shelf title, left-aligned */}
@@ -371,8 +371,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
           color: '#d4834a',
         }}>
           <span>
-            Showing {st.allLibrariesPartial.loaded} of {st.allLibrariesPartial.total} libraries
-            {' — '}{st.allLibrariesPartial.failedNames.join(', ')} unavailable
+            已加载 {st.allLibrariesPartial.loaded} / {st.allLibrariesPartial.total} 个书库，{st.allLibrariesPartial.failedNames.join('、')} 不可用
           </span>
           <button
             onClick={() => { void st.setActiveLibrary(st.currentLibraryId); }}
@@ -381,10 +380,10 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
               background: 'rgba(212,131,74,0.14)', border: '1px solid rgba(212,131,74,0.4)',
               color: '#d4834a', fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
             }}
-          >Retry</button>
+          >重试</button>
           <button
             onClick={() => st.dismissAllLibrariesPartial()}
-            aria-label="Dismiss"
+            aria-label="忽略"
             style={{
               padding: '3px 8px', borderRadius: 999, cursor: 'pointer',
               background: 'transparent', border: '1px solid transparent',

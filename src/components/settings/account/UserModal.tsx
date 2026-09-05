@@ -112,8 +112,8 @@ export default function UserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Validate required fields before making the network call.
-    if (!username.trim()) return setError('Username is required.');
-    if (!isEdit && !password) return setError('Password is required.');
+    if (!username.trim()) return setError('需要填写用户名。');
+    if (!isEdit && !password) return setError('需要填写密码。');
     setError('');
     setPending(true);
     try {
@@ -221,12 +221,12 @@ export default function UserModal({
         {/* Identity — username + password side by side */}
         <div style={twoCol}>
           <div>
-            <div style={fieldLabel}>Username</div>
+            <div style={fieldLabel}>用户名</div>
             <input
               style={fieldInput}
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="username"
+              placeholder="用户名"
               spellCheck={false}
               // Auto-focus the first field when the modal opens.
               autoFocus
@@ -234,14 +234,14 @@ export default function UserModal({
           </div>
           <div>
             <div style={fieldLabel}>
-              Password
+              密码
               {/* Show the "optional" hint only in edit mode. */}
               {isEdit && (
                 <span style={{
                   fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)',
                   marginLeft: 8, letterSpacing: '0.04em', textTransform: 'none', fontWeight: 400,
                 }}>
-                  leave blank to keep existing
+                  留空则保留现有密码
                 </span>
               )}
             </div>
@@ -257,7 +257,7 @@ export default function UserModal({
 
         {/* Email — full width */}
         <div>
-          <div style={fieldLabel}>Email <span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>(optional)</span></div>
+          <div style={fieldLabel}>邮箱 <span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>（可选）</span></div>
           <input
             style={fieldInput}
             type="email"
@@ -271,42 +271,42 @@ export default function UserModal({
         {/* Account type + enable, side by side */}
         <div style={twoCol}>
           <div>
-            <div style={fieldLabel}>Account type</div>
+            <div style={fieldLabel}>账户类型</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <Pill active={userType === 'user'} onClick={() => setUserType('user')}>user</Pill>
               <Pill active={userType === 'admin'} onClick={() => setUserType('admin')}>admin</Pill>
             </div>
           </div>
           <div>
-            <div style={fieldLabel}>Enabled</div>
+            <div style={fieldLabel}>启用</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 30 }}>
               <PermToggle on={enable} onChange={setEnable} />
-              <span style={{ fontSize: 12, color: 'var(--onyx-text-dim)' }}>{enable ? 'Account active' : 'Account disabled'}</span>
+              <span style={{ fontSize: 12, color: 'var(--onyx-text-dim)' }}>{enable ? '账户已启用' : '账户已停用'}</span>
             </div>
           </div>
         </div>
 
         {/* ── Permissions (shown for both add + edit) — two columns of toggles ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 8, borderTop: '1px solid var(--onyx-line)' }}>
-          <div style={fieldLabel}>Permissions</div>
+          <div style={fieldLabel}>权限</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28, rowGap: 13 }}>
-            <PermRow label="Can Download"                on={canDownload}        onChange={setCanDownload} />
-            <PermRow label="Can Update"                  on={canUpdate}          onChange={setCanUpdate} />
-            <PermRow label="Can Delete"                  on={canDelete}          onChange={setCanDelete} />
-            <PermRow label="Can Upload"                  on={canUpload}          onChange={setCanUpload} />
-            <PermRow label="Can Create Ereader"          on={canCreateEreader}   onChange={setCanCreateEreader} />
-            <PermRow label="Can Access Explicit Content" on={accessExplicit}     onChange={setAccessExplicit} />
-            <PermRow label="Can Access All Libraries"    on={accessAllLibraries} onChange={setAccessAllLibraries} />
-            <PermRow label="Can Access All Tags"         on={accessAllTags}      onChange={setAccessAllTags} />
+            <PermRow label="可下载"                      on={canDownload}        onChange={setCanDownload} />
+            <PermRow label="可更新"                      on={canUpdate}          onChange={setCanUpdate} />
+            <PermRow label="可删除"                      on={canDelete}          onChange={setCanDelete} />
+            <PermRow label="可上传"                      on={canUpload}          onChange={setCanUpload} />
+            <PermRow label="可创建电子阅读器"            on={canCreateEreader}   onChange={setCanCreateEreader} />
+            <PermRow label="可访问露骨内容"              on={accessExplicit}     onChange={setAccessExplicit} />
+            <PermRow label="可访问全部书库"              on={accessAllLibraries} onChange={setAccessAllLibraries} />
+            <PermRow label="可访问全部标签"              on={accessAllTags}      onChange={setAccessAllTags} />
           </div>
 
           {/* Library picker — shown when access-all is off (full width, 2-col list). */}
           {!accessAllLibraries && (
             <div style={pickerBox}>
-              <div style={fieldLabel}>Accessible libraries</div>
+              <div style={fieldLabel}>可访问的书库</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 20px', maxHeight: 150, overflowY: 'auto' }}>
-                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>No libraries found.</div>}
+                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>未找到书库。</div>}
                 {libraries.map(lib => (
                   <label key={lib.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
                     <input type="checkbox" style={{ accentColor: 'var(--onyx-accent)' }} checked={librariesAccessible.includes(lib.id)} onChange={() => setLibrariesAccessible(prev => toggleInArray(prev, lib.id))} />
@@ -321,13 +321,13 @@ export default function UserModal({
               plus the selectable tag chips. */}
           {!accessAllTags && (
             <div style={pickerBox}>
-              <div style={fieldLabel}>Accessible tags</div>
+              <div style={fieldLabel}>可访问的标签</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>only selected</Pill>
-                <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>all except</Pill>
+                <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>仅所选</Pill>
+                <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>除所选外</Pill>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 150, overflowY: 'auto' }}>
-                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>No tags in the loaded library.</div>}
+                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>当前书库中没有标签。</div>}
                 {availableTags.map(tag => {
                   const on = itemTagsSelected.includes(tag);
                   return (
@@ -370,7 +370,7 @@ export default function UserModal({
               cursor: 'pointer',
             }}
           >
-            Cancel
+            取消
           </button>
           <button
             type="submit"
@@ -391,7 +391,7 @@ export default function UserModal({
             }}
           >
             {/* Label changes to show progress while the request is in flight. */}
-            {pending ? (isEdit ? 'Saving…' : 'Creating…') : (isEdit ? 'Save' : 'Create')}
+            {pending ? (isEdit ? '保存中…' : '创建中…') : (isEdit ? '保存' : '创建')}
           </button>
         </div>
       </form>

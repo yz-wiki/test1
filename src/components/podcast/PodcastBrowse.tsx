@@ -32,6 +32,12 @@ export interface PodcastBrowseProps {
 
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
 
+// Feed sort keys are also the persisted localStorage value — keep the keys as-is
+// and only translate the pill labels rendered from them.
+const EPISODE_SORT_LABEL: Record<'newest' | 'oldest' | 'title', string> = {
+  newest: '最新', oldest: '最早', title: '标题',
+};
+
 // Stored cover URL a podcast item already carries (imageUrl, or raw-feed `image`).
 function directImage(it: LibraryItem): string | undefined {
   const m = (it.media?.metadata ?? {}) as unknown as Record<string, unknown>;
@@ -45,7 +51,7 @@ function podcastGenres(it: LibraryItem): string[] {
 function episodeDate(ep: RecentEpisode): string {
   const d = ep.publishedAt ? new Date(ep.publishedAt) : ep.pubDate ? new Date(ep.pubDate) : null;
   if (!d || isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 // Sort key — milliseconds since epoch from publishedAt or the RSS pubDate.
@@ -257,7 +263,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       st.setScreen('player');
     } catch (e) {
       log.error('playback', 'playEpisode failed', { itemId: pid, episodeId: ep.id, err: String(e) });
-      st.setToast({ message: 'Could not start episode', type: 'error' });
+      st.setToast({ message: '无法开始播放该单集', type: 'error' });
     }
   };
 
@@ -277,7 +283,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
     <button
       onClick={() => setShowSubscribe(true)}
       style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--onyx-glass-edge)', cursor: 'pointer', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600 }}
-    >+ Subscribe</button>
+    >+ 订阅</button>
   );
 
   const modal = showSubscribe && st.activeLibrary && (
@@ -293,12 +299,12 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>0 PODCASTS</div>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>0 个播客</div>
           <div style={{ flex: 1 }} />{subscribeBtn}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 13, letterSpacing: '0.06em', gap: 8 }}>
-          <div>No podcasts in this library yet.</div>
-          <div style={{ fontSize: 11, opacity: 0.7 }}>Use Subscribe to add one by RSS feed or OPML import.</div>
+          <div>此书库中还没有播客。</div>
+          <div style={{ fontSize: 11, opacity: 0.7 }}>点击“订阅”，可通过 RSS 订阅源或 OPML 导入添加播客。</div>
         </div>
         {modal}
       </div>
@@ -310,13 +316,13 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>
-          {st.library.length} PODCAST{st.library.length === 1 ? '' : 'S'}
+          {st.library.length} 个播客
         </div>
         {/* All filter — small pill (replaces the old full-size carousel tile) so
             the covers lead. Active when no single podcast is selected. */}
         <button
           onClick={() => setSelectedId(null)}
-          title="Show all podcasts"
+          title="显示全部播客"
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
             background: selectedId === null ? 'var(--onyx-accent-dim)' : 'rgba(0,0,0,0.3)',
@@ -325,7 +331,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
             fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em',
           }}
         >
-          <Icon name="grid" size={12} /> All
+          <Icon name="grid" size={12} /> 全部
         </button>
         {/* Genre filter for the carousel */}
         {genres.length > 0 && (
@@ -340,11 +346,11 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
                 fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em',
               }}
             >
-              {genre ?? 'All genres'} <Icon name="chevron-down" size={12} />
+              {genre ?? '全部类型'} <Icon name="chevron-down" size={12} />
             </button>
             {genreOpen && (
               <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50, minWidth: 160, maxHeight: 280, overflowY: 'auto', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', padding: 4 }}>
-                <button onClick={() => { setGenre(null); setGenreOpen(false); }} style={genreItemStyle(genre === null)}>All genres</button>
+                <button onClick={() => { setGenre(null); setGenreOpen(false); }} style={genreItemStyle(genre === null)}>全部类型</button>
                 {genres.map(g => (
                   <button key={g} onClick={() => { setGenre(g); setGenreOpen(false); }} style={genreItemStyle(genre === g)}>{g}</button>
                 ))}
@@ -374,7 +380,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
               onClick={() => setSelectedId(prev => prev === it.id ? null : it.id)}
               onDoubleClick={() => openDetail(it.id)}
               onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, item: it }); }}
-              title={`${asPodcastItem(it).media?.metadata?.title ?? ''} — click to filter, double-click to open, right-click for options`}
+              title={`${asPodcastItem(it).media?.metadata?.title ?? ''} — 单击筛选，双击打开，右键更多选项`}
               className="onyx-poster"
               style={{
                 flexShrink: 0, width: coverPx, height: coverPx, borderRadius: 8, cursor: 'pointer', padding: 0, overflow: 'hidden',
@@ -390,17 +396,17 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       {/* Episode feed header — shows the active filter + a way into the detail */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 10 }}>
         <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          {selectedPodcast ? (asPodcastItem(selectedPodcast).media?.metadata?.title ?? 'Episodes') : 'Latest Episodes'}
+          {selectedPodcast ? (asPodcastItem(selectedPodcast).media?.metadata?.title ?? '单集') : '最新单集'}
         </div>
         <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>{mergedEpisodes.length}</div>
         {selectedPodcast && (
           <button onClick={() => openDetail(selectedPodcast.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em' }}>
-            open podcast →
+            打开播客 →
           </button>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {(['newest', 'oldest', 'title'] as const).map(sort => (
-            <button key={sort} onClick={() => { setEpisodeSort(sort); localStorage.setItem('onyx.podcast.episodeSort', sort); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: episodeSort === sort ? 'var(--onyx-accent-dim)' : 'transparent', color: episodeSort === sort ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', cursor: 'pointer', fontFamily: MONO, fontSize: 9, textTransform: 'uppercase' }}>{sort}</button>
+            <button key={sort} onClick={() => { setEpisodeSort(sort); localStorage.setItem('onyx.podcast.episodeSort', sort); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: episodeSort === sort ? 'var(--onyx-accent-dim)' : 'transparent', color: episodeSort === sort ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', cursor: 'pointer', fontFamily: MONO, fontSize: 9, textTransform: 'uppercase' }}>{EPISODE_SORT_LABEL[sort]}</button>
           ))}
         </div>
       </div>
@@ -409,7 +415,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
         {mergedEpisodes.length === 0 && (
           <div style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 12, padding: '16px 2px' }}>
-            No episodes found. Subscribe to a podcast to see its latest episodes.
+            暂无单集。订阅播客后即可看到其最新单集。
           </div>
         )}
         {mergedEpisodes.map(({ ep, downloaded }) => {
@@ -441,7 +447,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
               {/* Play (downloaded) / Download (not yet downloaded) */}
               <button
                 onClick={(e) => { e.stopPropagation(); if (!downloaded) { openUndownloaded(ep); return; } if (nowPlaying) togglePlayback(st).catch(err => log.error('playback', 'episode toggle playback failed', { err: String(err) })); else playEp(ep); }}
-                title={!downloaded ? 'Download episode' : (nowPlaying && st.playing ? 'Pause' : 'Play')}
+                title={!downloaded ? '下载该单集' : (nowPlaying && st.playing ? '暂停' : '播放')}
                 style={{
                   width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
                   background: nowPlaying ? 'var(--onyx-accent)' : 'rgba(255,255,255,0.06)',
@@ -455,7 +461,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, color: downloaded ? 'var(--onyx-text)' : 'var(--onyx-text-dim)', fontWeight: downloaded ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{ep.title}</div>
                 {transfer && (
-                  <div role="progressbar" aria-label={`Downloading ${ep.title}`} aria-valuemin={0} aria-valuemax={transfer.total || undefined} aria-valuenow={transfer.total ? transfer.downloaded : undefined} style={{ height: 3, marginTop: 5, borderRadius: 2, overflow: 'hidden', background: 'rgba(255,255,255,0.08)' }}>
+                  <div role="progressbar" aria-label={`正在下载 ${ep.title}`} aria-valuemin={0} aria-valuemax={transfer.total || undefined} aria-valuenow={transfer.total ? transfer.downloaded : undefined} style={{ height: 3, marginTop: 5, borderRadius: 2, overflow: 'hidden', background: 'rgba(255,255,255,0.08)' }}>
                     <div style={{ height: '100%', width: transfer.total ? `${Math.min(100, transfer.downloaded / transfer.total * 100)}%` : '35%', background: 'var(--onyx-accent)', transition: 'width 0.15s' }} />
                   </div>
                 )}
@@ -463,8 +469,8 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
                   {!selectedId && podTitle && <><span style={{ color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{podTitle}</span><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /></>}
                   {date && <>{date}<span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /></>}
                   {dur > 0 && <span>{fmtRemaining(dur)}</span>}
-                  {!downloaded && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'rgba(235,231,223,0.5)' }}>not downloaded</span></>}
-                  {downloaded && finished && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'var(--onyx-accent)' }}>finished</span></>}
+                  {!downloaded && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'rgba(235,231,223,0.5)' }}>未下载</span></>}
+                  {downloaded && finished && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'var(--onyx-accent)' }}>已听完</span></>}
                   {downloaded && pct > 0 && !finished && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span>{fmtTime(mp?.currentTime ?? 0)} · {pct}%</span></>}
                 </div>
                 {pct > 0 && !finished && (
@@ -474,7 +480,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
                 )}
               </div>
               {!downloaded && (
-                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: `1px solid var(--onyx-accent-edge)`, flexShrink: 0, whiteSpace: 'nowrap' }}>New</div>
+                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: `1px solid var(--onyx-accent-edge)`, flexShrink: 0, whiteSpace: 'nowrap' }}>新</div>
               )}
             </div>
           );

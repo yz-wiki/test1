@@ -104,11 +104,11 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
         {/* Header */}
         <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
           <div id="library-files-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>
-            Library Files
+            书库文件
           </div>
           {files !== null && (
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-              {files.length} {files.length === 1 ? 'file' : 'files'}
+              {files.length} 个文件
             </div>
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -127,7 +127,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                 cursor: 'pointer',
               }}
             >
-              Full Path
+              完整路径
             </button>
             <button
               onClick={onClose}
@@ -144,7 +144,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                 cursor: 'pointer',
               }}
             >
-              Close
+              关闭
             </button>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {files === null && !error && (
             <div style={{ padding: '24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-              Loading…
+              加载中…
             </div>
           )}
           {error && (
@@ -161,14 +161,14 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
           )}
           {files !== null && files.length === 0 && (
             <div style={{ padding: '24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-              No files found.
+              未找到文件。
             </div>
           )}
           {files !== null && files.length > 0 && (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--onyx-line)' }}>
-                  {(['PATH', 'SIZE', 'TYPE'] as const).map(h => (
+                  {(['路径', '大小', '类型'] as const).map(h => (
                     <th key={h} style={{
                       padding: '8px 24px',
                       fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',

@@ -63,21 +63,21 @@ function relativeTime(ms: number | null): string {
   if (ms === null) return '—';
   const diff = Date.now() - ms;
   const s = Math.floor(diff / 1000);
-  if (s < 60) return 'just now';
+  if (s < 60) return '刚刚';
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m} 分钟前`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return `${h} 小时前`;
+  return `${Math.floor(h / 24)} 天前`;
 }
 
 /** Convert ABS playMethod integer to a short label. */
 function fmtPlayMethod(method: number | null): string {
   switch (method) {
-    case 0: return 'Direct';
-    case 1: return 'Stream';
-    case 2: return 'Transcode';
-    case 3: return 'Local';
+    case 0: return '直接';
+    case 1: return '流式';
+    case 2: return '转码';
+    case 3: return '本地';
     default: return '—';
   }
 }
@@ -232,7 +232,7 @@ function SessionRow({
         <td style={{ padding: '10px 0', borderTop: '1px solid var(--onyx-line)', verticalAlign: 'top' }}>
           <button
             onClick={onDelete}
-            title="Delete session"
+            title="删除收听时段"
             style={{
               width: 28,
               height: 28,
@@ -364,7 +364,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       // numPages from the server may be 0 when there are no sessions — clamp to 1.
       setNumPages(Math.max(1, res.numPages));
     } catch (e) {
-      setError(typeof e === 'string' ? e : (e as Error)?.message ?? 'Failed to load sessions.');
+      setError(typeof e === 'string' ? e : (e as Error)?.message ?? '收听时段加载失败。');
     } finally {
       setLoading(false);
     }
@@ -416,7 +416,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
   if (!st?.user) {
     return (
       <div style={{ color: 'var(--onyx-text-mute)', fontSize: 13, padding: 24 }}>
-        Loading…
+        加载中…
       </div>
     );
   }
@@ -434,7 +434,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         loadOpenSessions(),
       ]);
     } catch (e) {
-      setError(typeof e === 'string' ? e : (e as Error)?.message ?? 'Delete failed.');
+      setError(typeof e === 'string' ? e : (e as Error)?.message ?? '删除失败。');
     } finally {
       setDeletePending(false);
       setDeleteTarget(null);
@@ -459,7 +459,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         {/* Card header: title + admin user-filter dropdown */}
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
-            Listening Sessions
+            收听时段
           </div>
 
           {/* Admin-only filter dropdown — not shown to non-admins */}
@@ -486,9 +486,9 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               }}
             >
               {/* All Users — default for admins; maps to null → GET /api/sessions */}
-              <option value="">All Users</option>
+              <option value="">全部用户</option>
               {/* My sessions — '__me__' sentinel → GET /api/me/listening-sessions */}
-              <option value="__me__">My sessions</option>
+              <option value="__me__">我的收听时段</option>
               {/* Per-user options — specific user ID → GET /api/users/{id}/listening-sessions */}
               {allUsers.map(u => (
                 <option key={u.id} value={u.id}>{u.username}</option>
@@ -524,14 +524,14 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
             <thead>
               <tr>
                 {/* Each sortable header is clickable; active/dir drive the ▲/▼ indicator */}
-                <TH onClick={() => handleSort('displayTitle', 'desc')} active={sortKey === 'displayTitle'} dir={sortDir}>Item</TH>
+                <TH onClick={() => handleSort('displayTitle', 'desc')} active={sortKey === 'displayTitle'} dir={sortDir}>条目</TH>
                 {/* USER column only visible to admins; sorts by userId server-side */}
-                {isAdmin && <TH w={90} onClick={() => handleSort('username', 'asc')} active={sortKey === 'username'} dir={sortDir}>User</TH>}
+                {isAdmin && <TH w={90} onClick={() => handleSort('username', 'asc')} active={sortKey === 'username'} dir={sortDir}>用户</TH>}
                 {/* DEVICE sorts client-side only — deviceInfo.clientName is not a top-level field */}
-                <TH w={120} onClick={() => handleSort('device', 'asc')} active={sortKey === 'device'} dir={sortDir}>Device</TH>
-                <TH w={80} onClick={() => handleSort('timeListening', 'desc')} active={sortKey === 'timeListening'} dir={sortDir}>Listened</TH>
-                <TH w={80} onClick={() => handleSort('currentTime', 'desc')} active={sortKey === 'currentTime'} dir={sortDir}>Position</TH>
-                <TH w={80} onClick={() => handleSort('updatedAt', 'desc')} active={sortKey === 'updatedAt'} dir={sortDir}>Updated</TH>
+                <TH w={120} onClick={() => handleSort('device', 'asc')} active={sortKey === 'device'} dir={sortDir}>设备</TH>
+                <TH w={80} onClick={() => handleSort('timeListening', 'desc')} active={sortKey === 'timeListening'} dir={sortDir}>收听时长</TH>
+                <TH w={80} onClick={() => handleSort('currentTime', 'desc')} active={sortKey === 'currentTime'} dir={sortDir}>位置</TH>
+                <TH w={80} onClick={() => handleSort('updatedAt', 'desc')} active={sortKey === 'updatedAt'} dir={sortDir}>更新时间</TH>
                 {/* Delete column header — not sortable */}
                 {isAdmin && <TH w={32}></TH>}
               </tr>
@@ -541,14 +541,14 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 // Loading placeholder row
                 <tr>
                   <td colSpan={isAdmin ? 7 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
-                    Loading…
+                    加载中…
                   </td>
                 </tr>
               ) : sessions.length === 0 ? (
                 // Empty state
                 <tr>
                   <td colSpan={isAdmin ? 7 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
-                    No sessions found.
+                    没有找到收听时段。
                   </td>
                 </tr>
               ) : (
@@ -575,7 +575,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
           {/* Rows-per-page selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Rows per page:</span>
+            <span>每页行数：</span>
             <select
               value={itemsPerPage}
               onChange={e => {
@@ -601,8 +601,8 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
           </div>
 
           {/* Page indicator */}
-          <span>Page {page + 1} of {numPages}</span>
-          <span style={{ color: 'var(--onyx-text-mute)', fontSize: 10 }}>({total} total)</span>
+          <span>第 {page + 1} 页，共 {numPages} 页</span>
+          <span style={{ color: 'var(--onyx-text-mute)', fontSize: 10 }}>共 {total} 条</span>
 
           {/* Prev / Next buttons */}
           <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
@@ -621,7 +621,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 opacity: page === 0 ? 0.4 : 1,
               }}
             >
-              ← Prev
+              ← 上一页
             </button>
             <button
               onClick={() => setPage(p => Math.min(numPages - 1, p + 1))}
@@ -638,7 +638,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 opacity: page >= numPages - 1 ? 0.4 : 1,
               }}
             >
-              Next →
+              下一页 →
             </button>
           </div>
         </div>
@@ -648,11 +648,11 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--onyx-line)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18 }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
-            Open Listening Sessions
+            当前收听时段
           </div>
           {/* Auto-refresh indicator */}
           <span style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-            refreshes every 30s
+            每 30 秒自动刷新
           </span>
         </div>
 
@@ -660,12 +660,12 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
           <table style={tableStyle}>
             <thead>
               <tr>
-                <TH>Item</TH>
-                {isAdmin && <TH w={90}>User</TH>}
-                <TH w={120}>Device</TH>
-                <TH w={80}>Listened</TH>
-                <TH w={80}>Position</TH>
-                <TH w={80}>Updated</TH>
+                <TH>条目</TH>
+                {isAdmin && <TH w={90}>用户</TH>}
+                <TH w={120}>设备</TH>
+                <TH w={80}>收听时长</TH>
+                <TH w={80}>位置</TH>
+                <TH w={80}>更新时间</TH>
                 {/* No delete in the open sessions panel — admins can delete via the history table */}
               </tr>
             </thead>
@@ -673,13 +673,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               {openLoading ? (
                 <tr>
                   <td colSpan={isAdmin ? 6 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
-                    Loading…
+                    加载中…
                   </td>
                 </tr>
               ) : openSessions.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? 6 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
-                    No open sessions detected in the last 5 minutes.
+                    最近 5 分钟内未检测到正在进行的收听时段。
                   </td>
                 </tr>
               ) : (
@@ -701,9 +701,9 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       {/* Delete confirmation dialog — rendered at the top level so it overlays everything */}
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete session?"
-          message="This will permanently remove the session record from the server. This cannot be undone."
-          confirmLabel={deletePending ? 'Deleting…' : 'Delete'}
+          title="删除此收听时段？"
+          message="这将从服务器上永久删除该收听时段记录。此操作无法撤销。"
+          confirmLabel={deletePending ? '正在删除…' : '删除'}
           danger
           onConfirm={handleDeleteConfirmed}
           onCancel={() => setDeleteTarget(null)}

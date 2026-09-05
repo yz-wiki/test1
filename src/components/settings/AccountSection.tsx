@@ -203,7 +203,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       );
     } catch (e) {
       setListError(
-        typeof e === 'string' ? e : (e as Error)?.message ?? 'Failed to load users.',
+        typeof e === 'string' ? e : (e as Error)?.message ?? '用户加载失败。',
       );
     } finally {
       setLoading(false);
@@ -268,7 +268,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
     } catch (e) {
       // Surface the error in the list area and dismiss the dialog.
       setListError(
-        typeof e === 'string' ? e : (e as Error)?.message ?? 'Delete failed.',
+        typeof e === 'string' ? e : (e as Error)?.message ?? '删除失败。',
       );
       setDeleteTarget(null);
     } finally {
@@ -279,10 +279,10 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Account"
+        title="账户"
         subtitle={hasAbs
-          ? 'Your profile on this Audiobookshelf server.'
-          : 'Your profile on this device. Server accounts appear here after you connect to Audiobookshelf.'}
+          ? '你在该 Audiobookshelf 服务器上的个人资料。'
+          : '你在这台设备上的个人资料。连接 Audiobookshelf 后，服务器账户会显示在这里。'}
       />
 
       {/* ── Profile header card — shown for all users ── */}
@@ -325,20 +325,20 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             marginTop: 6,
             letterSpacing: '0.06em',
           }}>
-            {hasAbs ? (st.serverUrl || 'Not connected') : 'Local library'}
+            {hasAbs ? (st.serverUrl || '未连接') : '本机书库'}
             {/* Transport-encryption note (review L6) — mirrors the titlebar pill.
                 Plain HTTP stays allowed (common on trusted LANs); this only makes
                 the missing encryption visible where the address is shown. */}
             {hasAbs && st.serverUrl.startsWith('http://') && (
               <span
-                title="Traffic to this server (including media tokens) is not encrypted. Fine on a trusted home network; use an https:// address to encrypt."
+                title="发往该服务器的流量（包括媒体令牌）未加密。在可信的家庭网络中没有问题；如需加密请改用 https:// 地址。"
                 style={{
                   marginLeft: 8, padding: '1px 5px', borderRadius: 4,
                   color: '#d4834a', border: '1px solid rgba(212,131,74,0.4)',
                   background: 'rgba(212,131,74,0.08)', textTransform: 'uppercase',
                   letterSpacing: '0.08em', fontSize: 9,
                 }}
-              >not encrypted</span>
+              >未加密</span>
             )}
           </div>
         </div>
@@ -346,12 +346,12 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
 
       {/* ── Local-only view: editable display name (no account type / password) ── */}
       {!hasAbs && (
-        <Row label="Display name" hint="Shown in your library greeting. Stored on this device.">
+        <Row label="显示名称" hint="显示在你的书库问候语中。存储在这台设备上。">
           <input
             type="text"
             value={localName}
             onChange={e => saveLocalName(e.target.value)}
-            placeholder="Reader"
+            placeholder="读者"
             maxLength={40}
             style={{
               padding: '8px 12px',
@@ -371,18 +371,18 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* ── Admin self-service: password change + read-only SSO status ── */}
       {isAdmin && (
         <>
-          <Row label="Password" hint="Change your own account password.">
+          <Row label="密码" hint="修改你自己的账户密码。">
             <button
               onClick={() => setShowChangePw(true)}
               style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', borderRadius: 7, color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
             >
-              Change password
+              修改密码
             </button>
           </Row>
-          <Row label="Single sign-on (SSO)" hint="OpenID Connect is enabled in this server's Audiobookshelf auth settings. SSO login from Skald is not yet available.">
+          <Row label="单点登录（SSO）" hint="该服务器的 Audiobookshelf 认证设置中已启用 OpenID Connect。Skald 尚不支持通过 SSO 登录。">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', flexShrink: 0 }} />
-              {oidcEnabled ? 'Enabled · OpenID' : 'Not configured'}
+              {oidcEnabled ? '已启用 · OpenID' : '未配置'}
             </span>
           </Row>
         </>
@@ -392,13 +392,13 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {!isAdmin && hasAbs && (
         <>
           {/* Username row — read-only; ABS has no public rename endpoint */}
-          <Row label="Display name" hint="Name is managed by your Audiobookshelf server.">
+          <Row label="显示名称" hint="名称由你的 Audiobookshelf 服务器管理。">
             <input
               type="text"
               value={displayName}
               readOnly
               disabled
-              title="Name is managed by your Audiobookshelf server"
+              title="名称由你的 Audiobookshelf 服务器管理"
               style={{
                 padding: '8px 12px',
                 minWidth: 200,
@@ -416,19 +416,19 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           </Row>
 
           {/* Account type row */}
-          <Row label="Account type" hint="Role assigned to your account on this server.">
+          <Row label="账户类型" hint="该服务器为你账户分配的角色。">
             <TypeBadge type={st.user?.type ?? 'user'} />
           </Row>
 
           {/* Change password — self-service. Guests cannot (server returns 403). */}
           <Row
-            label="Password"
-            hint={isGuest ? 'Guest accounts cannot change their password.' : 'Change your account password.'}
+            label="密码"
+            hint={isGuest ? '访客账户无法修改密码。' : '修改你的账户密码。'}
           >
             <button
               onClick={() => setShowChangePw(true)}
               disabled={isGuest}
-              title={isGuest ? 'Not available for guest accounts' : 'Change password'}
+              title={isGuest ? '访客账户不可用' : '修改密码'}
               style={{
                 padding: '8px 16px',
                 background: 'transparent',
@@ -443,7 +443,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                 opacity: isGuest ? 0.45 : 1,
               }}
             >
-              Change password
+              修改密码
             </button>
           </Row>
         </>
@@ -456,12 +456,12 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>
-                Users
+                用户
               </div>
               {/* Member count — plain mono text, shown once the list has loaded */}
               {!loading && !listError && (
                 <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-                  {users.length} {users.length === 1 ? 'member' : 'members'}
+                  {users.length} {users.length === 1 ? '位成员' : '位成员'}
                 </span>
               )}
             </div>
@@ -483,7 +483,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                 flexShrink: 0,
               }}
             >
-              + Add User
+              + 添加用户
             </button>
           </div>
 
@@ -496,7 +496,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               color: 'var(--onyx-text-mute)',
               letterSpacing: '0.06em',
             }}>
-              Loading users…
+              正在加载用户…
             </div>
           )}
 
@@ -525,11 +525,11 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
                 <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 14, padding: '9px 18px', borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.02)' }}>
-                  <span style={headCell}>Name</span>
-                  <span style={headCell}>Role</span>
-                  <span style={headCell}>Last seen</span>
-                  <span style={headCell}>Joined</span>
-                  <span style={{ ...headCell, textAlign: 'right' }}>Actions</span>
+                  <span style={headCell}>用户名</span>
+                  <span style={headCell}>角色</span>
+                  <span style={headCell}>上次在线</span>
+                  <span style={headCell}>加入时间</span>
+                  <span style={{ ...headCell, textAlign: 'right' }}>操作</span>
                 </div>
 
                 {/* Rows */}
@@ -554,7 +554,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                           <UserAvatar color={color} initial={initialCh} online={isOnline} onClick={e => openPicker(e, u.id)} />
                           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13.5, fontWeight: isSelf ? 600 : 400, color: 'var(--onyx-text)' }}>
                             {u.username}
-                            {isSelf && <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)', marginLeft: 8 }}>you</span>}
+                            {isSelf && <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)', marginLeft: 8 }}>你</span>}
                           </span>
                         </div>
 
@@ -571,8 +571,8 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                         <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                           {!isSelf && (
                             <>
-                              <RowButton onClick={() => openEdit(u)} title={`Edit ${u.username}`}>{PencilIcon}</RowButton>
-                              <RowButton onClick={() => setDeleteTarget(u)} danger title={`Delete ${u.username}`}>{TrashIcon}</RowButton>
+                              <RowButton onClick={() => openEdit(u)} title={`编辑 ${u.username}`}>{PencilIcon}</RowButton>
+                              <RowButton onClick={() => setDeleteTarget(u)} danger title={`删除 ${u.username}`}>{TrashIcon}</RowButton>
                             </>
                           )}
                         </div>
@@ -609,7 +609,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             textTransform: 'uppercase' as const,
           }}
         >
-          Sign out
+          退出登录
         </button>
       </div>
 
@@ -628,7 +628,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* Add User modal */}
       {showAdd && (
         <UserModal
-          title="Add User"
+          title="添加用户"
           libraries={libraryOptions}
           availableTags={availableTags}
           onSubmit={handleCreate}
@@ -639,7 +639,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* Edit User modal — pre-filled with the target user's current values */}
       {editTarget && (
         <UserModal
-          title="Edit User"
+          title="编辑用户"
           initialUsername={editTarget.username}
           initialType={editTarget.type}
           isEdit
@@ -659,9 +659,9 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* Delete confirmation — ConfirmDialog is already styled to match the Glass aesthetic */}
       {deleteTarget && (
         <ConfirmDialog
-          title={`Delete ${deleteTarget.username}?`}
-          message={`This will permanently remove "${deleteTarget.username}" from the server. This cannot be undone.`}
-          confirmLabel={deletePending ? 'Deleting…' : 'Delete'}
+          title={`删除 ${deleteTarget.username}？`}
+          message={`这将从服务器上永久删除“${deleteTarget.username}”。此操作无法撤销。`}
+          confirmLabel={deletePending ? '正在删除…' : '删除'}
           danger
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}

@@ -44,9 +44,9 @@ function Glyph({ kind }: { kind: OnboardingPath }) {
 }
 
 const CARDS: { id: OnboardingPath; title: string; blurb: string }[] = [
-  { id: 'abs',   title: 'Audiobookshelf',  blurb: 'Connect to your ABS server to stream, sync progress, and download for offline listening.' },
-  { id: 'local', title: 'Local libraries', blurb: 'Build libraries from audiobooks already on this PC. No server, no account — Skald reads the files directly.' },
-  { id: 'both',  title: 'Both',            blurb: 'A server for the main collection, plus local libraries for anything else. Skald keeps them side by side in one library switcher.' },
+  { id: 'abs',   title: 'Audiobookshelf',  blurb: '连接到你的 ABS 服务器，串流收听、同步进度，并下载内容用于离线收听。' },
+  { id: 'local', title: '本机书库', blurb: '用这台电脑上已有的有声书建立书库。无需服务器、无需账户——Skald 直接读取文件。' },
+  { id: 'both',  title: '两者都要',            blurb: '服务器用于主要收藏，本机书库用于其余内容。Skald 会把它们并列放在同一个书库切换器中。' },
 ];
 
 export default function ChoosePathStep({ value, onChoose }: ChoosePathStepProps) {

@@ -27,7 +27,7 @@ export interface PodcastDetailProps {
 function episodeDate(ep: PodcastEpisode): string {
   const d = ep.publishedAt ? new Date(ep.publishedAt) : ep.pubDate ? new Date(ep.pubDate) : null;
   if (!d || isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function episodeTime(ep: PodcastEpisode): number {
@@ -107,7 +107,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
   if (!item) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 13 }}>
-        Podcast not found.
+        未找到该播客。
       </div>
     );
   }
@@ -147,7 +147,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       st.setScreen('player');
     } catch (e) {
       log.error('playback', 'playEpisode failed', { itemId: item.id, episodeId: ep.id, err: String(e) });
-      st.setToast({ message: 'Could not start episode', type: 'error' });
+      st.setToast({ message: '无法开始播放该单集', type: 'error' });
     }
   };
 
@@ -182,7 +182,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
           fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)', padding: 0,
         }}
       >
-        <Icon name="chevron-left" size={14} /> LIBRARY
+        <Icon name="chevron-left" size={14} /> 书库
       </button>
 
       {/* Header */}
@@ -196,9 +196,9 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
           </div>
           {meta.author && <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)' }}>{meta.author}</div>}
           <div style={{ fontFamily: mono, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-            {episodes.length} episode{episodes.length === 1 ? '' : 's'}
-            {pendingCount > 0 ? ` · ${pendingCount} not downloaded` : ''}
-            {meta.explicit ? ' · explicit' : ''}
+            {episodes.length} 个单集
+            {pendingCount > 0 ? ` · ${pendingCount} 个未下载` : ''}
+            {meta.explicit ? ' · 露骨内容' : ''}
           </div>
           {meta.feedUrl && (
             <div className="onyx-selectable" style={{
@@ -217,7 +217,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
             <button
               onClick={() => setShowDownload(true)}
               disabled={pendingCount === 0}
-              title={pendingCount === 0 ? 'All episodes downloaded' : `Choose from ${pendingCount} episode${pendingCount === 1 ? '' : 's'} to download`}
+              title={pendingCount === 0 ? '全部单集已下载' : `可从 ${pendingCount} 个单集中选择下载`}
               style={{
                 padding: '7px 14px', borderRadius: 8, border: 'none',
                 cursor: pendingCount === 0 ? 'default' : 'pointer',
@@ -225,10 +225,10 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                 color: pendingCount === 0 ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
                 fontFamily: mono, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
               }}
-            >{pendingCount === 0 ? 'All downloaded' : `Download… (${pendingCount})`}</button>
+            >{pendingCount === 0 ? '已全部下载' : `下载…（${pendingCount}）`}</button>
             <button
               onClick={() => setShowSettings(true)}
-              title={autoOn ? 'Auto-download is on — click to configure' : 'Configure auto-download'}
+              title={autoOn ? '自动下载已开启 — 点击配置' : '配置自动下载'}
               style={{
                 padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
                 background: autoOn ? 'var(--onyx-accent)' : 'transparent',
@@ -236,21 +236,21 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                 border: autoOn ? 'none' : '1px solid var(--onyx-glass-edge)',
                 fontFamily: mono, fontSize: 11, letterSpacing: '0.06em', fontWeight: autoOn ? 600 : 400,
               }}
-            >{autoOn ? 'Auto-download · enabled' : 'Auto-download'}</button>
+            >{autoOn ? '自动下载 · 已开启' : '自动下载'}</button>
             <button
               onClick={() => {
                 const next: EpisodeDirection = advanceDir === 'oldest' ? 'newest' : 'oldest';
                 setAdvanceDir(next);
                 if (st.podcastDetailId) setEpisodeDirection(st.podcastDetailId, next);
               }}
-              title="Which episode plays after this one, when continuation is on (Settings → Playback)"
+              title="开启续播时，本集之后自动播放哪一集（设置 → 播放）"
               style={{
                 padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
                 background: 'transparent', color: 'var(--onyx-text-dim)',
                 border: '1px solid var(--onyx-glass-edge)',
                 fontFamily: mono, fontSize: 11, letterSpacing: '0.06em',
               }}
-            >{advanceDir === 'oldest' ? 'Up next · oldest first' : 'Up next · newest first'}</button>
+            >{advanceDir === 'oldest' ? '接下来播放 · 从旧到新' : '接下来播放 · 从新到旧'}</button>
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
         {episodes.length === 0 && (
           <div style={{ color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 12, padding: '16px 0' }}>
-            No episodes found in the feed.
+            订阅源中没有找到单集。
           </div>
         )}
         {episodes.map(({ ep, downloaded }) => {
@@ -282,7 +282,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
             >
               <button
                 onClick={(e) => { e.stopPropagation(); if (!downloaded) { openUndownloaded(ep); return; } if (nowPlaying) togglePlayback(st).catch(err => log.error('playback', 'episode toggle playback failed', { err: String(err) })); else play(ep); }}
-                title={!downloaded ? 'Download episode' : (nowPlaying && st.playing ? 'Pause' : 'Play episode')}
+                title={!downloaded ? '下载该单集' : (nowPlaying && st.playing ? '暂停' : '播放该单集')}
                 style={{
                   width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
                   background: nowPlaying ? 'var(--onyx-accent)' : 'rgba(255,255,255,0.06)',
@@ -302,8 +302,8 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                 <div style={{ fontFamily: mono, fontSize: 10.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 2, display: 'flex', gap: 10 }}>
                   {date && <span>{date}</span>}
                   {dur > 0 && <span>{fmtRemaining(dur)}</span>}
-                  {!downloaded ? <span style={{ color: 'var(--onyx-text-mute)' }}>not downloaded</span>
-                    : finished ? <span style={{ color: 'var(--onyx-accent)' }}>finished</span>
+                  {!downloaded ? <span style={{ color: 'var(--onyx-text-mute)' }}>未下载</span>
+                    : finished ? <span style={{ color: 'var(--onyx-accent)' }}>已听完</span>
                     : pct > 0 ? <span>{fmtTime((mp?.currentTime ?? 0))} · {pct}%</span> : null}
                 </div>
                 {pct > 0 && !finished && (

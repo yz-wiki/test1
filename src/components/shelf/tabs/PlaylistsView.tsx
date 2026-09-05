@@ -129,12 +129,12 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
   };
 
   const subtitle = loading
-    ? 'Loading…'
-    : `${filtered.length} ${filtered.length === 1 ? 'playlist' : 'playlists'}`;
+    ? '加载中…'
+    : `${filtered.length} 个播放列表`;
 
   return (
     <>
-      <BrowseView st={st} title="Playlists" subtitle={subtitle} showModeToggle inline={inline}>
+      <BrowseView st={st} title="播放列表" subtitle={subtitle} showModeToggle inline={inline}>
 
         {/* Create playlist bar */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: createOpen ? 10 : 20 }}>
@@ -148,7 +148,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
               fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
             }}
           >
-            {createOpen ? 'Cancel' : '+ New Playlist'}
+            {createOpen ? '取消' : '+ 新建播放列表'}
           </button>
         </div>
 
@@ -166,7 +166,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                 if (e.key === 'Enter') { void handleCreate(); }
                 if (e.key === 'Escape') { setCreateOpen(false); setNewName(''); }
               }}
-              placeholder="Playlist name…"
+              placeholder="播放列表名称…"
               style={{
                 flex: 1, background: 'transparent', border: 'none', outline: 'none',
                 fontFamily: SERIF, fontSize: 16, color: 'var(--onyx-text)',
@@ -183,20 +183,20 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                 fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
               }}
             >
-              {creating ? 'Creating…' : 'Create'}
+              {creating ? '创建中…' : '创建'}
             </button>
           </div>
         )}
 
         {loading ? (
           <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-            Loading playlists…
+            正在加载播放列表…
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: SERIF, fontSize: 15, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
             {playlists.length === 0
-              ? 'No playlists yet — click "+ New Playlist" to create one.'
-              : 'No playlists match the current filter.'}
+              ? '还没有播放列表——点击“+ 新建播放列表”创建一个。'
+              : '没有播放列表符合当前筛选条件。'}
           </div>
         ) : st.libraryView === 'grid' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
@@ -206,22 +206,22 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                 <BrowseTile
                   key={p.id}
                   mode={st.browseTileStyle}
-                  tag="Playlist"
+                  tag="播放列表"
                   title={p.name}
                   subtitle={p.description || undefined}
-                  stat={`${p.items.length} TITLE${p.items.length === 1 ? '' : 'S'}`}
+                  stat={`${p.items.length} 个条目`}
                   books={books}
                   serverUrl={st.serverUrl}
                   onClick={() => openPlaylist(p)}
-                  emptyLabel="Empty playlist"
+                  emptyLabel="空播放列表"
                   corner={
                     // div (not button) + stopPropagation — valid inside BrowseTile's button.
                     <div
                       onClick={e => { e.stopPropagation(); setDetailPlaylistId(p.id); }}
-                      title="Manage playlist"
+                      title="管理播放列表"
                       style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
                     >
-                      Manage
+                      管理
                     </div>
                   }
                 />
@@ -231,9 +231,9 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
         ) : (
           <BrowseList
             columns={[
-              { id: 'name',        label: 'Playlist',    flex: 2 },
-              { id: 'description', label: 'Description', flex: 2 },
-              { id: 'titles',      label: 'Titles',      width: 80 },
+              { id: 'name',        label: '播放列表',    flex: 2 },
+              { id: 'description', label: '简介', flex: 2 },
+              { id: 'titles',      label: '条目数',      width: 80 },
               { id: 'manage',      label: '',            width: 80 },
             ]}
             rows={filtered.map(p => {
@@ -262,7 +262,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                         userSelect: 'none',
                       }}
                     >
-                      Manage
+                      管理
                     </div>
                   ),
                 },

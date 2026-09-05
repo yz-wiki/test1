@@ -166,7 +166,7 @@ export function useLiveSync({
         const eventSessionId = typeof raw.sessionId === 'string' ? raw.sessionId : '';
         const deviceDescription = typeof raw.deviceDescription === 'string' && raw.deviceDescription.trim()
           ? raw.deviceDescription.trim()
-          : 'another device';
+          : '其他设备';
 
         // ── Self-echo guard ───────────────────────────────────────────────────
         // Skald syncs its own playback position to the server on the shared cadence.
@@ -428,7 +428,7 @@ export function useLiveSync({
     if (change.op === 'removed') {
       log.info('sync', 'active collection filter cleared — removed on the server', { id: change.id });
       setContextFilter(null);
-      setToast({ message: `Collection “${filter.value}” was deleted on the server.`, type: 'info' });
+      setToast({ message: `合集“${filter.value}”已在服务器上被删除。`, type: 'info' });
       return;
     }
     if (!change.object) return;
@@ -445,7 +445,7 @@ export function useLiveSync({
     if (change.op === 'removed') {
       log.info('sync', 'active playlist filter cleared — removed on the server', { id: change.id });
       setContextFilter(null);
-      setToast({ message: `Playlist “${filter.value}” was deleted on the server.`, type: 'info' });
+      setToast({ message: `播放列表“${filter.value}”已在服务器上被删除。`, type: 'info' });
       return;
     }
     if (!change.object) return;
@@ -747,16 +747,16 @@ export function useLiveSync({
       });
       setToast({
         message: event.payload.queued
-          ? 'Progress sync is temporarily offline — your position was saved locally.'
-          : 'Progress sync failed and your position could not be saved locally.',
+          ? '进度同步暂时离线——你的收听位置已保存在本地。'
+          : '进度同步失败，无法在本地保存你的收听位置。',
         type: event.payload.queued ? 'info' : 'error',
       });
       recordActivity({
         category: 'sync',
         outcome: 'error',
         message: event.payload.queued
-          ? 'Progress sync interrupted — position saved locally'
-          : 'Progress sync interrupted — local fallback failed',
+          ? '进度同步中断——收听位置已保存在本地'
+          : '进度同步中断——本地回退保存失败',
       });
       setSyncHealth(previous => ({ ...previous, degraded: true }));
       refreshQueuedCount();
@@ -767,8 +767,8 @@ export function useLiveSync({
 
     listen<{ currentTime: number }>('session-sync-restored', event => {
       log.info('sync', 'session progress sync restored', { currentTime: event.payload.currentTime });
-      setToast({ message: 'Progress sync restored', type: 'success' });
-      recordActivity({ category: 'sync', outcome: 'success', message: 'Progress sync restored' });
+      setToast({ message: '进度同步已恢复', type: 'success' });
+      recordActivity({ category: 'sync', outcome: 'success', message: '进度同步已恢复' });
       setSyncHealth(previous => ({ ...previous, degraded: false }));
       refreshQueuedCount();
     }).then(fn => { if (disposed) fn(); else unlistenRestored = fn; });
@@ -788,13 +788,13 @@ export function useLiveSync({
       // transport: playback position changes are reserved for session startup
       // or an explicit user choice in the cross-device conflict dialog.
       setToast({
-        message: 'ABS had newer progress. Skald kept the server position and saved the local stop point as a backup.',
+        message: 'ABS 服务器有更新的进度。Skald 保留了服务器位置，并将本地停止点存为备份。',
         type: 'info',
       });
       recordActivity({
         category: 'sync',
         outcome: 'info',
-        message: 'ABS progress won an offline conflict; local stop point retained',
+        message: '离线冲突中采用了 ABS 的进度；本地停止点已保留',
       });
       refreshQueuedCount();
     }).then(fn => { if (disposed) fn(); else unlistenConflict = fn; });
@@ -821,7 +821,7 @@ export function useLiveSync({
     listen<{ task: string }>('sync-failed', e => {
       log.error('sync', 'playback task died — progress tracking stopped', { task: e.payload.task });
       setToast({
-        message: 'Progress tracking stopped unexpectedly — restart playback to resume it.',
+        message: '进度跟踪意外停止——请重新开始播放以恢复。',
         type: 'error',
       });
     }).then(fn => { if (disposed) fn(); else unlisten = fn; });

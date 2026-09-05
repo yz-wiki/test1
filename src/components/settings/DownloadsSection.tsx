@@ -33,16 +33,16 @@ function fmtSize(bytes: number): string {
 // Return a human-friendly relative time string from a Unix-ms timestamp.
 function relativeTime(ms: number): string {
   const diff = (Date.now() - ms) / 1000; // seconds elapsed
-  if (diff < 60)  return 'just now';
+  if (diff < 60)  return '刚刚';
   const minutes = Math.floor(diff / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} 分钟前`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} 小时前`;
   const days = Math.floor(hours / 24);
-  if (days < 30)  return `${days}d ago`;
+  if (days < 30)  return `${days} 天前`;
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(months / 12)}y ago`;
+  if (months < 12) return `${months} 个月前`;
+  return `${Math.floor(months / 12)} 年前`;
 }
 
 // Read-only path field + Open/Change buttons for a relocatable storage root.
@@ -56,7 +56,7 @@ function StorageControls({ value, busy, onOpen, onChange }: { value: string; bus
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input
         readOnly
-        value={value || 'Loading…'}
+        value={value || '加载中…'}
         onFocus={e => e.currentTarget.select()}
         title={value}
         style={{
@@ -66,9 +66,9 @@ function StorageControls({ value, busy, onOpen, onChange }: { value: string; bus
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}
       />
-      <button onClick={onOpen} style={{ ...btn, cursor: 'pointer' }}>Open</button>
+      <button onClick={onOpen} style={{ ...btn, cursor: 'pointer' }}>打开</button>
       <button onClick={onChange} disabled={busy} style={{ ...btn, cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.6 : 1 }}>
-        {busy ? 'Moving…' : 'Change…'}
+        {busy ? '正在移动…' : '更改…'}
       </button>
     </div>
   );
@@ -120,17 +120,17 @@ export default function DownloadsSection({ st }: Props) {
   // Relocate one of the two storage roots: pick a folder, run the backend move
   // (which also repoints the downloads registry), then refresh the displayed path.
   async function relocate(which: 'downloads' | 'cache') {
-    const picked = await open({ directory: true, multiple: false, title: which === 'downloads' ? 'Choose where to store downloads' : 'Choose where to store the cache' });
+    const picked = await open({ directory: true, multiple: false, title: which === 'downloads' ? '选择下载文件的存储位置' : '选择缓存的存储位置' });
     if (typeof picked !== 'string') return;
     try {
       setRelocating(which);
       log.info('downloads', 'relocate storage root', { which });
       if (which === 'downloads') { await setDownloadsDir(picked); setDownloadsDirState(await getDownloadsDir()); }
       else { await setCacheDir(picked); setCoverCacheDir(await getCacheDir()); }
-      st.setToast({ message: which === 'downloads' ? 'Downloads folder moved' : 'Cache folder moved', type: 'success' });
+      st.setToast({ message: which === 'downloads' ? '下载文件夹已移动' : '缓存文件夹已移动', type: 'success' });
     } catch (e) {
       log.error('downloads', 'relocate storage root failed', { which, err: String(e) });
-      st.setToast({ message: 'Could not move the folder', type: 'error' });
+      st.setToast({ message: '无法移动文件夹', type: 'error' });
     } finally {
       setRelocating(null);
     }
@@ -215,10 +215,10 @@ export default function DownloadsSection({ st }: Props) {
     st.setDownloads(prev => prev.filter(r => r.itemId !== record.itemId));
     try {
       await removeDownload(record.itemId);
-      st.setToast({ message: `"${record.title}" removed from downloads`, type: 'success' });
+      st.setToast({ message: `“${record.title}”已从下载中移除`, type: 'success' });
     } catch {
       // File was already deleted outside the app — registry is still cleaned up by Rust.
-      st.setToast({ message: `"${record.title}" was already gone — removed from list`, type: 'info' });
+      st.setToast({ message: `“${record.title}”文件已不存在——已从列表移除`, type: 'info' });
     }
   };
 
@@ -237,12 +237,12 @@ export default function DownloadsSection({ st }: Props) {
     }
     if (failed === 0) {
       st.setToast({
-        message: `All ${snapshot.length} download${snapshot.length !== 1 ? 's' : ''} removed`,
+        message: `已移除全部 ${snapshot.length} 个下载`,
         type: 'success',
       });
     } else {
       st.setToast({
-        message: `Removed ${snapshot.length - failed} of ${snapshot.length} — ${failed} already gone`,
+        message: `已移除 ${snapshot.length} 个中的 ${snapshot.length - failed} 个——其中 ${failed} 个文件已不存在`,
         type: 'info',
       });
     }
@@ -250,7 +250,7 @@ export default function DownloadsSection({ st }: Props) {
 
   return (
     <div>
-      <SectionHead title="Downloads" subtitle="Offline copies and cache." />
+      <SectionHead title="下载" subtitle="离线副本与缓存。" />
 
       {/* Total storage used — pill in lieu of a hard cache limit (none configured). */}
       {totalBytes > 0 && (
@@ -259,15 +259,15 @@ export default function DownloadsSection({ st }: Props) {
             display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 6,
             background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)',
             fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
-          }}>{fmtSize(totalBytes)} used</span>
+          }}>已用 {fmtSize(totalBytes)}</span>
         </div>
       )}
 
       {/* ── Storage locations ────────────────────────────────────────────── */}
       {/* Two independently relocatable roots (Onboarding roadmap, Resolved #1):
           downloaded audio, and the cover/library cache. */}
-      <Panel label="Storage">
-        <Row label="Downloads folder" hint="Where downloaded audio files are stored on this device.">
+      <Panel label="存储">
+        <Row label="下载文件夹" hint="已下载的音频文件在这台设备上的存储位置。">
           <StorageControls
             value={downloadsDir}
             busy={relocating === 'downloads'}
@@ -275,7 +275,7 @@ export default function DownloadsSection({ st }: Props) {
             onChange={() => relocate('downloads')}
           />
         </Row>
-        <Row label="Cache folder" hint="Where cover images and the offline library cache are kept.">
+        <Row label="缓存文件夹" hint="封面图片与离线书库缓存的存放位置。">
           <StorageControls
             value={coverCacheDir}
             busy={relocating === 'cache'}
@@ -287,7 +287,7 @@ export default function DownloadsSection({ st }: Props) {
 
       {/* ── Downloading (only while transfers are active) ──────────────────── */}
       {inProgress.size > 0 && (
-        <Panel label="Downloading">
+        <Panel label="下载中">
           {Array.from(inProgress.entries()).map(([itemId, { title, bytesDownloaded, totalBytes: total }], i, arr) => {
             // pct is null when the server didn't send Content-Length — shows indeterminate bar.
             const pct = total > 0 ? Math.min(100, (bytesDownloaded / total) * 100) : null;
@@ -316,14 +316,14 @@ export default function DownloadsSection({ st }: Props) {
                 </div>
                 <button
                   onClick={() => cancelDownload(itemId).catch(e => log.error('downloads', 'cancelDownload failed', { itemId, err: String(e) }))}
-                  title={`Cancel download of "${title}"`}
+                  title={`取消“${title}”的下载`}
                   style={{
                     flexShrink: 0, padding: '6px 13px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
                     textTransform: 'uppercase' as const, background: 'transparent',
                     border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, color: 'var(--onyx-text-dim)', cursor: 'pointer',
                   }}
                 >
-                  Cancel
+                  取消
                 </button>
               </div>
             );
@@ -333,23 +333,23 @@ export default function DownloadsSection({ st }: Props) {
 
       {/* ── Downloaded books ───────────────────────────────────────────────── */}
       <Panel
-        label="Download history"
+        label="下载历史"
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             {records.length > 1 && (
-              <select aria-label="Sort download history" value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9.5 }}>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="largest">Largest</option>
+              <select aria-label="排序下载历史" value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9.5 }}>
+                <option value="newest">最新</option>
+                <option value="oldest">最早</option>
+                <option value="largest">最大</option>
               </select>
             )}
-            <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{records.length} book{records.length === 1 ? '' : 's'}</span>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{records.length} 本</span>
           </div>
         }
       >
         {records.length === 0 ? (
           <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontSize: 12, fontFamily: MONO, letterSpacing: '0.04em' }}>
-            No downloads yet.
+            还没有下载。
           </div>
         ) : (
           <>
@@ -378,17 +378,17 @@ export default function DownloadsSection({ st }: Props) {
                       {record.title}
                     </div>
                     <div style={{ marginTop: 2, fontSize: 12, color: 'var(--onyx-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {record.author || 'Unknown Author'}
+                      {record.author || '未知作者'}
                     </div>
                     <div style={{ marginTop: 7, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <Chip>{fmtSize(record.fileSize)}</Chip>
                       <Chip><time dateTime={new Date(record.downloadedAt).toISOString()} title={new Date(record.downloadedAt).toLocaleString()}>{relativeTime(record.downloadedAt)}</time></Chip>
-                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: '2px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>Open location</button>
+                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: '2px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>打开位置</button>
                     </div>
                     {/* Server-deleted warning — local copy retained and still playable offline. */}
                     {record.serverDeleted && (
                       <div style={{ marginTop: 5, fontSize: 10, color: '#d4834a', fontFamily: MONO, letterSpacing: '0.04em' }}>
-                        ⚠ No longer on server — local copy only
+                        ⚠ 服务器上已不存在——仅保留本地副本
                       </div>
                     )}
                   </div>
@@ -396,14 +396,14 @@ export default function DownloadsSection({ st }: Props) {
                   {/* Delete (danger) */}
                   <button
                     onClick={() => setPendingDelete(record)}
-                    title={`Remove "${record.title}" from downloads`}
+                    title={`从下载中移除“${record.title}”`}
                     style={{
                       flexShrink: 0, padding: '6px 13px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
                       textTransform: 'uppercase' as const, background: 'rgba(220,80,80,0.12)',
                       border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
                     }}
                   >
-                    Delete
+                    删除
                   </button>
                 </div>
               );
@@ -419,7 +419,7 @@ export default function DownloadsSection({ st }: Props) {
                   border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
                 }}
               >
-                Clear all downloads
+                清除所有下载
               </button>
             </div>
           </>
@@ -427,11 +427,11 @@ export default function DownloadsSection({ st }: Props) {
       </Panel>
 
       {/* ── Behaviour ──────────────────────────────────────────────────────── */}
-      <Panel label="Behaviour">
-        <Row label="Auto-download next in series" hint="When you finish a book, automatically download the next one in its series (server libraries only).">
+      <Panel label="行为">
+        <Row label="自动下载系列下一本" hint="听完一本书后，自动下载其系列中的下一本（仅服务器书库）。">
           <Toggle on={autoNextInSeries} onChange={setAutoNextInSeries} />
         </Row>
-        <Row label="Keep downloads after finishing" hint="Keep the local file when you finish a book. Turn off to free space by removing it automatically.">
+        <Row label="听完后保留下载" hint="听完一本书后保留本地文件。关闭可在听完后自动删除以释放空间。">
           <Toggle on={keepAfterFinish} onChange={setKeepAfterFinish} />
         </Row>
       </Panel>
@@ -441,9 +441,9 @@ export default function DownloadsSection({ st }: Props) {
       {/* Individual delete confirmation */}
       {pendingDelete && (
         <ConfirmDialog
-          title={`Delete "${pendingDelete.title}"`}
-          message={`This will remove the downloaded audio file (${fmtSize(pendingDelete.fileSize)}) from your device. The book will still be available for streaming from your server.`}
-          confirmLabel="Delete"
+          title={`删除“${pendingDelete.title}”`}
+          message={`这将从你的设备上移除已下载的音频文件（${fmtSize(pendingDelete.fileSize)}）。这本书仍可随时从服务器在线收听。`}
+          confirmLabel="删除"
           danger
           onConfirm={handleConfirmDelete}
           onCancel={() => setPendingDelete(null)}
@@ -453,9 +453,9 @@ export default function DownloadsSection({ st }: Props) {
       {/* Clear all confirmation */}
       {pendingClearAll && (
         <ConfirmDialog
-          title="Clear all downloads?"
-          message="This will delete all downloaded audio files from your device. This cannot be undone."
-          confirmLabel="Clear All"
+          title="清除所有下载？"
+          message="这将从你的设备上删除所有已下载的音频文件。此操作无法撤销。"
+          confirmLabel="全部清除"
           danger
           onConfirm={handleConfirmClearAll}
           onCancel={() => setPendingClearAll(false)}

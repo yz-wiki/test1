@@ -57,23 +57,23 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
   const dialogRef = useModalFocus<HTMLDivElement>(onClose);
 
   const copyFull = async () => {
-    setStatus('Loading…');
+    setStatus('加载中…');
     try {
       const text = await loadNotices();
       await navigator.clipboard.writeText(text);
-      setStatus(`Copied full notices (${Math.round(text.length / 1024)} KB)`);
-    } catch (e) { setStatus(`Failed: ${String(e)}`); }
+      setStatus(`完整第三方声明已复制（${Math.round(text.length / 1024)} KB）`);
+    } catch (e) { setStatus(`失败：${String(e)}`); }
   };
 
   const saveFull = async () => {
-    setStatus('Loading…');
+    setStatus('加载中…');
     try {
       const text = await loadNotices();
       // Dialog + write both run Rust-side (export_text_file) so no path string
       // ever originates in the renderer.
       const saved = await exportTextFile('THIRD-PARTY-NOTICES.txt', text);
-      setStatus(saved ? 'Saved' : '');
-    } catch (e) { setStatus(`Failed: ${String(e)}`); }
+      setStatus(saved ? '已保存' : '');
+    } catch (e) { setStatus(`失败：${String(e)}`); }
   };
 
   return (
@@ -81,12 +81,12 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Open source licenses" style={{ width: '100%', maxWidth: 520, maxHeight: '85vh', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="开源许可" style={{ width: '100%', maxWidth: 520, maxHeight: '85vh', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em' }}>Open source licenses</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Components bundled with Skald</div>
+            <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em' }}>开源许可</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>随 Skald 捆绑的组件</div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
@@ -115,17 +115,17 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
             </div>
           ))}
           <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', lineHeight: 1.55, paddingTop: 4, paddingBottom: 8 }}>
-            License names link to the canonical SPDX text. The complete third-party notices below bundle the verbatim license text and copyright for every shipped Rust crate, npm package, LibVLC, and the fonts.
+            许可证名称会链接到规范的 SPDX 文本。下方完整的第三方声明收录了随附的每个 Rust crate、npm 包、LibVLC 与字体所附的逐字许可文本和版权信息。
           </div>
         </div>
 
         {/* Footer — the full bundled notices (verbatim texts), copy/save on demand */}
         <div style={{ flexShrink: 0, borderTop: '1px solid var(--onyx-line)', padding: '12px 22px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', flex: 1 }}>
-            {status || 'Full third-party notices'}
+            {status || '完整第三方声明'}
           </span>
-          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void copyFull()}>Copy all</button>
-          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void saveFull()}>Save…</button>
+          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void copyFull()}>全部复制</button>
+          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void saveFull()}>保存…</button>
         </div>
       </div>
     </div>
@@ -141,8 +141,8 @@ function HelpModal({ onClose }: { onClose: () => void }) {
     <div onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, zIndex: 500, padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)' }}>
       <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="quick-start-title" style={{ width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 16, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel)', boxShadow: '0 40px 100px rgba(0,0,0,0.72)' }}>
         <div style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--onyx-line)' }}>
-          <h2 id="quick-start-title" style={{ margin: 0, fontFamily: SERIF, fontSize: 20 }}>Quick start and troubleshooting</h2>
-          <button onClick={onClose} aria-label="Close quick start" style={{ width: 30, height: 30, border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontSize: 17 }}>×</button>
+          <h2 id="quick-start-title" style={{ margin: 0, fontFamily: SERIF, fontSize: 20 }}>快速入门与故障排查</h2>
+          <button onClick={onClose} aria-label="关闭快速入门" style={{ width: 30, height: 30, border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontSize: 17 }}>×</button>
         </div>
         <pre className="onyx-selectable" style={{ margin: 0, padding: '20px 24px 28px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12.5, lineHeight: 1.65, color: 'var(--onyx-text-dim)' }}>{quickStart}</pre>
       </section>
@@ -169,7 +169,7 @@ export default function AboutSection({ st }: { st: OnyxState }) {
 
   return (
     <div>
-      <SectionHead title="About" />
+      <SectionHead title="关于" />
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '0 0 24px', borderBottom: '1px solid var(--onyx-line)' }}>
         <img
           src={lyreIcon}
@@ -179,20 +179,20 @@ export default function AboutSection({ st }: { st: OnyxState }) {
         <div>
           <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 500 }}>Skald<span style={{ color: 'var(--onyx-accent)' }}>.</span></div>
           <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 2 }}>{version ? `v${version} · Onyx` : 'Onyx'}</div>
-          <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', marginTop: 6, maxWidth: 480 }}>A native desktop client for Audiobookshelf.</div>
+          <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', marginTop: 6, maxWidth: 480 }}>Audiobookshelf 的原生桌面客户端。</div>
         </div>
       </div>
 
-      <Row label="Open source licenses" hint="Third-party components bundled with Skald and their licenses.">
-        <button style={ghostBtn} onClick={() => setShowLicenses(true)}>View</button>
+      <Row label="开源许可" hint="随 Skald 捆绑的第三方组件及其许可证。">
+        <button style={ghostBtn} onClick={() => setShowLicenses(true)}>查看</button>
       </Row>
 
-      <Row label="Quick start & troubleshooting" hint="Connection, offline use, local-library safety, Staging, diagnostics, and current feature boundaries.">
-        <button style={ghostBtn} onClick={() => setShowHelp(true)}>Open guide</button>
+      <Row label="快速入门与故障排查" hint="连接、离线使用、本机书库安全、暂存文件夹、诊断以及当前的功能边界。">
+        <button style={ghostBtn} onClick={() => setShowHelp(true)}>打开指南</button>
       </Row>
 
-      <Row label="Run setup again" hint="Re-open the first-launch walkthrough — connect a server, create a local library, or review the folders. Your existing setup is kept.">
-        <button style={ghostBtn} onClick={runSetupAgain}>Run setup</button>
+      <Row label="重新运行设置" hint="重新打开首次启动引导——连接服务器、创建本机书库或查看文件夹。你现有的设置会被保留。">
+        <button style={ghostBtn} onClick={runSetupAgain}>运行设置</button>
       </Row>
 
       {showLicenses && <LicensesModal onClose={() => setShowLicenses(false)} />}

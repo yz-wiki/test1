@@ -26,9 +26,9 @@ type DragStyle = CSSProperties & { WebkitAppRegion?: string };
 type ResizeDirection = Parameters<ReturnType<typeof getCurrentWindow>['startResizeDragging']>[0];
 
 const BUTTONS = [
-  { label: 'Minimize', kind: 'min' },
-  { label: 'Maximize', kind: 'max' },
-  { label: 'Close', kind: 'close' },
+  { label: '最小化', kind: 'min' },
+  { label: '最大化', kind: 'max' },
+  { label: '关闭', kind: 'close' },
 ] as const;
 
 function WindowControlIcon({ kind }: { kind: (typeof BUTTONS)[number]['kind'] }) {
@@ -149,7 +149,7 @@ export default function Titlebar({ subtitle, isDark, minimal, isOffline, lastRef
             background: 'rgba(212,131,74,0.08)',
             lineHeight: 1,
           }}>
-            offline{lastRefresh ? ` · refreshed ${new Date(lastRefresh).toLocaleString()}` : ''}
+            离线{lastRefresh ? ` · 刷新于 ${new Date(lastRefresh).toLocaleString()}` : ''}
           </div>
         )}
         {/* Transport-encryption indicator (review L6) — same amber family as
@@ -158,7 +158,7 @@ export default function Titlebar({ subtitle, isDark, minimal, isOffline, lastRef
             the pill keeps that visible without forbidding the setup. */}
         {isUnencrypted && (
           <div
-            title="Connected over plain HTTP — traffic to your server (including media tokens) is not encrypted. Fine on a trusted home network; use an https:// address to encrypt."
+            title="发往该服务器的流量（包括媒体令牌）未加密。在可信的家庭网络中没有问题；如需加密请改用 https:// 地址。"
             style={{
               fontFamily: mono,
               fontSize: 9,
@@ -171,7 +171,7 @@ export default function Titlebar({ subtitle, isDark, minimal, isOffline, lastRef
               background: 'rgba(212,131,74,0.08)',
               lineHeight: 1,
             }}>
-            not encrypted
+            未加密
           </div>
         )}
         {/* Optional trailing controls (e.g. Recent activity) sit just right of the

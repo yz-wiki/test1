@@ -12,10 +12,10 @@ const MONO = "'JetBrains Mono', ui-monospace, monospace";
 
 function relativeTime(timestamp: number): string {
   const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
-  if (seconds < 60) return 'just now';
+  if (seconds < 60) return '刚刚';
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  return `${Math.round(minutes / 60)}h ago`;
+  if (minutes < 60) return `${minutes} 分钟前`;
+  return `${Math.round(minutes / 60)} 小时前`;
 }
 
 export default function ActivityCenter({ st }: ActivityCenterProps) {
@@ -36,7 +36,7 @@ export default function ActivityCenter({ st }: ActivityCenterProps) {
     // Relative so the dropdown anchors to the trigger; no-drag so clicks aren't
     // swallowed by the surrounding window-drag region.
     <div ref={rootRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', WebkitAppRegion: 'no-drag' } as NoDragStyle}>
-      <button ref={triggerRef} type="button" aria-label={`Recent activity${st.activity.length ? `, ${st.activity.length} items` : ''}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="onyx-activity-center" title="Recent activity" onClick={() => setOpen(value => !value)} style={{ position: 'relative', width: 30, height: 30, display: 'grid', placeItems: 'center', borderRadius: 8, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel2)', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
+      <button ref={triggerRef} type="button" aria-label={`最近活动${st.activity.length ? `，${st.activity.length} 条` : ''}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="onyx-activity-center" title="最近活动" onClick={() => setOpen(value => !value)} style={{ position: 'relative', width: 30, height: 30, display: 'grid', placeItems: 'center', borderRadius: 8, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel2)', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
         <Icon name="bell" size={14} />
         {st.activity.length > 0 && <span aria-hidden="true" style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, padding: '0 3px', boxSizing: 'border-box', borderRadius: 8, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', font: `700 9px/16px ${MONO}`, textAlign: 'center' }}>{Math.min(99, st.activity.length)}</span>}
       </button>
@@ -47,10 +47,10 @@ export default function ActivityCenter({ st }: ActivityCenterProps) {
       {open && (
         <section id="onyx-activity-center" role="dialog" aria-modal="false" aria-labelledby="onyx-activity-title" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 850, width: 360, maxHeight: 420, overflow: 'auto', padding: 14, borderRadius: 12, border: '1px solid var(--onyx-glass-edge)', background: st.translucent ? 'rgba(19, 19, 22, 0.86)' : 'var(--onyx-panel2)', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h2 id="onyx-activity-title" style={{ margin: 0, fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Recent activity</h2>
-            {st.activity.length > 0 && <button type="button" onClick={st.clearActivity} style={{ border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>Clear</button>}
+            <h2 id="onyx-activity-title" style={{ margin: 0, fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase' }}>最近活动</h2>
+            {st.activity.length > 0 && <button type="button" onClick={st.clearActivity} style={{ border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>清空</button>}
           </div>
-          {st.activity.length === 0 ? <div style={{ padding: '24px 8px', color: 'var(--onyx-text-mute)', fontSize: 12, textAlign: 'center' }}>No recent background activity.</div> : st.activity.map(entry => (
+          {st.activity.length === 0 ? <div style={{ padding: '24px 8px', color: 'var(--onyx-text-mute)', fontSize: 12, textAlign: 'center' }}>暂无最近的后台活动。</div> : st.activity.map(entry => (
             <div key={entry.id} style={{ display: 'grid', gridTemplateColumns: '8px 1fr auto', gap: 9, alignItems: 'start', padding: '10px 4px', borderTop: '1px solid var(--onyx-line)' }}>
               <span aria-hidden="true" style={{ width: 7, height: 7, marginTop: 5, borderRadius: '50%', background: entry.outcome === 'error' ? '#e05a5a' : entry.outcome === 'success' ? '#52c97a' : 'var(--onyx-accent)' }} />
               <div><div style={{ color: 'var(--onyx-text)', fontSize: 12.5, lineHeight: 1.4 }}>{entry.message}</div><div style={{ marginTop: 3, color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 8.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{entry.category}</div></div>

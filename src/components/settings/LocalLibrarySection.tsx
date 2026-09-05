@@ -16,7 +16,7 @@ function PathChip({ label, hint, path }: { label: string; hint?: string; path: s
   return (
     <button
       onClick={() => revealPath(path).catch(e => log.error('library', 'reveal path failed', { err: String(e) }))}
-      title={`Open ${path}`}
+      title={`打开 ${path}`}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3,
         width: '100%', boxSizing: 'border-box', textAlign: 'left', cursor: 'pointer',
@@ -95,7 +95,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
   // Choose the parent location where the new library folder will be created.
   async function chooseLocation() {
-    const dir = await open({ directory: true, multiple: false, title: 'Choose where to create the library' });
+    const dir = await open({ directory: true, multiple: false, title: '选择创建书库的位置' });
     if (typeof dir === 'string') setNewParent(dir);
   }
 
@@ -113,13 +113,13 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
       setNewName('');
       setNewParent(null);
       const msg = newType === 'podcast'
-        ? `Created "${newName.trim()}" — open it and Subscribe to a podcast by RSS or OPML`
-        : `Created "${newName.trim()}" — drop books into its staging folder, then Import`;
+        ? `已创建“${newName.trim()}”——打开它，然后通过 RSS 或 OPML 订阅播客`
+        : `已创建“${newName.trim()}”——将图书放入其暂存文件夹，然后导入`;
       st.setToast({ message: msg, type: 'success' });
       setNewType('book');
     } catch (e) {
       log.error('library', 'create local library failed', { err: String(e) });
-      st.setToast({ message: 'Could not create library', type: 'error' });
+      st.setToast({ message: '无法创建书库', type: 'error' });
     } finally {
       setBusy(null);
     }
@@ -132,10 +132,10 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
       const count = await scanLocalLibrary(lib.id);
       // If the rescanned library is the active one, reload its items into the shelf.
       if (st.currentLibraryId === lib.id) await st.setActiveLibrary(lib.id);
-      st.setToast({ message: `Rescanned "${lib.name}" — ${count} item${count === 1 ? '' : 's'}`, type: 'success' });
+      st.setToast({ message: `已重新扫描“${lib.name}”——共 ${count} 个条目`, type: 'success' });
     } catch (e) {
       log.error('library', 'rescan local library failed', { err: String(e) });
-      st.setToast({ message: 'Rescan failed', type: 'error' });
+      st.setToast({ message: '重新扫描失败', type: 'error' });
     } finally {
       setBusy(null);
     }
@@ -143,17 +143,17 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
   function removeLibrary(lib: Library) {
     st.setConfirmDialog({
-      title: 'Remove local library',
-      message: `Remove "${lib.name}" from Skald? This only removes it from the catalog — your files on disk are left untouched.`,
-      confirmLabel: 'Remove',
+      title: '移除本机书库',
+      message: `从 Skald 中移除“${lib.name}”？这只会将其从目录中移除——磁盘上的文件不会被改动。`,
+      confirmLabel: '移除',
       onConfirm: async () => {
         try {
           await deleteLocalLibrary(lib.id);
           await st.refreshLibrary();
-          st.setToast({ message: `Removed "${lib.name}"`, type: 'info' });
+          st.setToast({ message: `已移除“${lib.name}”`, type: 'info' });
         } catch (e) {
           log.error('library', 'remove local library failed', { err: String(e) });
-          st.setToast({ message: 'Could not remove library', type: 'error' });
+          st.setToast({ message: '无法移除书库', type: 'error' });
         }
       },
     });
@@ -165,13 +165,13 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
     <div>
       {!embedded && (
         <SectionHead
-          title="Local Library"
-          subtitle="Build a library from audiobooks on this computer — no server required. Skald reads each book's embedded tags and chapters, sorts them into Author / Series / Title folders, and tracks playback progress locally. Use Match or Edit Metadata on a book to fill in or correct details — changes are written back to the files."
+          title="本机书库"
+          subtitle="从这台电脑上的有声书构建书库——无需服务器。Skald 会读取每本书内嵌的标签与章节，将其归档到“作者 / 系列 / 书名”文件夹，并在本机跟踪播放进度。对某本书使用“匹配”或“编辑元数据”可补全或修正详细信息——更改会写回文件。"
         />
       )}
 
       <Panel
-        label="Your local libraries"
+        label="你的本机书库"
         action={
           <button
             onClick={() => { setCreating(c => !c); setNewName(''); setNewParent(null); }}
@@ -183,7 +183,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
             }}
           >
             <Icon name="plus" size={12} />
-            {creating ? 'Close' : 'Create library…'}
+            {creating ? '关闭' : '创建书库…'}
           </button>
         }
       >
@@ -191,7 +191,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
         {creating && (
           <div style={{ padding: '14px 0', borderBottom: '1px solid var(--onyx-line)', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <TextInput value={newName} onChange={setNewName} placeholder={newType === 'podcast' ? 'Library name (e.g. Podcasts)' : 'Library name (e.g. Audiobooks)'} />
+              <TextInput value={newName} onChange={setNewName} placeholder={newType === 'podcast' ? '书库名称（例如 播客）' : '书库名称（例如 有声书）'} />
               {/* Media type — segmented Audiobooks / Podcasts toggle. */}
               <div style={{ display: 'flex', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden' }}>
                 {(['book', 'podcast'] as const).map(t => (
@@ -204,29 +204,29 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                       background: newType === t ? 'var(--onyx-accent-dim)' : 'transparent',
                       color: newType === t ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
                     }}
-                  >{t === 'book' ? 'Audiobooks' : 'Podcasts'}</button>
+                  >{t === 'book' ? '有声书' : '播客'}</button>
                 ))}
               </div>
-              <button onClick={chooseLocation} style={btn()}>{newParent ? 'Change location' : 'Choose location…'}</button>
+              <button onClick={chooseLocation} style={btn()}>{newParent ? '更改位置' : '选择位置…'}</button>
               <button
                 onClick={createLibrary}
                 disabled={!newName.trim() || !newParent || busy === '__new__'}
                 style={btn(!newName.trim() || !newParent || busy === '__new__')}
               >
-                {busy === '__new__' ? 'Creating…' : 'Create'}
+                {busy === '__new__' ? '正在创建…' : '创建'}
               </button>
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
               {newParent
-                ? `Will create: ${newParent.replace(/[\\/]+$/, '')}\\${newName.trim() || '<name>'}\\  (with Staging\\, Unidentified\\, Audiobooks\\, Podcasts\\)`
-                : 'Pick a location; Skald creates the library folder with Staging, Unidentified, Audiobooks, and Podcasts subfolders.'}
+                ? `将创建：${newParent.replace(/[\\/]+$/, '')}\\${newName.trim() || '<名称>'}\\（含 Staging\、Unidentified\、Audiobooks\、Podcasts\ 子文件夹）`
+                : '选择一个位置；Skald 会创建包含 Staging、Unidentified、Audiobooks 与 Podcasts 子文件夹的书库文件夹。'}
             </div>
           </div>
         )}
 
         {locals.length === 0 && !creating ? (
           <div style={{ padding: '22px 4px', color: 'var(--onyx-text-mute)', fontSize: 13 }}>
-            No local libraries yet. Create one to get started.
+            还没有本机书库。创建一个即可开始。
           </div>
         ) : (
           locals.map(lib => {
@@ -243,37 +243,37 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                     <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--onyx-text)' }}>{lib.name}</span>
                     {active && (
                       <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: DIM_GOLD }}>
-                        Active
+                        当前
                       </span>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     {!active && (
-                      <button onClick={() => st.setActiveLibrary(lib.id)} style={btn()} title="Switch to this library">Open</button>
+                      <button onClick={() => st.setActiveLibrary(lib.id)} style={btn()} title="切换到该书库">打开</button>
                     )}
                     {lib.mediaType !== 'podcast' && (
                       <button
                         onClick={() => setImportLibrary(lib)}
                         style={btn()}
-                        title="Add audiobook files, scan a folder, or open Staging."
+                        title="添加有声书文件、扫描文件夹或打开暂存文件夹。"
                       >
-                        Add books
+                        添加图书
                       </button>
                     )}
                     <button
                       onClick={() => rescan(lib)}
                       disabled={scanning}
                       style={btn(scanning)}
-                      title="Sync with disk — adds books found in the folder and drops ones that were deleted. Your saved metadata is preserved."
+                      title="与磁盘同步——会加入文件夹中发现的图书，并移除已被删除的图书。你保存的元数据将被保留。"
                     >
-                      {scanning ? 'Scanning…' : 'Rescan'}
+                      {scanning ? '正在扫描…' : '重新扫描'}
                     </button>
                     <button
                       onClick={() => removeLibrary(lib)}
                       style={btn(false, true)}
-                      title="Remove from Skald only — your files on disk are left untouched."
+                      title="仅从 Skald 中移除——磁盘上的文件不会被改动。"
                     >
-                      Remove
+                      移除
                     </button>
                   </div>
                 </div>
@@ -281,10 +281,10 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                 {scanning && progress && (
                   <div style={{ marginTop: 9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)' }}>
-                      <span>{progress.phase === 'discovering' ? 'Discovering book folders…' : progress.phase === 'cataloguing' ? 'Updating catalog…' : `Scanning${progress.currentItem ? ` ${progress.currentItem}` : '…'}`}</span>
+                      <span>{progress.phase === 'discovering' ? '正在查找图书文件夹…' : progress.phase === 'cataloguing' ? '正在更新目录…' : `正在扫描${progress.currentItem ? ` ${progress.currentItem}` : '…'}`}</span>
                       {progress.total > 0 && <span>{progress.processed} / {progress.total}</span>}
                     </div>
-                    <div role="progressbar" aria-label={`Scanning ${lib.name}`} aria-valuemin={0} aria-valuemax={progress.total || undefined} aria-valuenow={progress.total ? progress.processed : undefined} style={{ height: 3, marginTop: 6, overflow: 'hidden', borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
+                    <div role="progressbar" aria-label={`正在扫描 ${lib.name}`} aria-valuemin={0} aria-valuemax={progress.total || undefined} aria-valuenow={progress.total ? progress.processed : undefined} style={{ height: 3, marginTop: 6, overflow: 'hidden', borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
                       <div style={{ height: '100%', width: progress.total ? `${Math.min(100, progress.processed / progress.total * 100)}%` : '35%', background: 'var(--onyx-accent)', transition: 'width 0.15s' }} />
                     </div>
                   </div>
@@ -293,9 +293,9 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                 {/* Folder paths — aligned glass buttons that open the location.
                     Staging is auto-organized by the app-wide watcher on drop. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-                  <PathChip label="Library folder" path={rootPath(lib)} />
+                  <PathChip label="书库文件夹" path={rootPath(lib)} />
                   {lib.stagingPath && (
-                    <PathChip label="Staging" hint="drop files here to auto-import" path={lib.stagingPath} />
+                    <PathChip label="Staging" hint="将文件放入此处即可自动导入" path={lib.stagingPath} />
                   )}
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
       {/* Needs attention — quarantined books awaiting a metadata match. */}
       {locals.some(l => (unidentified[l.id]?.length ?? 0) > 0) && (
-        <Panel label="Needs attention">
+        <Panel label="需要处理">
           {locals.flatMap(lib =>
             (unidentified[lib.id] ?? []).map(item => (
               <div
@@ -317,9 +317,9 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                   <div style={{ fontSize: 13, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.sourcePath.split(/[\\/]/).filter(Boolean).pop()}
                   </div>
-                  <div style={{ marginTop: 2, fontSize: 10.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>{lib.name} · unidentified</div>
+                  <div style={{ marginTop: 2, fontSize: 10.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>{lib.name} · 无法识别</div>
                 </div>
-                <button onClick={() => setMatchTarget({ libId: lib.id, item })} style={btn()}>Match…</button>
+                <button onClick={() => setMatchTarget({ libId: lib.id, item })} style={btn()}>匹配…</button>
               </div>
             )),
           )}

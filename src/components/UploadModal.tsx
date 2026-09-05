@@ -107,8 +107,8 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
   async function pickFiles() {
     const picked = await open({
       multiple: true,
-      title: 'Choose files to upload',
-      filters: [{ name: 'Audiobook files', extensions: UPLOAD_EXTS }],
+      title: '选择要上传的文件',
+      filters: [{ name: '有声书文件', extensions: UPLOAD_EXTS }],
     });
     const paths = Array.isArray(picked) ? picked : (typeof picked === 'string' ? [picked] : []);
     if (paths.length === 0) return; // cancelled
@@ -121,12 +121,12 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
   }
 
   async function pickFolder() {
-    const picked = await open({ directory: true, multiple: false, title: 'Choose a folder to upload' });
+    const picked = await open({ directory: true, multiple: false, title: '选择要上传的文件夹' });
     if (typeof picked !== 'string') return; // cancelled
     try {
       const resolved = await resolveUploadFiles([picked]);
       if (resolved.length === 0) {
-        setError('No uploadable files found directly in that folder.');
+        setError('该文件夹内未找到可直接上传的文件。');
         return;
       }
       mergeFiles(resolved);
@@ -178,7 +178,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
       );
       log.info('library', 'upload complete', { lib: lib.id, title: title.trim() });
       st.setToast({
-        message: 'Uploaded — the server is scanning it in. It can take a moment (or a library scan if the folder watcher is off).',
+        message: '上传完成——服务器正在扫描导入。可能需要片刻（若关闭了文件夹监视，则需一次书库扫描）。',
         type: 'success',
       });
       // With live sync on, the watcher's item_added socket event appends the new
@@ -196,7 +196,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
       uploadIdRef.current = null;
       setProgress(null);
       if (msg === 'cancelled') {
-        st.setToast({ message: 'Upload cancelled', type: 'info' });
+        st.setToast({ message: '上传已取消', type: 'info' });
       } else {
         log.error('library', 'upload failed', { lib: lib.id, err: msg });
         setError(msg);
@@ -233,14 +233,14 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
             <div id="upload-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>
-              Upload to {lib.name}
+              上传到“{lib.name}”
             </div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>
-              {isPodcast ? 'New podcast — files go to the server' : 'New book — files go to the server'}
+              {isPodcast ? '新播客——文件将上传到服务器' : '新图书——文件将上传到服务器'}
             </div>
           </div>
           <button
-            aria-label="Close upload"
+            aria-label="关闭上传"
             onClick={() => { if (!uploading) onClose(); }}
             disabled={uploading}
             style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}
@@ -253,10 +253,10 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {/* Pickers */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => void pickFiles()} disabled={uploading} style={{ ...pickerBtn, opacity: uploading ? 0.4 : 1, cursor: uploading ? 'default' : 'pointer' }}>
-              <Icon name="plus" size={12} /> Add files
+              <Icon name="plus" size={12} /> 添加文件
             </button>
             <button onClick={() => void pickFolder()} disabled={uploading} style={{ ...pickerBtn, opacity: uploading ? 0.4 : 1, cursor: uploading ? 'default' : 'pointer' }}>
-              <Icon name="plus" size={12} /> Add folder
+              <Icon name="plus" size={12} /> 添加文件夹
             </button>
           </div>
 
@@ -272,7 +272,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                     {!uploading && (
                       <button
                         onClick={() => setFiles(prev => prev.filter(x => x.path !== f.path))}
-                        title="Remove"
+                        title="移除"
                         style={{ flexShrink: 0, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'var(--onyx-text-mute)', fontSize: 11, cursor: 'pointer', padding: 0, lineHeight: 1 }}
                       >✕</button>
                     )}
@@ -280,7 +280,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                 ))}
               </div>
               <div style={{ padding: '6px 11px', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-                {files.length} file{files.length > 1 ? 's' : ''} · {fmtBytes(totalBytes)}
+                {files.length} 个文件 · {fmtBytes(totalBytes)}
               </div>
             </div>
           )}
@@ -288,10 +288,10 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {/* Fields — Title always; Author/Series for book libraries only (the
               server ignores them for podcasts, whose dir is just folder/title). */}
           <div>
-            <label style={labelStyle}>Title *</label>
+            <label style={labelStyle}>标题 *</label>
             <input
               type="text" value={title} onChange={e => setTitle(e.target.value)} disabled={uploading}
-              placeholder={isPodcast ? 'Podcast title…' : 'Book title…'}
+              placeholder={isPodcast ? '播客标题…' : '图书标题…'}
               onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
               onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
               style={fieldStyle}
@@ -300,20 +300,20 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {!isPodcast && (
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Author</label>
+                <label style={labelStyle}>作者</label>
                 <input
                   type="text" value={author} onChange={e => setAuthor(e.target.value)} disabled={uploading}
-                  placeholder="Author…"
+                  placeholder="作者…"
                   onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
                   style={fieldStyle}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Series</label>
+                <label style={labelStyle}>系列</label>
                 <input
                   type="text" value={series} onChange={e => setSeries(e.target.value)} disabled={uploading}
-                  placeholder="Series…"
+                  placeholder="系列…"
                   onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
                   style={fieldStyle}
@@ -326,7 +326,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
               exactly one; radio-style rows when there is a real choice. */}
           {folders.length > 1 && (
             <div>
-              <label style={labelStyle}>Server folder</label>
+              <label style={labelStyle}>服务器文件夹</label>
               <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 8, overflow: 'hidden' }}>
                 {folders.map(f => {
                   const active = f.id === folderId;
@@ -354,14 +354,13 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           )}
           {folders.length === 0 && (
             <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>
-              This library has no folders to upload into.
+              此书库没有可上传的文件夹。
             </div>
           )}
 
           {dupNames.length > 0 && (
             <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO, wordBreak: 'break-word' }}>
-              Duplicate file name{dupNames.length > 1 ? 's' : ''}: {dupNames.join(', ')} — the server puts all
-              files in one folder, so one copy would be lost. Remove or rename the duplicates.
+              存在重复文件名：{dupNames.join(', ')}——服务器会把所有文件放入同一文件夹，重复文件会被覆盖丢失。请移除或重命名重复文件。
             </div>
           )}
 
@@ -384,7 +383,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                 <button
                   onClick={() => { if (uploadIdRef.current) void cancelUpload(uploadIdRef.current).catch(e => log.error('library', 'cancelUpload failed', { err: String(e) })); }}
                   style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 12px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
-                >Cancel</button>
+                >取消</button>
               </div>
             </div>
           ) : (
@@ -392,7 +391,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
               <button
                 onClick={onClose}
                 style={{ flex: 1, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '9px 14px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
-              >Cancel</button>
+              >取消</button>
               <button
                 onClick={() => void startUpload()}
                 disabled={!canStart}
@@ -404,7 +403,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                   cursor: canStart ? 'pointer' : 'default',
                 }}
               >
-                {files.length > 0 ? `Upload ${files.length} file${files.length > 1 ? 's' : ''}` : 'Upload'}
+                {files.length > 0 ? `上传 ${files.length} 个文件` : '上传'}
               </button>
             </div>
           )}

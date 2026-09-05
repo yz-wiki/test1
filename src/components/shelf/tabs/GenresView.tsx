@@ -50,16 +50,16 @@ export default function GenresView({ st, inline = false }: GenresViewProps) {
   };
 
   return (
-    <BrowseView st={st} title="Genres" subtitle={`${list.length} genres in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title="类型" subtitle={`你书库中共 ${list.length} 个类型`} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(g => (
             <BrowseTile
               key={g.name}
               mode={st.browseTileStyle}
-              tag="Genre"
+              tag="类型"
               title={g.name}
-              stat={`${g.books.length} TITLE${g.books.length === 1 ? '' : 'S'} · ${seriesTotalDur(g.books)}`}
+              stat={`${g.books.length} 本 · ${seriesTotalDur(g.books)}`}
               books={g.books}
               serverUrl={st.serverUrl}
               onClick={() => open(g.name)}
@@ -69,9 +69,9 @@ export default function GenresView({ st, inline = false }: GenresViewProps) {
       ) : (
         <BrowseList
           columns={[
-            { id: 'name',   label: 'Genre',    flex: 2   },
-            { id: 'titles', label: 'Titles',   width: 80 },
-            { id: 'dur',    label: 'Duration', width: 110 },
+            { id: 'name',   label: '类型',    flex: 2   },
+            { id: 'titles', label: '作品数',   width: 80 },
+            { id: 'dur',    label: '时长', width: 110 },
           ]}
           rows={list.map(g => ({
             key: g.name,

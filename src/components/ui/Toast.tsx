@@ -75,7 +75,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
       </span>
       <button
         onClick={onDismiss}
-        aria-label="Dismiss notification"
+        aria-label="关闭通知"
         style={{
           background: 'none',
           border: 'none',
@@ -87,7 +87,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
           padding: '2px 4px',
           flexShrink: 0,
         }}
-        title="Dismiss notification"
+        title="关闭通知"
       >
         ✕
       </button>

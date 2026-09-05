@@ -59,7 +59,7 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
       } else {
         await downloadEpisodes(st.serverUrl, itemId, chosen);
       }
-      st.setToast({ message: `Queued ${chosen.length} episode${chosen.length === 1 ? '' : 's'} for download`, type: 'success' });
+      st.setToast({ message: `已将 ${chosen.length} 个单集加入下载队列`, type: 'success' });
       onQueued();
       onClose();
     } catch (e) {
@@ -80,27 +80,27 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
       }}>
         {/* Header */}
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--onyx-line)' }}>
-          <div id="podcast-download-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>Download Episodes</div>
+          <div id="podcast-download-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>下载单集</div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 4, letterSpacing: '0.04em' }}>
-            {visible.length} available · {selected.size} selected
+            {visible.length} 个可下载 · 已选 {selected.size} 个
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
-            <span style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>SINCE</span>
+            <span style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>自</span>
             <input
               type="date" value={since} onChange={e => setSince(e.target.value)}
               style={{ background: 'rgba(0,0,0,0.3)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-line)', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit' }}
             />
-            {since && <button onClick={() => setSince('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>clear</button>}
+            {since && <button onClick={() => setSince('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>清除</button>}
             <div style={{ flex: 1 }} />
-            <button onClick={selectAll} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>ALL</button>
-            <button onClick={selectNone} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>NONE</button>
+            <button onClick={selectAll} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>全选</button>
+            <button onClick={selectNone} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>全不选</button>
           </div>
         </div>
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', minHeight: 120 }}>
           {visible.length === 0 && (
-            <div style={{ padding: 16, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>Nothing to download.</div>
+            <div style={{ padding: 16, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>没有可下载的单集。</div>
           )}
           {visible.map(ep => {
             const key = episodeKey(ep);
@@ -111,7 +111,7 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ep.title}</div>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 2 }}>
-                    {d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                    {d ? d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
                   </div>
                 </div>
               </label>
@@ -123,7 +123,7 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 12 }}>
           {error && <div style={{ fontSize: 11.5, color: '#e8716a', flex: 1 }}>{error}</div>}
           <div style={{ flex: error ? 0 : 1 }} />
-          <button onClick={onClose} disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'default' : 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>CANCEL</button>
+          <button onClick={onClose} disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'default' : 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>取消</button>
           <button
             onClick={queue}
             disabled={busy || selected.size === 0}
@@ -133,7 +133,7 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
               color: (busy || selected.size === 0) ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
               fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
             }}
-          >{busy ? 'Queueing…' : `Download (${selected.size})`}</button>
+          >{busy ? '排队中…' : `下载（${selected.size}）`}</button>
         </div>
       </div>
     </div>

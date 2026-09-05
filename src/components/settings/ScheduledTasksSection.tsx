@@ -15,14 +15,14 @@ const POLL_MS = 3000;
 function relTime(ms: number | null | undefined): string {
   if (!ms) return '';
   const diff = Date.now() - ms;
-  if (diff < 0) return 'just now';
+  if (diff < 0) return '刚刚';
   const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
+  if (s < 60) return `${s} 秒前`;
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m} 分钟前`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return `${h} 小时前`;
+  return `${Math.floor(h / 24)} 天前`;
 }
 
 /** Capitalize the first letter for display. */
@@ -31,20 +31,20 @@ const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 /** Minimal human-readable description for the most common cron patterns. */
 function describeCron(expr: string): string {
   const parts = expr.trim().split(/\s+/);
-  if (parts.length !== 5) return 'custom schedule';
+  if (parts.length !== 5) return '自定义计划';
   const [min, hr, dom, , dow] = parts;
-  if (expr === '0 * * * *') return 'every hour';
-  if (min !== '*' && hr === '*' && dom === '*' && dow === '*') return `hourly at :${min.padStart(2, '0')}`;
-  if (min !== '*' && hr !== '*' && dom === '*' && dow === '*') return `daily at ${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
-  if (dom === '*' && dow !== '*') return `weekly (day ${dow}) at ${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
-  return 'custom schedule';
+  if (expr === '0 * * * *') return '每小时';
+  if (min !== '*' && hr === '*' && dom === '*' && dow === '*') return `每小时第 ${min.padStart(2, '0')} 分`;
+  if (min !== '*' && hr !== '*' && dom === '*' && dow === '*') return `每天 ${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
+  if (dom === '*' && dow !== '*') return `每周（第 ${dow} 天）${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
+  return '自定义计划';
 }
 
 // Status presentation for a task: dot colour + label.
 function taskStatus(t: Task): { color: string; label: string } {
-  if (!t.isFinished) return { color: '#f59e0b', label: 'Running' };
-  if (t.isFailed)   return { color: '#e08a8a', label: 'Failed' };
-  return { color: '#4caf50', label: 'Done' };
+  if (!t.isFinished) return { color: '#f59e0b', label: '运行中' };
+  if (t.isFailed)   return { color: '#e08a8a', label: '失败' };
+  return { color: '#4caf50', label: '已完成' };
 }
 
 // ── Main section ────────────────────────────────────────────────────────────────
@@ -127,41 +127,41 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Scheduled Tasks"
-        subtitle="Background server activity and the schedules that drive it. Admin only."
+        title="计划任务"
+        subtitle="服务器的后台活动及其驱动计划。仅限管理员。"
       />
 
       {/* ── Activity monitor ─────────────────────────────────────────────── */}
-      <Panel label="Activity">
+      <Panel label="活动">
 
       {!liveSyncOn && (
         <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', padding: '10px 0 2px', lineHeight: 1.5 }}>
-          Live sync is off — tasks refresh every {POLL_MS / 1000}s while this panel is open.
-          Enable live sync (Settings → Server) for real-time updates that persist across panels.
+          实时同步已关闭——本面板打开期间每 {POLL_MS / 1000} 秒刷新一次任务。
+          启用实时同步（设置 → 服务器）可获得跨面板保持的实时更新。
         </div>
       )}
 
       {loading && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
-          Loading tasks…
+          正在加载任务…
         </div>
       )}
 
       {error && !loading && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
-          Couldn't load tasks: {error}
+          无法加载任务：{error}
         </div>
       )}
 
       {!loading && !error && sorted.length === 0 && (
         <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
-          No active or recent tasks. Background operations (library scans, backups, metadata embeds) will appear here while they run.
+          当前没有活动或近期任务。后台操作（书库扫描、备份、元数据嵌入）运行时会显示在这里。
         </div>
       )}
 
       {sorted.map(t => {
         const status = taskStatus(t);
-        const title = t.title || t.titleKey || t.action || 'Task';
+        const title = t.title || t.titleKey || t.action || '任务';
         const desc = t.description || t.descriptionKey || '';
         const when = t.isFinished ? relTime(t.finishedAt) : relTime(t.startedAt);
         return (
@@ -214,15 +214,15 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       </Panel>
 
       {/* ── Schedule summary ─────────────────────────────────────────────── */}
-      <Panel label="Schedules">
+      <Panel label="计划">
 
-      <Row label="Automatic backups" hint="Edit in Settings → Backups.">
+      <Row label="自动备份" hint="在“设置 → 备份”中编辑。">
         <span style={{ fontSize: 12.5, color: backupEnabled ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
-          {backupEnabled ? cap(describeCron(backupSchedule as string)) : 'Disabled'}
+          {backupEnabled ? cap(describeCron(backupSchedule as string)) : '已禁用'}
         </span>
       </Row>
 
-      <Row label="Podcast episode check" hint="Edit in Settings → Server.">
+      <Row label="播客单集检查" hint="在“设置 → 服务器”中编辑。">
         <span style={{ fontSize: 12.5, color: podcastSchedule ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
           {podcastSchedule ? cap(describeCron(podcastSchedule)) : '—'}
         </span>
@@ -231,11 +231,11 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       </Panel>
 
       {/* ── Cron builder & validator ─────────────────────────────────────── */}
-      <Panel label="Cron builder">
+      <Panel label="Cron 构建器">
 
       <Row
-        label="Build a schedule"
-        hint="Construct a cron expression with the picker. Custom mode accepts raw cron, which you can check against the server."
+        label="构建计划"
+        hint="使用选择器构造 cron 表达式。自定义模式可输入原始 cron，并可向服务器校验。"
         align="top"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
@@ -243,7 +243,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {cronValid !== null && (
               <span style={{ fontFamily: MONO, fontSize: 11, color: cronValid ? '#4caf50' : '#e08a8a' }}>
-                {cronValid ? '✓ valid' : '✕ invalid expression'}
+                {cronValid ? '✓ 有效' : '✕ 表达式无效'}
               </span>
             )}
             <button
@@ -256,7 +256,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
                 opacity: cronChecking || !cronInput.trim() ? 0.45 : 1,
               }}
             >
-              Validate
+              校验
             </button>
           </div>
         </div>

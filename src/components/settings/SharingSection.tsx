@@ -15,9 +15,9 @@ function publicShareUrl(serverUrl: string, slug: string): string {
 async function copy(text: string, st: OnyxState, label: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    st.setToast({ message: `${label} copied to clipboard`, type: 'success' });
+    st.setToast({ message: `已复制${label}到剪贴板`, type: 'success' });
   } catch {
-    st.setToast({ message: `Copy failed — ${text}`, type: 'info' });
+    st.setToast({ message: `复制失败——${text}`, type: 'info' });
   }
 }
 
@@ -29,7 +29,7 @@ function CopyLink({ url, label, st }: { url: string; label: string; st: OnyxStat
       onClick={() => void copy(url, st, label)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      title="Click to copy"
+      title="点击复制"
       style={{ color: 'var(--onyx-accent)', cursor: 'pointer', textDecoration: hover ? 'underline' : 'none' }}
     >
       {url}
@@ -78,7 +78,7 @@ export default function SharingSection({ st }: SharingSectionProps) {
       setFeeds(await getFeeds(st.serverUrl));
     } catch (e) {
       log.error('sharing', 'getFeeds failed', { err: String(e) });
-      st.setToast({ message: `Failed to load feeds: ${String(e)}`, type: 'error' });
+      st.setToast({ message: `加载订阅源失败：${String(e)}`, type: 'error' });
     } finally {
       setFeedsLoading(false);
     }
@@ -88,18 +88,18 @@ export default function SharingSection({ st }: SharingSectionProps) {
 
   const revokeShare = useCallback((s: TrackedShare) => {
     st.setConfirmDialog({
-      title: 'Revoke share link?',
-      message: `The public link for "${s.title}" will stop working immediately.`,
-      confirmLabel: 'Revoke',
+      title: '撤销分享链接？',
+      message: `“${s.title}”的公开链接将立即失效。`,
+      confirmLabel: '撤销',
       onConfirm: async () => {
         setBusyId(s.id);
         try {
           await deleteShare(st.serverUrl, s.id);
           removeTrackedShare(s.id);
           setShares(prev => prev.filter(x => x.id !== s.id));
-          st.setToast({ message: 'Share link revoked.', type: 'success' });
+          st.setToast({ message: '分享链接已撤销。', type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Revoke failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: `撤销失败：${String(e)}`, type: 'error' });
         } finally {
           setBusyId(null);
         }
@@ -110,17 +110,17 @@ export default function SharingSection({ st }: SharingSectionProps) {
   const close = useCallback((f: RssFeed) => {
     const name = f.meta?.title || f.slug || f.id;
     st.setConfirmDialog({
-      title: 'Close RSS feed?',
-      message: `The public feed "${name}" will stop working immediately.`,
-      confirmLabel: 'Close feed',
+      title: '关闭 RSS 订阅源？',
+      message: `公开订阅源“${name}”将立即失效。`,
+      confirmLabel: '关闭订阅源',
       onConfirm: async () => {
         setBusyId(f.id);
         try {
           await closeFeed(st.serverUrl, f.id);
           setFeeds(prev => prev.filter(x => x.id !== f.id));
-          st.setToast({ message: 'RSS feed closed.', type: 'success' });
+          st.setToast({ message: 'RSS 订阅源已关闭。', type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Close failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: `关闭失败：${String(e)}`, type: 'error' });
         } finally {
           setBusyId(null);
         }
@@ -139,12 +139,12 @@ export default function SharingSection({ st }: SharingSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Sharing & RSS"
-        subtitle="Manage public share links and RSS feeds. Create them per item from the library context menu (Share & Publish). These are admin-only server surfaces."
+        title="分享与 RSS"
+        subtitle="管理公开分享链接与 RSS 订阅源。可在书库右键菜单的“分享与发布”中按条目创建。这些是仅限管理员使用的服务器功能。"
       />
 
       {/* ── Public link address ── */}
-      <Panel label="Public link address">
+      <Panel label="公开链接地址">
         <div style={{ padding: '12px 2px 2px' }}>
           <input
             value={pubUrl}
@@ -153,47 +153,47 @@ export default function SharingSection({ st }: SharingSectionProps) {
             style={input}
           />
           <div style={{ ...empty, padding: '10px 0 2px' }}>
-            Share and new RSS feed links are built from this address. Leave blank to use the server URL Skald connects to ({st.serverUrl}). Set it to a public domain (e.g. https://abs.example.com) so links work outside your LAN — your Audiobookshelf server must be reachable there.
+            分享链接与新 RSS 订阅源链接均以此地址为基础生成。留空则使用 Skald 所连接服务器的地址（{st.serverUrl}）。可将其设置为公网域名（例如 https://abs.example.com），以便在局域网外也能访问——你的 Audiobookshelf 服务器须在该地址可被访问。
           </div>
         </div>
       </Panel>
 
       {/* ── Share Manager ── */}
-      <Panel label="Share links">
+      <Panel label="分享链接">
         {shares.length === 0 ? (
           <div style={empty}>
-            No share links created from this device. ABS provides no way to list shares, so links created on the web client or another device aren't shown here.
+            此设备上尚未创建过分享链接。ABS 不提供列出分享链接的接口，因此在 Web 客户端或其他设备上创建的链接不会显示在这里。
           </div>
         ) : shares.map((s, i) => (
           <div key={s.id} style={row(i === shares.length - 1)}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{s.title}</div>
               <div style={sub}>
-                <CopyLink url={publicShareUrl(st.serverUrl, s.slug)} label="Share link" st={st} />
-                {s.expiresAt ? ` · expires ${new Date(s.expiresAt).toLocaleDateString()}` : ' · never expires'}
-                {s.isDownloadable ? ' · downloadable' : ''}
+                <CopyLink url={publicShareUrl(st.serverUrl, s.slug)} label="分享链接" st={st} />
+                {s.expiresAt ? ` · 有效期至 ${new Date(s.expiresAt).toLocaleDateString()}` : ' · 永不过期'}
+                {s.isDownloadable ? ' · 可下载' : ''}
               </div>
             </div>
-            <button onClick={() => void copy(publicShareUrl(st.serverUrl, s.slug), st, 'Share link')} style={ghostBtn}>Copy</button>
-            <button onClick={() => revokeShare(s)} disabled={busyId === s.id} style={dangerBtn}>Revoke</button>
+            <button onClick={() => void copy(publicShareUrl(st.serverUrl, s.slug), st, '分享链接')} style={ghostBtn}>复制</button>
+            <button onClick={() => revokeShare(s)} disabled={busyId === s.id} style={dangerBtn}>撤销</button>
           </div>
         ))}
       </Panel>
 
       {/* ── RSS Feed Manager ── */}
-      <Panel label="Open RSS feeds">
+      <Panel label="已开启的 RSS 订阅源">
         {feedsLoading ? (
-          <div style={empty}>Loading…</div>
+          <div style={empty}>加载中…</div>
         ) : feeds.length === 0 ? (
-          <div style={empty}>No open feeds. Open one from an item's Share &amp; Publish menu.</div>
+          <div style={empty}>暂无已开启的订阅源。可从条目的“分享与发布”菜单开启一个。</div>
         ) : feeds.map((f, i) => (
           <div key={f.id} style={row(i === feeds.length - 1)}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{f.meta?.title || f.slug}</div>
-              <div style={sub}>{f.entityType} · <CopyLink url={absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl)} label="Feed URL" st={st} /></div>
+              <div style={sub}>{f.entityType} · <CopyLink url={absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl)} label="订阅源地址" st={st} /></div>
             </div>
-            <button onClick={() => void copy(absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl), st, 'Feed URL')} style={ghostBtn}>Copy</button>
-            <button onClick={() => close(f)} disabled={busyId === f.id} style={dangerBtn}>Close</button>
+            <button onClick={() => void copy(absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl), st, '订阅源地址')} style={ghostBtn}>复制</button>
+            <button onClick={() => close(f)} disabled={busyId === f.id} style={dangerBtn}>关闭</button>
           </div>
         ))}
       </Panel>

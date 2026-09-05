@@ -213,24 +213,24 @@ export default function AudioSection() {
 
   return (
     <div>
-      <SectionHead title="Audio" subtitle="Output device and signal-chain preferences." />
+      <SectionHead title="音频" subtitle="输出设备与信号链路偏好。" />
 
       {/* Output device — kept as a standalone line item above the signal chain. */}
       <Row
-        label="Output device"
-        hint="Active right now. Pick a different device any time from the toolbar."
+        label="输出设备"
+        hint="当前生效。可随时从工具栏中选择其他设备。"
         align="top"
       >
         {devices.length === 0 ? (
           <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 12px', letterSpacing: '0.06em' }}>
-            Loading devices…
+            正在加载设备…
           </div>
         ) : (
           <Dropdown
             trigger={
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="headphones" size={13} color="var(--onyx-text-dim)" />
-                <span>{currentDevice?.name ?? 'Select device'}</span>
+                <span>{currentDevice?.name ?? '选择设备'}</span>
               </span>
             }
             items={devices.map(d => ({ id: d.id, name: d.name, icon: 'headphones' }))}
@@ -242,35 +242,35 @@ export default function AudioSection() {
       </Row>
 
       {/* ── Signal chain panel ── */}
-      <Panel label="Signal chain" bodyStyle={{ padding: '2px 20px 18px' }}>
+      <Panel label="信号链路" bodyStyle={{ padding: '2px 20px 18px' }}>
           {/* Equalizer master toggle */}
-          <Row label="Equalizer" hint="9-band DSP equalizer powered by LibVLC. Changes apply live.">
+          <Row label="均衡器" hint="由 LibVLC 提供支持的 9 段 DSP 均衡器。改动会实时生效。">
             {eqSettings !== null && <Toggle on={eqEnabled} onChange={handleToggleEq} />}
           </Row>
 
           {/* EQ controls — greyed and non-interactive while disabled */}
           <div style={{ opacity: eqEnabled ? 1 : 0.35, pointerEvents: eqEnabled ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
             {/* Preset pills (replaces the dropdown) */}
-            <Row label="Preset">
+            <Row label="预设">
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {presets.map(p => (
                   <Seg key={p.index} active={presetSelectValue === String(p.index)} onClick={() => handlePresetChange(p.index)}>{p.name}</Seg>
                 ))}
                 {/* Custom is an indicator (active when bands were hand-tuned), not directly applicable. */}
-                <Seg active={presetSelectValue === '__custom__'} onClick={() => {}}>Custom</Seg>
+                <Seg active={presetSelectValue === '__custom__'} onClick={() => {}}>自定义</Seg>
               </div>
             </Row>
 
-            <Row label="Saved profiles" hint="Custom profiles apply to the current output device and are stored on this PC.">
+            <Row label="已保存配置" hint="自定义配置应用于当前输出设备，并存储在这台电脑上。">
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
                 {savedPresets.map(p => <Seg key={p.name} active={false} onClick={() => applySavedPreset(p)}>{p.name}</Seg>)}
-                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder="Profile name" aria-label="Saved EQ profile name" style={{ width: 105, padding: '5px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 10 }} />
-                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: '5px 8px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>SAVE</button>
+                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder="配置名称" aria-label="已保存均衡器配置名称" style={{ width: 105, padding: '5px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 10 }} />
+                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: '5px 8px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>保存</button>
               </div>
             </Row>
 
             {/* Preamp */}
-            <Row label="Preamp">
+            <Row label="前置放大">
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <input
                   type="range"
@@ -292,7 +292,7 @@ export default function AudioSection() {
             {frequencies.length > 0 && (
               <div style={{ paddingTop: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <span style={eyebrowStyle}>9-Band EQ</span>
+                  <span style={eyebrowStyle}>9 段均衡器</span>
                   <button
                     onClick={handleResetFlat}
                     style={{
@@ -301,7 +301,7 @@ export default function AudioSection() {
                       fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
                     }}
                   >
-                    Reset to flat
+                    重置为平直
                   </button>
                 </div>
 

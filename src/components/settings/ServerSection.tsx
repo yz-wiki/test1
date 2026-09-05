@@ -10,11 +10,11 @@ export default function ServerSection({ st }: ServerSectionProps) {
 
   return (
     <div>
-      <SectionHead title="Server" subtitle="Your Audiobookshelf server connection." />
+      <SectionHead title="服务器" subtitle="你的 Audiobookshelf 服务器连接。" />
 
-      <Panel label="Connection">
+      <Panel label="连接">
         {/* Connection status — dot + label */}
-        <Row label="Status">
+        <Row label="状态">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{
               width: 8, height: 8, borderRadius: 4, flexShrink: 0, display: 'inline-block',
@@ -22,19 +22,19 @@ export default function ServerSection({ st }: ServerSectionProps) {
               boxShadow: connected ? '0 0 8px #5ac88a' : 'none',
             }} />
             <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: connected ? '#5ac88a' : 'var(--onyx-text-mute)' }}>
-              {connected ? 'Connected' : 'Not connected'}
+              {connected ? '已连接' : '未连接'}
             </span>
           </span>
         </Row>
 
         {/* Server URL — read-only; changing server requires signing out */}
-        <Row label="Server URL" hint="To change servers, sign out and sign back in.">
+        <Row label="服务器地址" hint="如需更换服务器，请先退出登录，再重新登录。">
           <input
             type="text"
             value={st.serverUrl}
             readOnly
             disabled
-            title="To change servers, sign out and sign back in"
+            title="如需更换服务器，请先退出登录，再重新登录"
             style={{
               padding: '8px 12px',
               minWidth: 280,

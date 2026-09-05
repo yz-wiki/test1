@@ -34,12 +34,12 @@ function StagingScene() {
       {/* Staging box (left) */}
       <div style={{ ...box, left: '8%' }}>
         <span style={{ fontSize: 18, lineHeight: 1 }}>📁</span>
-        <span style={cap}>Staging</span>
+        <span style={cap}>暂存</span>
       </div>
       {/* Filed box (right) */}
       <div className="onb-filed" style={{ ...box, right: '8%' }}>
         <span style={{ fontSize: 18, lineHeight: 1 }}>🗂️</span>
-        <span style={cap}>Author / Series</span>
+        <span style={cap}>作者 / 系列</span>
       </div>
       {/* Travelling file glyph */}
       <div className="onb-file" style={{ position: 'absolute', width: 24, height: 28, borderRadius: 4, background: 'linear-gradient(180deg,#e9bb5e,#a37d2e)', boxShadow: '0 6px 16px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1306', fontFamily: MONO, fontSize: 9, fontWeight: 700 }}>
@@ -69,19 +69,19 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
       <StagingScene />
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <RouteCard badge="Automatic" title="Drop into Staging">
-          Copy audiobooks — files <em>or whole book folders</em> — into the library's{' '}
-          <span style={{ color: 'rgba(235,231,223,0.85)' }}>Staging</span> folder. Skald reads each book's tags and
-          chapters and files it under Author / Series / Title automatically.
+        <RouteCard badge="自动" title="拖入 Staging">
+          将有声书——单个文件<em>或整个书籍文件夹</em>——复制到书库的{' '}
+          <span style={{ color: 'rgba(235,231,223,0.85)' }}>Staging</span> 文件夹。Skald 会自动读取每本书的标签和
+          章节，并按 作者 / 系列 / 书名 归档。
         </RouteCard>
-        <RouteCard badge="Manual" title="Add books button">
-          Use <span style={{ color: 'rgba(235,231,223,0.85)' }}>Add books</span> here, in the library bar, or in
-          Settings to choose files, scan a folder, or open Staging from one place.
+        <RouteCard badge="手动" title="“添加图书”按钮">
+          在这里、书库栏或“设置”中使用 <span style={{ color: 'rgba(235,231,223,0.85)' }}>添加图书</span>，
+          即可从同一个入口选择文件、扫描文件夹或打开 Staging。
         </RouteCard>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 4 }}>
-        <GoldButton onClick={onContinue}>Continue</GoldButton>
+        <GoldButton onClick={onContinue}>继续</GoldButton>
         {library ? (
           <button
             type="button"
@@ -92,11 +92,11 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
               color: 'var(--onyx-accent)', cursor: 'pointer',
             }}
           >
-            Add books
+            添加图书
           </button>
         ) : (
           <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(235,231,223,0.4)' }}>
-            Create a library first to import books.
+            请先创建书库，再导入图书。
           </span>
         )}
       </div>

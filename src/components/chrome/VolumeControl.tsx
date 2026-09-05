@@ -33,9 +33,9 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
     }}>
       <button
         onClick={() => st.muted ? unmuteAudio(st) : muteAudio(st)}
-        aria-label={st.muted ? 'Unmute' : 'Mute'}
+        aria-label={st.muted ? '取消静音' : '静音'}
         style={{ background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 2, display: 'flex' }}
-        title="Mute"
+        title="静音"
       >
         <Icon name={st.muted || st.volume < 0.01 ? 'volume-mute' : 'volume'} size={15} />
       </button>
@@ -53,7 +53,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
         }} />
         <input
           type="range" min={0} max={100} value={Math.round(v * 100)}
-          aria-label="Volume"
+          aria-label="音量"
           onChange={onChange}
           style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer' }}
         />

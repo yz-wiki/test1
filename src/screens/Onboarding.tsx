@@ -73,7 +73,7 @@ export default function Onboarding({ st }: OnboardingProps) {
     if (skipped) {
       log.info('app', 'onboarding skipped', { atStep: step });
       if (!st.authToken) {
-        st.setToast({ message: 'You can connect a server any time in Settings → Server.', type: 'info' });
+        st.setToast({ message: '你随时可以在“设置 → 服务器”中连接服务器。', type: 'info' });
       }
     } else {
       log.info('app', 'onboarding completed', { path });
@@ -96,30 +96,30 @@ export default function Onboarding({ st }: OnboardingProps) {
             onClick={goBack}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.5)', padding: '6px 4px' }}
           >
-            ← Back
+            ← 返回
           </button>
         )}
       </div>
       {step !== 'welcome' && <ProgressDots count={branchSteps.length} index={dotIndex} />}
       <div style={{ minWidth: 80, display: 'flex', justifyContent: 'flex-end' }}>
-        {step !== 'done' && <GhostButton onClick={() => finish(true)}>Skip setup</GhostButton>}
+        {step !== 'done' && <GhostButton onClick={() => finish(true)}>跳过设置</GhostButton>}
       </div>
     </>
   );
 
   // ── Per-step header copy + body ────────────────────────────────────────────
   const eyebrow = step === 'welcome'
-    ? 'Welcome'
-    : `Step ${dotIndex + 1} of ${branchSteps.length}`;
+    ? '欢迎'
+    : `第 ${dotIndex + 1} 步，共 ${branchSteps.length} 步`;
 
   const header: Record<StepKey, { title: React.ReactNode; subtitle?: React.ReactNode }> = {
-    welcome:  { title: <>Welcome to <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>Skald</span></> },
-    choose:   { title: 'How will you use Skald?', subtitle: 'Pick one — you can add the other later in Settings.' },
-    connect:  { title: 'Connect to Audiobookshelf', subtitle: 'Enter your server address and sign in with an API key or password.' },
-    folders:  { title: 'Where downloads live', subtitle: 'Choose where offline copies are stored on this computer.' },
-    create:   { title: 'Create a local library', subtitle: 'Skald builds a managed folder from audiobooks on this PC — no server needed.' },
-    addbooks: { title: 'Getting books in', subtitle: 'Two ways to add books to a local library.' },
-    done:     { title: 'You’re all set', subtitle: undefined },
+    welcome:  { title: <>欢迎来到 <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>Skald</span></> },
+    choose:   { title: '你打算如何使用 Skald？', subtitle: '选择其一——之后随时可在“设置”中添加另一种。' },
+    connect:  { title: '连接到 Audiobookshelf', subtitle: '输入服务器地址，使用 API 密钥或密码登录。' },
+    folders:  { title: '下载内容存放何处', subtitle: '选择离线副本在这台电脑上的存放位置。' },
+    create:   { title: '创建本机书库', subtitle: 'Skald 会用这台电脑上的有声书搭建一个受管理的文件夹——无需服务器。' },
+    addbooks: { title: '如何添加图书', subtitle: '向本机书库添加图书的两种方式。' },
+    done:     { title: '一切就绪', subtitle: undefined },
   };
 
   const body = (() => {

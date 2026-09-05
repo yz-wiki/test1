@@ -181,7 +181,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                 flex: 1,
                 minWidth: 0,
               }}>
-                Downloading "{title}"
+                正在下载“{title}”
               </div>
 
               {/* Cancel button — calls cancel_download on the Rust side; the
@@ -189,7 +189,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                   file has been cleaned up. */}
               <button
                 onClick={() => cancelDownload(itemId).catch(e => log.error('downloads', 'cancelDownload failed', { itemId, err: String(e) }))}
-                title="Cancel download"
+                title="取消下载"
                 style={{
                   flexShrink: 0,
                   width: 22,
@@ -251,12 +251,12 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
       })}
       {Array.from(failed.values()).map(entry => (
         <div key={entry.itemId} style={{ minWidth: 260, maxWidth: 420, background: 'var(--onyx-panel2)', border: '1px solid rgba(220,100,100,0.45)', borderRadius: 8, padding: '11px 14px', pointerEvents: 'auto' }}>
-          <div style={{ fontSize: 13, color: 'var(--onyx-text)', marginBottom: 7 }}>Download failed: “{entry.title}”</div>
+          <div style={{ fontSize: 13, color: 'var(--onyx-text)', marginBottom: 7 }}>下载失败：“{entry.title}”</div>
           <button onClick={() => {
             setFailed(prev => { const next = new Map(prev); next.delete(entry.itemId); return next; });
             downloadItem(serverUrl, entry.itemId, `${entry.title}.zip`, entry.title, '')
               .catch(e => log.error('downloads', 'retry download command failed', { itemId: entry.itemId, err: String(e) }));
-          }} style={{ padding: '5px 10px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>RETRY</button>
+          }} style={{ padding: '5px 10px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>重试</button>
         </div>
       ))}
     </div>

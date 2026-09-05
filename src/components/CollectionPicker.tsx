@@ -110,8 +110,8 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="collection-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Add to Collection</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Choose a collection for this book</div>
+            <div id="collection-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>添加到合集</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>为这本书选择一个合集</div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
@@ -120,13 +120,13 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
         {/* Collection list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
           {collections === null && !error && (
-            <div style={{ padding: '16px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading…</div>
+            <div style={{ padding: '16px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>加载中…</div>
           )}
           {error && (
             <div style={{ padding: '12px 22px', fontSize: 12, color: '#e8716a', fontFamily: MONO }}>{error}</div>
           )}
           {collections !== null && collections.length === 0 && (
-            <div style={{ padding: '12px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>No collections yet — create one below.</div>
+            <div style={{ padding: '12px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>还没有合集——在下方新建一个。</div>
           )}
           {collections?.map(col => {
             const inCol = members.has(col.id);
@@ -172,7 +172,7 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={onNewKeyDown}
-                placeholder="Collection name…"
+                placeholder="合集名称…"
                 disabled={creating}
                 onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
@@ -183,7 +183,7 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
                 disabled={!newName.trim() || creating}
                 style={{ ...footBtn, width: 'auto', whiteSpace: 'nowrap', border: '1px solid transparent', fontWeight: 600, background: newName.trim() && !creating ? 'var(--onyx-accent)' : 'var(--onyx-accent-dim)', color: newName.trim() && !creating ? 'var(--onyx-bg)' : 'var(--onyx-text-mute)', cursor: newName.trim() && !creating ? 'pointer' : 'default' }}
               >
-                {creating ? 'Creating…' : 'Create'}
+                {creating ? '创建中…' : '创建'}
               </button>
             </div>
           ) : (
@@ -192,7 +192,7 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
               disabled={busyId !== null}
               style={{ ...footBtn, border: '1px dashed var(--onyx-accent-edge)', color: 'var(--onyx-accent)' }}
             >
-              + New Collection
+              + 新建合集
             </button>
           )}
 
@@ -200,7 +200,7 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
             onClick={onClose}
             style={{ ...footBtn, border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
           >
-            {members.size > 0 ? 'Done' : 'Cancel'}
+            {members.size > 0 ? '完成' : '取消'}
           </button>
         </div>
       </div>

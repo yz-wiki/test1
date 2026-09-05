@@ -207,7 +207,7 @@ export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProp
   };
 
   const menu = (
-    <div ref={ref} role="menu" aria-label="Item actions" onKeyDown={onMenuKeyDown} style={{ ...posStyle, ...PANEL }}>
+    <div ref={ref} role="menu" aria-label="条目操作" onKeyDown={onMenuKeyDown} style={{ ...posStyle, ...PANEL }}>
       {sections.map((section, si) => (
         <div key={si}>
           {/* Divider above every group after the first; header replaces it when present. */}

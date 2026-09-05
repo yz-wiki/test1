@@ -27,10 +27,10 @@ export interface ShareModalProps {
 // stores `expiresAt || null`, so 0 is the wire value that yields a never-expiring
 // share. A positive value is `Date.now() + ms`.
 const EXPIRY_OPTIONS: Array<{ label: string; ms: number | null }> = [
-  { label: 'Never',   ms: null },
-  { label: '1 day',   ms: 24 * 60 * 60 * 1000 },
-  { label: '7 days',  ms: 7 * 24 * 60 * 60 * 1000 },
-  { label: '30 days', ms: 30 * 24 * 60 * 60 * 1000 },
+  { label: '永久',   ms: null },
+  { label: '1 天',   ms: 24 * 60 * 60 * 1000 },
+  { label: '7 天',  ms: 7 * 24 * 60 * 60 * 1000 },
+  { label: '30 天', ms: 30 * 24 * 60 * 60 * 1000 },
 ];
 
 /** Build the public share URL from the configured public base (or server) + slug. */
@@ -41,10 +41,10 @@ function shareUrl(serverUrl: string, slug: string): string {
 async function copy(text: string, st: OnyxState, label: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    st.setToast({ message: `${label} copied to clipboard`, type: 'success' });
+    st.setToast({ message: `${label} 已复制到剪贴板`, type: 'success' });
   } catch {
     // Clipboard can be blocked; surface the URL so the user can copy manually.
-    st.setToast({ message: `Copy failed — ${text}`, type: 'info' });
+    st.setToast({ message: `复制失败——${text}`, type: 'info' });
   }
 }
 
@@ -140,8 +140,8 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const doCreateShare = useCallback(async () => {
     setShareError(null);
     const s = slug.trim();
-    if (!s) { setShareError('A slug is required.'); return; }
-    if (!mediaId) { setShareError('Could not resolve this item’s media id.'); return; }
+    if (!s) { setShareError('需要填写 Slug。'); return; }
+    if (!mediaId) { setShareError('无法解析此条目的媒体 ID。'); return; }
     setShareBusy(true);
     try {
       const ms = EXPIRY_OPTIONS[expiryIdx].ms;
@@ -157,8 +157,8 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
       };
       addTrackedShare(tracked);
       setShare(tracked);
-      st.setToast({ message: 'Share link created.', type: 'success' });
-      void copy(shareUrl(st.serverUrl, created.slug), st, 'Share link');
+      st.setToast({ message: '分享链接已创建。', type: 'success' });
+      void copy(shareUrl(st.serverUrl, created.slug), st, '分享链接');
     } catch (e) {
       const msg = String(e);
       // ABS returns HTTP 409 "Item is already shared" when a share exists for this
@@ -167,9 +167,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
       // retrieve or display the existing link — surface a clear, actionable note
       // inline (a toast would be hidden behind the modal's blurred backdrop).
       if (/already shared/i.test(msg) || /\b409\b/.test(msg)) {
-        setShareError('This book is already shared on the server, but Skald doesn’t have the link locally (it was created elsewhere or in an earlier session). Audiobookshelf can’t look up an existing share by item — revoke it from the Audiobookshelf web app, then create a new link here.');
+        setShareError('这本书在服务器上已被分享，但 Skald 本地没有这条链接（它可能是在别处或之前的会话中创建的）。Audiobookshelf 无法按条目查找已有分享——请先在 Audiobookshelf WebUI 中撤销它，再在此创建新链接。');
       } else {
-        setShareError(`Create share failed: ${msg}`);
+        setShareError(`创建分享链接失败：${msg}`);
       }
     } finally {
       setShareBusy(false);
@@ -179,9 +179,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const doRevokeShare = useCallback(() => {
     if (!share) return;
     st.setConfirmDialog({
-      title: 'Revoke share link?',
-      message: `The public link for "${title}" will stop working immediately.`,
-      confirmLabel: 'Revoke',
+      title: '撤销分享链接？',
+      message: `“${title}”的公开链接将立即失效。`,
+      confirmLabel: '撤销',
       onConfirm: async () => {
         setShareBusy(true);
         try {
@@ -189,9 +189,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
           removeTrackedShare(share.id);
           setShare(null);
           setSlug(suggestSlug(title));
-          st.setToast({ message: 'Share link revoked.', type: 'success' });
+          st.setToast({ message: '分享链接已撤销。', type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Revoke failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: `撤销失败：${String(e)}`, type: 'error' });
         } finally {
           setShareBusy(false);
         }
@@ -201,17 +201,17 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
 
   const doOpenFeed = useCallback(async () => {
     const s = feedSlug.trim();
-    if (!s) { st.setToast({ message: 'A feed slug is required.', type: 'error' }); return; }
+    if (!s) { st.setToast({ message: '需要填写订阅源 Slug。', type: 'error' }); return; }
     setFeedBusy(true);
     try {
       // serverAddress is the public ABS origin the feedUrl is built from — use the
       // configured public base when set so feeds work outside the LAN.
       const opened = await openFeed(st.serverUrl, 'item', item.id, publicBase(st.serverUrl), s);
       setFeed(opened);
-      st.setToast({ message: 'RSS feed opened.', type: 'success' });
-      void copy(absoluteFeedUrl(opened.serverAddress, opened.feedUrl, st.serverUrl), st, 'Feed URL');
+      st.setToast({ message: 'RSS 订阅源已开启。', type: 'success' });
+      void copy(absoluteFeedUrl(opened.serverAddress, opened.feedUrl, st.serverUrl), st, '订阅源地址');
     } catch (e) {
-      st.setToast({ message: `Open feed failed: ${String(e)}`, type: 'error' });
+      st.setToast({ message: `开启订阅源失败：${String(e)}`, type: 'error' });
     } finally {
       setFeedBusy(false);
     }
@@ -220,18 +220,18 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const doCloseFeed = useCallback(() => {
     if (!feed) return;
     st.setConfirmDialog({
-      title: 'Close RSS feed?',
-      message: `The public feed for "${title}" will stop working immediately.`,
-      confirmLabel: 'Close feed',
+      title: '关闭 RSS 订阅源？',
+      message: `“${title}”的公开订阅源将立即失效。`,
+      confirmLabel: '关闭订阅源',
       onConfirm: async () => {
         setFeedBusy(true);
         try {
           await closeFeed(st.serverUrl, feed.id);
           setFeed(null);
           setFeedSlug(suggestSlug(title));
-          st.setToast({ message: 'RSS feed closed.', type: 'success' });
+          st.setToast({ message: 'RSS 订阅源已关闭。', type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Close feed failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: `关闭订阅源失败：${String(e)}`, type: 'error' });
         } finally {
           setFeedBusy(false);
         }
@@ -249,7 +249,7 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const UrlRow = ({ url, lbl }: { url: string; lbl: string }) => (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <input readOnly value={url} style={{ ...input, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)' }} onFocus={e => e.currentTarget.select()} />
-      <button onClick={() => void copy(url, st, lbl)} style={ghostBtn}>Copy</button>
+      <button onClick={() => void copy(url, st, lbl)} style={ghostBtn}>复制</button>
     </div>
   );
 
@@ -262,30 +262,30 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="share-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Share &amp; Publish</div>
+            <div id="share-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>分享与发布</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{title}</div>
           </div>
-          <button onClick={onClose} aria-label="Close sharing" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1, transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
+          <button onClick={onClose} aria-label="关闭分享" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1, transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
         </div>
         <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>
           {/* ── Public share link ── */}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>Public share link</div>
+            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>公开分享链接</div>
             {!canShare ? (
               <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', lineHeight: 1.5 }}>
-                Share links are available for book items only. Sharing an individual podcast episode is not yet supported.
+                分享链接仅适用于图书条目。暂不支持分享单个播客单集。
               </div>
             ) : share ? (
               <>
-                <UrlRow url={shareUrl(st.serverUrl, share.slug)} lbl="Share link" />
+                <UrlRow url={shareUrl(st.serverUrl, share.slug)} lbl="分享链接" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>
-                    {share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleString()}` : 'Never expires'}
-                    {share.isDownloadable ? ' · downloadable' : ''}
+                    {share.expiresAt ? `有效期至 ${new Date(share.expiresAt).toLocaleString()}` : '永不过期'}
+                    {share.isDownloadable ? ' · 可下载' : ''}
                   </div>
-                  <button onClick={doRevokeShare} disabled={shareBusy} style={dangerBtn}>Revoke</button>
+                  <button onClick={doRevokeShare} disabled={shareBusy} style={dangerBtn}>撤销</button>
                 </div>
               </>
             ) : (
@@ -296,18 +296,18 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
                 </div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 140 }}>
-                    <div style={label}>Expires</div>
+                    <div style={label}>有效期</div>
                     <select value={expiryIdx} onChange={e => setExpiryIdx(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                       {EXPIRY_OPTIONS.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
                     </select>
                   </div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', cursor: 'pointer', paddingBottom: 8 }}>
                     <input type="checkbox" checked={downloadable} onChange={e => setDownloadable(e.target.checked)} />
-                    Allow download
+                    允许下载
                   </label>
                 </div>
                 <button onClick={() => void doCreateShare()} disabled={shareBusy || !slug.trim() || !mediaId} style={{ ...primaryBtn, alignSelf: 'flex-start', opacity: shareBusy || !slug.trim() || !mediaId ? 0.6 : 1 }}>
-                  {shareBusy ? 'Creating…' : !mediaId ? 'Loading…' : 'Create share link'}
+                  {shareBusy ? '正在创建…' : !mediaId ? '加载中…' : '创建分享链接'}
                 </button>
                 {/* Inline error (e.g. 409 already-shared) — shown in-section so it
                     isn't hidden behind the modal's blurred backdrop like a toast. */}
@@ -328,22 +328,22 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
 
           {/* ── RSS feed ── */}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>RSS feed</div>
+            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>RSS 订阅源</div>
             {feedLoading ? (
-              <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>Checking…</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>检查中…</div>
             ) : feed ? (
               <>
-                <UrlRow url={absoluteFeedUrl(feed.serverAddress, feed.feedUrl, st.serverUrl)} lbl="Feed URL" />
-                <button onClick={doCloseFeed} disabled={feedBusy} style={{ ...dangerBtn, alignSelf: 'flex-start' }}>Close feed</button>
+                <UrlRow url={absoluteFeedUrl(feed.serverAddress, feed.feedUrl, st.serverUrl)} lbl="订阅源地址" />
+                <button onClick={doCloseFeed} disabled={feedBusy} style={{ ...dangerBtn, alignSelf: 'flex-start' }}>关闭订阅源</button>
               </>
             ) : (
               <>
                 <div>
-                  <div style={label}>Feed slug</div>
+                  <div style={label}>订阅源 Slug</div>
                   <input value={feedSlug} onChange={e => setFeedSlug(e.target.value)} style={{ ...input, fontFamily: MONO }} placeholder="my-feed" />
                 </div>
                 <button onClick={() => void doOpenFeed()} disabled={feedBusy || !feedSlug.trim()} style={{ ...primaryBtn, alignSelf: 'flex-start', opacity: feedBusy || !feedSlug.trim() ? 0.6 : 1 }}>
-                  {feedBusy ? 'Opening…' : 'Open RSS feed'}
+                  {feedBusy ? '正在开启…' : '开启 RSS 订阅源'}
                 </button>
               </>
             )}

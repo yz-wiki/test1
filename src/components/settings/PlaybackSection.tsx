@@ -68,15 +68,21 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
   // Off / prompt / auto, in ascending order of how much the app does unasked.
   const UP_NEXT_MODES: Array<{ value: UpNextMode; label: string }> = [
-    { value: 'off',    label: 'Stop' },
-    { value: 'prompt', label: 'Ask'  },
-    { value: 'auto',   label: 'Play' },
+    { value: 'off',    label: '停止' },
+    { value: 'prompt', label: '询问'  },
+    { value: 'auto',   label: '自动播放' },
   ];
   const COUNTDOWNS = [5, 10, 20, 30];
 
   const SKIP   = ['10s', '15s', '30s', '60s'];
   const REWIND = ['Off', '2s', '5s', '10s'];
   const SLEEP  = ['Off', '15m', '30m', '1h', 'End of chapter'];
+  // Display labels for values that are also stored/compared verbatim. The raw
+  // tokens above are what persists and what the backend/parsers compare; only
+  // the rendered text is translated.
+  const SKIP_LABELS: Record<string, string>  = { '10s': '10 秒', '15s': '15 秒', '30s': '30 秒', '60s': '60 秒' };
+  const REWIND_LABELS: Record<string, string> = { Off: '关闭', '2s': '2 秒', '5s': '5 秒', '10s': '10 秒' };
+  const SLEEP_LABELS: Record<string, string> = { Off: '关闭', '15m': '15 分钟', '30m': '30 分钟', '1h': '1 小时', 'End of chapter': '本章结束' };
   // Kept short and log-spaced: these are "feel" choices, not dial-in numbers.
   const MIN_STEPS = [1, 2, 5, 10];
   const MAX_STEPS = [15, 30, 60, 120];
@@ -84,7 +90,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
   return (
     <div>
-      <SectionHead title="Playback" subtitle="Defaults applied when starting a new book." />
+      <SectionHead title="播放" subtitle="开始播放新书时应用的默认设置。" />
 
       {/* Subtab pill toggle — Playback settings vs Listening Sessions */}
       <div style={{
@@ -97,7 +103,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
         marginBottom: 28, // space before the active tab's content
         width: 'fit-content', // shrink-wrap to just the two pills
       }}>
-        {([ { id: 'playback', label: 'Playback' }, { id: 'sessions', label: 'Sessions' } ] as const).map(t => {
+        {([ { id: 'playback', label: '播放' }, { id: 'sessions', label: '收听时段' } ] as const).map(t => {
           const active = tab === t.id;
           return (
             <button
@@ -130,8 +136,8 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
       {/* Playback tab — existing speed/skip/sleep/auto-play controls, wrapped in a Panel */}
       {tab === 'playback' && (
-        <Panel label="Playback" style={{ marginTop: 0 }}>
-          <Row label="Default playback speed" hint="Applied when you open a book for the first time. Per-book speed overrides this.">
+        <Panel label="播放设置" style={{ marginTop: 0 }}>
+          <Row label="默认播放倍速" hint="首次打开一本书时采用。书籍专属倍速优先于此设置。">
             <SegGroup>
               {SPEEDS.map(s => (
                 <Seg key={s} active={s === speed} onClick={() => setSpeed(s)}>{s}×</Seg>
@@ -140,18 +146,18 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
           </Row>
 
           <Row
-            label="Remember speed per book"
-            hint="Each book keeps the speed you last chose for it. Off means every book uses the default above."
+            label="记住每本书的倍速"
+            hint="每本书会记住你最后一次为其选择的倍速。关闭后，所有书籍都使用上面的默认倍速。"
           >
             <Toggle on={perBookSpeed} onChange={setPerBookSpeed} />
           </Row>
 
           {perBookSpeed && (
             <Row
-              label="Saved book speeds"
+              label="已保存的书籍倍速"
               hint={rememberedCount === 0
-                ? 'No book has its own speed yet.'
-                : `${rememberedCount} book${rememberedCount === 1 ? '' : 's'} play at their own speed.`}
+                ? '还没有书籍使用专属倍速。'
+                : `${rememberedCount} 本书使用各自的专属倍速播放。`}
             >
               <Pill
                 active={false}
@@ -163,26 +169,26 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
                   setRememberedCount(rememberedSpeedCount());
                 }}
               >
-                Reset all
+                全部重置
               </Pill>
             </Row>
           )}
 
-          <Row label="Skip duration" hint="Used by the −/+ skip buttons and ←/→ keys.">
+          <Row label="跳进步长" hint="由 −/+ 跳转按钮与 ←/→ 方向键使用。">
             <SegGroup>
-              {SKIP.map(v => <Seg key={v} active={v === skipDur} onClick={() => setSkipDur(v)}>{v}</Seg>)}
+              {SKIP.map(v => <Seg key={v} active={v === skipDur} onClick={() => setSkipDur(v)}>{SKIP_LABELS[v] ?? v}</Seg>)}
             </SegGroup>
           </Row>
 
-          <Row label="Auto-rewind on resume" hint="Step backwards a few seconds when you resume after a pause.">
+          <Row label="恢复播放时自动回退" hint="暂停后恢复时自动回退几秒。">
             <SegGroup>
-              {REWIND.map(v => <Seg key={v} active={v === rewindOnResume} onClick={() => setRewindOnResume(v)}>{v}</Seg>)}
+              {REWIND.map(v => <Seg key={v} active={v === rewindOnResume} onClick={() => setRewindOnResume(v)}>{REWIND_LABELS[v] ?? v}</Seg>)}
             </SegGroup>
           </Row>
 
           <Row
-            label="Scale rewind with time away"
-            hint="Rewind further after a long break than after a short one. Replaces the fixed step above."
+            label="按离开时长调整回退"
+            hint="离开时间越长回退越多，取代上面的固定步长。"
           >
             <Toggle on={adaptive} onChange={setAdaptive} />
           </Row>
@@ -192,39 +198,39 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
               does not. */}
           {adaptive && (
             <>
-              <Row label="Shortest rewind" hint="Applied after a brief pause.">
+              <Row label="最短回退" hint="短暂暂停后采用。">
                 <SegGroup>
                   {MIN_STEPS.map(v => (
-                    <Seg key={v} active={v === rewindMin} onClick={() => setRewindMin(v)}>{v}s</Seg>
+                    <Seg key={v} active={v === rewindMin} onClick={() => setRewindMin(v)}>{v} 秒</Seg>
                   ))}
                 </SegGroup>
               </Row>
 
-              <Row label="Longest rewind" hint="Applied after several hours away.">
+              <Row label="最长回退" hint="离开数小时后采用。">
                 <SegGroup>
                   {MAX_STEPS.map(v => (
-                    <Seg key={v} active={v === rewindMax} onClick={() => setRewindMax(v)}>{v}s</Seg>
+                    <Seg key={v} active={v === rewindMax} onClick={() => setRewindMax(v)}>{v} 秒</Seg>
                   ))}
                 </SegGroup>
               </Row>
 
-              <Row label="Ignore pauses shorter than" hint="Skip the rewind entirely for a quick interruption.">
+              <Row label="忽略短于此时长的暂停" hint="短暂中断时不回退。">
                 <SegGroup>
                   {DELAYS.map(v => (
                     <Seg key={v} active={v === rewindDelay} onClick={() => setRewindDelay(v)}>
-                      {v === 0 ? 'Off' : `${v}s`}
+                      {v === 0 ? '关闭' : `${v} 秒`}
                     </Seg>
                   ))}
                 </SegGroup>
               </Row>
 
-              <Row label="Stay within the chapter" hint="Never rewind past the start of the chapter you are in.">
+              <Row label="不越出当前章节" hint="回退不会越过当前章节的起点。">
                 <Toggle on={chapterBarrier} onChange={setChapterBarrier} />
               </Row>
             </>
           )}
 
-          <Row label="Auto-play next chapter" hint="Continue without pausing when a chapter ends. Applies within one book or episode.">
+          <Row label="自动播放下一章" hint="章节结束时不停顿、直接继续播放。适用于同一本书或单集内。">
             <Toggle on={autoPlayNext} onChange={setAutoPlayNext} />
           </Row>
 
@@ -232,7 +238,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
               chapter continuity above — it opens a new session and starts
               something the listener has not chosen — so it gets its own
               controls rather than riding on that toggle. */}
-          <Row label="When a book ends" hint="Continue with the next book in the same series.">
+          <Row label="一本书结束时" hint="继续播放同一系列中的下一本书。">
             <SegGroup>
               {UP_NEXT_MODES.map(m => (
                 <Seg key={m.value} active={m.value === bookUpNext} onClick={() => setBookUpNext(m.value)}>
@@ -242,7 +248,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
             </SegGroup>
           </Row>
 
-          <Row label="When an episode ends" hint="Continue with the next episode. Each show keeps its own oldest- or newest-first order.">
+          <Row label="一集结束时" hint="继续播放下一集。每档播客节目保留各自的从旧到新或从新到旧顺序。">
             <SegGroup>
               {UP_NEXT_MODES.map(m => (
                 <Seg key={m.value} active={m.value === podcastUpNext} onClick={() => setPodcastUpNext(m.value)}>
@@ -253,18 +259,18 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
           </Row>
 
           {(bookUpNext === 'prompt' || podcastUpNext === 'prompt') && (
-            <Row label="Ask for" hint="How long the “Up next” panel waits before playing.">
+            <Row label="询问前等待" hint="“接下来播放”面板在开始播放前等待的时长。">
               <SegGroup>
                 {COUNTDOWNS.map(v => (
-                  <Seg key={v} active={v === upNextCountdown} onClick={() => setUpNextCountdown(v)}>{v}s</Seg>
+                  <Seg key={v} active={v === upNextCountdown} onClick={() => setUpNextCountdown(v)}>{v} 秒</Seg>
                 ))}
               </SegGroup>
             </Row>
           )}
 
-          <Row label="Sleep timer default" hint="Pre-fill when you open the sleep timer.">
+          <Row label="睡眠定时默认值" hint="打开睡眠定时时预填的值。">
             <SegGroup>
-              {SLEEP.map(v => <Seg key={v} active={v === sleepDefault} onClick={() => setSleepDefault(v)}>{v}</Seg>)}
+              {SLEEP.map(v => <Seg key={v} active={v === sleepDefault} onClick={() => setSleepDefault(v)}>{SLEEP_LABELS[v] ?? v}</Seg>)}
             </SegGroup>
           </Row>
         </Panel>

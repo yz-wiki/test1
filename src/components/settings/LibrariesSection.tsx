@@ -69,7 +69,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       // Custom providers are best-effort — older ABS versions lack the endpoint.
       getCustomMetadataProviders(st.serverUrl).then(setCustomProviders).catch(() => setCustomProviders([]));
     } catch (e) {
-      setListError(typeof e === 'string' ? e : (e as Error)?.message ?? 'Failed to load libraries.');
+      setListError(typeof e === 'string' ? e : (e as Error)?.message ?? '书库加载失败。');
     } finally {
       setLoading(false);
     }
@@ -79,9 +79,9 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
     setScanPending(prev => new Set([...prev, lib.id]));
     try {
       await apiScanLibrary(st.serverUrl, lib.id, false);
-      showToast(`Scan started for "${lib.name}"`);
+      showToast(`已开始扫描“${lib.name}”`);
     } catch (e) {
-      showToast(`Scan failed: ${typeof e === 'string' ? e : (e as Error)?.message ?? 'error'}`);
+      showToast(`扫描失败：${typeof e === 'string' ? e : (e as Error)?.message ?? '错误'}`);
     } finally {
       setScanPending(prev => { const s = new Set(prev); s.delete(lib.id); return s; });
     }
@@ -95,7 +95,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
     );
     setLibraries(prev => [...prev, lib]);
     setCreateMode(false);
-    showToast(`Library "${lib.name}" created`);
+    showToast(`书库“${lib.name}”已创建`);
     // Refresh global state so the shelf switcher picks up the new library.
     void st.refreshLibrary();
   }
@@ -112,7 +112,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
     const updated = await apiUpdateLibrary(st.serverUrl, lib.id, payload);
     setLibraries(prev => prev.map(l => (l.id === updated.id ? updated : l)));
     setEditTarget(null);
-    showToast(`"${updated.name}" updated`);
+    showToast(`“${updated.name}”已更新`);
   }
 
   async function handleDelete() {
@@ -122,12 +122,12 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       await apiDeleteLibrary(st.serverUrl, deleteTarget.id);
       setLibraries(prev => prev.filter(l => l.id !== deleteTarget.id));
       setDeleteTarget(null);
-      showToast('Library deleted');
+      showToast('书库已删除');
       // Refresh global state so the shelf switcher removes the deleted library
       // and currentLibraryId is repointed if it was the active one.
       void st.refreshLibrary();
     } catch (e) {
-      setListError(typeof e === 'string' ? e : (e as Error)?.message ?? 'Delete failed.');
+      setListError(typeof e === 'string' ? e : (e as Error)?.message ?? '删除失败。');
       setDeleteTarget(null);
     } finally {
       setDeletePending(false);
@@ -137,29 +137,29 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
   async function handleAddProvider(p: { name: string; url: string; mediaType: string; authHeaderValue?: string }) {
     const created = await createCustomMetadataProvider(st.serverUrl, p);
     setCustomProviders(prev => [...prev, created]);
-    showToast(`Provider "${created.name}" added`);
+    showToast(`提供方“${created.name}”已添加`);
   }
 
   async function handleDeleteProvider(id: string) {
     await deleteCustomMetadataProvider(st.serverUrl, id);
     setCustomProviders(prev => prev.filter(p => p.id !== id));
-    showToast('Provider removed');
+    showToast('提供方已移除');
   }
 
   return (
     <div>
       {!embedded && (
         <SectionHead
-          title="Libraries"
-          subtitle="Manage libraries on your Audiobookshelf server."
+          title="书库"
+          subtitle="管理 Audiobookshelf 服务器上的书库。"
         />
       )}
 
       <Panel
-        label="Libraries"
+        label="书库"
         action={!createMode ? (
           <SmallBtn onClick={() => { setCreateMode(true); setEditTarget(null); setDeleteTarget(null); }}>
-            + New Library
+            + 新建书库
           </SmallBtn>
         ) : undefined}
       >
@@ -176,14 +176,14 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
             fontFamily: SERIF, fontSize: 14, fontWeight: 500,
             color: 'var(--onyx-text-dim)',
           }}>
-            New Library
+            新建书库
           </div>
           <LibraryForm
             initial={DEFAULT_FORM}
             lockMediaType={false}
             onSubmit={handleCreate}
             onCancel={() => setCreateMode(false)}
-            submitLabel="Create Library"
+            submitLabel="创建书库"
             serverUrl={st.serverUrl}
             customProviders={customProviders}
           />
@@ -193,7 +193,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       {/* Loading / error */}
       {loading && (
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: '12px 0' }}>
-          Loading libraries…
+          正在加载书库…
         </div>
       )}
       {!loading && listError && (
@@ -207,7 +207,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
         <div>
           {libraries.length === 0 && !createMode && (
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: '12px 0' }}>
-              No libraries found.
+              没有找到书库。
             </div>
           )}
 
@@ -243,9 +243,9 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                           muted
                           onClick={() => handleScan(lib)}
                           disabled={isScanning}
-                          title="Trigger incremental scan"
+                          title="触发增量扫描"
                         >
-                          {isScanning ? 'Scanning…' : 'Scan'}
+                          {isScanning ? '正在扫描…' : '扫描'}
                         </SmallBtn>
                         <SmallBtn
                           muted
@@ -255,7 +255,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                             setDeleteTarget(null);
                           }}
                         >
-                          {isEditing ? 'Collapse' : 'Edit'}
+                          {isEditing ? '收起' : '编辑'}
                         </SmallBtn>
                         <SmallBtn
                           danger
@@ -265,7 +265,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                             setCreateMode(false);
                           }}
                         >
-                          Delete
+                          删除
                         </SmallBtn>
                       </div>
                     )}
@@ -284,7 +284,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
 
                   {/* Last scan */}
                   <div style={{ marginTop: 5, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', opacity: 0.65 }}>
-                    Last scanned {relativeTime(lib.lastScan)}
+                    上次扫描：{relativeTime(lib.lastScan)}
                   </div>
 
                   {/* Delete confirmation — inline warning, no modal */}
@@ -296,14 +296,14 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                       borderRadius: 7,
                     }}>
                       <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', lineHeight: 1.55, marginBottom: 14 }}>
-                        <span style={{ color: '#e8716a', fontWeight: 600 }}>⚠ Deleting "{lib.name}"</span>{' '}
-                        will permanently remove all library items, collections, and listening progress from the server.
-                        Files on disk are <strong>not</strong> deleted. This cannot be undone.
+                        <span style={{ color: '#e8716a', fontWeight: 600 }}>⚠ 正在删除“{lib.name}”</span>{' '}
+                        将永久移除该书库中的所有条目、合集与收听进度。
+                        磁盘上的文件<strong>不会</strong>被删除。此操作无法撤销。
                       </div>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <SmallBtn muted onClick={() => setDeleteTarget(null)}>Cancel</SmallBtn>
+                        <SmallBtn muted onClick={() => setDeleteTarget(null)}>取消</SmallBtn>
                         <SmallBtn danger onClick={handleDelete} disabled={deletePending}>
-                          {deletePending ? 'Deleting…' : 'Delete Library'}
+                          {deletePending ? '正在删除…' : '删除书库'}
                         </SmallBtn>
                       </div>
                     </div>
@@ -323,7 +323,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                       lockMediaType
                       onSubmit={form => handleEdit(lib, form)}
                       onCancel={() => setEditTarget(null)}
-                      submitLabel="Save Changes"
+                      submitLabel="保存更改"
                       serverUrl={st.serverUrl}
                       customProviders={customProviders}
                     />
@@ -346,9 +346,9 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
           onDelete={async id => {
             const p = customProviders.find(x => x.id === id);
             st.setConfirmDialog({
-              title: 'Delete metadata provider',
-              message: `Delete the custom provider "${p?.name ?? id}"? Its configuration cannot be recovered.`,
-              confirmLabel: 'Delete',
+              title: '删除元数据提供方',
+              message: `删除自定义提供方“${p?.name ?? id}”？其配置无法恢复。`,
+              confirmLabel: '删除',
               onConfirm: () => void handleDeleteProvider(id),
             });
           }}

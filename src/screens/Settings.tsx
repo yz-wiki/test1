@@ -41,27 +41,27 @@ interface NavGroup { label: string; sections: NavSection[]; }
 // when all of its sections are permission/source gated, keeping local-only mode
 // concise without maintaining a second navigation model.
 const NAV_GROUPS: NavGroup[] = [
-  { label: 'This device', sections: [
-    { id: 'account', label: 'Account', icon: 'home', keywords: ['profile', 'password', 'user', 'sign out'] },
-    { id: 'appearance', label: 'Appearance', icon: 'sliders', keywords: ['theme', 'accent', 'scale', 'cover size', 'layout', 'display', 'shelf'] },
-    { id: 'audio', label: 'Audio', icon: 'headphones', keywords: ['device', 'output', 'equalizer', 'eq', 'volume'] },
-    { id: 'downloads', label: 'Downloads', icon: 'download', keywords: ['offline', 'folder', 'storage', 'cache', 'retry'] },
-    { id: 'keyboard', label: 'Keyboard', icon: 'kbd', keywords: ['shortcut', 'hotkey', 'keys'] },
+  { label: '本机', sections: [
+    { id: 'account', label: '账户', icon: 'home', keywords: ['profile', 'password', 'user', 'sign out'] },
+    { id: 'appearance', label: '外观', icon: 'sliders', keywords: ['theme', 'accent', 'scale', 'cover size', 'layout', 'display', 'shelf'] },
+    { id: 'audio', label: '音频', icon: 'headphones', keywords: ['device', 'output', 'equalizer', 'eq', 'volume'] },
+    { id: 'downloads', label: '下载', icon: 'download', keywords: ['offline', 'folder', 'storage', 'cache', 'retry'] },
+    { id: 'keyboard', label: '键盘', icon: 'kbd', keywords: ['shortcut', 'hotkey', 'keys'] },
   ]},
-  { label: 'Libraries', sections: [
-    { id: 'library', label: 'Libraries', icon: 'grid', keywords: ['local', 'staging', 'import', 'scan', 'provider', 'open library'] },
-    { id: 'playback', label: 'Playback', icon: 'play', keywords: ['sleep timer', 'skip', 'speed', 'session', 'progress', 'resume'] },
+  { label: '书库', sections: [
+    { id: 'library', label: '书库', icon: 'grid', keywords: ['local', 'staging', 'import', 'scan', 'provider', 'open library'] },
+    { id: 'playback', label: '播放', icon: 'play', keywords: ['sleep timer', 'skip', 'speed', 'session', 'progress', 'resume'] },
   ]},
-  { label: 'Audiobookshelf server', sections: [
-    { id: 'server', label: 'Server', icon: 'monitor', keywords: ['sync', 'socket', 'connection', 'address'], requiresAbs: true },
-    { id: 'logs', label: 'Logs', icon: 'list', keywords: ['diagnostic', 'errors', 'debug', 'report'], requiresAbs: true, adminOnly: true },
-    { id: 'backups', label: 'Backups', icon: 'file', keywords: ['restore', 'schedule', 'database'], requiresAbs: true, adminOnly: true },
-    { id: 'notifications', label: 'Notifications', icon: 'bell', keywords: ['apprise', 'alerts', 'events'], requiresAbs: true, adminOnly: true },
-    { id: 'scheduled-tasks', label: 'Scheduled Tasks', icon: 'clock', keywords: ['jobs', 'scanner', 'maintenance'], requiresAbs: true, adminOnly: true },
-    { id: 'sharing', label: 'Sharing & RSS', icon: 'share', keywords: ['feeds', 'public link', 'opds'], requiresAbs: true, adminOnly: true },
+  { label: 'Audiobookshelf 服务器', sections: [
+    { id: 'server', label: '服务器', icon: 'monitor', keywords: ['sync', 'socket', 'connection', 'address'], requiresAbs: true },
+    { id: 'logs', label: '日志', icon: 'list', keywords: ['diagnostic', 'errors', 'debug', 'report'], requiresAbs: true, adminOnly: true },
+    { id: 'backups', label: '备份', icon: 'file', keywords: ['restore', 'schedule', 'database'], requiresAbs: true, adminOnly: true },
+    { id: 'notifications', label: '通知', icon: 'bell', keywords: ['apprise', 'alerts', 'events'], requiresAbs: true, adminOnly: true },
+    { id: 'scheduled-tasks', label: '计划任务', icon: 'clock', keywords: ['jobs', 'scanner', 'maintenance'], requiresAbs: true, adminOnly: true },
+    { id: 'sharing', label: '分享与 RSS', icon: 'share', keywords: ['feeds', 'public link', 'opds'], requiresAbs: true, adminOnly: true },
   ]},
-  { label: 'About', sections: [
-    { id: 'about', label: 'About', icon: 'info', keywords: ['help', 'quick start', 'version', 'privacy', 'troubleshooting'] },
+  { label: '关于', sections: [
+    { id: 'about', label: '关于', icon: 'info', keywords: ['help', 'quick start', 'version', 'privacy', 'troubleshooting'] },
   ]},
 ];
 
@@ -128,10 +128,10 @@ export default function Settings({ st, onLogout }: SettingsProps) {
           onClick={() => st.setScreen('library')}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' as const }}
         >
-          <Icon name="chevron-left" size={12} /> Library
+          <Icon name="chevron-left" size={12} /> 书库
         </button>
         <span>·</span>
-        <span style={{ color: 'var(--onyx-text)' }}>Settings</span>
+        <span style={{ color: 'var(--onyx-text)' }}>设置</span>
       </div>
 
       <div style={{ flex: 1, display: 'flex', gap: 24, minHeight: 0 }}>
@@ -141,8 +141,8 @@ export default function Settings({ st, onLogout }: SettingsProps) {
           <input
             value={navQuery}
             onChange={e => setNavQuery(e.target.value)}
-            placeholder="Find a setting…"
-            aria-label="Find a setting"
+            placeholder="查找设置…"
+            aria-label="查找设置"
             style={{ margin: '0 8px 14px', padding: '8px 10px', borderRadius: 7, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 12 }}
           />
           {visibleGroups.map((group, groupIndex) => (

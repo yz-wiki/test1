@@ -244,7 +244,7 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
         // "Unknown Author" display sentinel.
         const authorArr = Array.isArray(m.authors) ? (m.authors as { name: string }[]).map(a => a.name).filter(Boolean) : [];
         let authorStr = authorArr.length ? authorArr.join(', ') : (typeof m.authorName === 'string' ? m.authorName : '');
-        if (!authorStr) { const pa = bookAuthor(item); if (pa && pa !== 'Unknown Author') authorStr = pa; }
+        if (!authorStr) { const pa = bookAuthor(item); if (pa && pa !== '未知作者') authorStr = pa; }
         setAuthors(authorStr);
         const narratorArr = Array.isArray(m.narrators) ? (m.narrators as string[]).filter(Boolean) : [];
         let narratorStr = narratorArr.length ? narratorArr.join(', ') : (typeof m.narratorName === 'string' ? m.narratorName : '');
@@ -385,7 +385,7 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '22px 22px 0 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="metadata-editor-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Edit Metadata</div>
+            <div id="metadata-editor-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>编辑元数据</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {item.media.metadata.title ?? item.id}
             </div>
@@ -405,7 +405,7 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
                 color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
                 border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'transparent'}`,
               }}>
-                {t === 'chapters' ? <>Chapters <span style={{ opacity: 0.55, fontSize: 8.5 }}>{chapters.length}</span></> : 'Details'}
+                {t === 'chapters' ? <>章节 <span style={{ opacity: 0.55, fontSize: 8.5 }}>{chapters.length}</span></> : '详情'}
               </button>
             );
           })}
@@ -414,31 +414,31 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
 
         {/* Body — chapters render full-bleed (own row padding), details stay padded */}
         <div style={{ flex: 1, overflowY: 'auto', padding: tab === 'chapters' ? 0 : '20px 24px 24px' }}>
-          {loading && <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '20px 24px' }}>Loading…</div>}
+          {loading && <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '20px 24px' }}>加载中…</div>}
 
           {!loading && tab === 'details' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Field label="Title" value={title} onChange={setTitle} full />
-              <Field label="Subtitle" value={subtitle} onChange={setSubtitle} full />
-              <Field label="Authors (comma-separated)" value={authors} onChange={setAuthors} />
-              <Field label="Narrators (comma-separated)" value={narrators} onChange={setNarrators} />
-              <Field label="Series (Name #seq)" value={series} onChange={setSeries} />
-              <Field label="Publisher" value={publisher} onChange={setPublisher} />
-              <Field label="Published Year" value={year} onChange={setYear} />
-              <Field label="Language" value={language} onChange={setLanguage} />
+              <Field label="标题" value={title} onChange={setTitle} full />
+              <Field label="副标题" value={subtitle} onChange={setSubtitle} full />
+              <Field label="作者（以逗号分隔）" value={authors} onChange={setAuthors} />
+              <Field label="讲述人（以逗号分隔）" value={narrators} onChange={setNarrators} />
+              <Field label="系列（名称 #序号）" value={series} onChange={setSeries} />
+              <Field label="出版社" value={publisher} onChange={setPublisher} />
+              <Field label="发行年份" value={year} onChange={setYear} />
+              <Field label="语言" value={language} onChange={setLanguage} />
               <div style={sectionRule} />
-              <Field label="Genres (comma-separated)" value={genres} onChange={setGenres} full />
-              <Field label="Tags (comma-separated)" value={tags} onChange={setTags} full />
+              <Field label="类型（以逗号分隔）" value={genres} onChange={setGenres} full />
+              <Field label="标签（以逗号分隔）" value={tags} onChange={setTags} full />
               <div style={sectionRule} />
               <Field label="ISBN" value={isbn} onChange={setIsbn} mono />
               <Field label="ASIN" value={asin} onChange={setAsin} mono />
               <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column' }}>
-                <div style={labelStyle}>Description</div>
+                <div style={labelStyle}>简介</div>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} {...accentFocus} style={{ ...inputStyle, resize: 'none', height: 110, lineHeight: 1.6, fontSize: 12.5 }} />
               </div>
               <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--onyx-text)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={explicit} onChange={e => setExplicit(e.target.checked)} />
-                Explicit content
+                露骨内容
               </label>
             </div>
           )}
@@ -446,7 +446,7 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
           {!loading && tab === 'chapters' && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {chapters.length === 0 && (
-                <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 24px' }}>No chapters. Add one below.</div>
+                <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 24px' }}>暂无章节。可在下方添加。</div>
               )}
               {chapters.map((c, i) => (
                 <div
@@ -463,14 +463,14 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
                   <input
                     value={c.title}
                     onChange={e => setChapters(prev => prev.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
-                    placeholder="Chapter title"
+                    placeholder="章节标题"
                     onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; e.currentTarget.style.background = 'rgba(0,0,0,0.32)'; }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; e.currentTarget.style.background = 'rgba(0,0,0,0.22)'; }}
                     style={{ flex: 1, minWidth: 0, background: 'rgba(0,0,0,0.22)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 10px', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 12.5, outline: 'none', transition: 'border-color 0.15s, background 0.15s' }}
                   />
                   <button
                     onClick={() => setChapters(prev => prev.filter((_, j) => j !== i))}
-                    title="Remove"
+                    title="删除"
                     onMouseEnter={e => { e.currentTarget.style.color = '#e8716a'; e.currentTarget.style.background = 'rgba(220,80,80,0.12)'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--onyx-text-mute)'; e.currentTarget.style.background = 'none'; }}
                     style={{ width: 26, height: 26, borderRadius: 6, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, lineHeight: 1, transition: 'color 0.15s, background 0.15s' }}
@@ -482,9 +482,9 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
                 <button
                   onClick={() => setChapters(prev => [...prev, { start: prev.length ? prev[prev.length - 1].start + 1 : 0, title: '' }])}
                   style={{ fontFamily: MONO, fontSize: 11, padding: '6px 12px', borderRadius: 6, background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', cursor: 'pointer' }}
-                >+ Add chapter</button>
+                >+ 添加章节</button>
                 <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 10, lineHeight: 1.5 }}>
-                  Times are H:MM:SS. Chapter ends are derived automatically from the next chapter's start.
+                  时间格式为 H:MM:SS。章节结束时间会自动按下一章节的开始时间推算。
                 </div>
                 {/* Local single-file books: chapters always save to the library;
                     this also embeds them into the audio file so they survive a
@@ -492,7 +492,7 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
                 {isLocal && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--onyx-text-dim)', cursor: 'pointer', marginTop: 12 }}>
                     <input type="checkbox" checked={writeToFile} onChange={e => setWriteToFile(e.target.checked)} />
-                    Write chapters into the audio file
+                    将章节写入音频文件
                   </label>
                 )}
               </div>
@@ -503,13 +503,13 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
         {/* Footer */}
         <div style={{ padding: '13px 24px', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9, flexShrink: 0 }}>
           {error && <span style={{ fontFamily: MONO, fontSize: 10.5, color: '#e08a8a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{error}</span>}
-          <button onClick={onClose} style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 500, padding: '8px 16px', borderRadius: 7, cursor: 'pointer', lineHeight: 1, background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}>Cancel</button>
+          <button onClick={onClose} style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 500, padding: '8px 16px', borderRadius: 7, cursor: 'pointer', lineHeight: 1, background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}>取消</button>
           <button
             onClick={() => (tab === 'details' ? void saveDetails() : void saveChapterEdits())}
             disabled={saving || loading}
             style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 600, padding: '8px 16px', borderRadius: 7, cursor: saving || loading ? 'default' : 'pointer', lineHeight: 1, border: '1px solid transparent', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', opacity: saving || loading ? 0.6 : 1 }}
           >
-            {saving ? 'Saving…' : tab === 'details' ? 'Save details' : 'Save chapters'}
+            {saving ? '保存中…' : tab === 'details' ? '保存详情' : '保存章节'}
           </button>
         </div>
       </div>

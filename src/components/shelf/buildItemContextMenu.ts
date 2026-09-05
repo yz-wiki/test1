@@ -46,7 +46,7 @@ export function buildItemContextMenu(
   // ── PLAYBACK ───────────────────────────────────────────────────────────────
   const playback: ContextMenuItem[] = [
     {
-      label: 'Play Book',
+      label: '播放本书',
       icon: 'play',
       primary: true,
       onClick: async () => {
@@ -55,9 +55,9 @@ export function buildItemContextMenu(
           // Delegate session teardown, resume-position lookup, session open,
           // UI sync, and playAudio to the canonical playBook function.
           await playBook(st, item.id);
-          st.setToast({ message: `Now playing "${title}"`, type: 'success' });
+          st.setToast({ message: `正在播放“${title}”`, type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Failed to start playback: ${String(e)}`, type: 'error' });
+          st.setToast({ message: `无法开始播放：${String(e)}`, type: 'error' });
         }
       },
     },
@@ -68,22 +68,22 @@ export function buildItemContextMenu(
         ? {
             // Already downloaded — offer deletion so the user can free up space directly
             // from the shelf without navigating to Settings → Downloads.
-            label: 'Delete Download',
+            label: '删除下载',
             icon: 'trash',
             danger: true,
             onClick: () => {
               const title = item.media?.metadata?.title ?? item.id;
               st.setConfirmDialog({
-                title: `Delete downloaded copy of "${title}"?`,
-                message: 'This will remove the local audio file from your device. The book will still be available for streaming from your server.',
-                confirmLabel: 'Delete',
+                title: `删除“${title}”的下载副本？`,
+                message: '这将从你的设备中移除本机音频文件。该书仍可从你的服务器在线收听。',
+                confirmLabel: '删除',
                 onConfirm: async () => {
                   try {
                     await removeDownload(item.id);
                     st.setDownloads(prev => prev.filter(d => d.itemId !== item.id));
-                    st.setToast({ message: `Downloaded copy of "${title}" removed`, type: 'success' });
+                    st.setToast({ message: `已删除“${title}”的下载副本`, type: 'success' });
                   } catch (e) {
-                    st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' });
+                    st.setToast({ message: `删除失败：${String(e)}`, type: 'error' });
                   }
                 },
               });
@@ -91,7 +91,7 @@ export function buildItemContextMenu(
           }
         : {
             // Not yet downloaded — fires the Rust streaming command.
-            label: 'Download',
+            label: '下载',
             icon: 'download',
             onClick: () => {
               const title = item.media?.metadata?.title ?? item.id;
@@ -103,13 +103,13 @@ export function buildItemContextMenu(
                 .then(() => log.info('downloads', 'download completed', { itemId: item.id }))
                 .catch(e => {
                   log.error('downloads', 'download failed', { itemId: item.id, err: String(e) });
-                  st.setToast({ message: `Download failed: ${String(e)}`, type: 'error' });
+                  st.setToast({ message: `下载失败：${String(e)}`, type: 'error' });
                 });
             },
           },
     ] as ContextMenuItem[]),
     {
-      label: 'Mark as Finished',
+      label: '标记为已听完',
       icon: 'check-circle',
       onClick: async () => {
         if (pendingItems.has(item.id)) return;
@@ -166,38 +166,38 @@ export function buildItemContextMenu(
   // Pick-it-up shelf — right-clicking the same book on the main shelf omits it.
   if (fromPickItUp) {
     playback.push({
-      label: 'Remove from Pick it up',
+      label: '从“接着听”中移除',
       icon: 'clock',
       onClick: () => {
         // The DELETE endpoint requires the progress record's own id, not the library item id.
         const progressRecord = st.mediaProgress.find(p => p.libraryItemId === item.id);
         if (!progressRecord) {
-          st.setToast({ message: 'No progress record found for this book.', type: 'info' });
+          st.setToast({ message: '未找到这本书的进度记录。', type: 'info' });
           return;
         }
         const title = item.media?.metadata?.title ?? item.id;
         deleteProgress(st.serverUrl, progressRecord.id)
           .then(() => {
             st.setMediaProgress(st.mediaProgress.filter(p => p.id !== progressRecord.id));
-            st.setToast({ message: `Removed "${title}" from Pick it up`, type: 'success' });
+            st.setToast({ message: `已从“接着听”中移除“${title}”`, type: 'success' });
           })
-          .catch(e => st.setToast({ message: `Failed to remove: ${String(e)}`, type: 'error' }));
+          .catch(e => st.setToast({ message: `移除失败：${String(e)}`, type: 'error' }));
       },
     });
   }
 
   // ── ORGANIZE ─────────────────────────────────────────────────────────────
   const organize: ContextMenuItem[] = isLocal || isCombinedShelf ? [] : [
-    { label: 'Add to Playlist', icon: 'playlist', onClick: () => setPlaylistItem?.(item), disabled: !setPlaylistItem },
+    { label: '添加到播放列表', icon: 'playlist', onClick: () => setPlaylistItem?.(item), disabled: !setPlaylistItem },
   ];
   if (!isLocal && !isCombinedShelf && isAdmin) {
-    organize.push({ label: 'Add to Collection', icon: 'layers', onClick: () => setCollectionItem?.(item), disabled: !setCollectionItem });
+    organize.push({ label: '添加到合集', icon: 'layers', onClick: () => setCollectionItem?.(item), disabled: !setCollectionItem });
   }
 
   const sections: ContextMenuSection[] = [
-    { label: 'Playback', items: playback },
+    { label: '播放', items: playback },
   ];
-  if (organize.length > 0) sections.push({ label: 'Organize', items: organize });
+  if (organize.length > 0) sections.push({ label: '整理', items: organize });
 
   // ── SOURCE (combined shelf only) ───────────────────────────────────────────
   // All Libraries deliberately exposes search/play only (review L1) — organize
@@ -209,9 +209,9 @@ export function buildItemContextMenu(
     const sourceLib = st.libraries.find(l => l.id === item.libraryId);
     if (sourceLib) {
       sections.push({
-        label: 'Source',
+        label: '来源',
         items: [{
-          label: `Open in ${sourceLib.name}`,
+          label: `在“${sourceLib.name}”中打开`,
           icon: 'grid',
           onClick: () => {
             log.info('library', 'open source library from combined shelf', { itemId: item.id, libraryId: sourceLib.id });
@@ -235,31 +235,31 @@ export function buildItemContextMenu(
   // no server user.
   if (isLocal) {
     sections.push({
-      label: 'Manage',
+      label: '管理',
       items: [
         {
-          label: 'Library tools',
+          label: '书库工具',
           icon: 'sliders',
           submenu: [
-            { label: 'Edit Metadata', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
-            { label: 'Match', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
+            { label: '编辑元数据', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
+            { label: '匹配元数据', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
             {
-              label: 'Delete',
+              label: '删除',
               icon: 'trash',
               danger: true,
               onClick: () => {
-                const title = item.media?.metadata?.title ?? 'this book';
+                const title = item.media?.metadata?.title ?? '这本书';
                 st.setConfirmDialog({
-                  title: `Delete "${title}"?`,
-                  message: 'This permanently deletes the book and its files from this device. This cannot be undone.',
-                  confirmLabel: 'Delete',
+                  title: `删除“${title}”？`,
+                  message: '这将永久删除本书及其在本设备上的文件，且无法撤销。',
+                  confirmLabel: '删除',
                   onConfirm: () => {
                     deleteLocalItem(item.id)
                       .then(() => {
                         st.removeLibraryItem(item.id);
-                        st.setToast({ message: `"${title}" deleted`, type: 'success' });
+                        st.setToast({ message: `已删除“${title}”`, type: 'success' });
                       })
-                      .catch(e => st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' }));
+                      .catch(e => st.setToast({ message: `删除失败：${String(e)}`, type: 'error' }));
                   },
                 });
               },
@@ -270,25 +270,25 @@ export function buildItemContextMenu(
     });
   } else if (isAdmin) {
     sections.push({
-      label: 'Manage',
+      label: '管理',
       items: [
-        { label: 'Share & Publish…', icon: 'share', onClick: () => setShareItem?.(item), disabled: !setShareItem },
+        { label: '分享与发布…', icon: 'share', onClick: () => setShareItem?.(item), disabled: !setShareItem },
         {
-          label: 'Library tools',
+          label: '书库工具',
           icon: 'sliders',
           submenu: [
-            { label: 'Edit Metadata', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
-            { label: 'Change Cover', icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
-            { label: 'Match', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
-            { label: 'Files', icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
+            { label: '编辑元数据', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
+            { label: '更换封面', icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
+            { label: '匹配元数据', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
+            { label: '文件', icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
             {
-              label: 'Re-Scan',
+              label: '重新扫描',
               icon: 'refresh',
               onClick: () => {
                 const title = item.media?.metadata?.title ?? item.id;
                 rescanItem(st.serverUrl, item.id)
-                  .then(() => st.setToast({ message: `Rescan started for "${title}"`, type: 'success' }))
-                  .catch(e => st.setToast({ message: `Rescan failed: ${String(e)}`, type: 'error' }));
+                  .then(() => st.setToast({ message: `已开始重新扫描“${title}”`, type: 'success' }))
+                  .catch(e => st.setToast({ message: `重新扫描失败：${String(e)}`, type: 'error' }));
               },
             },
           ],
@@ -300,22 +300,22 @@ export function buildItemContextMenu(
     sections.push({
       items: [
         {
-          label: 'Delete',
+          label: '删除',
           icon: 'trash',
           danger: true,
           onClick: () => {
-            const title = item.media?.metadata?.title ?? 'this item';
+            const title = item.media?.metadata?.title ?? '这个条目';
             st.setConfirmDialog({
-              title: `Delete "${title}"`,
-              message: 'This will permanently remove the item from the server. If file deletion is enabled on the server, the audio files will also be deleted from disk. This cannot be undone.',
-              confirmLabel: 'Delete',
+              title: `删除“${title}”`,
+              message: '这将从服务器上永久移除该条目。若服务器已启用文件删除，音频文件也会一并从磁盘删除。此操作无法撤销。',
+              confirmLabel: '删除',
               onConfirm: () => {
                 deleteItem(st.serverUrl, item.id)
                   .then(() => {
                     st.removeLibraryItem(item.id);
-                    st.setToast({ message: `"${title}" was deleted`, type: 'success' });
+                    st.setToast({ message: `已删除“${title}”`, type: 'success' });
                   })
-                  .catch(e => st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' }));
+                  .catch(e => st.setToast({ message: `删除失败：${String(e)}`, type: 'error' }));
               },
             });
           },

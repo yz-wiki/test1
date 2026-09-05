@@ -101,9 +101,9 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="playlist-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Add to Playlist</div>
+            <div id="playlist-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>加入播放列表</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {episode ? `Episode — ${episode.title}` : 'Choose a playlist for this book'}
+              {episode ? `单集 — ${episode.title}` : '为这本书选择播放列表'}
             </div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
@@ -113,13 +113,13 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
         {/* Playlist list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
           {playlists === null && !error && (
-            <div style={{ padding: '16px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading…</div>
+            <div style={{ padding: '16px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>加载中…</div>
           )}
           {error && (
             <div style={{ padding: '12px 22px', fontSize: 12, color: '#e8716a', fontFamily: MONO }}>{error}</div>
           )}
           {playlists !== null && playlists.length === 0 && (
-            <div style={{ padding: '12px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>No playlists yet — create one below.</div>
+            <div style={{ padding: '12px 22px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>还没有播放列表——请在下方创建一个。</div>
           )}
           {playlists?.map(pl => {
             const rowBusy = adding === pl.id;
@@ -140,7 +140,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
               >
                 <Icon name="playlist" size={15} color={rowBusy ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)'} />
                 <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {rowBusy ? 'Adding…' : pl.name}
+                  {rowBusy ? '添加中…' : pl.name}
                 </span>
                 {/* Membership indicator — always checked since adding closes */}
                 <span style={{
@@ -164,7 +164,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={onNewKeyDown}
-                placeholder="Playlist name…"
+                placeholder="播放列表名称…"
                 disabled={creating}
                 onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
@@ -175,7 +175,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
                 disabled={!newName.trim() || creating}
                 style={{ ...footBtn, width: 'auto', whiteSpace: 'nowrap', border: '1px solid transparent', fontWeight: 600, background: newName.trim() && !creating ? 'var(--onyx-accent)' : 'var(--onyx-accent-dim)', color: newName.trim() && !creating ? 'var(--onyx-bg)' : 'var(--onyx-text-mute)', cursor: newName.trim() && !creating ? 'pointer' : 'default' }}
               >
-                {creating ? 'Creating…' : 'Create'}
+                {creating ? '创建中…' : '创建'}
               </button>
             </div>
           ) : (
@@ -184,7 +184,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
               disabled={adding !== null}
               style={{ ...footBtn, border: '1px dashed var(--onyx-accent-edge)', color: 'var(--onyx-accent)' }}
             >
-              + New Playlist
+              + 新建播放列表
             </button>
           )}
 
@@ -192,7 +192,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
             onClick={onClose}
             style={{ ...footBtn, border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
           >
-            Cancel
+            取消
           </button>
         </div>
       </div>

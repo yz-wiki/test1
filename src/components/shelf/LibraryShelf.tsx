@@ -85,11 +85,11 @@ type SortDir = 'asc' | 'desc';
 interface SortState { col: string; dir: SortDir }
 
 const COLS = [
-  { id: 'title',    label: 'Title',    align: 'left'  as const },
-  { id: 'author',   label: 'Author',   align: 'left'  as const },
-  { id: 'genre',    label: 'Genre',    align: 'left'  as const },
-  { id: 'narrator', label: 'Narrator', align: 'left'  as const },
-  { id: 'duration', label: 'Duration', align: 'right' as const },
+  { id: 'title',    label: '书名',    align: 'left'  as const },
+  { id: 'author',   label: '作者',   align: 'left'  as const },
+  { id: 'genre',    label: '类型',    align: 'left'  as const },
+  { id: 'narrator', label: '讲述人', align: 'left'  as const },
+  { id: 'duration', label: '时长', align: 'right' as const },
 ];
 
 function getVal(b: LibraryItem, key: string): string | number {
@@ -112,19 +112,19 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
     return (
       <div style={{ padding: '58px 24px', textAlign: 'center' }}>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 9 }}>
-          {isCombined ? 'All libraries' : isLocal ? 'This PC library' : 'Server library'}
+          {isCombined ? '全部书库' : isLocal ? '本机书库' : '服务器书库'}
         </div>
         <div style={{ fontFamily: SERIF, fontSize: 17, color: 'var(--onyx-text-dim)' }}>
-          {isCombined ? 'No books were found across your libraries.' : isLocal ? 'No books on this PC shelf yet.' : 'No books in this Audiobookshelf library yet.'}
+          {isCombined ? '在各书库中均未找到图书。' : isLocal ? '这台电脑的书架上还没有图书。' : '这个 Audiobookshelf 书库中还没有图书。'}
         </div>
         <div style={{ marginTop: 7, fontSize: 11.5, lineHeight: 1.5, color: 'var(--onyx-text-mute)' }}>
           {isCombined
-            ? 'Add books to a source library, then return here to search everything together.'
+            ? '请先在某个源书库中添加图书，再回到这里一起搜索。'
             : isLocal
-            ? 'Use Add books above to choose files or a folder, or open the watched Staging folder.'
+            ? '使用上方的“添加图书”选择文件或文件夹，或打开受监听的暂存文件夹。'
             : st.canUpload
-              ? 'Use Upload above to add books to the server, or scan the library from Audiobookshelf.'
-              : 'Add or scan books on the Audiobookshelf server, then refresh this library.'}
+              ? '使用上方的“上传”向服务器添加图书，或在 Audiobookshelf 中扫描书库。'
+              : '在 Audiobookshelf 服务器上添加或扫描图书，然后刷新此书库。'}
         </div>
       </div>
     );
@@ -132,7 +132,7 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
 
   return (
     <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 16, fontStyle: 'italic' }}>
-      {st.search ? <>No titles match &ldquo;{st.search}&rdquo;.</> : 'No titles match the current filters.'}
+      {st.search ? <>没有匹配“{st.search}”的标题。</> : '没有标题符合当前筛选条件。'}
     </div>
   );
 }
@@ -140,7 +140,7 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
 function ItemSourceBadge({ item }: { item: LibraryItem }) {
   return (
     <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.82 }}>
-      {item.localPath ? 'This PC' : 'Server'}
+      {item.localPath ? '这台电脑' : '服务器'}
     </span>
   );
 }
@@ -268,9 +268,9 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
               <button
                 type="button"
                 className="onyx-item-actions"
-                aria-label={`Actions for ${bookTitle(b)}`}
+                aria-label={`对“${bookTitle(b)}”执行操作`}
                 aria-haspopup="menu"
-                title={`Actions for ${bookTitle(b)}`}
+                title={`对“${bookTitle(b)}”执行操作`}
                 onClick={(event) => { event.stopPropagation(); onActionMenu(event.currentTarget, b); }}
                 style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', zIndex: 4, width: 28, height: 28, borderRadius: 6, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel2)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
               >•••</button>
@@ -285,7 +285,7 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
                 {/* Downloaded badge — brass ↓ when available; amber ! when server-deleted */}
                 {dlRecord && (
                   <div
-                    title={dlRecord.serverDeleted ? 'No longer on server — local copy only' : 'Available offline'}
+                    title={dlRecord.serverDeleted ? '服务器上已不存在——仅保留本机副本' : '可离线收听'}
                     style={{
                       position: 'absolute', bottom: st.showProgressOverlay && prog > 0 ? 4 : 2, right: 1,
                       zIndex: 3,
@@ -469,7 +469,7 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
                     {/* Downloaded badge — brass ↓ when available; amber ! when server-deleted */}
                     {dlRecord && (
                       <div
-                        title={dlRecord.serverDeleted ? 'No longer on server — local copy only' : 'Available offline'}
+                        title={dlRecord.serverDeleted ? '服务器上已不存在——仅保留本机副本' : '可离线收听'}
                         style={{
                           position: 'absolute', bottom: st.showProgressOverlay && prog > 0 ? 6 : 4, right: 4,
                           zIndex: 3,
@@ -494,9 +494,9 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
                 <button
                   type="button"
                   className="onyx-item-actions"
-                  aria-label={`Actions for ${bookTitle(b)}`}
+                  aria-label={`对“${bookTitle(b)}”执行操作`}
                   aria-haspopup="menu"
-                  title={`Actions for ${bookTitle(b)}`}
+                  title={`对“${bookTitle(b)}”执行操作`}
                   onClick={(event) => onActionMenu(event.currentTarget, b)}
                   style={{ position: 'absolute', top: 6, right: 6, zIndex: 4, width: 28, height: 28, borderRadius: 6, border: '1px solid var(--onyx-glass-edge)', background: 'rgba(12,12,15,0.9)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
                 >•••</button>
@@ -744,7 +744,7 @@ export default function LibraryShelf({ st, items, sortMode, groupBySeries }: Lib
             toggle still swaps component TYPE, an intentional one-time remount.) */}
         {seriesLoading ? (
           <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 16, fontStyle: 'italic' }}>
-            Loading series…
+            正在加载系列…
           </div>
         ) : st.libraryView === 'list' ? (
           <ShelfList books={shelfBooks} st={st} openBook={openBook} onContextMenu={onContextMenu} onActionMenu={onActionMenu} scrollRef={scrollRef} />

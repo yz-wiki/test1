@@ -43,8 +43,8 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!next) return setError('Enter a new password.');
-    if (next !== confirm) return setError('New passwords do not match.');
+    if (!next) return setError('请输入新密码。');
+    if (next !== confirm) return setError('两次输入的新密码不一致。');
     setError('');
     setPending(true);
     try {
@@ -70,35 +70,35 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
         onSubmit={submit}
         style={{ width: 400, maxWidth: '90vw', background: 'var(--onyx-panel2)', backdropFilter: 'blur(40px) saturate(120%)', WebkitBackdropFilter: 'blur(40px) saturate(120%)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 12, boxShadow: '0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)', padding: '26px 26px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
-        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>Change password</div>
+        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>修改密码</div>
         {done ? (
           <>
             <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)', lineHeight: 1.5 }}>
-              Your password has been changed.
+              你的密码已修改。
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={onClose} style={brassBtnStyle}>Done</button>
+              <button type="button" onClick={onClose} style={brassBtnStyle}>完成</button>
             </div>
           </>
         ) : (
           <>
             <div>
-              <div style={fieldLabelStyle}>Current password</div>
+              <div style={fieldLabelStyle}>当前密码</div>
               <input style={fieldInputStyle} type="password" value={current} onChange={e => setCurrent(e.target.value)} autoFocus />
             </div>
             <div>
-              <div style={fieldLabelStyle}>New password</div>
+              <div style={fieldLabelStyle}>新密码</div>
               <input style={fieldInputStyle} type="password" value={next} onChange={e => setNext(e.target.value)} />
             </div>
             <div>
-              <div style={fieldLabelStyle}>Confirm new password</div>
+              <div style={fieldLabelStyle}>确认新密码</div>
               <input style={fieldInputStyle} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} />
             </div>
             {error && <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>{error}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-              <button type="button" onClick={onClose} style={ghostBtnStyle}>Cancel</button>
+              <button type="button" onClick={onClose} style={ghostBtnStyle}>取消</button>
               <button type="submit" disabled={pending} style={{ ...brassBtnStyle, cursor: pending ? 'wait' : 'pointer' }}>
-                {pending ? 'Saving…' : 'Change'}
+                {pending ? '保存中…' : '修改'}
               </button>
             </div>
           </>

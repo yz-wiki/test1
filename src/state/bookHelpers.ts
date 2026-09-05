@@ -80,7 +80,7 @@ export function computeLocalLibraryStats(items: LibraryItem[]): LibraryStats {
   let totalSize = 0;
   for (const it of items) {
     const a = bookAuthor(it);
-    if (a && a !== 'Unknown Author') authors.add(a);
+    if (a && a !== '未知作者') authors.add(a);
     for (const g of bookGenres(it)) genreCounts[g] = (genreCounts[g] ?? 0) + 1;
     // media is pass-through JSON — books carry audioFiles/duration/size,
     // podcasts carry episodes; read both shapes loosely.
@@ -111,7 +111,7 @@ export function bookTitle(b: LibraryItem): string {
 
 export function bookAuthor(b: LibraryItem): string {
   const a = b.media.metadata.authorName;
-  if (!a) return 'Unknown Author';
+  if (!a) return '未知作者';
   if (typeof a === 'string') return a;
   if (Array.isArray(a)) return a.map(x => x.name).join(', ');
   return a.name;

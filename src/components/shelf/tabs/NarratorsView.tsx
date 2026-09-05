@@ -23,7 +23,7 @@ export interface NarratorsViewProps {
 export default function NarratorsView({ st, inline = false }: NarratorsViewProps) {
   const groups: Record<string, LibraryItem[]> = {};
   for (const b of st.library) {
-    const key = bookNarrator(b) || 'Unknown';
+    const key = bookNarrator(b) || '未知讲述人';
     if (!groups[key]) groups[key] = [];
     groups[key].push(b);
   }
@@ -51,7 +51,7 @@ export default function NarratorsView({ st, inline = false }: NarratorsViewProps
   };
 
   return (
-    <BrowseView st={st} title="Narrators" subtitle={`${list.length} narrators · vocal performances in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title="讲述人" subtitle={`你书库中共 ${list.length} 位讲述人 · 有声演绎`} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(a => {
@@ -60,10 +60,10 @@ export default function NarratorsView({ st, inline = false }: NarratorsViewProps
               <BrowseTile
                 key={a.name}
                 mode={st.browseTileStyle}
-                tag="Narrator"
+                tag="讲述人"
                 title={a.name}
                 subtitle={genres.join(' · ') || '—'}
-                stat={`${a.books.length} TITLE${a.books.length === 1 ? '' : 'S'} · ${seriesTotalDur(a.books)}`}
+                stat={`${a.books.length} 本 · ${seriesTotalDur(a.books)}`}
                 books={a.books}
                 serverUrl={st.serverUrl}
                 onClick={() => open(a.name)}
@@ -74,9 +74,9 @@ export default function NarratorsView({ st, inline = false }: NarratorsViewProps
       ) : (
         <BrowseList
           columns={[
-            { id: 'name',   label: 'Narrator', flex: 2   },
-            { id: 'titles', label: 'Titles',   width: 80 },
-            { id: 'dur',    label: 'Duration', width: 110 },
+            { id: 'name',   label: '讲述人', flex: 2   },
+            { id: 'titles', label: '作品数',   width: 80 },
+            { id: 'dur',    label: '时长', width: 110 },
           ]}
           rows={list.map(a => ({
             key: a.name,

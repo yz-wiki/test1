@@ -4,15 +4,15 @@
 /** Returns a human-readable relative time string for a Unix-ms timestamp.
  *  Returns "Never" when the timestamp is null (user has never signed in). */
 export function relativeTime(ms: number | null): string {
-  if (ms === null) return 'Never';
+  if (ms === null) return '从未';
   const diff = Date.now() - ms;
   const m = Math.floor(diff / 60_000);
-  if (m < 1) return 'Just now';
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return '刚刚';
+  if (m < 60) return `${m} 分钟前`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h} 小时前`;
   const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return `${d} 天前`;
 }
 
 /** Formats a Unix-ms timestamp as "MMM D, YYYY" (e.g. May 18, 2026). Returns "—" when null. */

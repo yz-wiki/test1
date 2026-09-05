@@ -121,7 +121,7 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                   onBlur={() => void saveField('name', name)}
                   style={{ ...editInput, fontFamily: SERIF, fontSize: 20, fontWeight: 500 }} />
               ) : (
-                <div onClick={() => setEditing('name')} title="Click to rename"
+                <div onClick={() => setEditing('name')} title="点击重命名"
                   style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {name || '…'}
                 </div>
@@ -130,12 +130,12 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                 <input autoFocus value={description} onChange={e => setDescription(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') void saveField('description', description); if (e.key === 'Escape') setEditing(null); }}
                   onBlur={() => void saveField('description', description)}
-                  placeholder="Add a description…"
+                  placeholder="添加简介…"
                   style={{ ...editInput, marginTop: 6, fontSize: 12.5, fontStyle: 'italic', color: 'var(--onyx-text-dim)' }} />
               ) : (
-                <div onClick={() => setEditing('description')} title="Click to edit description"
+                <div onClick={() => setEditing('description')} title="点击编辑简介"
                   style={{ marginTop: 6, fontSize: 12.5, cursor: 'text', fontStyle: 'italic', color: description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)' }}>
-                  {description || 'Add a description…'}
+                  {description || '添加简介…'}
                 </div>
               )}
             </div>
@@ -146,10 +146,10 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 7, cursor: ids.length ? 'pointer' : 'default',
                 background: ids.length ? 'var(--onyx-accent-dim)' : 'transparent', border: `1px solid ${ids.length ? 'var(--onyx-accent-edge)' : 'var(--onyx-line)'}`,
                 color: ids.length ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              ▶ Play All
+              ▶ 播放全部
             </button>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {ids.length} {ids.length === 1 ? 'book' : 'books'} · drag to reorder
+              {ids.length} 本 · 拖动排序
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }} onDragOver={e => e.preventDefault()}>
           {ids.length === 0 && (
             <div style={{ padding: '32px 24px', fontFamily: SERIF, fontSize: 14, color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
-              This collection is empty.
+              这个合集是空的。
             </div>
           )}
           {ids.map((id, i) => {
@@ -180,7 +180,7 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                   opacity: isDragging ? 0.5 : 1, transition: 'background 0.1s',
                 }}
               >
-                <div style={{ flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)', fontSize: 14, lineHeight: 1, userSelect: 'none' }} title="Drag to reorder">⠿</div>
+                <div style={{ flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)', fontSize: 14, lineHeight: 1, userSelect: 'none' }} title="拖动排序">⠿</div>
                 <div style={{ flexShrink: 0, width: 20, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', textAlign: 'right' }}>{i + 1}</div>
                 {book ? <Cover item={book} size={40} serverUrl={serverUrl} />
                       : <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />}
@@ -190,7 +190,7 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                   </div>
                   {book && <div style={{ fontSize: 11.5, color: 'var(--onyx-text-dim)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookAuthor(book)}</div>}
                 </div>
-                <button onClick={() => handleRemove(id)} disabled={removing === id} title="Remove from collection"
+                <button onClick={() => handleRemove(id)} disabled={removing === id} title="从合集中移除"
                   style={{ flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid transparent', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 13, lineHeight: 1 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e8716a'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--onyx-text-mute)'; }}>

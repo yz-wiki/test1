@@ -48,16 +48,16 @@ export default function PublishersView({ st, inline = false }: PublishersViewPro
   };
 
   return (
-    <BrowseView st={st} title="Publishers" subtitle={`${list.length} publishers in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title="出版社" subtitle={`你书库中共 ${list.length} 家出版社`} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(p => (
             <BrowseTile
               key={p.name}
               mode={st.browseTileStyle}
-              tag="Publisher"
+              tag="出版社"
               title={p.name}
-              stat={`${p.books.length} TITLE${p.books.length === 1 ? '' : 'S'} · ${seriesTotalDur(p.books)}`}
+              stat={`${p.books.length} 本 · ${seriesTotalDur(p.books)}`}
               books={p.books}
               serverUrl={st.serverUrl}
               onClick={() => open(p.name)}
@@ -67,9 +67,9 @@ export default function PublishersView({ st, inline = false }: PublishersViewPro
       ) : (
         <BrowseList
           columns={[
-            { id: 'name',   label: 'Publisher', flex: 2   },
-            { id: 'titles', label: 'Titles',    width: 80 },
-            { id: 'dur',    label: 'Duration',  width: 110 },
+            { id: 'name',   label: '出版社', flex: 2   },
+            { id: 'titles', label: '作品数',    width: 80 },
+            { id: 'dur',    label: '时长',  width: 110 },
           ]}
           rows={list.map(p => ({
             key: p.name,

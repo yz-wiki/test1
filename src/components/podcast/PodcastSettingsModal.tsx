@@ -42,7 +42,7 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
       // valid shapes anyway).
       if (autoDownload && !isLocal) {
         const ok = await validateCron(st.serverUrl, schedule).catch(() => false);
-        if (!ok) { setError('Schedule is not a valid cron expression.'); setSaving(false); return; }
+        if (!ok) { setError('计划不是有效的 cron 表达式。'); setSaving(false); return; }
       }
       if (isLocal) {
         await updateLocalPodcastSettings(
@@ -57,7 +57,7 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
           maxNewEpisodesToDownload: Number(maxNew) || 0,
         });
       }
-      st.setToast({ message: 'Auto-download settings saved', type: 'success' });
+      st.setToast({ message: '自动下载设置已保存', type: 'success' });
       onSaved();
       onClose();
     } catch (e) {
@@ -91,7 +91,7 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
         borderRadius: 12, boxShadow: '0 24px 60px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--onyx-line)' }}>
-          <div id="podcast-settings-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>Auto-Download</div>
+          <div id="podcast-settings-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>自动下载</div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 4, letterSpacing: '0.04em' }}>
             {media.metadata?.title ?? ''}
           </div>
@@ -100,17 +100,17 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <input type="checkbox" checked={autoDownload} onChange={e => setAutoDownload(e.target.checked)} />
-            <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>Automatically download new episodes</div>
+            <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>自动下载新单集</div>
           </label>
 
           {autoDownload && (
             <>
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em', marginBottom: 8 }}>CHECK SCHEDULE</div>
+                <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em', marginBottom: 8 }}>检查计划</div>
                 <CronEditor value={schedule} onChange={setSchedule} />
               </div>
-              {numField('Max episodes to keep', '0 = keep all episodes', maxKeep, setMaxKeep)}
-              {numField('Max new per check', 'cap downloads per scheduled check', maxNew, setMaxNew)}
+              {numField('保留单集上限', '0 = 保留全部单集', maxKeep, setMaxKeep)}
+              {numField('单次检查下载上限', '限制每次定时检查下载的单集数', maxNew, setMaxNew)}
             </>
           )}
 
@@ -118,7 +118,7 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
         </div>
 
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--onyx-line)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-          <button onClick={onClose} disabled={saving} style={{ background: 'none', border: 'none', cursor: saving ? 'default' : 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>CANCEL</button>
+          <button onClick={onClose} disabled={saving} style={{ background: 'none', border: 'none', cursor: saving ? 'default' : 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>取消</button>
           <button
             onClick={save}
             disabled={saving}
@@ -127,7 +127,7 @@ export default function PodcastSettingsModal({ st, item, onClose, onSaved }: Pod
               background: saving ? 'var(--onyx-line)' : 'var(--onyx-accent)', color: saving ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
               fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
             }}
-          >{saving ? 'Saving…' : 'Save'}</button>
+          >{saving ? '保存中…' : '保存'}</button>
         </div>
       </div>
     </div>

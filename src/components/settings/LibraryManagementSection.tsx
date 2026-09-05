@@ -46,8 +46,8 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
   if (!st.isAdmin) {
     return (
       <div ref={rootRef}>
-        <SectionHead title="Libraries" subtitle="The local libraries on this computer." />
-        {pane('On this PC', <LocalLibrarySection st={st} embedded />, { marginTop: 0 })}
+        <SectionHead title="书库" subtitle="这台电脑上的本机书库。" />
+        {pane('这台电脑', <LocalLibrarySection st={st} embedded />, { marginTop: 0 })}
       </div>
     );
   }
@@ -59,12 +59,12 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
   return (
     <div ref={rootRef}>
       <SectionHead
-        title="Libraries"
-        subtitle="Your Audiobookshelf server libraries and the local libraries on this computer."
+        title="书库"
+        subtitle="你的 Audiobookshelf 服务器书库，以及这台电脑上的本机书库。"
       />
       <div style={{ display: 'flex', flexDirection: sideBySide ? 'row' : 'column', gap: 24, alignItems: 'flex-start' }}>
-        {pane('Audiobookshelf server', <LibrariesSection st={st} embedded />, colStyle)}
-        {pane('On this PC', <LocalLibrarySection st={st} embedded />, colStyle)}
+        {pane('Audiobookshelf 服务器', <LibrariesSection st={st} embedded />, colStyle)}
+        {pane('这台电脑', <LocalLibrarySection st={st} embedded />, colStyle)}
       </div>
     </div>
   );

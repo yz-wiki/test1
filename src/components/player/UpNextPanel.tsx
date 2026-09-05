@@ -51,7 +51,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
   }, [state.status, onPlay, onDismiss]);
 
   const title = target.kind === 'book'
-    ? target.item.media?.metadata?.title ?? 'Next book'
+    ? target.item.media?.metadata?.title ?? '下一本书'
     : target.episode.title;
   const subtitle = target.kind === 'book'
     ? target.item.media?.metadata?.seriesName ?? ''
@@ -86,7 +86,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>
-          UP NEXT
+          接下来播放
         </div>
         <div style={{
           fontSize: 13,
@@ -121,7 +121,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
               padding: '4px 10px',
             }}
           >
-            Play now
+            立即播放
           </button>
           <button
             onClick={() => dispatch({ type: 'cancel' })}
@@ -135,7 +135,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
               padding: '4px 10px',
             }}
           >
-            Cancel
+            取消
           </button>
         </div>
       </div>

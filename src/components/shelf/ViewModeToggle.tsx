@@ -8,8 +8,8 @@ export interface ViewModeToggleProps {
 }
 
 const MODES = [
-  { id: 'grid', icon: 'grid', label: 'Grid' },
-  { id: 'list', icon: 'list', label: 'List' },
+  { id: 'grid', icon: 'grid', label: '网格' },
+  { id: 'list', icon: 'list', label: '列表' },
 ] as const;
 
 export default function ViewModeToggle({ st }: ViewModeToggleProps) {
@@ -21,7 +21,7 @@ export default function ViewModeToggle({ st }: ViewModeToggleProps) {
       {MODES.map(m => {
         const active = st.libraryView === m.id;
         return (
-          <button key={m.id} onClick={() => st.setLibraryView(m.id)} title={`${m.label} view`} style={{
+          <button key={m.id} onClick={() => st.setLibraryView(m.id)} title={`${m.label}视图`} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
             background: active ? 'var(--onyx-accent-dim)' : 'transparent',

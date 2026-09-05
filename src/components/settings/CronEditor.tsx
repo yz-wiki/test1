@@ -29,7 +29,7 @@ interface CronState {
   custom: string;   // custom: raw expression
 }
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 const EVERY_N_OPTIONS = [2, 3, 4, 6, 8, 12];
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -125,17 +125,17 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
           }}
           style={{ ...controlStyle, minWidth: 130 }}
         >
-          <option value="hourly">Every hour</option>
-          <option value="everyN">Every few hours</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="custom">Custom…</option>
+          <option value="hourly">每小时</option>
+          <option value="everyN">每隔几小时</option>
+          <option value="daily">每天</option>
+          <option value="weekly">每周</option>
+          <option value="custom">自定义…</option>
         </select>
 
         {/* Mode-specific controls */}
         {state.mode === 'hourly' && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--onyx-text-dim)' }}>
-            at&nbsp;:
+            在&nbsp;：
             <input
               type="number" min={0} max={59}
               value={state.minute}
@@ -154,7 +154,7 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
             onChange={e => commit({ ...state, everyN: Number(e.target.value) })}
             style={controlStyle}
           >
-            {EVERY_N_OPTIONS.map(n => <option key={n} value={n}>every {n} hours</option>)}
+            {EVERY_N_OPTIONS.map(n => <option key={n} value={n}>每 {n} 小时</option>)}
           </select>
         )}
 
@@ -170,7 +170,7 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
               </select>
             )}
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--onyx-text-dim)' }}>
-              at
+              在
               <input
                 type="time"
                 value={state.time}

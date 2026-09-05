@@ -85,7 +85,7 @@ export default function Player({ st }: PlayerProps) {
   // A podcast episode selected from the feed that isn't downloaded yet: it has no
   // ABS episode id, so there's no session to play — the player offers Download.
   const episodePending = isPodcast && !!st.currentEpisode && !st.currentEpisodeId;
-  const detailLabel = isPodcast ? 'Description' : 'Synopsis';
+  const detailLabel = isPodcast ? '单集简介' : '内容简介';
   // Descriptions are remote HTML (ABS metadata / arbitrary podcast RSS) headed
   // for dangerouslySetInnerHTML — sanitize down to basic formatting first.
   // Memoized because the player re-renders on every 1 Hz playback tick.
@@ -93,7 +93,7 @@ export default function Player({ st }: PlayerProps) {
     ? (ep?.description || b.media?.metadata?.description || '')
     : (b.media?.metadata?.description || '');
   const descriptionHtml = React.useMemo(() => sanitizeHtml(rawDescription), [rawDescription]);
-  const noDescText = isPodcast ? 'No description available.' : 'No synopsis available.';
+  const noDescText = isPodcast ? '暂无单集简介。' : '暂无简介。';
 
   // Chapters are locked when the focused book differs from the playing book,
   // OR when playback has not yet started (position is 0 and not playing).
@@ -248,10 +248,10 @@ export default function Player({ st }: PlayerProps) {
         st.setBookmarks(me.bookmarks);
       }
       // The bookmark list may be off-screen, so make a successful save explicit.
-      st.setToast({ message: 'Bookmark saved', type: 'success' });
+      st.setToast({ message: '书签已保存', type: 'success' });
     } catch (err) {
       log.error('playback', 'bookmark create failed', { err: String(err) });
-      st.setToast({ message: 'Could not save bookmark — please try again', type: 'error' });
+      st.setToast({ message: '无法保存书签，请重试', type: 'error' });
     }
   };
 
@@ -301,14 +301,14 @@ export default function Player({ st }: PlayerProps) {
           // carrying episodes[], which is what continuation walks at the end.
           await playEpisode(st, show ?? pid, match).catch(err => {
             log.error('playback', 'play after local episode download failed', { itemId: pid, err: String(err) });
-            st.setToast({ message: 'Downloaded, but playback could not start — tap the episode to retry', type: 'error' });
+            st.setToast({ message: '已下载，但无法开始播放——请点击该单集重试', type: 'error' });
           });
         } else {
-          st.setToast({ message: 'Downloaded — open the episode to play', type: 'info' });
+          st.setToast({ message: '已下载——请打开该单集播放', type: 'info' });
         }
       } catch (e) {
         log.error('downloads', 'local episode download failed', { err: String(e) });
-        st.setToast({ message: 'Download failed', type: 'error' });
+        st.setToast({ message: '下载失败', type: 'error' });
         setDlState('idle');
       }
       return;
@@ -318,7 +318,7 @@ export default function Player({ st }: PlayerProps) {
       await downloadEpisodes(st.serverUrl, pid, [ep]);
     } catch (e) {
       log.error('downloads', 'episode download failed', { err: String(e) });
-      st.setToast({ message: 'Download failed', type: 'error' });
+      st.setToast({ message: '下载失败', type: 'error' });
       setDlState('idle');
       return;
     }
@@ -336,14 +336,14 @@ export default function Player({ st }: PlayerProps) {
           // of this episode has the show's episode list.
           await playEpisode(st, item, match).catch(err => {
             log.error('playback', 'play after episode download failed', { itemId: pid, err: String(err) });
-            st.setToast({ message: 'Downloaded, but playback could not start — tap the episode to retry', type: 'error' });
+            st.setToast({ message: '已下载，但无法开始播放——请点击该单集重试', type: 'error' });
           });
           return;
         }
       } catch { /* keep polling */ }
     }
     setDlState('idle');
-    st.setToast({ message: 'Download is taking a while — it will appear once finished', type: 'info' });
+    st.setToast({ message: '下载需要一些时间——完成后会自动出现', type: 'info' });
   };
 
   useEffect(() => {
@@ -639,7 +639,7 @@ export default function Player({ st }: PlayerProps) {
   const sleepLabel: string | null = sleepMode == null
     ? null
     : sleepMode === 'chapter'
-      ? 'End of chapter'
+      ? '本章结束'
       : `${Math.floor(sleepRemain / 60)}:${String(sleepRemain % 60).padStart(2, '0')}`;
 
   const onScrub = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -756,7 +756,7 @@ export default function Player({ st }: PlayerProps) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: isCompact ? 8 : 18, /* Reduced in compact mode — volume/device controls move to transport bar */ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
         <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
-          <Icon name="chevron-left" size={12} /> Library
+          <Icon name="chevron-left" size={12} /> 书库
         </button>
         <span>·</span>
         <span>{bSeries}</span>
@@ -777,7 +777,7 @@ export default function Player({ st }: PlayerProps) {
             <Cover item={b} size={coverSize} fill serverUrl={st.serverUrl} fallbackImageUrl={podcastImageUrl ?? podcastFeedImg} style={{ transition: 'width 0.3s ease, height 0.3s ease' }} />
           </div>
           <div style={{ marginTop: 32, textAlign: 'center', position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%' }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 8 }}>{isPodcast ? 'Podcast' : bSeries}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 8 }}>{isPodcast ? '播客' : bSeries}</div>
             <div style={{ fontFamily: SERIF, fontSize: titleFontSize, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.02em', transition: 'font-size 0.2s ease' }}>{displayTitle}</div>
             {isPodcast ? (
               // For an episode, the "show" is the podcast title; author filtering
@@ -786,7 +786,7 @@ export default function Player({ st }: PlayerProps) {
             ) : (
               <>
                 <div style={{ marginTop: 10, fontSize: 16, color: 'var(--onyx-text-dim)' }}>
-                  by{' '}
+                  作者{' '}
                   <span
                     onClick={() => { st.setContextFilter({ kind: 'author', value: bookAuthor(b) }); st.setShelfTab('library'); st.setScreen('library'); }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.textDecorationColor = 'var(--onyx-text-dim)'; }}
@@ -796,7 +796,7 @@ export default function Player({ st }: PlayerProps) {
                 </div>
                 <div style={{ marginTop: 2, fontSize: 13, color: 'var(--onyx-text-mute)' }}>
                   {bookNarrator(b) && <>
-                    narrated by{' '}
+                    讲述人{' '}
                     <span
                       onClick={() => { st.setContextFilter({ kind: 'narrator', value: bookNarrator(b) }); st.setShelfTab('library'); st.setScreen('library'); }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.textDecorationColor = 'var(--onyx-text-mute)'; }}
@@ -852,7 +852,7 @@ export default function Player({ st }: PlayerProps) {
             {episodePending && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, minHeight: 160, textAlign: 'center' }}>
                 <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
-                  Episode not downloaded
+                  单集尚未下载
                 </div>
                 <button
                   onClick={downloadAndPlay}
@@ -867,11 +867,11 @@ export default function Player({ st }: PlayerProps) {
                   }}
                 >
                   <Icon name={dlState === 'downloading' ? 'dot' : 'play'} size={13} />
-                  {dlState === 'downloading' ? 'Downloading…' : 'Download episode'}
+                  {dlState === 'downloading' ? '下载中…' : '下载单集'}
                 </button>
                 {dlState === 'downloading' && (
                   <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-                    Fetching from the feed — playback starts automatically.
+                    正在从订阅源获取——下载完成后将自动开始播放。
                   </div>
                 )}
               </div>
@@ -895,7 +895,7 @@ export default function Player({ st }: PlayerProps) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  <Icon name="play" size={13} /> Play this book
+                  <Icon name="play" size={13} /> 播放本书
                 </button>
               </div>
             )}
@@ -908,7 +908,7 @@ export default function Player({ st }: PlayerProps) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 22 }}>
                 <div style={{ minWidth: 0 }}>
                   {/* Eyebrow always visible — tells the user what will play when they press the button */}
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>Now playing · {bookTitle(st.currentBook ?? b)}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>正在播放 · {bookTitle(st.currentBook ?? b)}</div>
                   {/* Only show chapter title once playback has started — before that,
                       nothing is technically playing so showing a chapter would be misleading. */}
                   {(st.playing || st.position > 0) && (
@@ -926,11 +926,11 @@ export default function Player({ st }: PlayerProps) {
                 ref={waveformRef}
                 role="slider"
                 tabIndex={0}
-                aria-label={hasChapters ? `Seek within ${curCh.t || `chapter ${chIdx + 1}`}` : 'Seek within episode'}
+                aria-label={hasChapters ? `在 ${curCh.t || `第 ${chIdx + 1} 章`} 中定位` : '在单集中定位'}
                 aria-valuemin={0}
                 aria-valuemax={Math.round(dispTotal)}
                 aria-valuenow={Math.round(dispLocal)}
-                aria-valuetext={`${fmtTime(dispLocal)} of ${fmtTime(dispTotal)}`}
+                aria-valuetext={`${fmtTime(dispLocal)} / ${fmtTime(dispTotal)}`}
                 onClick={onScrub}
                 onKeyDown={onScrubKeyDown}
                 style={{ cursor: 'pointer', position: 'relative', width: '100%', flex: 1, minWidth: 0, outlineOffset: 4 }}
@@ -985,20 +985,20 @@ export default function Player({ st }: PlayerProps) {
               {/* Center group — primary transport controls; flex: 1 with centered content
                   ensures play/pause/skip always sit at the geometric center of the row */}
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14 }}>
-                <button onClick={() => seekAudio(Math.max(0, st.position - skipSeconds())).catch(logErr)} aria-label={`Back ${skipSeconds()} seconds`} title={`Back ${skipSeconds()}s`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
+                <button onClick={() => seekAudio(Math.max(0, st.position - skipSeconds())).catch(logErr)} aria-label={`后退 ${skipSeconds()} 秒`} title={`后退 ${skipSeconds()} 秒`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
                   <Icon name="skip-back" size={isCompact ? 14 : 20} />
                 </button>
                 <button
                   onClick={handlePlayPause}
-                  aria-label={st.playing ? 'Pause' : 'Play'}
-                  title={st.playing ? 'Pause (space)' : 'Play (space)'}
+                  aria-label={st.playing ? '暂停' : '播放'}
+                  title={st.playing ? '暂停 (Space)' : '播放 (Space)'}
                   style={{ width: isCompact ? 36 : 64, height: isCompact ? 36 : 64, borderRadius: isCompact ? 18 : 32, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', boxShadow: '0 12px 32px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.4)' }}
                 >
                   <span style={{ display: 'inline-flex', marginLeft: st.playing ? 0 : 3 }}>
                     <Icon name={st.playing ? 'pause' : 'play'} size={isCompact ? 15 : 26} />
                   </span>
                 </button>
-                <button onClick={() => seekAudio(Math.min(st.bookSecs, st.position + skipSeconds())).catch(logErr)} aria-label={`Forward ${skipSeconds()} seconds`} title={`Forward ${skipSeconds()}s`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
+                <button onClick={() => seekAudio(Math.min(st.bookSecs, st.position + skipSeconds())).catch(logErr)} aria-label={`前进 ${skipSeconds()} 秒`} title={`前进 ${skipSeconds()} 秒`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
                   <Icon name="skip-forward" size={isCompact ? 14 : 20} />
                 </button>
               </div>
@@ -1009,16 +1009,16 @@ export default function Player({ st }: PlayerProps) {
                   /* In compact mode, device selector moves here to sit left of bookmark/sleep */
                   <DeviceSelector st={st} compact style={{ flex: '0 0 auto', minWidth: 0, maxWidth: 120 }} />
                 )}
-                <button onClick={addBookmark} aria-label="Bookmark this moment" style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()} title="Bookmark this moment">
+                <button onClick={addBookmark} aria-label="在当前位置添加书签" style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()} title="在当前位置添加书签">
                   <Icon name="bookmark" size={isCompact ? 11 : 15} />
                 </button>
                 <div ref={sleepRef} style={{ position: 'relative', zIndex: 200 }}>
                   <button
                     onClick={() => setSleepOpen(o => !o)}
-                    aria-label={sleepLabel ? `Sleep timer: ${sleepLabel}` : 'Sleep timer'}
+                    aria-label={sleepLabel ? `睡眠定时：${sleepLabel}` : '睡眠定时'}
                     aria-haspopup="menu"
                     aria-expanded={sleepOpen}
-                    title={sleepLabel ? `Sleep timer: ${sleepLabel}` : 'Sleep timer'}
+                    title={sleepLabel ? `睡眠定时：${sleepLabel}` : '睡眠定时'}
                     style={{
                       ...transportBtnSmall(),
                       background: sleepMode != null ? 'var(--onyx-accent-dim)' : 'var(--onyx-glass)',
@@ -1037,7 +1037,7 @@ export default function Player({ st }: PlayerProps) {
                   </button>
                   {sleepOpen && (
                     <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 10, boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', padding: 6, zIndex: 300, minWidth: 170 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>Sleep Timer</div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>睡眠定时</div>
                       {SLEEP_OPTIONS.map(opt => {
                         const active = sleepMode === opt.id;
                         return (
@@ -1080,7 +1080,7 @@ export default function Player({ st }: PlayerProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    {pane === 'synopsis' ? detailLabel : pane[0].toUpperCase() + pane.slice(1)}
+                    {pane === 'details' ? '详情' : pane === 'chapters' ? '章节' : pane === 'bookmarks' ? '书签' : detailLabel}
                   </button>
                 ))}
               </div>
@@ -1089,7 +1089,7 @@ export default function Player({ st }: PlayerProps) {
             {/* ── Details panel — hidden in compact mode unless selected ── */}
             <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Details</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>详情</div>
                 {!isPodcast && !b.localPath && (
                   <button
                     onClick={() => setShowFileInspector(true)}
@@ -1107,7 +1107,7 @@ export default function Player({ st }: PlayerProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    Files &amp; Tracks
+                    文件与音轨
                   </button>
                 )}
               </div>
@@ -1134,17 +1134,17 @@ export default function Player({ st }: PlayerProps) {
                   );
                   const listeningRows = prog ? (
                     <>
-                      {detailRow('Progress',
+                      {detailRow('进度',
                         <span style={{ color: prog.isFinished ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
                           {Math.round(prog.progress * 100)}%{prog.isFinished && ' ✓'}
                         </span>
                       )}
-                      {detailRow('Listened',   fmtTime(prog.currentTime))}
-                      {detailRow('Remaining',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
-                      {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                      {detailRow('已听',   fmtTime(prog.currentTime))}
+                      {detailRow('剩余',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
+                      {detailRow('上次播放', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                     </>
                   ) : (
-                    <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Not started</div>
+                    <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>未开始</div>
                   );
 
                   // ── Podcast / episode details ──────────────────────────────
@@ -1156,19 +1156,19 @@ export default function Player({ st }: PlayerProps) {
                     const epNum = [ep?.season ? `S${ep.season}` : '', ep?.episode ? `E${ep.episode}` : ''].filter(Boolean).join(' ');
                     return (
                       <>
-                        {sectionHead('Podcast')}
-                        {detailRow('Author',   pMeta?.author   || dash)}
-                        {detailRow('Genre',    pGenres.join(', ') || dash)}
-                        {detailRow('Language', pMeta?.language || dash)}
-                        {pMeta?.explicit !== undefined && detailRow('Explicit', pMeta.explicit ? 'Yes' : 'No')}
+                        {sectionHead('播客')}
+                        {detailRow('作者',   pMeta?.author   || dash)}
+                        {detailRow('类型',    pGenres.join(', ') || dash)}
+                        {detailRow('语言', pMeta?.language || dash)}
+                        {pMeta?.explicit !== undefined && detailRow('露骨内容', pMeta.explicit ? '是' : '否')}
 
-                        {sectionHead('Episode', 16)}
-                        {ep?.title && detailRow('Title', ep.title)}
-                        {pub && !isNaN(pub.getTime()) && detailRow('Published', pub.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
-                        {epNum && detailRow('Number', epNum)}
-                        {detailRow('Duration', epDur > 0 ? fmtRemaining(epDur) : dash)}
+                        {sectionHead('单集', 16)}
+                        {ep?.title && detailRow('标题', ep.title)}
+                        {pub && !isNaN(pub.getTime()) && detailRow('发布日期', pub.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                        {epNum && detailRow('编号', epNum)}
+                        {detailRow('时长', epDur > 0 ? fmtRemaining(epDur) : dash)}
 
-                        {sectionHead('Listening', 16)}
+                        {sectionHead('收听进度', 16)}
                         {listeningRows}
                       </>
                     );
@@ -1177,13 +1177,13 @@ export default function Player({ st }: PlayerProps) {
                   return (
                     <>
                       {/* Book details */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 4, paddingBottom: 4 }}>Book</div>
-                      {detailRow('Publisher',  meta?.publisher    || dash)}
-                      {detailRow('Genre',      genres.join(', ')  || dash)}
-                      {detailRow('Year',       meta?.publishedYear || dash)}
-                      {detailRow('Language',   meta?.language      || dash)}
-                      {detailRow('Duration',   bookDur(b))}
-                      {tags.length > 0 && detailRow('Tags',
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 4, paddingBottom: 4 }}>图书</div>
+                      {detailRow('出版社',  meta?.publisher    || dash)}
+                      {detailRow('类型',      genres.join(', ')  || dash)}
+                      {detailRow('年份',       meta?.publishedYear || dash)}
+                      {detailRow('语言',   meta?.language      || dash)}
+                      {detailRow('时长',   bookDur(b))}
+                      {tags.length > 0 && detailRow('标签',
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
                           {tags.map(t => (
                             <span key={t} style={{ padding: '1px 7px', borderRadius: 999, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t}</span>
@@ -1192,20 +1192,20 @@ export default function Player({ st }: PlayerProps) {
                       )}
 
                       {/* Listening stats */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>Listening</div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>收听进度</div>
                       {prog ? (
                         <>
-                          {detailRow('Progress',
+                          {detailRow('进度',
                             <span style={{ color: prog.isFinished ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
                               {Math.round(prog.progress * 100)}%{prog.isFinished && ' ✓'}
                             </span>
                           )}
-                          {detailRow('Listened',   fmtTime(prog.currentTime))}
-                          {detailRow('Remaining',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
-                          {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                          {detailRow('已听',   fmtTime(prog.currentTime))}
+                          {detailRow('剩余',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
+                          {detailRow('上次播放', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                         </>
                       ) : (
-                        <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Not started</div>
+                        <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>未开始</div>
                       )}
 
                       {/* Open Library */}
@@ -1213,9 +1213,9 @@ export default function Player({ st }: PlayerProps) {
                         <>
                           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>Open Library</div>
                           {olWorkKey === undefined ? (
-                            <div aria-live="polite" style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>Loading Open Library details…</div>
+                            <div aria-live="polite" style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>正在加载 Open Library 详情…</div>
                           ) : olWorkKey === null ? (
-                            <div style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>No data found</div>
+                            <div style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>未找到数据</div>
                           ) : (
                             <>
                               <div style={{ padding: '8px 0', borderBottom: '1px solid var(--onyx-line)', fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>
@@ -1223,14 +1223,14 @@ export default function Player({ st }: PlayerProps) {
                                   ? `${olRatings.average.toFixed(1)} / 5`
                                   : '—'}
                                 {olRatings?.count != null
-                                  ? <span style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>{' '}· {olRatings.count.toLocaleString()} ratings</span>
+                                  ? <span style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>{' '}· {olRatings.count.toLocaleString()} 条评分</span>
                                   : null}
                               </div>
                               {olShelves && (
                                 <div style={{ padding: '8px 0', borderBottom: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1.8 }}>
-                                  <div>Want to read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.wantToRead?.toLocaleString() ?? '—'}</span></div>
-                                  <div>Reading: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.reading?.toLocaleString() ?? '—'}</span></div>
-                                  <div>Read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.alreadyRead?.toLocaleString() ?? '—'}</span></div>
+                                  <div>想读：<span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.wantToRead?.toLocaleString() ?? '—'}</span></div>
+                                  <div>正在读：<span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.reading?.toLocaleString() ?? '—'}</span></div>
+                                  <div>已读：<span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.alreadyRead?.toLocaleString() ?? '—'}</span></div>
                                 </div>
                               )}
                               <a
@@ -1239,7 +1239,7 @@ export default function Player({ st }: PlayerProps) {
                                 rel="noreferrer"
                                 style={{ display: 'inline-block', marginTop: 10, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none' }}
                               >
-                                View on Open Library ↗
+                                在 Open Library 中查看 ↗
                               </a>
                             </>
                           )}
@@ -1258,31 +1258,31 @@ export default function Player({ st }: PlayerProps) {
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
             <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Chapters</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>章节</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
                     show the episode duration instead of NaNm. */}
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>{displayChapters.length} · {fmtRemaining(st.bookSecs)} total</div>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>{displayChapters.length} · 共 {fmtRemaining(st.bookSecs)}</div>
               </div>
               {/* Podcast episodes carry no chapter markers in this model. */}
               {isPodcast && displayChapters.length === 0 && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  No chapters for this episode
+                  该单集没有章节
                 </div>
               )}
               {/* Contextual hint above the list — message varies by lock reason */}
               {isFocusedDifferent && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  Press Play to enable chapter navigation
+                  播放后可启用章节导航
                 </div>
               )}
               {/* Not yet started: same book but position is 0 and not playing */}
               {!isFocusedDifferent && !st.playing && st.position === 0 && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  Press play to begin
+                  点击播放开始收听
                 </div>
               )}
               {chapterListDiverged && (
-                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 8, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9.5 }}>Return to current chapter</button>
+                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 8, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9.5 }}>返回当前章节</button>
               )}
               <div ref={chapterListRef} onWheel={markChapterListManual} onTouchMove={markChapterListManual} style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 8 }}>
                 {displayChapters.map((c, i) => {
@@ -1340,7 +1340,7 @@ export default function Player({ st }: PlayerProps) {
 
               {/* ── Panel header: title + tab switcher + add button ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Bookmarks</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>书签</div>
 
                 {/* Tab switcher — pill toggles between server bookmarks and local stop points */}
                 <div style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--onyx-line)', overflow: 'hidden', marginLeft: 4 }}>
@@ -1360,7 +1360,7 @@ export default function Player({ st }: PlayerProps) {
                         cursor: 'pointer',
                       }}
                     >
-                      {tab === 'bookmarks' ? 'Saved' : 'Local'}
+                      {tab === 'bookmarks' ? '已保存' : '本机'}
                     </button>
                   ))}
                 </div>
@@ -1372,8 +1372,8 @@ export default function Player({ st }: PlayerProps) {
 
                 {/* Add-bookmark button — only shown on the Saved tab */}
                 {bookmarkTab === 'bookmarks' && (
-                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} title="Bookmark current moment">
-                    <Icon name="plus" size={11} /> ADD HERE
+                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} title="在当前位置添加书签">
+                    <Icon name="plus" size={11} /> 添加书签
                   </button>
                 )}
               </div>
@@ -1386,15 +1386,15 @@ export default function Player({ st }: PlayerProps) {
                   //    title, meta = chapter. Gold dot when labelled, muted if not. ──
                   playerBookmarks.length === 0 ? (
                     <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-                      No bookmarks yet
+                      暂无书签
                     </div>
                   ) : playerBookmarks.map((bm, i) => {
                     const ch = chapterAtPos(bm.time, displayChapters);
-                    const meta = ch ? `Ch. ${ch.n}${ch.t ? ` · ${ch.t}` : ''}` : undefined;
+                    const meta = ch ? `第 ${ch.n} 章${ch.t ? ` · ${ch.t}` : ''}` : undefined;
                     return railRow({
                       keyId: `${bm.time}-${i}`,
                       time: fmtTime(bm.time),
-                      label: bm.title || 'Untitled',
+                      label: bm.title || '未命名',
                       italic: true,
                       meta,
                       accent: !!bm.title,
@@ -1407,11 +1407,11 @@ export default function Player({ st }: PlayerProps) {
                   //    at, meta = when it was recorded. ──
                   stopPoints.length === 0 ? (
                     <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-                      No local history yet
+                      暂无本机收听记录
                     </div>
                   ) : stopPoints.map((point, i) => {
                     const ch = chapterAtPos(point.position, chapters);
-                    const label = ch ? (ch.t || `Chapter ${ch.n}`) : 'Unknown chapter';
+                    const label = ch ? (ch.t || `第 ${ch.n} 章`) : '未知章节';
                     return railRow({
                       keyId: `${point.recordedAt}-${i}`,
                       time: fmtTime(point.position),

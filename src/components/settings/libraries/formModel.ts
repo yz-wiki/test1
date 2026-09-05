@@ -4,14 +4,14 @@
 import type { Library, LibrarySettings } from '../../../api/abs';
 
 export function relativeTime(ms: number | null): string {
-  if (ms === null) return 'Never';
+  if (ms === null) return '从未';
   const diff = Date.now() - ms;
   const m = Math.floor(diff / 60_000);
-  if (m < 1) return 'Just now';
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return '刚刚';
+  if (m < 60) return `${m} 分钟前`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return `${h} 小时前`;
+  return `${Math.floor(h / 24)} 天前`;
 }
 
 const ICON_EMOJI: Record<string, string> = {

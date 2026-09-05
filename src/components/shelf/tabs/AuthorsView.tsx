@@ -51,7 +51,7 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
   };
 
   return (
-    <BrowseView st={st} title="Authors" subtitle={`${list.length} authors in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title="作者" subtitle={`你书库中共 ${list.length} 位作者`} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(a => {
@@ -60,10 +60,10 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
               <BrowseTile
                 key={a.name}
                 mode={st.browseTileStyle}
-                tag="Author"
+                tag="作者"
                 title={a.name}
                 subtitle={genres.join(' · ') || '—'}
-                stat={`${a.books.length} TITLE${a.books.length === 1 ? '' : 'S'} · ${seriesTotalDur(a.books)}`}
+                stat={`${a.books.length} 本 · ${seriesTotalDur(a.books)}`}
                 books={a.books}
                 serverUrl={st.serverUrl}
                 onClick={() => open(a.name)}
@@ -74,9 +74,9 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
       ) : (
         <BrowseList
           columns={[
-            { id: 'name',   label: 'Author',   flex: 2   },
-            { id: 'titles', label: 'Titles',   width: 80 },
-            { id: 'dur',    label: 'Duration', width: 110 },
+            { id: 'name',   label: '作者',   flex: 2   },
+            { id: 'titles', label: '作品数',   width: 80 },
+            { id: 'dur',    label: '时长', width: 110 },
           ]}
           rows={list.map(a => ({
             key: a.name,

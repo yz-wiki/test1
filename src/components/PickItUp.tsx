@@ -123,7 +123,7 @@ export default function PickItUp({ st }: PickItUpProps) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '0 4px 12px' }}>
         <button
           onClick={() => st.setPickItUpCollapsed(!st.pickItUpCollapsed)}
-          title={st.pickItUpCollapsed ? 'Expand Pick it up' : 'Collapse Pick it up'}
+          title={st.pickItUpCollapsed ? '展开“接着听”' : '收起“接着听”'}
           style={{ display: 'flex', alignItems: 'baseline', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', color: 'inherit' }}
         >
           <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -135,10 +135,10 @@ export default function PickItUp({ st }: PickItUpProps) {
             }}>
               <Icon name="chevron-down" size={13} />
             </span>
-            Pick it up
+            接着听
           </div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            {continueItems.length} in progress
+            {continueItems.length} 收听中
           </div>
         </button>
       </div>
@@ -164,7 +164,7 @@ export default function PickItUp({ st }: PickItUpProps) {
                   {/* Downloaded badge — matches LibraryShelf: brass ↓ or amber ! */}
                   {dlRecord && (
                     <div
-                      title={dlRecord.serverDeleted ? 'No longer on server — local copy only' : 'Available offline'}
+                      title={dlRecord.serverDeleted ? '服务器上已删除——仅保留本机副本' : '可离线使用'}
                       style={{
                         position: 'absolute', bottom: 2, right: 2,
                         zIndex: 3,

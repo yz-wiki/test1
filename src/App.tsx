@@ -111,8 +111,8 @@ export default function App() {
     listen('socket-disconnected', () => {
       log.warn('sync', 'socket disconnected');
       if (localStorage.getItem('onyx.sync.live') === 'true') {
-        st.setToast({ message: 'Live sync disconnected — reconnecting…', type: 'info' });
-        st.recordActivity({ category: 'sync', outcome: 'error', message: 'Live sync disconnected — reconnecting' });
+        st.setToast({ message: '实时同步已断开——正在重连…', type: 'info' });
+        st.recordActivity({ category: 'sync', outcome: 'error', message: '实时同步已断开——正在重连' });
       }
     }).then(fn => { unlistenDisconnected = fn; });
 
@@ -120,8 +120,8 @@ export default function App() {
     listen('socket-reconnected', async () => {
       log.info('sync', 'socket reconnected');
       if (localStorage.getItem('onyx.sync.live') === 'true') {
-        st.setToast({ message: 'Live sync restored', type: 'success' });
-        st.recordActivity({ category: 'sync', outcome: 'success', message: 'Live sync restored' });
+        st.setToast({ message: '实时同步已恢复', type: 'success' });
+        st.recordActivity({ category: 'sync', outcome: 'success', message: '实时同步已恢复' });
       }
       // When live sync reconnects after an offline period, flush any progress
       // updates that were queued locally during the disconnection window.
@@ -131,10 +131,10 @@ export default function App() {
           log.info('downloads', 'flushed offline progress on reconnect', { count });
           // Override the "live sync restored" toast with a more informative one.
           st.setToast({
-            message: `Synced ${count} offline progress update${count > 1 ? 's' : ''} to server`,
+            message: `已将 ${count} 条离线进度更新同步到服务器`,
             type: 'success',
           });
-          st.recordActivity({ category: 'sync', outcome: 'success', message: `Synced ${count} offline progress update${count > 1 ? 's' : ''} to server` });
+          st.recordActivity({ category: 'sync', outcome: 'success', message: `已将 ${count} 条离线进度更新同步到服务器` });
           // Refresh mediaProgress so cover overlays and Pick it up reflect the synced values.
           // applyServerProgress preserves local-library progress (server payload omits it).
           const me = await getMe(st.serverUrl);
@@ -229,9 +229,9 @@ export default function App() {
           }
           if (filed || quarantined) {
             await st.refreshLibrary();
-            const parts = [`${filed} added`];
-            if (quarantined) parts.push(`${quarantined} need attention`);
-            st.setToast({ message: `Imported from staging — ${parts.join(', ')}`, type: 'success' });
+            const parts = [`${filed} 个已添加`];
+            if (quarantined) parts.push(`${quarantined} 个需要处理`);
+            st.setToast({ message: `已从暂存文件夹导入 — ${parts.join('，')}`, type: 'success' });
             log.info('library', 'auto-ingest staging', { filed, quarantined });
           }
         } catch (e) {
@@ -331,7 +331,7 @@ export default function App() {
         {/* Show a loading indicator while the library fetch is in flight */}
         {st.libraryLoading ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontSize: 14, fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: '0.08em' }}>
-            Loading library…
+            正在加载书库…
           </div>
         ) : (
           <>
@@ -349,9 +349,9 @@ export default function App() {
           toasts originate from the same place and use the same st.setToast mechanism. */}
       <DownloadProgressToast
         serverUrl={st.serverUrl}
-        onComplete={(title) => { st.setToast({ message: `Downloaded "${title}"`, type: 'success' }); st.recordActivity({ category: 'downloads', outcome: 'success', message: `Downloaded "${title}"` }); }}
-        onCancel={(title) => st.setToast({ message: `Download cancelled — "${title}"`, type: 'info' })}
-        onFailed={(title, _error) => { st.setToast({ message: `Download failed — "${title}"`, type: 'error' }); st.recordActivity({ category: 'downloads', outcome: 'error', message: `Download failed — "${title}"` }); }}
+        onComplete={(title) => { st.setToast({ message: `已下载“${title}”`, type: 'success' }); st.recordActivity({ category: 'downloads', outcome: 'success', message: `已下载“${title}”` }); }}
+        onCancel={(title) => st.setToast({ message: `下载已取消——“${title}”`, type: 'info' })}
+        onFailed={(title, _error) => { st.setToast({ message: `下载失败——“${title}”`, type: 'error' }); st.recordActivity({ category: 'downloads', outcome: 'error', message: `下载失败——“${title}”` }); }}
       />
 
       {/* Quarantine notice — local-library books awaiting a metadata match. */}
@@ -392,10 +392,10 @@ export default function App() {
 
       {st.syncConflict && !st.confirmDialog && (
         <ConfirmDialog
-          title="Playback changed on another device"
-          message={`Playback continued on ${st.syncConflict.deviceDescription} at ${formatConflictTime(st.syncConflict.currentTime)}. Use that server position, or continue from Skald's current position?`}
-          confirmLabel="Use server position"
-          cancelLabel="Continue here"
+          title="播放位置已在其他设备更新"
+          message={`播放已在 ${st.syncConflict.deviceDescription} 上继续，位置为 ${formatConflictTime(st.syncConflict.currentTime)}。是采用服务器的该位置，还是从 Skald 的当前位置继续？`}
+          confirmLabel="采用服务器位置"
+          cancelLabel="在此继续"
           danger={false}
           onConfirm={() => {
             const conflict = st.syncConflict;
@@ -403,14 +403,14 @@ export default function App() {
             st.setPosition(conflict.currentTime);
             seekAudio(conflict.currentTime).catch(e =>
               log.error('playback', 'cross-device conflict seek failed', { err: String(e) }));
-            st.recordActivity({ category: 'sync', outcome: 'info', message: `Accepted playback position from ${conflict.deviceDescription}` });
+            st.recordActivity({ category: 'sync', outcome: 'info', message: `已采用来自 ${conflict.deviceDescription} 的播放位置` });
             st.setSyncConflict(null);
           }}
           onCancel={() => {
-            const device = st.syncConflict?.deviceDescription ?? 'another device';
+            const device = st.syncConflict?.deviceDescription ?? '其他设备';
             syncActiveSession().catch(e =>
               log.error('sync', 'local conflict position reassert failed', { err: String(e) }));
-            st.recordActivity({ category: 'sync', outcome: 'info', message: `Continued in Skald instead of ${device}` });
+            st.recordActivity({ category: 'sync', outcome: 'info', message: `已在 Skald 中继续播放（未采用 ${device} 的位置）` });
             st.setSyncConflict(null);
           }}
         />

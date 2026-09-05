@@ -81,7 +81,7 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
     // Best-effort teardown of the half-open socket; may already be closed.
     disconnectSocket().catch(() => {});
     st.setToast({
-      message: 'Live sync could not connect. Check your server and try again.',
+      message: '实时同步无法连接。请检查服务器后重试。',
       type: 'error',
     });
   }
@@ -158,7 +158,7 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
         // Disconnect is best-effort; ignore the result (may already be closed).
         disconnectSocket().catch(() => {});
         st.setToast({
-          message: 'Live sync disabled after repeated connection failures. Check your server.',
+          message: '实时同步因反复连接失败已被停用。请检查你的服务器。',
           type: 'error',
         });
       }
@@ -240,16 +240,16 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
 
   // Human-readable status string. Ellipsis rendered as Unicode to avoid a
   // trailing '...' that would misalign with the mono font.
-  const labelText = connectionStatus === 'connected'    ? 'Connected'
-                  : connectionStatus === 'reconnecting' ? 'Reconnecting…'
-                  : connectionStatus === 'connecting'   ? 'Connecting…'
-                  :                                       'Off';
+  const labelText = connectionStatus === 'connected'    ? '已连接'
+                  : connectionStatus === 'reconnecting' ? '正在重连…'
+                  : connectionStatus === 'connecting'   ? '正在连接…'
+                  :                                       '已关闭';
 
   // ── Live sync toggle row ── (shared by the standalone and embedded layouts)
   const liveSyncRow = (
     <Row
-      label="Live sync"
-      hint="Maintain a live connection to the server for real-time progress and library updates."
+      label="实时同步"
+      hint="与服务器保持实时连接，实时同步收听进度与书库更新。"
     >
       {/* Right-side slot: connection indicator (only when active) + toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -297,24 +297,24 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   } as const;
   const healthRows = (
     <>
-      <Row label="Server delivery" hint="HTTP session writes are authoritative; failed writes stay in Skald's local recovery queue.">
+      <Row label="服务器写入" hint="HTTP 会话写入为权威数据；失败的写入会保留在 Skald 的本地恢复队列中。">
         <span style={{ ...healthValueStyle, color: health.degraded ? '#f59e0b' : '#4caf50' }}>
-          {health.degraded ? 'Degraded' : 'Healthy'}
+          {health.degraded ? '降级' : '正常'}
         </span>
       </Row>
-      <Row label="Last server sync" hint="The most recent playback position acknowledged by ABS.">
+      <Row label="上次服务器同步" hint="最近一次获 ABS 确认的播放位置。">
         <span style={healthValueStyle}>
           {health.lastSuccessfulServerSync
             ? new Date(health.lastSuccessfulServerSync).toLocaleTimeString()
-            : 'Not yet this session'}
+            : '本会话尚未同步'}
         </span>
       </Row>
-      <Row label="Queued updates" hint="Local progress writes waiting for conflict-safe delivery to ABS.">
+      <Row label="待同步的更新" hint="等待安全无冲突地投递给 ABS 的本地进度写入。">
         <span style={healthValueStyle}>{health.queuedUpdates}</span>
       </Row>
-      <Row label="Playback device" hint="A remote device only moves Skald after you choose which position to keep.">
+      <Row label="播放设备" hint="只有在你选定保留哪一侧进度后，其他设备才会改动 Skald 的进度。">
         <span style={healthValueStyle}>
-          {st.syncConflict ? `${st.syncConflict.deviceDescription} (conflict)` : 'Skald'}
+          {st.syncConflict ? `${st.syncConflict.deviceDescription}（冲突）` : 'Skald'}
         </span>
       </Row>
     </>
@@ -327,8 +327,8 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   return (
     <div>
       <SectionHead
-        title="Sync"
-        subtitle="Control how Skald stays in sync with your server."
+        title="同步"
+        subtitle="控制 Skald 如何与服务器保持同步。"
       />
       {liveSyncRow}
       {healthRows}

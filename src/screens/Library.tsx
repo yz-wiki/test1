@@ -81,7 +81,7 @@ export default function Library({ st }: LibraryProps) {
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {showFocus
           ? <FocusPanel st={st} />
-          : <GreetingPane st={st} name={st.user?.username || st.localDisplayName || 'Reader'} />}
+          : <GreetingPane st={st} name={st.user?.username || st.localDisplayName || '读者'} />}
       </div>
       {showMini && <MiniPlayer st={st} force />}
     </div>

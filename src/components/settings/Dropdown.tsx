@@ -175,7 +175,7 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
           ref={dropdownRef}
           id="onyx-dropdown-options"
           role="listbox"
-          aria-label="Output device"
+          aria-label="输出设备"
           onKeyDown={onListKeyDown}
           style={{
             ...popoutStyle,
@@ -196,7 +196,7 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
             letterSpacing: '0.12em', textTransform: 'uppercase',
             padding: '6px 8px 4px',
           }}>
-            Output device
+            输出设备
           </div>
 
           {items.map((item, i) => {

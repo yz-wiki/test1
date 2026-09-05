@@ -15,7 +15,7 @@ export interface ConfirmDialogProps {
 }
 
 export default function ConfirmDialog({
-  title, message, confirmLabel, cancelLabel = 'Cancel', danger, onConfirm, onCancel,
+  title, message, confirmLabel, cancelLabel = '取消', danger, onConfirm, onCancel,
 }: ConfirmDialogProps) {
   // ConfirmDialog shares the modal stack so a parent dialog cannot also consume
   // Tab/Escape while this higher-z confirmation owns keyboard interaction.

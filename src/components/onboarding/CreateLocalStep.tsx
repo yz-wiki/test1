@@ -26,7 +26,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
   const [busy, setBusy] = useState(false);
 
   async function chooseLocation() {
-    const dir = await open({ directory: true, multiple: false, title: 'Choose where to create the library' });
+    const dir = await open({ directory: true, multiple: false, title: '选择创建书库的位置' });
     if (typeof dir === 'string') setParent(dir);
   }
 
@@ -42,7 +42,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
       onCreated(lib);
     } catch (e) {
       log.error('app', 'onboarding local library create failed', { err: String(e) });
-      st.setToast({ message: 'Could not create the library', type: 'error' });
+      st.setToast({ message: '无法创建书库', type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -55,13 +55,13 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)' }}>
           <span style={{ color: 'var(--onyx-accent)', fontSize: 18 }}>✓</span>
           <div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>Created “{created.name}”</div>
+            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>已创建“{created.name}”</div>
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(235,231,223,0.5)', marginTop: 2 }}>
               {created.folders?.[0]?.fullPath ?? ''}
             </div>
           </div>
         </div>
-        <div><GoldButton onClick={() => onCreated(created)}>Continue</GoldButton></div>
+        <div><GoldButton onClick={() => onCreated(created)}>继续</GoldButton></div>
       </div>
     );
   }
@@ -76,12 +76,12 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Name */}
       <label style={{ display: 'block' }}>
-        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>What shall we call it?</div>
+        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>想给它起个什么名字？</div>
         <input
           className="saga-input"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder={mediaType === 'podcast' ? 'Podcasts' : 'Audiobooks'}
+          placeholder={mediaType === 'podcast' ? '播客' : '有声书'}
           spellCheck={false}
           style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', outline: 'none', color: '#ebe7df', fontSize: 16, fontFamily: SERIF, padding: '0 0 9px' }}
         />
@@ -99,27 +99,27 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
                 background: mediaType === t ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.15)' : 'transparent',
                 color: mediaType === t ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.5)',
               }}
-            >{t === 'book' ? 'Audiobooks' : 'Podcasts'}</button>
+            >{t === 'book' ? '有声书' : '播客'}</button>
           ))}
         </div>
-        <button type="button" onClick={chooseLocation} style={btn()}>{parent ? 'Change location' : 'Choose location…'}</button>
+        <button type="button" onClick={chooseLocation} style={btn()}>{parent ? '更改位置' : '选择位置…'}</button>
       </div>
 
       <div style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(235,231,223,0.42)', lineHeight: 1.5 }}>
         {parent
-          ? `Will create  ${parent.replace(/[\\/]+$/, '')}\\${name.trim() || '<name>'}\\  with Staging, Audiobooks, Podcasts and Unidentified subfolders.`
-          : 'Pick a location and Skald creates the library folder — with Staging, Audiobooks, Podcasts and Unidentified subfolders — for you.'}
+          ? `将在  ${parent.replace(/[\\/]+$/, '')}\\${name.trim() || '<名称>'}\\  下创建 Staging、Audiobooks、Podcasts 与 Unidentified 子文件夹。`
+          : '选择一个位置，Skald 会为你创建书库文件夹——内含 Staging、Audiobooks、Podcasts 与 Unidentified 子文件夹。'}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         <GoldButton onClick={create} busy={busy} disabled={!name.trim() || !parent}>
-          {busy ? 'Creating…' : 'Create library'}
+          {busy ? '正在创建…' : '创建书库'}
         </GoldButton>
-        <GhostButton onClick={onSkip}>Skip for now</GhostButton>
+        <GhostButton onClick={onSkip}>暂时跳过</GhostButton>
       </div>
 
       <div style={{ fontFamily: SANS, fontSize: 11.5, color: 'rgba(235,231,223,0.35)', maxWidth: 440, lineHeight: 1.5 }}>
-        You can add more local libraries, or remove this one, any time in Settings → Libraries → On this PC.
+        你随时可以在“设置 → 书库 → 这台电脑”中添加更多本机书库，或移除当前这个。
       </div>
     </div>
   );

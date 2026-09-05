@@ -21,7 +21,7 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
   useEffect(() => { getDownloadsDir().then(setDir).catch(() => {}); }, []);
 
   async function relocate() {
-    const picked = await open({ directory: true, multiple: false, title: 'Choose where to store downloads' });
+    const picked = await open({ directory: true, multiple: false, title: '选择下载内容的存储位置' });
     if (typeof picked !== 'string') return;
     try {
       setBusy(true);
@@ -29,10 +29,10 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
       await setDownloadsDir(picked);
       const next = await getDownloadsDir();
       setDir(next);
-      st.setToast({ message: 'Downloads folder updated', type: 'success' });
+      st.setToast({ message: '下载文件夹已更新', type: 'success' });
     } catch (e) {
       log.error('app', 'onboarding relocate downloads dir failed', { err: String(e) });
-      st.setToast({ message: 'Could not move the downloads folder', type: 'error' });
+      st.setToast({ message: '无法移动下载文件夹', type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -42,12 +42,12 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.45)' }}>
-          Downloads folder
+          下载文件夹
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <input
             readOnly
-            value={dir || 'Loading…'}
+            value={dir || '加载中…'}
             title={dir}
             onFocus={e => e.currentTarget.select()}
             style={{
@@ -66,20 +66,18 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
               color: 'rgba(235,231,223,0.7)', cursor: busy ? 'wait' : 'pointer',
             }}
           >
-            {busy ? 'Moving…' : 'Change…'}
+            {busy ? '移动中…' : '更改…'}
           </button>
         </div>
         <div style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(235,231,223,0.45)', lineHeight: 1.5, maxWidth: 460 }}>
-          Books you download for offline listening are kept here. You can leave it as the default — Skald
-          manages it for you — or move it to a drive with more room. Changing it later (and relocating the
-          cover cache) lives in <span style={{ color: 'rgba(235,231,223,0.7)' }}>Settings → Downloads</span>.
+          你下载用于离线收听的书存放在这里。可以保持默认位置——Skald 会替你管理——也可以移动到空间更大的磁盘。日后如需更改（或一并移动封面缓存），可在{' '}<span style={{ color: 'rgba(235,231,223,0.7)' }}>设置 → 下载</span>中操作。
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <GoldButton onClick={onContinue}>Continue</GoldButton>
+        <GoldButton onClick={onContinue}>继续</GoldButton>
         <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 12.5, color: 'rgba(235,231,223,0.4)' }}>
-          The default is fine for most people.
+          对大多数人来说，默认位置即可。
         </span>
       </div>
     </div>

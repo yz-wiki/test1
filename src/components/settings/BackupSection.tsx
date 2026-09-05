@@ -145,13 +145,13 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
   async function doCreate() {
     setBusy(true);
-    st.setToast({ message: 'Creating backup…', type: 'info' });
+    st.setToast({ message: '正在创建备份…', type: 'info' });
     try {
       const resp = await createBackup(st.serverUrl);
       setBackups(resp.backups);
-      st.setToast({ message: 'Backup created.', type: 'success' });
+      st.setToast({ message: '备份已创建。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Backup failed: ${e}`, type: 'error' });
+      st.setToast({ message: `备份失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -162,9 +162,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
     try {
       const resp = await deleteBackup(st.serverUrl, backup.id);
       setBackups(resp.backups);
-      st.setToast({ message: 'Backup deleted.', type: 'success' });
+      st.setToast({ message: '备份已删除。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to delete: ${e}`, type: 'error' });
+      st.setToast({ message: `删除失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -172,12 +172,12 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
   async function doRestore(backup: Backup) {
     setBusy(true);
-    st.setToast({ message: 'Restoring backup — the server will restart…', type: 'info' });
+    st.setToast({ message: '正在还原备份——服务器即将重启…', type: 'info' });
     try {
       await applyBackup(st.serverUrl, backup.id);
-      st.setToast({ message: 'Restore started. Audiobookshelf is restarting; reconnect shortly.', type: 'success' });
+      st.setToast({ message: '还原已开始。Audiobookshelf 正在重启，请稍后重新连接。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Restore failed: ${e}`, type: 'error' });
+      st.setToast({ message: `还原失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -189,9 +189,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
     try {
       const updated = await updateServerSettings(st.serverUrl, partial);
       st.setServerSettings(updated);
-      st.setToast({ message: 'Backup settings saved.', type: 'success' });
+      st.setToast({ message: '备份设置已保存。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: `保存失败：${e}`, type: 'error' });
     }
   }
 
@@ -211,9 +211,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   if (loading) {
     return (
       <div>
-        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <SectionHead title="备份" subtitle="数据库与元数据快照。备份不包含音频文件。" />
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
-          Loading backups…
+          正在加载备份…
         </div>
       </div>
     );
@@ -222,14 +222,14 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   if (error) {
     return (
       <div>
-        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <SectionHead title="备份" subtitle="数据库与元数据快照。备份不包含音频文件。" />
         <div style={{
           fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
           padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
           border: '1px solid var(--onyx-glass-edge)',
         }}>
-          Couldn't load backups: {error}.
-          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>Retry</Btn></div>
+          无法加载备份：{error}。
+          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>重试</Btn></div>
         </div>
       </div>
     );
@@ -238,8 +238,8 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Backups"
-        subtitle="Database and metadata snapshots. Audio files are not included in backups."
+        title="备份"
+        subtitle="数据库与元数据快照。备份不包含音频文件。"
       />
 
       {/* Admin-only badge */}
@@ -248,29 +248,29 @@ function BackupSectionInner({ st }: BackupSectionProps) {
           display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6,
           background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)',
           fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
-        }}>★ Admin only</span>
+        }}>★ 仅管理员</span>
       </div>
 
       {/* ── Snapshots ────────────────────────────────────────────────────── */}
       <Panel
-        label="Snapshots"
-        action={<Btn variant="accent" onClick={() => void doCreate()} disabled={busy}>Create backup now</Btn>}
+        label="快照"
+        action={<Btn variant="accent" onClick={() => void doCreate()} disabled={busy}>立即创建备份</Btn>}
       >
         {/* Count + on-disk location */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--onyx-line)' }}>
           <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>
-            {backups.length} snapshot{backups.length === 1 ? '' : 's'}
+            {backups.length} 个快照
           </span>
           {location && (
             <span style={{ fontFamily: MONO, fontSize: 11, color: DIM_GOLD, letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {location}{pathEnvSet ? ' (env)' : ''}
+              {location}{pathEnvSet ? '（环境变量）' : ''}
             </span>
           )}
         </div>
 
         {backups.length === 0 && (
           <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0', letterSpacing: '0.04em' }}>
-            No snapshots yet.
+            还没有快照。
           </div>
         )}
 
@@ -285,7 +285,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)' }}>{b.datePretty || b.id}</span>
-                {b.id === latestId && <Tag>Latest</Tag>}
+                {b.id === latestId && <Tag>最新</Tag>}
               </div>
               <div style={{ display: 'flex', gap: 14, marginTop: 4, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em' }}>
                 <span>{formatBytes(b.fileSize)}</span>
@@ -294,16 +294,16 @@ function BackupSectionInner({ st }: BackupSectionProps) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <Btn variant="ghost" onClick={() => setConfirm({ kind: 'restore', backup: b })} disabled={busy}>Restore</Btn>
-              <Btn variant="danger" onClick={() => setConfirm({ kind: 'delete', backup: b })} disabled={busy}>Delete</Btn>
+              <Btn variant="ghost" onClick={() => setConfirm({ kind: 'restore', backup: b })} disabled={busy}>还原</Btn>
+              <Btn variant="danger" onClick={() => setConfirm({ kind: 'delete', backup: b })} disabled={busy}>删除</Btn>
             </div>
           </div>
         ))}
       </Panel>
 
       {/* ── Schedule & retention ─────────────────────────────────────────── */}
-      <Panel label="Schedule & retention">
-        <Row label="Automatic backups" hint="Run a backup on a recurring schedule.">
+      <Panel label="计划与保留">
+        <Row label="自动备份" hint="按计划定期运行备份。">
           <Toggle
             on={scheduleEnabled}
             onChange={v => {
@@ -314,7 +314,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
         </Row>
 
         {scheduleEnabled && (
-          <Row label="Schedule" hint="When automatic backups run." align="top">
+          <Row label="计划" hint="自动备份的运行时间。" align="top">
             <CronEditor
               value={cronValue}
               onChange={v => void patchSettings({ backupSchedule: v })}
@@ -322,7 +322,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
           </Row>
         )}
 
-        <Row label="Snapshots to keep" hint="Older snapshots beyond this count are pruned automatically.">
+        <Row label="保留快照数" hint="超过此数量的旧快照会被自动清理。">
           <NumField
             value={st.serverSettings?.backupsToKeep ?? 2}
             min={1} max={100}
@@ -330,7 +330,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
           />
         </Row>
 
-        <Row label="Max backup size" hint="Safety limit — a backup larger than this is aborted. Set 0 to disable.">
+        <Row label="备份大小上限" hint="安全限制——超过此大小的备份会被中止。设为 0 可禁用。">
           <NumField
             value={st.serverSettings?.maxBackupSize ?? 1}
             min={0} max={1024} step={0.5} suffix="GB"
@@ -342,9 +342,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
       {/* ── Confirm dialogs ──────────────────────────────────────────────── */}
       {confirm?.kind === 'delete' && (
         <ConfirmDialog
-          title="Delete backup?"
-          message={`Permanently delete the backup from ${confirm.backup.datePretty || confirm.backup.id}? This cannot be undone.`}
-          confirmLabel="Delete"
+          title="删除此备份？"
+          message={`永久删除来自 ${confirm.backup.datePretty || confirm.backup.id} 的备份？此操作无法撤销。`}
+          confirmLabel="删除"
           danger
           onConfirm={() => { const b = confirm.backup; setConfirm(null); void doDelete(b); }}
           onCancel={() => setConfirm(null)}
@@ -352,9 +352,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
       )}
       {confirm?.kind === 'restore' && (
         <ConfirmDialog
-          title="Restore this backup?"
-          message={`Restoring the backup from ${confirm.backup.datePretty || confirm.backup.id} overwrites the server's current database and metadata, then restarts Audiobookshelf. You will be disconnected. This cannot be undone.`}
-          confirmLabel="Restore & restart"
+          title="还原此备份？"
+          message={`还原来自 ${confirm.backup.datePretty || confirm.backup.id} 的备份会覆盖服务器当前的数据库与元数据，然后重启 Audiobookshelf。你将被断开连接。此操作无法撤销。`}
+          confirmLabel="还原并重启"
           danger
           onConfirm={() => { const b = confirm.backup; setConfirm(null); void doRestore(b); }}
           onCancel={() => setConfirm(null)}

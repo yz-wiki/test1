@@ -21,41 +21,41 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
   const [err, setErr] = useState('');
 
   async function add() {
-    if (!name.trim() || !url.trim()) { setErr('Name and URL are required.'); return; }
+    if (!name.trim() || !url.trim()) { setErr('需要填写名称和 URL。'); return; }
     setErr(''); setBusy(true);
     try {
       await onAdd({ name: name.trim(), url: url.trim(), mediaType, authHeaderValue: auth.trim() || undefined });
       setName(''); setUrl(''); setAuth('');
     } catch (e) {
-      setErr(typeof e === 'string' ? e : (e as Error)?.message ?? 'Failed to add provider.');
+      setErr(typeof e === 'string' ? e : (e as Error)?.message ?? '添加提供方失败。');
     } finally { setBusy(false); }
   }
 
   return (
-    <Panel label="Custom metadata providers">
+    <Panel label="自定义元数据提供方">
       <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px', lineHeight: 1.5 }}>
-        Register a community or self-hosted provider; it then appears in the Provider dropdown above and in the Match dialog.
+        注册一个社区或自托管提供方；注册后它将出现在上面的“提供方”下拉框和匹配对话框中。
       </div>
 
       {providers.length === 0 && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '4px 0 10px' }}>None registered.</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '4px 0 10px' }}>尚未注册任何提供方。</div>
       )}
       {providers.map(p => (
         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--onyx-line)' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 500 }}>{p.name}</div>
             <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {p.mediaType} · {p.url}
+              {p.mediaType === 'book' ? '有声书' : '播客'} · {p.url}
             </div>
           </div>
-          <SmallBtn danger onClick={() => void onDelete(p.id)}>Delete</SmallBtn>
+          <SmallBtn danger onClick={() => void onDelete(p.id)}>删除</SmallBtn>
         </div>
       ))}
 
       {/* Add form */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Field value={name} onChange={setName} placeholder="Provider name" />
+          <Field value={name} onChange={setName} placeholder="提供方名称" />
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             {(['book', 'podcast'] as const).map(mt => (
               <button key={mt} onClick={() => setMediaType(mt)} style={{
@@ -64,15 +64,15 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
                 border: `1px solid ${mediaType === mt ? 'var(--onyx-accent-edge)' : 'rgba(255,255,255,0.08)'}`,
                 color: mediaType === mt ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
                 fontFamily: MONO, fontSize: 10.5, cursor: 'pointer',
-              }}>{mt}</button>
+              }}>{mt === 'book' ? '有声书' : '播客'}</button>
             ))}
           </div>
         </div>
         <Field value={url} onChange={setUrl} placeholder="https://provider.example/search" mono />
-        <Field value={auth} onChange={setAuth} placeholder="Authorization header value (optional)" mono />
+        <Field value={auth} onChange={setAuth} placeholder="授权请求头值（可选）" mono />
         {err && <div style={{ fontFamily: MONO, fontSize: 11, color: '#e8716a' }}>{err}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <SmallBtn onClick={add} disabled={busy}>{busy ? 'Adding…' : '+ Add Provider'}</SmallBtn>
+          <SmallBtn onClick={add} disabled={busy}>{busy ? '添加中…' : '+ 添加提供方'}</SmallBtn>
         </div>
       </div>
     </Panel>
@@ -88,18 +88,18 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
   return (
     <Panel label="Open Library">
       <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px 2px', lineHeight: 1.5 }}>
-        Enrich the player with community ratings and shelf data from Open Library.
+        用 Open Library 的社区评分与书架数据丰富播放器内容。
       </div>
 
-      <Row label="Open Library" hint="Community ratings and shelf data.">
+      <Row label="Open Library" hint="社区评分与书架数据。">
         <Toggle on={st.enableOpenLibrary} onChange={st.setEnableOpenLibrary} />
       </Row>
 
-      <Row label="Review cache" hint="Force a fresh fetch of all ratings data on next visit to the Player screen.">
+      <Row label="评分缓存" hint="下次进入播放器界面时强制重新获取全部评分数据。">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {cacheCleared && (
             <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-              Cache cleared
+              缓存已清空
             </span>
           )}
           <button
@@ -115,7 +115,7 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
               letterSpacing: '0.06em', textTransform: 'uppercase' as const,
             }}
           >
-            Clear review cache
+            清空评分缓存
           </button>
         </div>
       </Row>

@@ -100,7 +100,7 @@ function UrlEditor({
         <button
           key={u}
           onClick={() => onChange(urls.filter(x => x !== u))}
-          title="Click to remove"
+          title="点击移除"
           style={{
             fontFamily: MONO, fontSize: 11, background: 'var(--onyx-accent-dim)',
             border: '1px solid var(--onyx-accent-edge)', borderRadius: 6,
@@ -116,7 +116,7 @@ function UrlEditor({
         onChange={e => setInput(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
         onBlur={add}
-        placeholder="ntfy://topic  (Enter to add)"
+        placeholder="ntfy://topic  （按 Enter 添加）"
         style={{
           fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)',
           color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)',
@@ -195,11 +195,11 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       padding: 18, marginTop: 14, marginBottom: 8,
       background: 'var(--onyx-glass)', display: 'flex', flexDirection: 'column', gap: 16,
     }}>
-      <div style={{ fontFamily: SERIF, fontSize: 16 }}>{initial ? 'Edit notification' : 'New notification'}</div>
+      <div style={{ fontFamily: SERIF, fontSize: 16 }}>{initial ? '编辑通知' : '新建通知'}</div>
 
       {/* Event */}
       <div>
-        <div style={labelStyle}>Event</div>
+        <div style={labelStyle}>事件</div>
         <select value={eventName} onChange={e => setEventName(e.target.value)} style={{ ...selectStyle, width: '100%' }}>
           {events.map(ev => <option key={ev.name} value={ev.name}>{ev.name}</option>)}
         </select>
@@ -211,9 +211,9 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       {/* Library (only for events that require one) */}
       {requiresLibrary && (
         <div>
-          <div style={labelStyle}>Library</div>
+          <div style={labelStyle}>书库</div>
           <select value={libraryId} onChange={e => setLibraryId(e.target.value)} style={{ ...selectStyle, width: '100%' }}>
-            <option value="">— select a library —</option>
+            <option value="">— 选择书库 —</option>
             {libraries.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </div>
@@ -221,29 +221,29 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Target URLs */}
       <div>
-        <div style={labelStyle}>Apprise URLs</div>
+        <div style={labelStyle}>Apprise URL</div>
         <UrlEditor urls={urls} onChange={setUrls} input={urlInput} setInput={setUrlInput} />
         <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 6 }}>
-          Use an Apprise URL scheme, e.g. <code style={{ fontFamily: MONO }}>ntfy://topic</code>,{' '}
-          <code style={{ fontFamily: MONO }}>discord://id/token</code>,{' '}
-          <code style={{ fontFamily: MONO }}>tgram://bottoken/chatid</code>.
+          使用 Apprise URL 方案，例如 <code style={{ fontFamily: MONO }}>ntfy://topic</code>、{' '}
+          <code style={{ fontFamily: MONO }}>discord://id/token</code>、{' '}
+          <code style={{ fontFamily: MONO }}>tgram://bottoken/chatid</code>。
         </div>
       </div>
 
       {/* Templates */}
       <div>
-        <div style={labelStyle}>Title template</div>
-        <Field value={titleTemplate} onChange={setTitleTemplate} placeholder="e.g. New {{podcastTitle}} Episode!" mono />
+        <div style={labelStyle}>标题模板</div>
+        <Field value={titleTemplate} onChange={setTitleTemplate} placeholder="例如：新单集 {{podcastTitle}}！" mono />
       </div>
       <div>
-        <div style={labelStyle}>Body template</div>
-        <Field value={bodyTemplate} onChange={setBodyTemplate} placeholder="e.g. {{episodeTitle}} was added." mono />
+        <div style={labelStyle}>正文模板</div>
+        <Field value={bodyTemplate} onChange={setBodyTemplate} placeholder="例如：{{episodeTitle}} 已添加。" mono />
       </div>
 
       {/* Available variables for the chosen event */}
       {event && event.variables.length > 0 && (
         <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', lineHeight: 1.6 }}>
-          Variables:{' '}
+          可用变量：{' '}
           {event.variables.map(v => (
             <code key={v} style={{ fontFamily: MONO, color: 'var(--onyx-text-dim)', marginRight: 8 }}>{`{{${v}}}`}</code>
           ))}
@@ -253,27 +253,27 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       {/* Type + enabled */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         <div>
-          <div style={labelStyle}>Type</div>
+          <div style={labelStyle}>类型</div>
           <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
             {NOTIFICATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, cursor: 'pointer', marginTop: 18 }}>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
-          Enabled
+          已启用
         </label>
       </div>
 
       {/* Actions — Create is gated on having at least one URL (committed OR
           typed-but-not-yet-added) and, for library events, a chosen library. */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-        <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
+        <Btn variant="ghost" onClick={onCancel}>取消</Btn>
         <Btn
           variant="accent"
           onClick={save}
           disabled={(urls.length === 0 && !urlInput.trim()) || (requiresLibrary && !libraryId)}
         >
-          {initial ? 'Save changes' : 'Create'}
+          {initial ? '保存更改' : '创建'}
         </Btn>
       </div>
     </div>
@@ -329,9 +329,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
     try {
       const updated = await updateNotificationSettings(st.serverUrl, partial);
       setSettings(updated);
-      st.setToast({ message: 'Notification settings saved.', type: 'success' });
+      st.setToast({ message: '通知设置已保存。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: `保存失败：${e}`, type: 'error' });
     }
   }
 
@@ -342,9 +342,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
         : await createNotification(st.serverUrl, payload);
       setSettings(updated);
       setEditing(null);
-      st.setToast({ message: id ? 'Notification updated.' : 'Notification created.', type: 'success' });
+      st.setToast({ message: id ? '通知已更新。' : '通知已创建。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save notification: ${e}`, type: 'error' });
+      st.setToast({ message: `保存通知失败：${e}`, type: 'error' });
     }
   }
 
@@ -352,29 +352,29 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
     try {
       const updated = await deleteNotification(st.serverUrl, id);
       setSettings(updated);
-      st.setToast({ message: 'Notification deleted.', type: 'success' });
+      st.setToast({ message: '通知已删除。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to delete: ${e}`, type: 'error' });
+      st.setToast({ message: `删除失败：${e}`, type: 'error' });
     }
   }
 
   async function testRule(id: string) {
-    st.setToast({ message: 'Sending test notification…', type: 'info' });
+    st.setToast({ message: '正在发送测试通知…', type: 'info' });
     try {
       await testNotification(st.serverUrl, id);
-      st.setToast({ message: 'Test notification sent.', type: 'success' });
+      st.setToast({ message: '测试通知已发送。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Test failed: ${e}`, type: 'error' });
+      st.setToast({ message: `测试失败：${e}`, type: 'error' });
     }
   }
 
   async function fireTest() {
-    st.setToast({ message: 'Firing test event…', type: 'info' });
+    st.setToast({ message: '正在触发测试事件…', type: 'info' });
     try {
       await fireTestNotificationEvent(st.serverUrl);
-      st.setToast({ message: 'Test event fired.', type: 'success' });
+      st.setToast({ message: '测试事件已触发。', type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Test event failed: ${e}`, type: 'error' });
+      st.setToast({ message: `测试事件失败：${e}`, type: 'error' });
     }
   }
 
@@ -383,9 +383,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   if (loading) {
     return (
       <div>
-        <SectionHead title="Notifications" subtitle="Event-driven notifications via Apprise. Admin only." />
+        <SectionHead title="通知" subtitle="通过 Apprise 发送的事件驱动通知。仅管理员可用。" />
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
-          Loading notification settings…
+          正在加载通知设置…
         </div>
       </div>
     );
@@ -394,14 +394,14 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   if (error || !settings) {
     return (
       <div>
-        <SectionHead title="Notifications" subtitle="Event-driven notifications via Apprise. Admin only." />
+        <SectionHead title="通知" subtitle="通过 Apprise 发送的事件驱动通知。仅管理员可用。" />
         <div style={{
           fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
           padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
           border: '1px solid var(--onyx-glass-edge)',
         }}>
-          Couldn't load notification settings{error ? `: ${error}` : ''}.
-          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>Retry</Btn></div>
+          无法加载通知设置{error ? `：${error}` : ''}。
+          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>重试</Btn></div>
         </div>
       </div>
     );
@@ -413,12 +413,12 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Notifications"
-        subtitle="Send event-driven notifications (podcast downloads, backups, RSS failures) through an Apprise API server. Admin only."
+        title="通知"
+        subtitle="通过 Apprise API 服务器发送事件驱动通知（播客下载、备份、RSS 失败等）。仅管理员可用。"
       />
 
       {/* ── Apprise connection ───────────────────────────────────────────── */}
-      <Panel label="Apprise connection">
+      <Panel label="Apprise 连接">
 
       {/* Persistent explanatory note — the #1 source of confusion is that ABS
           does not bundle Apprise and needs an external Apprise API server. */}
@@ -427,20 +427,19 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
         background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
         borderRadius: 8, padding: '12px 14px', margin: '12px 0',
       }}>
-        Audiobookshelf does not include Apprise itself — it forwards notifications to a
-        separate <strong>Apprise API server</strong> that you host (typically via Docker).
-        Set its <code style={{ fontFamily: MONO }}>/notify</code> endpoint URL below. Without a
-        reachable Apprise API server, no notifications will be delivered.{' '}
+        Audiobookshelf 本身不包含 Apprise——它会将通知转发给你自行托管（通常通过 Docker）的独立
+        <strong>Apprise API 服务器</strong>。请在下方设置其 <code style={{ fontFamily: MONO }}>/notify</code> 端点 URL。
+        如果 Apprise API 服务器不可达，将不会送达任何通知。{' '}
         <a href={APPRISE_API_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--onyx-accent)' }}>
-          Apprise API setup
+          Apprise API 设置
         </a>
         {' · '}
         <a href={APPRISE_DOCS_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--onyx-accent)' }}>
-          ABS notification docs
+          ABS 通知文档
         </a>
       </div>
 
-      <Row label="Apprise API URL" hint="The full URL of your Apprise API server's notify endpoint." align="top">
+      <Row label="Apprise API URL" hint="你的 Apprise API 服务器 notify 端点的完整 URL。" align="top">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
           <input
             value={appriseDraft}
@@ -459,7 +458,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
             }}
           />
           <Btn variant="ghost" onClick={() => void fireTest()} disabled={!hasApprise}>
-            Send test event
+            发送测试事件
           </Btn>
         </div>
       </Row>
@@ -467,11 +466,11 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       </Panel>
 
       {/* ── Notification rules ───────────────────────────────────────────── */}
-      <Panel label="Notifications">
+      <Panel label="通知">
 
       {rules.length === 0 && editing !== 'new' && (
         <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 0' }}>
-          No notifications configured yet.
+          尚未配置通知。
         </div>
       )}
 
@@ -491,24 +490,24 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
               }} />
               <span style={{ fontSize: 13.5, fontWeight: 500 }}>{rule.eventName}</span>
               {rule.lastAttemptFailed && (
-                <span style={{ fontFamily: MONO, fontSize: 10, color: '#e08a8a' }}>last attempt failed</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: '#e08a8a' }}>上次发送失败</span>
               )}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', marginTop: 4, fontFamily: MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 420 }}>
-              {rule.urls.length} url{rule.urls.length === 1 ? '' : 's'}
-              {typeof rule.numTimesFired === 'number' ? ` · fired ${rule.numTimesFired}×` : ''}
+              {rule.urls.length} 个 URL
+              {typeof rule.numTimesFired === 'number' ? ` · 已触发 ${rule.numTimesFired} 次` : ''}
               {' · '}{rule.type}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <Btn variant="ghost" onClick={() => rule.id && void testRule(rule.id)} disabled={!hasApprise}>Test</Btn>
-            <Btn variant="ghost" onClick={() => setEditing(rule)}>Edit</Btn>
+            <Btn variant="ghost" onClick={() => rule.id && void testRule(rule.id)} disabled={!hasApprise}>测试</Btn>
+            <Btn variant="ghost" onClick={() => setEditing(rule)}>编辑</Btn>
             <Btn variant="danger" onClick={() => rule.id && st.setConfirmDialog({
-              title: 'Delete notification',
-              message: `Delete the "${rule.eventName}" notification rule? This cannot be undone.`,
-              confirmLabel: 'Delete',
+              title: '删除通知',
+              message: `删除“${rule.eventName}”通知规则？此操作无法撤销。`,
+              confirmLabel: '删除',
               onConfirm: () => void removeRule(rule.id!),
-            })}>Delete</Btn>
+            })}>删除</Btn>
           </div>
         </div>
       ))}
@@ -535,30 +534,30 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
 
       {!editing && (
         <div style={{ marginTop: 14 }}>
-          <Btn variant="accent" onClick={() => setEditing('new')}>+ Add notification</Btn>
+          <Btn variant="accent" onClick={() => setEditing('new')}>+ 添加通知</Btn>
         </div>
       )}
 
       </Panel>
 
       {/* ── Advanced ─────────────────────────────────────────────────────── */}
-      <Panel label="Advanced">
+      <Panel label="高级">
 
-      <Row label="Max failed attempts" hint="Consecutive failures before a notification is automatically disabled.">
+      <Row label="最大失败次数" hint="连续失败达到该次数后，通知会被自动禁用。">
         <NumField
           value={settings.maxFailedAttempts ?? 5}
           min={1} max={20}
           onCommit={v => void patchSettings({ maxFailedAttempts: v })}
         />
       </Row>
-      <Row label="Max notification queue" hint="Maximum notifications held in the send queue before new ones are dropped.">
+      <Row label="最大通知队列" hint="发送队列中最多可容纳的通知数，超出后新通知会被丢弃。">
         <NumField
           value={settings.maxNotificationQueue ?? 20}
           min={1} max={100}
           onCommit={v => void patchSettings({ maxNotificationQueue: v })}
         />
       </Row>
-      <Row label="Notification delay" hint="Minimum delay between dispatched notifications.">
+      <Row label="通知间隔" hint="两次通知发送之间的最小间隔。">
         <NumField
           value={settings.notificationDelay ?? 1000}
           min={0} max={60000} suffix="ms"

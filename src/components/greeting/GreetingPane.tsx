@@ -44,7 +44,7 @@ function buildLast7(days: Record<string, number>): Array<{ d: string; m: number 
     // /60 conversion; local stats match) — divide by 60 for whole minutes.
     const mins  = Math.round((days[key] ?? 0) / 60);
     // "Mon", "Tue", etc. — slice to 3 chars for consistency.
-    const label = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 3);
+    const label = date.toLocaleDateString('zh-CN', { weekday: 'short' }).slice(0, 3);
     return { d: label, m: mins };
   });
 }
@@ -64,8 +64,8 @@ function computeStreak(days: Record<string, number>): number {
 function fmtListeningTime(secs: number): string {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${Math.max(m, 1)} min`;
+  if (h > 0) return `${h}小时${m}分`;
+  return `${Math.max(m, 1)}分钟`;
 }
 
 // Format a "YYYY-MM-DD" date string as a human-readable relative label.
@@ -76,9 +76,9 @@ function relativeDate(dateStr: string | null): string {
   const local = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   const diffMs   = Date.now() - local.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
-  return `${diffDays} days ago`;
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  return `${diffDays} 天前`;
 }
 
 // ── Top-authors derived from local library ─────────────────────────────────
@@ -90,7 +90,7 @@ function topAuthorsFromLibrary(
   const map: Record<string, number> = {};
   library.forEach(item => {
     const a = bookAuthor(item);
-    if (a && a !== 'Unknown Author') map[a] = (map[a] ?? 0) + 1;
+    if (a && a !== '未知作者') map[a] = (map[a] ?? 0) + 1;
   });
   return Object.entries(map)
     .sort((a, b) => b[1] - a[1])
@@ -273,42 +273,42 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
         <BigStat
           // totalTime is SECONDS (ABS unit; local stats match) — /60 for minutes.
           value={stats ? Math.round((stats.totalTime ?? 0) / 60).toLocaleString() : ph}
-          label="Minutes"
+          label="分钟"
         />
         <BigStat
           // ABS's payload omits numDaysListened (it arrives 0) — fall back to
           // counting the day keys, which is how the ABS web client shows it too.
           value={stats ? (stats.numDaysListened || Object.keys(stats.days ?? {}).length) : ph}
-          label="Days listened"
+          label="收听天数"
         />
         {/* Finished BigStat removed — it duplicated the Finished GreetStat in the footer */}
       </div>
 
       {/* 7-day sparkline */}
       <div>
-        <SubHead>Minutes listening · last 7 days</SubHead>
+        <SubHead>最近 7 天收听（分钟）</SubHead>
         <SparkBars data={last7} />
         {/* 4-up summary row below the sparkline — centered with even gaps */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 14 }}> {/* centered, gap: 24 */}
-          <MiniStat value={loading ? ph : weekMinutes} unit="min" label="This week" />
-          <MiniStat value={loading ? ph : dailyAvg}    unit="min" label="Daily avg" />
-          <MiniStat value={loading ? ph : bestDay}     unit="min" label="Best day" />
-          <MiniStat value={loading ? ph : streak} unit={streak === 1 ? 'day' : 'days'} label="Streak" />
+          <MiniStat value={loading ? ph : weekMinutes} unit="分钟" label="本周" />
+          <MiniStat value={loading ? ph : dailyAvg}    unit="分钟" label="日均" />
+          <MiniStat value={loading ? ph : bestDay}     unit="分钟" label="最佳日" />
+          <MiniStat value={loading ? ph : streak} unit="天" label="连续" />
         </div>
       </div>
 
       {/* Recent sessions */}
       <div>
-        <SubHead>Recent sessions</SubHead>
+        <SubHead>最近的收听时段</SubHead>
         <div style={{ marginTop: 6 }}>
           {loading ? (
             // Subtle loading placeholder — one muted line of text
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-              Loading…
+              加载中…
             </div>
           ) : recentSessions.length === 0 ? (
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-              No recent sessions.
+              暂无最近的收听时段。
             </div>
           ) : (
             recentSessions.map((r, i) => (
@@ -323,7 +323,7 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
                 {/* Left: title + relative date */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {r.displayTitle ?? 'Unknown'}
+                    {r.displayTitle ?? '未知'}
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 1 }}>
                     {relativeDate(r.date)}
@@ -379,16 +379,16 @@ function LibraryStatsPage({
       {/* Hero quad: Hours · Authors · Tracks · GB */}
       {/* Widths tuned to fit the four numbers in one row at 360px. */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <BigStat value={loading ? ph : hours}                           label="Hours"   w={74} />
-        <BigStat value={stats ? stats.totalAuthors   : ph}              label="Authors" w={56} />
-        <BigStat value={stats ? stats.numAudioTracks : ph}              label="Tracks"  w={56} />
+        <BigStat value={loading ? ph : hours}                           label="小时"   w={74} />
+        <BigStat value={stats ? stats.totalAuthors   : ph}              label="作者" w={56} />
+        <BigStat value={stats ? stats.numAudioTracks : ph}              label="音轨"  w={56} />
         <BigStat value={loading ? ph : sizeGb}                         label="GB"      w={58} />
       </div>
 
       {/* Top genres — ranked bars without a rank number */}
       {topGenres.length > 0 && (
         <div>
-          <SubHead>Top genres</SubHead>
+          <SubHead>热门类型</SubHead>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
             {topGenres.map((g, i) => (
               <RankBar key={i} label={g.label} display={`${g.pct}%`} pct={g.pct} />
@@ -400,7 +400,7 @@ function LibraryStatsPage({
       {/* Top authors — ranked bars with 1-based rank number in gutter */}
       {topAuthors.length > 0 && (
         <div>
-          <SubHead>Top authors</SubHead>
+          <SubHead>热门作者</SubHead>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
             {topAuthors.map((a, i) => (
               <RankBar
@@ -443,10 +443,10 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
   const hr  = now.getHours();
   // Time-aware greeting: night < 5, morning < 12, afternoon < 17, evening < 21.
   const greeting =
-    hr < 5  ? 'Still up'       :
-    hr < 12 ? 'Good morning'   :
-    hr < 17 ? 'Good afternoon' :
-    hr < 21 ? 'Good evening'   : 'Still up';
+    hr < 5  ? '还没睡'      :
+    hr < 12 ? '早上好'   :
+    hr < 17 ? '下午好' :
+    hr < 21 ? '晚上好'   : '还没睡';
 
   // Display the name with each word's leading letter capitalized — usernames
   // (e.g. from ABS) are often all-lowercase, and "Good morning, javier" reads
@@ -454,7 +454,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
   // names (McDonald, O'Brien) are preserved.
   const displayName = name.replace(/(^|[\s'-])(\p{L})/gu, (_, sep, ch: string) => sep + ch.toUpperCase());
   // "TUESDAY, JUNE 2" — locale-formatted and uppercased.
-  const dateLine = now.toLocaleDateString('en-US', {
+  const dateLine = now.toLocaleDateString('zh-CN', {
     weekday: 'long', month: 'long', day: 'numeric',
   }).toUpperCase();
 
@@ -580,7 +580,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         letterSpacing: '-0.015em',
         color: 'var(--onyx-text)',
       }}>
-        {greeting},<br />{displayName}<span style={{ color: 'var(--onyx-accent)' }}>.</span>
+        {greeting}，<br />{displayName}<span style={{ color: 'var(--onyx-accent)' }}>.</span>
       </div>
 
       {/* Segmented toggle — Your stats / Library stats */}
@@ -593,7 +593,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         border: '1px solid var(--onyx-glass-edge)',
         borderRadius: 10,
       }}>
-        {([ { id: 'user', label: 'Your stats' }, { id: 'library', label: 'Library stats' } ] as const).map(t => {
+        {([ { id: 'user', label: '收听统计' }, { id: 'library', label: '书库统计' } ] as const).map(t => {
           const active = page === t.id;
           return (
             <button
@@ -654,11 +654,11 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         gap: 32, // wider gap to match the hero row
       }}>
         {/* Total items in the loaded library */}
-        <GreetStat label="In library" value={st.library.length} />
+        <GreetStat label="书库中" value={st.library.length} />
         {/* Items with 0 < progress < 0.98 */}
-        <GreetStat label="In progress" value={inProg} />
+        <GreetStat label="收听中" value={inProg} />
         {/* Items with progress ≥ 0.98 */}
-        <GreetStat label="Finished" value={finished} />
+        <GreetStat label="已听完" value={finished} />
       </div>
     </Glass>
   );

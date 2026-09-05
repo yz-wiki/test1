@@ -150,9 +150,9 @@ export default function PlaylistDetail({
       const title = resolveItem(items[0]);
       const bookName = title ? bookTitle(title) : libraryItemId;
       st.setConfirmDialog({
-        title: 'Remove last item?',
-        message: `Removing "${bookName}" will delete the playlist "${playlist.name}" — ABS automatically removes empty playlists.`,
-        confirmLabel: 'Remove & Delete',
+        title: '移除最后一项？',
+        message: `移除“${bookName}”将删除播放列表“${playlist.name}”——ABS 会自动删除空播放列表。`,
+        confirmLabel: '移除并删除',
         onConfirm: async () => {
           try {
             await batchRemoveFromPlaylist(serverUrl, playlist.id, [{ libraryItemId }]);
@@ -256,7 +256,7 @@ export default function PlaylistDetail({
               ) : (
                 <div
                   onClick={() => { setPendingName(playlist?.name ?? ''); setEditingField('name'); }}
-                  title="Click to rename"
+                  title="点击重命名"
                   style={{
                     fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: 'var(--onyx-text)',
                     cursor: 'text', borderBottom: '1px solid transparent',
@@ -277,7 +277,7 @@ export default function PlaylistDetail({
                   onKeyDown={onDescKeyDown}
                   onBlur={onDescBlur}
                   disabled={saving}
-                  placeholder="Add a description…"
+                  placeholder="添加简介…"
                   style={{
                     width: '100%', background: 'transparent',
                     border: 'none', borderBottom: '1px solid var(--onyx-accent-edge)',
@@ -289,14 +289,14 @@ export default function PlaylistDetail({
               ) : (
                 <div
                   onClick={() => { setPendingDescription(playlist?.description ?? ''); setEditingField('description'); }}
-                  title="Click to edit description"
+                  title="点击编辑简介"
                   style={{
                     marginTop: 6, fontSize: 12.5, cursor: 'text',
                     color: playlist?.description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)',
                     fontStyle: 'italic',
                   }}
                 >
-                  {playlist?.description ?? 'Add a description…'}
+                  {playlist?.description ?? '添加简介…'}
                 </div>
               )}
             </div>
@@ -328,10 +328,10 @@ export default function PlaylistDetail({
                 fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
               }}
             >
-              ▶ Play All
+              ▶ 播放全部
             </button>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {items.length} {items.length === 1 ? 'item' : 'items'}
+              {items.length} 个条目
             </div>
           </div>
         </div>
@@ -343,7 +343,7 @@ export default function PlaylistDetail({
         >
           {loading && (
             <div style={{ padding: '24px 24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-              Loading…
+              加载中…
             </div>
           )}
           {error && (
@@ -351,7 +351,7 @@ export default function PlaylistDetail({
           )}
           {!loading && !error && items.length === 0 && (
             <div style={{ padding: '32px 24px', fontFamily: SERIF, fontSize: 14, color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
-              This playlist is empty.
+              这个播放列表是空的。
             </div>
           )}
           {items.map((pi, i) => {
@@ -401,7 +401,7 @@ export default function PlaylistDetail({
                     flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)',
                     fontSize: 14, lineHeight: 1, userSelect: 'none', paddingRight: 2,
                   }}
-                  title="Drag to reorder"
+                  title="拖动排序"
                 >
                   ⠿
                 </div>
@@ -434,7 +434,7 @@ export default function PlaylistDetail({
                 <button
                   onClick={() => handleRemove(pi.libraryItemId)}
                   disabled={removing === pi.libraryItemId}
-                  title="Remove from playlist"
+                  title="从播放列表中移除"
                   style={{
                     flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
                     background: 'transparent', border: '1px solid transparent',

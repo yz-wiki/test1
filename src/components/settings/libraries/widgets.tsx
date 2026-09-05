@@ -100,8 +100,8 @@ export function OnOff({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
   );
   return (
     <div style={{ display: 'flex', gap: 4 }}>
-      {pill('On', on, true)}
-      {pill('Off', !on, false)}
+      {pill('开', on, true)}
+      {pill('关', !on, false)}
     </div>
   );
 }

@@ -54,12 +54,12 @@ export default function Login({ st }: LoginProps) {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Server URL is required for both auth methods
-    if (!host.trim()) return setError('A server address is required.');
+    if (!host.trim()) return setError('需要填写服务器地址。');
     const serverUrl = `${scheme}://${host.trim()}`;
 
     // ── API key method ──────────────────────────────────────────────────────
     if (method === 'apikey') {
-      if (!apiKey.trim()) return setError('An API key is required.');
+      if (!apiKey.trim()) return setError('需要填写 API 密钥。');
       setError('');
       setPending(true);
       try {
@@ -86,8 +86,8 @@ export default function Login({ st }: LoginProps) {
     }
 
     // ── Password method ─────────────────────────────────────────────────────
-    if (!user.trim()) return setError('Your name is required.');
-    if (!pass)        return setError('A password is required.');
+    if (!user.trim()) return setError('需要填写用户名。');
+    if (!pass)        return setError('需要填写密码。');
     setError('');
     setPending(true);
     try {
@@ -179,8 +179,8 @@ export default function Login({ st }: LoginProps) {
               <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
               {/* Display heading — 33px/600 serif, "hall" in italic accent gold */}
               <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-                The teller<br />returns to<br />the{' '}
-                <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>hall</span>.
+                说书人<br />重回<br />
+                <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>殿堂</span>
               </div>
             </div>
 
@@ -207,10 +207,10 @@ export default function Login({ st }: LoginProps) {
 
             {/* Bottom quote block — italic serif, 13px, maxWidth 200px */}
             <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, lineHeight: 1.55, color: 'rgba(235,231,223,0.62)', maxWidth: 200 }}>
-              "Every tale you keep awaits you here — bound, voiced, and ready to resume."
+              “你所珍藏的每一个故事都在此等候——装订成册、倾情演绎、随时续听。”
               {/* Attribution line — NOT italic, mono, very muted */}
               <div style={{ fontStyle: 'normal', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.38)', marginTop: 14 }}>
-                — the keeper's note
+                ——守卷人之语
               </div>
             </div>
           </div>
@@ -233,10 +233,10 @@ export default function Login({ st }: LoginProps) {
           {/* Header: title + subtitle */}
           <div style={{ marginBottom: 30 }}>
             <div style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 600, letterSpacing: '-0.01em', color: '#ebe7df' }}>
-              Enter the hall
+              步入殿堂
             </div>
             <div style={{ fontSize: 13, fontFamily: SANS, color: 'rgba(235,231,223,0.62)', marginTop: 6 }}>
-              Connect to your library server to continue.
+              连接到你的书库服务器以继续。
             </div>
           </div>
 
@@ -268,7 +268,7 @@ export default function Login({ st }: LoginProps) {
                     transition: 'background 0.15s, color 0.15s',
                   }}
                 >
-                  {m === 'password' ? 'Password' : 'API Key'}
+                  {m === 'password' ? '密码' : 'API 密钥'}
                 </button>
               ))}
             </div>
@@ -281,7 +281,7 @@ export default function Login({ st }: LoginProps) {
             <label style={{ display: 'block' }}>
               {/* Italic serif label above the field */}
               <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                Where is your server?
+                你的服务器在哪里？
               </div>
               {/* Flex row: scheme dropdown on the left, host input on the right */}
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
@@ -384,14 +384,14 @@ export default function Login({ st }: LoginProps) {
                 {/* Field 2: Username */}
                 <label style={{ display: 'block' }}>
                   <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    By what name are you known?
+                    如何称呼你？
                   </div>
                   <input
                     className="saga-input"
                     style={underline}
                     value={user}
                     onChange={e => setUser(e.target.value)}
-                    placeholder="Username"
+                    placeholder="用户名"
                     spellCheck={false}
                   />
                 </label>
@@ -399,7 +399,7 @@ export default function Login({ st }: LoginProps) {
                 {/* Field 3: Password */}
                 <label style={{ display: 'block' }}>
                   <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    Password
+                    密码
                   </div>
                   <input
                     className="saga-input"
@@ -415,7 +415,7 @@ export default function Login({ st }: LoginProps) {
               // ── API key field ───────────────────────────────────────────
               <label style={{ display: 'block' }}>
                 <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                  Your API key
+                  你的 API 密钥
                 </div>
                 {/* Textarea for long JWT-format keys — resize disabled so it stays tidy */}
                 <textarea
@@ -432,13 +432,13 @@ export default function Login({ st }: LoginProps) {
                   }}
                   value={apiKey}
                   onChange={e => setApiKey(e.target.value)}
-                  placeholder="Paste your API key here"
+                  placeholder="在此粘贴你的 API 密钥"
                   spellCheck={false}
                   autoComplete="off"
                 />
                 {/* Helper text pointing the user to where keys are generated */}
                 <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>
-                  Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.
+                  可在 Audiobookshelf WebUI 的“设置 → 用户 → API 密钥”中生成密钥。
                 </div>
               </label>
             )}
@@ -478,7 +478,7 @@ export default function Login({ st }: LoginProps) {
               }}
             >
               {/* Button label — "Opening…" while request is in flight */}
-              {pending ? 'Opening…' : 'Enter'}
+              {pending ? '正在进入…' : '进入'}
               {/* Arrow slides right on CTA hover (via .saga-arrow rule in index.css) */}
               <span className="saga-arrow" style={{ display: 'flex', transition: 'transform 0.2s' }}>→</span>
             </button>
@@ -495,7 +495,7 @@ export default function Login({ st }: LoginProps) {
                 textUnderlineOffset: 3, textDecorationColor: 'rgba(235,231,223,0.25)',
               }}
             >
-              Use Skald locally, without a server
+              不连接服务器，仅在本机使用 Skald
             </button>
 
           </div>

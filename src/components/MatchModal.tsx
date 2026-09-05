@@ -156,10 +156,10 @@ function Glyph({ name, size = 16, color = 'currentColor', sw = 1.6 }: {
 /* Metadata Match Option B — see design-handoff/metadata_match */
 function StatusTag({ status, style }: { status: string; style?: CSSProperties }) {
   const map: Record<string, { t: string; c: string; bg: string; e: string }> = {
-    added:   { t: 'NEW',     c: MX.add,      bg: MX.addDim,     e: MX.addEdge   },
-    changed: { t: 'CHANGED', c: MX.accent,   bg: MX.accentDim,  e: MX.accentEdge },
-    edited:  { t: 'EDITED',  c: MX.text,     bg: MX.glassStrong, e: MX.lineStrong },
-    same:    { t: 'MATCH',   c: MX.textMute, bg: 'transparent', e: MX.line      },
+    added:   { t: '新增',     c: MX.add,      bg: MX.addDim,     e: MX.addEdge   },
+    changed: { t: '更改',     c: MX.accent,   bg: MX.accentDim,  e: MX.accentEdge },
+    edited:  { t: '已编辑',   c: MX.text,     bg: MX.glassStrong, e: MX.lineStrong },
+    same:    { t: '一致',     c: MX.textMute, bg: 'transparent', e: MX.line      },
   };
   const m = map[status] ?? map.same;
   return (
@@ -201,7 +201,7 @@ function ValueCell({ field, side, value, dim, strike, currentCoverUrl, incomingC
   }
   const empty = Array.isArray(value) ? value.length === 0 : !value;
   if (field.type === 'chips') {
-    if (empty) return <span style={{ fontSize: 11, color: MATCH_ONYX.textMute, fontStyle: 'italic' }}>none</span>;
+    if (empty) return <span style={{ fontSize: 11, color: MATCH_ONYX.textMute, fontStyle: 'italic' }}>无</span>;
     return (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {(value as string[]).map((t, i) => (
@@ -214,7 +214,7 @@ function ValueCell({ field, side, value, dim, strike, currentCoverUrl, incomingC
     );
   }
   if (empty) {
-    return <span style={{ fontSize: 12, color: MATCH_ONYX.textMute, fontStyle: 'italic', fontFamily: MATCH_ONYX.sans }}>empty</span>;
+    return <span style={{ fontSize: 12, color: MATCH_ONYX.textMute, fontStyle: 'italic', fontFamily: MATCH_ONYX.sans }}>空</span>;
   }
   const isLong = field.type === 'longtext';
   return (
@@ -266,7 +266,7 @@ function EditField({ field, value, onSave, onCancel }: {
         <textarea ref={ref} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKey} rows={4} style={inputStyle} />
       ) : (
         <input ref={ref} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKey}
-          style={inputStyle} placeholder={field.type === 'chips' ? 'comma, separated, tags' : ''} />
+          style={inputStyle} placeholder={field.type === 'chips' ? '以逗号分隔的标签' : ''} />
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button onClick={commit} style={{
@@ -274,16 +274,16 @@ function EditField({ field, value, onSave, onCancel }: {
           border: 'none', cursor: 'pointer', background: MATCH_ONYX.accent, color: MATCH_ONYX.bg,
           fontFamily: MATCH_ONYX.mono, fontSize: 9.5, letterSpacing: '0.05em', textTransform: 'uppercase' as const, fontWeight: 600,
         }}>
-          <Glyph name="check" size={11} color={MATCH_ONYX.bg} sw={2} />Save
+          <Glyph name="check" size={11} color={MATCH_ONYX.bg} sw={2} />保存
         </button>
         <button onClick={onCancel} style={{
           padding: '4px 10px', borderRadius: 6, border: `1px solid ${MATCH_ONYX.glassEdge}`,
           cursor: 'pointer', background: 'transparent', color: MATCH_ONYX.textDim,
           fontFamily: MATCH_ONYX.mono, fontSize: 9.5, letterSpacing: '0.05em', textTransform: 'uppercase' as const,
-        }}>Cancel</button>
+        }}>取消</button>
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: MATCH_ONYX.mono, fontSize: 8.5, color: MATCH_ONYX.textMute, letterSpacing: '0.04em' }}>
-          {field.type === 'longtext' ? '⌘↵ save · esc' : '↵ save · esc'}
+          {field.type === 'longtext' ? '⌘↵ 保存 · esc' : '↵ 保存 · esc'}
         </span>
       </div>
     </div>
@@ -333,7 +333,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
       {/* accept toggle / revert button */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: editing ? 12 : 0 }}>
         {edited ? (
-          <button onClick={onRevert} title="Revert to source value" style={{
+          <button onClick={onRevert} title="还原为原值" style={{
             width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent', border: `1.5px solid ${MATCH_ONYX.lineStrong}`,
@@ -342,7 +342,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
           </button>
         ) : changed ? (
           <button onClick={onToggle}
-            title={base === 'incoming' ? 'Using new value' : 'Keeping current'}
+            title={base === 'incoming' ? '采用新值' : '保留当前值'}
             style={{
               width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -373,7 +373,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
                 dim={!applied && !edited} currentCoverUrl={currentCoverUrl} incomingCoverUrl={incomingCoverUrl} />
             </div>
             {canEdit && (
-              <button onClick={onStartEdit} title={`Edit ${field.label}`} style={{
+              <button onClick={onStartEdit} title={`编辑${field.label}`} style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 3, marginRight: -3,
                 display: 'flex', color: MATCH_ONYX.textMute, flexShrink: 0, alignSelf: 'flex-start',
               }}
@@ -481,7 +481,7 @@ export function makeServerAdapter(serverUrl: string, item: LibraryItem): MatchAd
       const base = builtins.length > 0 ? builtins : FALLBACK_PROVIDERS;
       const customBook = (custom ?? [])
         .filter(p => p.mediaType === 'book')
-        .map(p => ({ id: p.slug, name: `${p.name} (custom)` }));
+        .map(p => ({ id: p.slug, name: `${p.name}（自定义）` }));
       return [...base, ...customBook];
     },
     search: async (title, author, provider) => {
@@ -635,20 +635,20 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
   const buildFields = (src: SearchResult): MatchField[] => {
     const m = item.media?.metadata;
     const raw: Omit<MatchField, 'status'>[] = [
-      { key: 'cover',       label: 'Cover',       type: 'cover',    current: null,                        incoming: src.cover ?? null },
-      { key: 'title',       label: 'Title',       type: 'text',     current: m?.title ?? '',               incoming: src.title ?? '' },
-      { key: 'subtitle',    label: 'Subtitle',    type: 'text',     current: m?.subtitle ?? '',            incoming: src.subtitle ?? '' },
-      { key: 'author',      label: 'Author',      type: 'text',     current: m?.authorName ?? '',          incoming: src.author ?? '' },
-      { key: 'narrator',    label: 'Narrator',    type: 'text',     current: m?.narratorName ?? '',        incoming: src.narrator ?? '' },
-      { key: 'series',      label: 'Series',      type: 'text',     current: m?.seriesName ?? '',          incoming: seriesStr(src.series) },
-      { key: 'publisher',   label: 'Publisher',   type: 'text',     current: m?.publisher ?? '',           incoming: src.publisher ?? '' },
-      { key: 'year',        label: 'Year',        type: 'text',     current: m?.publishedYear ?? '',       incoming: src.publishedYear ?? '' },
-      { key: 'genres',      label: 'Genres',      type: 'chips',    current: m?.genres ?? [],              incoming: src.genres ?? [] },
-      { key: 'tags',        label: 'Tags',        type: 'chips',    current: item.media?.tags ?? [],       incoming: src.tags ?? [] },
-      { key: 'language',    label: 'Language',    type: 'text',     current: m?.language ?? '',            incoming: src.language ?? '' },
-      { key: 'isbn',        label: 'ISBN',        type: 'mono',     current: m?.isbn ?? '',                incoming: src.isbn ?? '' },
-      { key: 'asin',        label: 'ASIN',        type: 'mono',     current: '',                           incoming: src.asin ?? '' },
-      { key: 'description', label: 'Description', type: 'longtext', current: m?.description ?? '',         incoming: src.description ?? '' },
+      { key: 'cover',       label: '封面',       type: 'cover',    current: null,                        incoming: src.cover ?? null },
+      { key: 'title',       label: '标题',       type: 'text',     current: m?.title ?? '',               incoming: src.title ?? '' },
+      { key: 'subtitle',    label: '副标题',     type: 'text',     current: m?.subtitle ?? '',            incoming: src.subtitle ?? '' },
+      { key: 'author',      label: '作者',       type: 'text',     current: m?.authorName ?? '',          incoming: src.author ?? '' },
+      { key: 'narrator',    label: '讲述人',     type: 'text',     current: m?.narratorName ?? '',        incoming: src.narrator ?? '' },
+      { key: 'series',      label: '系列',       type: 'text',     current: m?.seriesName ?? '',          incoming: seriesStr(src.series) },
+      { key: 'publisher',   label: '出版社',     type: 'text',     current: m?.publisher ?? '',           incoming: src.publisher ?? '' },
+      { key: 'year',        label: '年份',       type: 'text',     current: m?.publishedYear ?? '',       incoming: src.publishedYear ?? '' },
+      { key: 'genres',      label: '类型',       type: 'chips',    current: m?.genres ?? [],              incoming: src.genres ?? [] },
+      { key: 'tags',        label: '标签',       type: 'chips',    current: item.media?.tags ?? [],       incoming: src.tags ?? [] },
+      { key: 'language',    label: '语言',       type: 'text',     current: m?.language ?? '',            incoming: src.language ?? '' },
+      { key: 'isbn',        label: 'ISBN',       type: 'mono',     current: m?.isbn ?? '',                incoming: src.isbn ?? '' },
+      { key: 'asin',        label: 'ASIN',       type: 'mono',     current: '',                           incoming: src.asin ?? '' },
+      { key: 'description', label: '简介',       type: 'longtext', current: m?.description ?? '',         incoming: src.description ?? '' },
     ];
     return raw.map(f => ({ ...f, status: fieldStatus(f) }));
   };
@@ -789,11 +789,11 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
             ))}
           </div>
           <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: MX.textMute }}>
-            Book {queue.index + 1} of {queue.total}
+            第 {queue.index + 1} 本，共 {queue.total} 本
           </span>
         </div>
       )}
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={screen === 'search' ? 'Match book' : 'Review match'} style={{
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={screen === 'search' ? '匹配元数据' : '核对匹配'} style={{
         width: '100%', maxWidth: 720, maxHeight: '90vh',
         background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)',
         borderRadius: 14, boxShadow: '0 32px 80px rgba(0,0,0,0.7)',
@@ -804,9 +804,9 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
         {screen === 'search' && (
           <div style={{ padding: '18px 24px 16px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>Match Book</div>
+              <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>匹配元数据</div>
             </div>
-            <button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-dim)', lineHeight: 1, padding: 4, flexShrink: 0, display: 'flex' }}>
+            <button onClick={onClose} title="关闭" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-dim)', lineHeight: 1, padding: 4, flexShrink: 0, display: 'flex' }}>
               <Glyph name="close" size={16} color="var(--onyx-text-dim)" />
             </button>
           </div>
@@ -817,24 +817,24 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', flexShrink: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 140 }}>
-                <div style={labelStyle}>Provider</div>
+                <div style={labelStyle}>数据源</div>
                 <select value={provider} onChange={e => setProvider(e.target.value)} disabled={providersLoading}
                   style={{ ...inputStyle, cursor: providersLoading ? 'default' : 'pointer', opacity: providersLoading ? 0.6 : 1 }}>
                   {providersLoading
-                    ? <option value={provider}>Loading…</option>
+                    ? <option value={provider}>加载中…</option>
                     : providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 160 }}>
-                <div style={labelStyle}>Title / ASIN</div>
-                <input value={queryTitle} onChange={e => setQueryTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="Title or ASIN…" style={{ ...inputStyle }} />
+                <div style={labelStyle}>书名 / ASIN</div>
+                <input value={queryTitle} onChange={e => setQueryTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="书名或 ASIN…" style={{ ...inputStyle }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 140 }}>
-                <div style={labelStyle}>Author</div>
-                <input value={queryAuthor} onChange={e => setQueryAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="Author…" style={{ ...inputStyle }} />
+                <div style={labelStyle}>作者</div>
+                <input value={queryAuthor} onChange={e => setQueryAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="作者…" style={{ ...inputStyle }} />
               </div>
               <button onClick={handleSearch} disabled={searching} style={{ padding: '8px 20px', borderRadius: 8, cursor: searching ? 'default' : 'pointer', background: 'var(--onyx-accent)', border: 'none', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600, opacity: searching ? 0.6 : 1 }}>
-                {searching ? 'Searching…' : 'Search'}
+                {searching ? '正在搜索…' : '搜索'}
               </button>
             </div>
 
@@ -845,7 +845,7 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
               {hasSearched && !searching && !searchErr && results.length === 0 && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '48px 24px', color: 'var(--onyx-text-mute)' }}>
                   <Glyph name="search" size={32} color="var(--onyx-text-mute)" sw={1.4} />
-                  <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' }}>No results found</div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' }}>未找到结果</div>
                 </div>
               )}
               {results.map((r, i) => (
@@ -865,7 +865,7 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                       <ConfBadge score={r.confidence} />
                     </div>
                     {r.author   && <div style={{ marginTop: 2, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>{r.author}</div>}
-                    {r.narrator && <div style={{ marginTop: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>Narr. {r.narrator}</div>}
+                    {r.narrator && <div style={{ marginTop: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>讲述人 {r.narrator}</div>}
                     {r.series   && <div style={{ marginTop: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{seriesStr(r.series)}</div>}
                   </div>
                 </button>
@@ -882,22 +882,22 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
             <div style={{ position: 'relative', padding: '16px 18px 0', borderBottom: `1px solid ${MX.line}`, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingBottom: 14 }}>
                 {/* Back */}
-                <button onClick={() => setScreen('search')} title="Back to search"
+                <button onClick={() => setScreen('search')} title="返回搜索"
                   style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 4, marginLeft: -4, display: 'flex', flexShrink: 0 }}>
                   <Glyph name="back" size={17} />
                 </button>
                 {/* Title block */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: MATCH_ONYX.serif, fontSize: 19, fontWeight: 600, lineHeight: 1.1 }}>Review Match</div>
+                  <div style={{ fontFamily: MATCH_ONYX.serif, fontSize: 19, fontWeight: 600, lineHeight: 1.1 }}>核对匹配</div>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: MX.textMute, marginTop: 5, letterSpacing: '0.04em' }}>
                     {providerLabel}
-                    {selected.confidence != null && ` · ${Math.round(selected.confidence * 100)}% match`}
-                    {` · ${changedFields.length} differ · edit any field`}
+                    {selected.confidence != null && ` · 匹配度 ${Math.round(selected.confidence * 100)}%`}
+                    {` · ${changedFields.length} 处不同 · 可编辑任意字段`}
                   </div>
                 </div>
                 {/* Segmented filter */}
                 <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 3, border: `1px solid ${MX.line}`, flexShrink: 0 }}>
-                  {(['Changes', 'All fields'] as const).map((lbl, idx) => {
+                  {(['仅更改', '全部字段'] as const).map((lbl, idx) => {
                     const v = idx === 0;
                     return (
                       <button key={lbl} onClick={() => setOnlyChanges(v)} style={{
@@ -910,7 +910,7 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                   })}
                 </div>
                 {/* Close */}
-                <button onClick={onClose} title="Close"
+                <button onClick={onClose} title="关闭"
                   style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 4, marginRight: -4, display: 'flex', flexShrink: 0 }}>
                   <Glyph name="close" size={16} />
                 </button>
@@ -918,11 +918,11 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
               {/* Column heads */}
               <div style={{ display: 'grid', gridTemplateColumns: '78px 1fr 38px 1fr', alignItems: 'center' }}>
                 <span />
-                <span style={{ padding: '8px 14px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: MX.textMute }}>CURRENT</span>
+                <span style={{ padding: '8px 14px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: MX.textMute }}>当前</span>
                 <span />
                 <span style={{ padding: '8px 16px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: MX.accent, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Glyph name="sparkle" size={9} color={MX.accent} />RESULT
-                  <span style={{ color: MX.textMute, letterSpacing: '0.04em' }}>· editable</span>
+                  <Glyph name="sparkle" size={9} color={MX.accent} />结果
+                  <span style={{ color: MX.textMute, letterSpacing: '0.04em' }}>· 可编辑</span>
                 </span>
               </div>
             </div>
@@ -949,12 +949,12 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                 <div style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Glyph name="check" size={12} color={MX.textMute} />
                   <span style={{ fontFamily: MONO, fontSize: 10, color: MX.textMute, letterSpacing: '0.05em' }}>
-                    {sameFields.length} more field{sameFields.length === 1 ? '' : 's'} already match
+                    还有 {sameFields.length} 个字段已一致
                   </span>
                   <button onClick={() => setOnlyChanges(false)} style={{
                     background: 'none', border: 'none', color: MX.accent, cursor: 'pointer',
                     fontFamily: MONO, fontSize: 10, letterSpacing: '0.05em', padding: 0,
-                  }}>show all</button>
+                  }}>显示全部</button>
                 </div>
               )}
             </div>
@@ -971,20 +971,20 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                 fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' as const,
                 color: allOn ? MX.accent : MX.textDim,
               }}>
-                <MatchCheck on={allOn} onClick={() => {}} size={15} /> Accept all
+                <MatchCheck on={allOn} onClick={() => {}} size={15} /> 全部采用
               </div>
               <span style={{ flex: 1 }} />
               {/* Change count */}
               <span style={{ fontSize: 11.5, color: MX.textMute }}>
-                <strong style={{ color: MX.text, fontWeight: 600 }}>{appliedCount}</strong> change{appliedCount === 1 ? '' : 's'}
-                {editedCount > 0 && <span style={{ color: MX.textMute }}> · {editedCount} edited</span>}
+                <strong style={{ color: MX.text, fontWeight: 600 }}>{appliedCount}</strong> 处更改
+                {editedCount > 0 && <span style={{ color: MX.textMute }}> · {editedCount} 处已编辑</span>}
               </span>
               {/* Cancel */}
               <button onClick={onClose} style={{
                 padding: '9px 18px', borderRadius: 8, background: 'transparent',
                 border: `1px solid ${MX.glassEdge}`, color: MX.textDim, cursor: 'pointer',
                 fontFamily: SANS, fontSize: 13,
-              }}>Cancel</button>
+              }}>取消</button>
               {/* Apply */}
               <button onClick={handleSubmit} disabled={submitting || appliedCount === 0} style={{
                 padding: '9px 18px', borderRadius: 8, border: 'none',
@@ -995,7 +995,7 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                 display: 'flex', alignItems: 'center', gap: 7,
               }}>
                 <Glyph name="check" size={14} color={appliedCount > 0 ? MX.bg : MX.textMute} sw={2} />
-                {submitting ? 'Applying…' : `Apply ${appliedCount}`}
+                {submitting ? '正在应用…' : `应用 ${appliedCount}`}
               </button>
             </div>
           </div>

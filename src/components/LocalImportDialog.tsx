@@ -75,12 +75,12 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
 
   async function finishImport(outcomes: IngestOutcome[], matched: number) {
     const summary = summarizeImport(outcomes, matched);
-    const parts = [`${summary.added} added`];
-    if (summary.needsAttention) parts.push(`${summary.needsAttention} need attention`);
-    if (summary.failed) parts.push(`${summary.failed} failed`);
+    const parts = [`${summary.added} 个已添加`];
+    if (summary.needsAttention) parts.push(`${summary.needsAttention} 条待处理`);
+    if (summary.failed) parts.push(`${summary.failed} 个失败`);
     log.info('library', 'local import complete', { libraryId: library.id, ...summary });
     st.setToast({
-      message: `Imported into "${library.name}" — ${parts.join(', ')}`,
+      message: `已导入到“${library.name}”——${parts.join('，')}`,
       type: summary.failed && summary.added === 0 ? 'error' : summary.added ? 'success' : 'info',
     });
     onClose();
@@ -115,7 +115,7 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
       await finishImport(outcomes, 0);
     } catch (e) {
       log.error('library', 'local import failed', { libraryId: library.id, route, err: String(e) });
-      setError('Could not import from that location. Check the Skald log for details.');
+      setError('无法从该位置导入。请查看 Skald 日志了解详情。');
     } finally {
       setBusy(null);
     }
@@ -125,21 +125,21 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
     const picked = await open({
       directory: false,
       multiple: true,
-      title: `Add books to "${library.name}"`,
-      filters: [{ name: 'Audiobook files', extensions: AUDIO_EXTENSIONS }],
+      title: `添加图书到“${library.name}”`,
+      filters: [{ name: '有声书文件', extensions: AUDIO_EXTENSIONS }],
     });
     const sources = Array.isArray(picked) ? picked : typeof picked === 'string' ? [picked] : [];
     await ingest('files', sources);
   }
 
   async function pickFolder() {
-    const picked = await open({ directory: true, multiple: false, title: `Choose a book folder or parent folder for "${library.name}"` });
+    const picked = await open({ directory: true, multiple: false, title: `为“${library.name}”选择图书文件夹或上级文件夹` });
     if (typeof picked === 'string') await ingest('folder', [picked]);
   }
 
   async function openStaging() {
     if (!library.stagingPath) {
-      setError('This library does not have a Staging folder configured.');
+      setError('此书库未配置暂存文件夹。');
       return;
     }
     setBusy('staging');
@@ -150,7 +150,7 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
       onClose();
     } catch (e) {
       log.error('library', 'open local import staging folder failed', { libraryId: library.id, err: String(e) });
-      setError('Could not open the Staging folder.');
+      setError('无法打开暂存文件夹。');
     } finally {
       setBusy(null);
     }
@@ -190,22 +190,22 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="local-import-title" style={modalStyle}>
         <div style={{ padding: '20px 20px 16px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderBottom: '1px solid var(--onyx-line)' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="local-import-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>Add books to “{library.name}”</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Choose how the books enter this PC library</div>
+            <div id="local-import-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>添加图书到“{library.name}”</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>选择图书以何种方式进入这台电脑的书库</div>
           </div>
-          <button onClick={onClose} aria-label="Close local import" disabled={working} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 15 }}>×</button>
+          <button onClick={onClose} aria-label="关闭本机导入" disabled={working} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 15 }}>×</button>
         </div>
 
         <div style={{ padding: '18px 22px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '10px 12px', borderRadius: 9, background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>What happens to your files</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>你的文件将如何处理</div>
             <div style={{ marginTop: 6, fontSize: 11.5, lineHeight: 1.5, color: 'var(--onyx-text-dim)' }}>
-              Source files <span aria-hidden="true">→</span> <strong>{library.organizeMode === 'move' ? 'Move after verification' : 'Copy and keep originals'}</strong> <span aria-hidden="true">→</span> Managed library <span aria-hidden="true">→</span> Needs attention only when a match is uncertain
+              源文件 <span aria-hidden="true">→</span> <strong>{library.organizeMode === 'move' ? '验证后移动' : '复制并保留原件'}</strong> <span aria-hidden="true">→</span> 受管书库 <span aria-hidden="true">→</span> 仅在匹配不确定时进入待处理
             </div>
           </div>
-          <Choice icon="file" title={busy === 'files' ? 'Adding files…' : 'Add files'} copy="Choose one or more audiobook files from this PC." disabled={working} onClick={() => void pickFiles()} />
-          <Choice icon="layers" title={busy === 'folder' ? 'Scanning folder…' : 'Add folder'} copy="Choose a book folder or a parent folder; Skald will scan and file every book it finds." disabled={working} onClick={() => void pickFolder()} />
-          <Choice icon="upload" title={busy === 'staging' ? 'Opening Staging…' : 'Open Staging'} copy="Drop files or folders into the watched Staging folder for automatic import." disabled={working} onClick={() => void openStaging()} />
+          <Choice icon="file" title={busy === 'files' ? '正在添加文件…' : '添加文件'} copy="从这台电脑中选择一个或多个有声书文件。" disabled={working} onClick={() => void pickFiles()} />
+          <Choice icon="layers" title={busy === 'folder' ? '正在扫描文件夹…' : '添加文件夹'} copy="选择一个图书文件夹或上级文件夹；Skald 会扫描并归档其中找到的每一本书。" disabled={working} onClick={() => void pickFolder()} />
+          <Choice icon="upload" title={busy === 'staging' ? '正在打开暂存文件夹…' : '打开暂存文件夹'} copy="将文件或文件夹放入受监视的暂存文件夹即可自动导入。" disabled={working} onClick={() => void openStaging()} />
           {error && <div style={{ marginTop: 2, padding: '9px 11px', borderRadius: 8, background: 'rgba(232,113,106,0.08)', color: '#e8716a', fontFamily: MONO, fontSize: 10.5, lineHeight: 1.45 }}>{error}</div>}
         </div>
       </div>

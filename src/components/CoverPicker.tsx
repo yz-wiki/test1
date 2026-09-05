@@ -35,7 +35,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
   const meta = item.media.metadata;
   const [provider, setProvider] = useState<string>(COVER_PROVIDERS[0]);
   const [title, setTitle] = useState(meta.title ?? '');
-  const [author, setAuthor] = useState(bookAuthor(item) === 'Unknown Author' ? '' : bookAuthor(item));
+  const [author, setAuthor] = useState(bookAuthor(item) === '未知作者' ? '' : bookAuthor(item));
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -58,7 +58,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
       const urls = await findCovers(st.serverUrl, title.trim(), author.trim(), provider);
       setResults(urls);
     } catch (e) {
-      st.setToast({ message: `Cover search failed: ${e}`, type: 'error' });
+      st.setToast({ message: `封面搜索失败：${e}`, type: 'error' });
     } finally {
       setSearching(false);
     }
@@ -76,9 +76,9 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     setBusy(true);
     try {
       await setCoverUrl(st.serverUrl, item.id, url);
-      afterChange('Cover updated.');
+      afterChange('封面已更新。');
     } catch (e) {
-      st.setToast({ message: `Failed to set cover: ${e}`, type: 'error' });
+      st.setToast({ message: `设置封面失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -87,15 +87,15 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
   async function doUpload() {
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
+      filters: [{ name: '图片', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
     });
     if (!selected || typeof selected !== 'string') return;
     setBusy(true);
     try {
       await uploadCover(st.serverUrl, item.id, selected);
-      afterChange('Cover uploaded.');
+      afterChange('封面已上传。');
     } catch (e) {
-      st.setToast({ message: `Upload failed: ${e}`, type: 'error' });
+      st.setToast({ message: `上传失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -105,9 +105,9 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     setBusy(true);
     try {
       await removeCover(st.serverUrl, item.id);
-      afterChange('Cover removed.');
+      afterChange('封面已移除。');
     } catch (e) {
-      st.setToast({ message: `Failed to remove: ${e}`, type: 'error' });
+      st.setToast({ message: `移除失败：${e}`, type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -132,10 +132,10 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '22px 22px 0 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Change Cover</div>
+            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>更换封面</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.title ?? item.id}</div>
           </div>
-          <button onClick={onClose} aria-label="Close cover picker" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
+          <button onClick={onClose} aria-label="关闭封面选择器" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
         <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
 
@@ -146,10 +146,10 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
               {previewSrc && <img src={convertFileSrc(previewSrc)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={label}>Current cover</div>
+              <div style={label}>当前封面</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => void doUpload()} disabled={busy} style={{ ...btnMono, color: 'var(--onyx-accent)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>Upload…</button>
-                <button onClick={() => void doRemove()} disabled={busy} style={{ ...btnMono, color: '#e08a8a', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)' }}>Remove</button>
+                <button onClick={() => void doUpload()} disabled={busy} style={{ ...btnMono, color: 'var(--onyx-accent)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>上传…</button>
+                <button onClick={() => void doRemove()} disabled={busy} style={{ ...btnMono, color: '#e08a8a', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)' }}>移除</button>
               </div>
             </div>
           </div>
@@ -157,21 +157,21 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           {/* Search controls */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120 }}>
-              <div style={label}>Provider</div>
+              <div style={label}>数据源</div>
               <select value={provider} onChange={e => setProvider(e.target.value)} {...accentFocus} style={{ ...input, cursor: 'pointer' }}>
                 {COVER_PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 140 }}>
-              <div style={label}>Title</div>
+              <div style={label}>标题</div>
               <input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} {...accentFocus} style={input} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 120 }}>
-              <div style={label}>Author</div>
+              <div style={label}>作者</div>
               <input value={author} onChange={e => setAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} {...accentFocus} style={input} />
             </div>
             <button onClick={() => void doSearch()} disabled={searching || !title.trim()} style={{ ...btnMono, padding: '8px 16px', background: 'var(--onyx-accent)', border: '1px solid transparent', color: 'var(--onyx-bg)', fontWeight: 600, opacity: searching || !title.trim() ? 0.6 : 1 }}>
-              {searching ? 'Searching…' : 'Find covers'}
+              {searching ? '搜索中…' : '查找封面'}
             </button>
           </div>
 
@@ -179,7 +179,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           {results.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 10 }}>
               {results.map((url, i) => (
-                <button key={i} onClick={() => void pick(url)} disabled={busy} title="Use this cover" style={{ padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
+                <button key={i} onClick={() => void pick(url)} disabled={busy} title="使用此封面" style={{ padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
                   <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </button>
               ))}
@@ -187,7 +187,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           )}
           {!searching && results.length === 0 && (
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-              Search a provider for cover art, or upload your own image.
+              从数据源搜索封面图，或上传你自己的图片。
             </div>
           )}
         </div>

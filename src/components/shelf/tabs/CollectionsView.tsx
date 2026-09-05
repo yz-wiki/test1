@@ -115,24 +115,24 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
   };
 
   const subtitle = loading
-    ? 'Loading…'
-    : `${filtered.length} ${filtered.length === 1 ? 'collection' : 'collections'}`;
+    ? '加载中…'
+    : `${filtered.length} 个合集`;
 
   return (
     <BrowseView
       st={st}
-      title="Collections"
+      title="合集"
       subtitle={subtitle}
       showModeToggle
       inline={inline}
     >
       {loading ? (
         <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-          Loading collections…
+          正在加载合集…
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: SERIF, fontSize: 15, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
-          No collections yet — right-click any book to create one.
+          还没有合集——右键点击任意图书即可创建。
         </div>
       ) : st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
@@ -142,22 +142,22 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
               <BrowseTile
                 key={c.id}
                 mode={st.browseTileStyle}
-                tag="Collection"
+                tag="合集"
                 title={c.name}
                 subtitle={c.description || undefined}
-                stat={`${books.length} TITLE${books.length === 1 ? '' : 'S'}`}
+                stat={`${books.length} 本`}
                 books={books}
                 serverUrl={st.serverUrl}
                 onClick={() => openCollection(c)}
-                emptyLabel="Empty collection"
+                emptyLabel="空合集"
                 corner={
                   // div (not button) + stopPropagation — valid inside BrowseTile's button.
                   <div
                     onClick={e => { e.stopPropagation(); setDetail(c); }}
-                    title="Manage collection"
+                    title="管理合集"
                     style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
                   >
-                    Manage
+                    管理
                   </div>
                 }
               />
@@ -167,9 +167,9 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
       ) : (
         <BrowseList
           columns={[
-            { id: 'name',        label: 'Collection',  flex: 2 },
-            { id: 'description', label: 'Description', flex: 2 },
-            { id: 'titles',      label: 'Titles',      width: 80 },
+            { id: 'name',        label: '合集',  flex: 2 },
+            { id: 'description', label: '简介', flex: 2 },
+            { id: 'titles',      label: '作品数',      width: 80 },
             { id: 'manage',      label: '',            width: 90 },
           ]}
           rows={filtered.map(c => {
@@ -188,7 +188,7 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
                 manage: (
                   <div onClick={e => { e.stopPropagation(); setDetail(c); }}
                     style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: 5, cursor: 'pointer', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', userSelect: 'none' }}>
-                    Manage
+                    管理
                   </div>
                 ),
               },

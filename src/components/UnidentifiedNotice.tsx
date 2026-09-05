@@ -30,7 +30,7 @@ interface QuarantineEntry {
 function entryTitle(e: QuarantineEntry): string {
   const t = e.scanned.item?.media?.metadata?.title;
   if (t && t.trim()) return t;
-  return e.scanned.sourcePath.split(/[\\/]/).filter(Boolean).pop() ?? 'Unknown';
+  return e.scanned.sourcePath.split(/[\\/]/).filter(Boolean).pop() ?? '未知';
 }
 
 export interface UnidentifiedNoticeProps { st: OnyxState; }
@@ -114,10 +114,10 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)' }}>
-                  {count} book{count === 1 ? '' : 's'} need matching
+                  {count} 本书需要匹配元数据
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 1 }}>
-                  Click one to identify it
+                  点击其中一本进行识别
                 </div>
               </div>
               <span style={{ color: 'var(--onyx-text-mute)', display: 'inline-flex', flexShrink: 0 }}>
@@ -142,11 +142,11 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
                       {entryTitle(e)}
                     </div>
                     <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {e.libName} · unidentified
+                      {e.libName} · 无法识别
                     </div>
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', flexShrink: 0 }}>
-                    Match
+                    匹配
                   </span>
                 </button>
               ))}
@@ -156,7 +156,7 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
           // Collapsed pill
           <button
             onClick={() => setExpanded(true)}
-            title={`${count} book${count === 1 ? '' : 's'} need matching — click to review`}
+            title={`${count} 本书需要匹配元数据 — 点击查看`}
             style={{
               display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderRadius: 999,
               background: 'var(--onyx-panel2)',
@@ -171,7 +171,7 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
               <Icon name="target" size={15} />
             </span>
             <span style={{ fontSize: 12.5, color: 'var(--onyx-text)', fontWeight: 500 }}>
-              {count} book{count === 1 ? '' : 's'} need matching
+              {count} 本书需要匹配元数据
             </span>
             {/* Count badge */}
             <span style={{

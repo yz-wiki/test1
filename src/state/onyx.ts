@@ -773,7 +773,7 @@ export function useOnyxState(): OnyxState {
       if (notices.length === 0) return;
       log.warn('downloads', 'corrupt persistence reset surfaced to user', { notices });
       setToast({
-        message: `Damaged ${notices.join(' and ')} reset — the original was kept as a .corrupt file in the downloads folder.`,
+        message: `检测到损坏的 ${notices.join(' 和 ')}，已重置——原文件已以 .corrupt 后缀保留在下载文件夹中。`,
         type: 'info',
       });
     } catch (e) {
@@ -836,7 +836,7 @@ export function useOnyxState(): OnyxState {
             setIsOffline(true);
             setLastLibraryRefresh(readLastRefresh(serverUrl, currentLibraryId));
             if (authToken && screen !== 'login') {
-              setToast({ message: 'Server unreachable — showing cached library', type: 'info' });
+              setToast({ message: '服务器不可达——正在显示缓存的书库', type: 'info' });
             }
           }
         } catch (ce) {
@@ -1200,7 +1200,7 @@ export function useOnyxState(): OnyxState {
       // stored server address stays as a returning-user convenience.
       setAuthToken('');
       setScreen('login');
-      setToast({ message: 'Your session expired. Please sign in again.', type: 'error' });
+      setToast({ message: '会话已过期，请重新登录。', type: 'error' });
     }).then(fn => { unlisten = fn; });
     return () => { unlisten?.(); };
   }, [setAuthToken]);
@@ -1343,7 +1343,7 @@ export function useOnyxState(): OnyxState {
       removeDownload(itemId)
         .then(() => {
           setDownloads(prev => prev.filter(d => d.itemId !== itemId));
-          setToast({ message: 'Removed finished download', type: 'info' });
+          setToast({ message: '已移除听完的下载', type: 'info' });
           log.info('downloads', 'auto-removed finished download', { itemId });
         })
         .catch(e => log.warn('downloads', 'auto-remove on finish failed', { err: String(e) }));
@@ -1359,7 +1359,7 @@ export function useOnyxState(): OnyxState {
           const title = next.media?.metadata?.title ?? next.id;
           downloadItem(serverUrlRef.current, next.id, `${title}.zip`, title, bookAuthor(next))
             .then(() => {
-              setToast({ message: `Downloading next in series: ${title}`, type: 'success' });
+              setToast({ message: `正在下载系列中的下一本：${title}`, type: 'success' });
               log.info('downloads', 'auto-download next in series', { from: itemId, next: next.id });
             })
             .catch(e => log.warn('downloads', 'auto-download next failed', { err: String(e) }));

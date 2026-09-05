@@ -45,7 +45,7 @@ export function allLibrariesShelf(libraries: Library[]): Library | undefined {
   if (!allLibrariesAvailable(libraries)) return undefined;
   return {
     id: ALL_LIBRARIES_ID,
-    name: 'All Libraries',
+    name: '全部书库',
     mediaType: 'book',
     icon: null,
     provider: null,

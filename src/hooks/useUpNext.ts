@@ -132,7 +132,7 @@ export function useUpNext(st: OnyxState): UseUpNext {
         log.info('playback', 'nothing up next', { itemId: payload.itemId, episodeId, reason: miss });
         if (miss === 'series-end' || miss === 'feed-end') {
           stRef.current.setToast({
-            message: miss === 'series-end' ? 'That was the last book in the series' : 'No more episodes',
+            message: miss === 'series-end' ? '这是系列中的最后一本书' : '没有更多单集了',
             type: 'info',
           });
         }
@@ -149,7 +149,7 @@ export function useUpNext(st: OnyxState): UseUpNext {
       if (mode === 'auto') {
         // Auto still says what happened — audio changing with no explanation is
         // the thing that makes continuation feel like a malfunction.
-        stRef.current.setToast({ message: `Up next: ${describe(target)}`, type: 'info' });
+        stRef.current.setToast({ message: `接下来播放：${describe(target)}`, type: 'info' });
         play(target);
         return;
       }

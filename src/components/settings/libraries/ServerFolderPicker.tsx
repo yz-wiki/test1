@@ -92,7 +92,7 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
           flexShrink: 0,
         }}>
           <div id="server-folder-title" style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 10 }}>
-            Select Server Folder
+            选择服务器文件夹
           </div>
 
           {/* Breadcrumb strip */}
@@ -125,7 +125,7 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 8px' }}>
           {loading && (
             <div style={{ padding: '20px 12px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-              Loading…
+              加载中…
             </div>
           )}
 
@@ -156,7 +156,7 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
 
               {entries.length === 0 && (
                 <div style={{ padding: '12px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.05em' }}>
-                  No subdirectories
+                  没有子文件夹
                 </div>
               )}
 
@@ -196,9 +196,9 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
             {currentPath}
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <SmallBtn muted onClick={onCancel}>Cancel</SmallBtn>
+            <SmallBtn muted onClick={onCancel}>取消</SmallBtn>
             <SmallBtn onClick={() => onSelect(currentPath)} disabled={loading}>
-              Select This Folder
+              选择此文件夹
             </SmallBtn>
           </div>
         </div>

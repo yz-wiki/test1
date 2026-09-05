@@ -56,14 +56,14 @@ export function buildEpisodeContextMenu(
   // ── PLAYBACK ───────────────────────────────────────────────────────────────
   const playback: ContextMenuItem[] = [
     downloaded && hasId
-      ? { label: 'Play Episode', icon: 'play', primary: true, onClick: () => opts.play(ep) }
-      : { label: 'Download & Play', icon: 'download', primary: true, onClick: () => opts.openUndownloaded(ep) },
+      ? { label: '播放本集', icon: 'play', primary: true, onClick: () => opts.play(ep) }
+      : { label: '下载并播放', icon: 'download', primary: true, onClick: () => opts.openUndownloaded(ep) },
   ];
 
   if (downloaded && hasId) {
     const finished = mp?.isFinished ?? false;
     playback.push({
-      label: finished ? 'Mark as Not Finished' : 'Mark as Finished',
+      label: finished ? '标记为未听完' : '标记为已听完',
       icon: 'check-circle',
       onClick: async () => {
         const key = `${item.id}|${ep.id}`;
@@ -113,17 +113,17 @@ export function buildEpisodeContextMenu(
     });
   }
 
-  const sections: ContextMenuSection[] = [{ label: 'Playback', items: playback }];
+  const sections: ContextMenuSection[] = [{ label: '播放', items: playback }];
 
   // ── ORGANIZE ─────────────────────────────────────────────────────────────
   // ABS playlists support podcast episodes (PlaylistItemInput.episodeId); the
   // local catalog has no playlists, so the section is omitted for local.
   if (!isLocal && downloaded && hasId) {
     sections.push({
-      label: 'Organize',
+      label: '整理',
       items: [
         {
-          label: 'Add to Playlist',
+          label: '添加到播放列表',
           icon: 'playlist',
           onClick: () => opts.setPlaylistEpisode?.(item, ep),
           disabled: !opts.setPlaylistEpisode,
@@ -142,17 +142,17 @@ export function buildEpisodeContextMenu(
     sections.push({
       items: [
         {
-          label: blockedByPlayback ? 'Delete Episode (playing)' : 'Delete Episode',
+          label: blockedByPlayback ? '删除单集（播放中）' : '删除单集',
           icon: 'trash',
           danger: true,
           disabled: blockedByPlayback,
           onClick: () => {
             st.setConfirmDialog({
-              title: `Delete "${ep.title}"?`,
+              title: `删除“${ep.title}”？`,
               message: isLocal
-                ? 'This deletes the downloaded audio file from this device. The episode stays in the feed and can be downloaded again.'
-                : "This removes the episode from the server and deletes its audio file from the server's disk. This cannot be undone.",
-              confirmLabel: 'Delete',
+                ? '这将删除本机已下载的音频文件。该单集仍保留在订阅源中，之后可以重新下载。'
+                : '这会从服务器移除该单集，并删除服务器磁盘上的音频文件。此操作无法撤销。',
+              confirmLabel: '删除',
               onConfirm: async () => {
                 try {
                   if (nowPlaying && !isLocal) {
@@ -175,11 +175,11 @@ export function buildEpisodeContextMenu(
                   // starts clean (the backend cleared its persisted row too).
                   st.setMediaProgress(st.mediaProgress.filter(p => !(p.libraryItemId === item.id && p.episodeId === ep.id)));
                   opts.onDeleted?.(ep);
-                  st.setToast({ message: `Episode "${ep.title}" deleted`, type: 'success' });
+                  st.setToast({ message: `已删除单集“${ep.title}”`, type: 'success' });
                   log.info('library', 'episode deleted', { itemId: item.id, episodeId: ep.id, local: isLocal });
                 } catch (e) {
                   log.error('library', 'episode delete failed', { itemId: item.id, episodeId: ep.id, err: String(e) });
-                  st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' });
+                  st.setToast({ message: `删除失败：${String(e)}`, type: 'error' });
                 }
               },
             });

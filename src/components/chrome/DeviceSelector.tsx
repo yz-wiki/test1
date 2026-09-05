@@ -65,7 +65,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
     <div ref={ref} style={{ ...style }}>
       <button
         ref={triggerRef}
-        aria-label={`Audio output: ${current?.name ?? 'loading devices'}`}
+        aria-label={`音频输出：${current?.name ?? '正在加载设备'}`}
         aria-haspopup="listbox"
         aria-expanded={st.deviceOpen}
         aria-controls="onyx-device-listbox"
@@ -94,7 +94,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
         {/* Device name — hidden in compact mode to fit the narrow transport slot */}
         {!compact && (
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, textAlign: 'left' }}>
-            <span style={{ fontSize: 11.5, color: 'var(--onyx-text)' }}>{current?.name ?? 'Audio output'}</span>
+            <span style={{ fontSize: 11.5, color: 'var(--onyx-text)' }}>{current?.name ?? '音频输出'}</span>
           </div>
         )}
         <span style={{
@@ -117,7 +117,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
           ref={panelRef}
           id="onyx-device-listbox"
           role="listbox"
-          aria-label="Audio output device"
+          aria-label="音频输出设备"
           style={{
             position: 'fixed',
             top: dropPos.top,
@@ -131,9 +131,9 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
             zIndex: 9999,
           }}
         >
-          <div style={{ fontFamily: mono, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px' }}>OUTPUT DEVICE</div>
+          <div style={{ fontFamily: mono, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px' }}>输出设备</div>
           {devices.length === 0 ? (
-            <div style={{ padding: '8px', fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading devices…</div>
+            <div style={{ padding: '8px', fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>正在加载设备…</div>
           ) : devices.map(d => (
             <button
               key={d.id}

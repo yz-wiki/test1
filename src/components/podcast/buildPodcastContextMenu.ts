@@ -30,20 +30,20 @@ export function buildPodcastContextMenu(
   const isLocal = st.activeLibrary?.source === 'local';
   const isAdmin = st.user?.type === 'root' || st.user?.type === 'admin';
   const canManage = isLocal || isAdmin;
-  const title = item.media?.metadata?.title ?? 'this podcast';
+  const title = item.media?.metadata?.title ?? '此播客';
 
   // ── PODCAST ────────────────────────────────────────────────────────────────
   const podcast: ContextMenuItem[] = [
-    { label: 'Open Podcast', icon: 'list', primary: true, onClick: () => openDetail(item.id) },
+    { label: '打开播客', icon: 'list', primary: true, onClick: () => openDetail(item.id) },
   ];
   if (canManage) {
     podcast.push(
-      { label: 'Download Episodes…', icon: 'download', onClick: () => setDownloadItem?.(item), disabled: !setDownloadItem },
-      { label: 'Auto-download Settings', icon: 'sliders', onClick: () => setSettingsItem?.(item), disabled: !setSettingsItem },
+      { label: '下载单集…', icon: 'download', onClick: () => setDownloadItem?.(item), disabled: !setDownloadItem },
+      { label: '自动下载设置', icon: 'sliders', onClick: () => setSettingsItem?.(item), disabled: !setSettingsItem },
     );
   }
 
-  const sections: ContextMenuSection[] = [{ label: 'Podcast', items: podcast }];
+  const sections: ContextMenuSection[] = [{ label: '播客', items: podcast }];
 
   // ── MANAGE ──────────────────────────────────────────────────────────────────
   if (canManage) {
@@ -51,43 +51,43 @@ export function buildPodcastContextMenu(
     // Cover/Files use ABS server endpoints — only meaningful for ABS podcasts.
     if (!isLocal) {
       manage.push(
-        { label: 'Change Cover', icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
-        { label: 'Files', icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
+        { label: '更换封面', icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
+        { label: '文件', icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
       );
     }
     manage.push({
-      label: isLocal ? 'Check for New Episodes' : 'Re-Scan',
+      label: isLocal ? '检查新单集' : '重新扫描',
       icon: 'refresh',
       onClick: () => {
         const p = isLocal ? checkLocalNewEpisodes(item.id).then(() => st.refreshLibrary()) : rescanItem(st.serverUrl, item.id);
-        p.then(() => st.setToast({ message: isLocal ? `Checked "${title}" for new episodes` : `Rescan started for "${title}"`, type: 'success' }))
-          .catch(e => st.setToast({ message: `Failed: ${String(e)}`, type: 'error' }));
+        p.then(() => st.setToast({ message: isLocal ? `已检查“${title}”是否有新单集` : `已开始重新扫描“${title}”`, type: 'success' }))
+          .catch(e => st.setToast({ message: `失败：${String(e)}`, type: 'error' }));
       },
     });
-    sections.push({ label: 'Manage', items: manage });
+    sections.push({ label: '管理', items: manage });
 
     // Unsubscribe sits in its own divided-off group, like the audiobook Delete.
     sections.push({
       items: [
         {
-          label: 'Unsubscribe',
+          label: '取消订阅',
           icon: 'trash',
           danger: true,
           onClick: () => {
             st.setConfirmDialog({
-              title: `Unsubscribe from "${title}"?`,
+              title: `取消订阅“${title}”？`,
               message: isLocal
-                ? 'This removes the podcast from your library and deletes its downloaded episodes from disk. This cannot be undone.'
-                : 'This removes the podcast from your library. If file deletion is enabled on the server, its downloaded episodes are also deleted from disk. This cannot be undone.',
-              confirmLabel: 'Unsubscribe',
+                ? '这会从你的书库中移除该播客，并删除已下载到本机的单集文件。此操作无法撤销。'
+                : '这会从你的书库中移除该播客。如果服务器已开启删除文件，其下载的单集也会从磁盘删除。此操作无法撤销。',
+              confirmLabel: '取消订阅',
               onConfirm: () => {
                 const p = isLocal ? deleteLocalPodcast(item.id) : deleteItem(st.serverUrl, item.id);
                 p.then(() => {
                     st.removeLibraryItem(item.id);
                     onUnsubscribed?.(item.id);
-                    st.setToast({ message: `Unsubscribed from "${title}"`, type: 'success' });
+                    st.setToast({ message: `已取消订阅“${title}”`, type: 'success' });
                   })
-                  .catch(e => st.setToast({ message: `Unsubscribe failed: ${String(e)}`, type: 'error' }));
+                  .catch(e => st.setToast({ message: `取消订阅失败：${String(e)}`, type: 'error' }));
               },
             });
           },

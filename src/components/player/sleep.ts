@@ -5,12 +5,12 @@
 export type SleepMode = null | number | 'chapter';
 
 export const SLEEP_OPTIONS: { id: SleepMode; label: string }[] = [
-  { id: null,      label: 'Off'            },
-  { id: 5,         label: '5 minutes'      },
-  { id: 15,        label: '15 minutes'     },
-  { id: 30,        label: '30 minutes'     },
-  { id: 60,        label: '1 hour'         },
-  { id: 'chapter', label: 'End of chapter' },
+  { id: null,      label: '关闭'      },
+  { id: 5,         label: '5 分钟'    },
+  { id: 15,        label: '15 分钟'   },
+  { id: 30,        label: '30 分钟'   },
+  { id: 60,        label: '1 小时'    },
+  { id: 'chapter', label: '本章结束'  },
 ];
 
 /** Map the persisted Settings → Playback sleep-default string to a SleepMode. */

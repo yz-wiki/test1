@@ -10,11 +10,11 @@ const MONO = "'JetBrains Mono', ui-monospace, monospace";
 // anything unmatched falls to "Other". Categories render in DISPLAY order (which
 // matches the design). Keyword match is a case-insensitive substring test.
 const CAT_DEFS: Record<string, { label: string; kw: string[] }> = {
-  fantasy:  { label: 'Fantasy & Sci-Fi',  kw: ['fantasy', 'sci-fi', 'science fiction', 'dragon', 'magic', 'sorcery', 'sword', 'epic', 'space', 'cyberpunk', 'steampunk', 'dystop', 'apocalyp', 'paranormal', 'supernatural', 'myth', 'litrpg', 'gamelit', 'wizard', 'vampire', 'superhero'] },
-  mystery:  { label: 'Mystery & Thriller', kw: ['mystery', 'thriller', 'suspense', 'crime', 'detective', 'noir', 'spy', 'espionage', 'heist', 'horror'] },
-  format:   { label: 'Format & Audio',     kw: ['audio', 'dramatiz', 'performance', 'antholog', 'short stor', 'full cast', 'abridged', 'collection', 'radio'] },
-  themes:   { label: 'Themes & Era',       kw: ['historical', 'history', 'war', 'military', 'western', 'biograph', 'memoir', 'politic', 'classic', 'adventure', 'sea ', 'coming of age', 'religio', 'sports'] },
-  literary: { label: 'Literary & General', kw: ['literary', 'fiction', 'contemporary', 'general', 'drama', 'humor', 'humour', 'romance', 'romantic', 'women', 'young adult', 'teen', 'children', 'nonfiction', 'non-fiction', 'self', 'business', 'poetry', 'essay'] },
+  fantasy:  { label: '奇幻与科幻',  kw: ['fantasy', 'sci-fi', 'science fiction', 'dragon', 'magic', 'sorcery', 'sword', 'epic', 'space', 'cyberpunk', 'steampunk', 'dystop', 'apocalyp', 'paranormal', 'supernatural', 'myth', 'litrpg', 'gamelit', 'wizard', 'vampire', 'superhero'] },
+  mystery:  { label: '悬疑与惊悚', kw: ['mystery', 'thriller', 'suspense', 'crime', 'detective', 'noir', 'spy', 'espionage', 'heist', 'horror'] },
+  format:   { label: '形式与音频',     kw: ['audio', 'dramatiz', 'performance', 'antholog', 'short stor', 'full cast', 'abridged', 'collection', 'radio'] },
+  themes:   { label: '主题与时代',       kw: ['historical', 'history', 'war', 'military', 'western', 'biograph', 'memoir', 'politic', 'classic', 'adventure', 'sea ', 'coming of age', 'religio', 'sports'] },
+  literary: { label: '文学与综合', kw: ['literary', 'fiction', 'contemporary', 'general', 'drama', 'humor', 'humour', 'romance', 'romantic', 'women', 'young adult', 'teen', 'children', 'nonfiction', 'non-fiction', 'self', 'business', 'poetry', 'essay'] },
 };
 // Assignment priority — Format/Themes resolve before the broad "Literary" bucket
 // so e.g. "Historical Fiction" → Themes, "Audio Performances" → Format.
@@ -30,7 +30,7 @@ function categorize(tag: string): string {
   return 'other';
 }
 function catLabel(c: string): string {
-  return c === 'other' ? 'Other' : CAT_DEFS[c].label;
+  return c === 'other' ? '其他' : CAT_DEFS[c].label;
 }
 
 // A compact "Filters" button + popover for tag / language / explicit filtering.
@@ -114,7 +114,7 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
         border: `1px solid ${lit ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
         color: lit ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
       }}>
-        Filters{activeCount > 0 ? ` · ${activeCount}` : ''}
+        筛选{activeCount > 0 ? ` · ${activeCount}` : ''}
       </button>
 
       {open && (
@@ -125,9 +125,9 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
         }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>Filter library</span>
+            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>筛选书库</span>
             {activeCount > 0 && (
-              <button onClick={() => { st.setAdvFilter(EMPTY_ADV_FILTER); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>Clear</button>
+              <button onClick={() => { st.setAdvFilter(EMPTY_ADV_FILTER); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>清除</button>
             )}
           </div>
 
@@ -142,7 +142,7 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Filter tags…"
+              placeholder="筛选标签…"
               style={{
                 flex: 1, minWidth: 0, padding: '8px 0', background: 'transparent', border: 'none', outline: 'none',
                 color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 11,
@@ -204,28 +204,28 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
             </div>
           ) : allTags.length > 0 ? (
             <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', padding: '16px 2px' }}>
-              No tags match “{search}”.
+              没有标签匹配“{search}”。
             </div>
           ) : null}
 
           {/* Language */}
           {allLangs.length > 0 && (
             <>
-              {head('Language')}
+              {head('语言')}
               <select value={f.language} onChange={e => st.setAdvFilter({ ...f, language: e.target.value })} style={{
                 width: '100%', fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
                 border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
               }}>
-                <option value="">Any language</option>
+                <option value="">任意语言</option>
                 {allLangs.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </>
           )}
 
           {/* Explicit */}
-          {head('Explicit content')}
+          {head('露骨内容')}
           <div style={{ display: 'flex', gap: 5 }}>
-            {([['all', 'All'], ['clean', 'Clean'], ['explicit', 'Explicit']] as const).map(([v, l]) => {
+            {([['all', '全部'], ['clean', '干净'], ['explicit', '露骨']] as const).map(([v, l]) => {
               const on = f.explicit === v;
               return (
                 <button key={v} onClick={() => st.setAdvFilter({ ...f, explicit: v })} style={{
