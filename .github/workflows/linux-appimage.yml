@@ -6,7 +6,7 @@
 #
 # 产物:src-tauri/target/release/bundle/appimage/*.AppImage
 #
-# 日志:每个阶段独立 step 并 Tee 到 .gha-logs/,成功/失败都会上传,
+# 日志:每个阶段独立 step 并 Tee 到 gha-logs/,成功/失败都会上传,
 # 便于在云端定位错误。
 # =============================================================================
 
@@ -72,25 +72,25 @@ jobs:
 
       - name: 5 · pnpm install(冻结 lockfile)
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
           pnpm install --frozen-lockfile 2>&1 |
-            tee "$GITHUB_WORKSPACE/.gha-logs/05-pnpm-install.log"
+            tee "$GITHUB_WORKSPACE/gha-logs/05-pnpm-install.log"
           exit ${PIPESTATUS[0]}
 
       - name: 6 · 仓库校验套件(pnpm verify)
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
           pnpm verify 2>&1 |
-            tee "$GITHUB_WORKSPACE/.gha-logs/06-verify.log"
+            tee "$GITHUB_WORKSPACE/gha-logs/06-verify.log"
           exit ${PIPESTATUS[0]}
 
       # beforeBuildCommand = pnpm build:linux,会先用 system VLC 暂存
       # linux-runtime/plugins(AppImage 打包需要,见 tauri.linux.conf.json)。
       - name: 7 · tauri build(AppImage,--verbose 输出完整打包细节)
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.gha-logs"
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
           pnpm exec tauri build --ci --verbose 2>&1 |
-            tee "$GITHUB_WORKSPACE/.gha-logs/07-tauri-appimage.log"
+            tee "$GITHUB_WORKSPACE/gha-logs/07-tauri-appimage.log"
           exit ${PIPESTATUS[0]}
 
       - name: 8 · 产物清单
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: skald-linux-logs-${{ github.run_id }}
-          path: .gha-logs
+          path: gha-logs
           if-no-files-found: ignore
           retention-days: 14
 

@@ -12,7 +12,7 @@
 #
 # 日志与排错设计(便于在云编译日志里定位错误):
 #   * 每个阶段都是独立 step,失败时 GitHub 直接高亮该 step;
-#   * 每步输出同时 Tee 到 .gha-logs/<阶段>.log,并作为 artifact 上传
+#   * 每步输出同时 Tee 到 gha-logs/<阶段>.log,并作为 artifact 上传
 #     (成功/失败都会上传,if: always());
 #   * RUST_BACKTRACE=full + tauri build --verbose,保留最详细输出;
 #   * 运行时暂存脚本会打印"从哪下载 / 找到什么 / 缺哪个文件",失败原因一眼可见。
@@ -101,9 +101,9 @@ jobs:
 
       - name: 5 · pnpm install(冻结 lockfile)
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm install --frozen-lockfile 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\05-pnpm-install.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\05-pnpm-install.log"
           exit $LASTEXITCODE
 
       # 仓库里 vlc-dist/ 与 bin/ 是 git-ignored 的运行时(见 README),云编译必须现场补齐。
@@ -111,17 +111,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\stage-windows-runtime.ps1') -VlcVersion $env:VLC_VERSION 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\06-stage-runtime.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\06-stage-runtime.log"
           exit $LASTEXITCODE
 
       - name: 7 · 仓库校验套件(可选,run_verify=true 时)
         if: ${{ inputs.run_verify == true }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm verify 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\07-verify.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\07-verify.log"
           exit $LASTEXITCODE
 
       # all / nsis / msi → 走 tauri build 出安装器;tauri 会自动下载 NSIS/WiX 工具链。
@@ -129,7 +129,7 @@ jobs:
       - name: 8 · tauri build 安装器(NSIS / MSI)
         if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'nsis' || env.BUNDLES == 'msi' }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           $list = switch ($env:BUNDLES) {
             'nsis' { @('nsis') }
             'msi'  { @('msi') }
@@ -137,25 +137,25 @@ jobs:
           }
           Write-Host "tauri bundles: $($list -join ', ')"
           & pnpm exec tauri build --ci --verbose --bundles $list 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\08-tauri-installers.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\08-tauri-installers.log"
           exit $LASTEXITCODE
 
       # 只选了 portable 时不需要装安装器,直接 --no-bundle 编译 exe + 运行时即可。
       - name: 9 · tauri build --no-bundle(仅便携版场景)
         if: ${{ env.BUNDLES == 'portable' }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm exec tauri build --ci --verbose --no-bundle 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\09-tauri-nobundle.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\09-tauri-nobundle.log"
           exit $LASTEXITCODE
 
       # 便携 zip 从 target\release 的可运行布局打包(见 scripts/package-portable.ps1)。
       - name: 10 · 打包便携版 ZIP
         if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'portable' }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\package-portable.ps1') 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\10-portable.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\10-portable.log"
           exit $LASTEXITCODE
 
       - name: 11 · 产物清单与 SHA256
@@ -186,7 +186,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: skald-build-logs-${{ github.run_id }}
-          path: .gha-logs
+          path: gha-logs
           if-no-files-found: ignore
           retention-days: 14
 

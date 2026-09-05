@@ -2,14 +2,23 @@
 # windows-verify.yml — Windows 前端/后端编译校验(按需)
 #
 # 触发:仅 Actions 页面手动 Run workflow(workflow_dispatch)。
-# 背景(沿用上游注释):仓库不在线提供 VLC 链接/运行时(vlc-dist/ 为 git-ignored,
-# 需先由 scripts/stage-windows-runtime.ps1 现场暂存),因此这里只跑"无需链接
-# LibVLC"的校验:clippy 以 check 语义编译所有 crate 与 #[cfg(windows)] 分支,
-# 证明 Windows 专属代码在改动后仍能编译。完整安装包/便携包请用
-# build-windows.yml(已包含运行时暂存步骤)。
 #
-# 日志:每个校验命令独立 step 并 Tee 到 .gha-logs/,失败/成功都会上传 artifact,
-# 方便在云端定位具体是哪一条命令、哪一个文件报错。
+# 本工作流覆盖"改动后 Windows 代码能否编译"的快速检查:
+#   * 前端:tsc 类型检查 + vitest + 仓库自带 commands/console 校验脚本;
+#   * 后端:clippy --all-targets,以 check 语义编译所有 crate 与
+#     #[cfg(windows)] 分支(不链接、不运行)。
+#
+# 为什么这里也要"暂存打包运行时"?
+#   tauri-build 在编译期(连 clippy 的 check 阶段)就会校验
+#   tauri.windows.conf.json 里声明的 bundle.resources(vlc-dist/*、bin/*)。
+#   这些目录被 gitignore、克隆后并不存在,因此必须先跑
+#   scripts/stage-windows-runtime.ps1 现场补齐,否则报:
+#     resource path `vlc-dist\libvlc.dll` doesn't exist
+#   (test:rust 仍然刻意排除:它属于链接/运行范畴,且部分用例需要真实
+#   凭据文件;完整打包验证请用 build-windows.yml。)
+#
+# 日志:每个命令独立 step 并 Tee 到 gha-logs/(目录名不带前导点,否则会被
+# actions/upload-artifact 当隐藏文件跳过),失败/成功都会上传 artifact。
 # =============================================================================
 
 name: Windows 校验(按需)
@@ -27,6 +36,7 @@ jobs:
   verify:
     name: Windows 编译校验
     runs-on: windows-latest
+    timeout-minutes: 90
     defaults:
       run:
         shell: pwsh
@@ -42,6 +52,14 @@ jobs:
           rustc --version
           cargo --version
           Write-Host "::endgroup::"
+
+      - name: 1b · cargo 依赖缓存(加速重复按需校验)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock') }}
 
       - name: 2 · Rust stable(含 clippy)
         uses: dtolnay/rust-toolchain@stable
@@ -60,52 +78,63 @@ jobs:
 
       - name: 4 · pnpm install(冻结 lockfile)
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm install --frozen-lockfile 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\04-pnpm-install.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\04-pnpm-install.log"
           exit $LASTEXITCODE
 
       - name: 5 · 前端类型检查(tsc)
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm typecheck 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\05-typecheck.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\05-typecheck.log"
           exit $LASTEXITCODE
 
       - name: 6 · 前端单元测试(vitest)
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm test:front 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\06-front-tests.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\06-front-tests.log"
           exit $LASTEXITCODE
 
       - name: 7 · Tauri 命令一致性校验
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm verify:commands 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\07-verify-commands.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\07-verify-commands.log"
           exit $LASTEXITCODE
 
       - name: 8 · console.* 使用校验
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
           & pnpm verify:console 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\08-verify-console.log"
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\08-verify-console.log"
           exit $LASTEXITCODE
 
-      # clippy 以 check 语义编译(不链接 LibVLC),覆盖 #[cfg(windows)] 代码。
-      - name: 9 · Rust clippy(Windows 分支编译校验)
+      # 关键前置:补齐 vlc-dist/ + bin/(git-ignored 运行时),否则 tauri-build
+      # 会在 clippy 阶段因 "resource path `vlc-dist\libvlc.dll` doesn't exist" 失败。
+      - name: 9 · 暂存打包运行时(VLC + ffprobe + tone)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\.gha-logs" | Out-Null
-          & pnpm verify:clippy 2>&1 |
-              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\.gha-logs\09-clippy.log"
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\stage-windows-runtime.ps1') 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\09-stage-runtime.log"
           exit $LASTEXITCODE
 
-      - name: 10 · 上传校验日志(成功/失败都会上传)
+      # clippy 以 check 语义编译(不链接/不运行),覆盖 #[cfg(windows)] 代码。
+      - name: 10 · Rust clippy(Windows 分支编译校验)
+        run: |
+          New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
+          & pnpm verify:clippy 2>&1 |
+              Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\10-clippy.log"
+          exit $LASTEXITCODE
+
+      - name: 11 · 上传校验日志(成功/失败都会上传)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: skald-verify-logs-${{ github.run_id }}
-          path: .gha-logs
+          path: gha-logs
           if-no-files-found: ignore
           retention-days: 14

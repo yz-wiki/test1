@@ -20,14 +20,19 @@
 - `skald-portable-<run>` → `Skald_<version>_portable_win-x64.zip`(绿色免安装版)
 - `skald-build-logs-<run>` → 每阶段完整日志(即使失败也会上传),用来定位云编译错误
 
+> 日志目录叫 `gha-logs`(不带前导点):以 `.` 开头的目录会被 upload-artifact
+> 当作隐藏内容跳过,导致"日志没传上来"的假象。
+
 ## 排错小贴士
 
 - 失败时 GitHub 会直接标红对应的 step;点开即可看到该阶段输出。
 - 想深入排查就下载 `skald-build-logs` artifact,按阶段查看:
-  `04-pnpm-install.log`(依赖)、`05-stage-runtime.log`(VLC/ffprobe/tone 暂存)、
-  `07-tauri-installers.log`(Rust 编译 + NSIS/WiX 打包)、`09-portable.log`(便携打包)。
+  `04-pnpm-install.log`(依赖)、`06-stage-runtime.log`(VLC/ffprobe/tone 暂存)、
+  `08-tauri-installers.log`(Rust 编译 + NSIS/WiX 打包)、`10-portable.log`(便携打包)。
 - 常见错误与对策:
-  - `05` 失败 = 下载/解压 VLC、FFmpeg 或 tone 出问题,日志会写明具体缺哪个文件;
-  - `07` 里 cargo 报错 = 代码编译问题(文件:行号 + 错误片段都在日志里);
-  - `07` 里 NSIS/WiX 报错 = 打包器问题,日志会打印 makensis/WiX 命令细节;
-  - 产物未上传但步骤显示成功 = 检查 `10 · 产物清单` 步骤的 SHA256 输出。
+  - `06` 失败 = 下载/解压 VLC、FFmpeg 或 tone 出问题,日志会写明具体缺哪个文件;
+  - `08` 里 cargo 报错 = 代码编译问题(文件:行号 + 错误片段都在日志里);
+  - `08` 里 NSIS/WiX 报错 = 打包器问题,日志会打印 makensis/WiX 命令细节;
+  - 产物未上传但步骤显示成功 = 检查 `11 · 产物清单` 步骤的 SHA256 输出。
+  - clippy 阶段报 `resource path ... doesn't exist` = 说明运行时暂存(step 9)没跑或
+    没成功,先看 `09-stage-runtime.log`。
