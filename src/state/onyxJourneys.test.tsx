@@ -339,7 +339,7 @@ describe('playback-state regression guards', () => {
       await pendingFlush;
     });
     await waitFor(() => {
-      expect(result.current.toast?.message).toContain('Damaged offline progress queue reset');
+      expect(result.current.toast?.message).toContain('检测到损坏的 offline progress queue');
     });
   });
 });

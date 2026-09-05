@@ -47,15 +47,15 @@ describe('combined-shelf context menu (All Libraries boundary)', () => {
     const sections = buildItemContextMenu(ITEM, fakeState('all'));
     const labels = sections.map(s => s.label);
 
-    expect(labels).not.toContain('Organize');
-    const source = sections.find(s => s.label === 'Source');
-    expect(source?.items.map(i => i.label)).toEqual(['Open in Server Shelf']);
+    expect(labels).not.toContain('整理');
+    const source = sections.find(s => s.label === '来源');
+    expect(source?.items.map(i => i.label)).toEqual(['在“Server Shelf”中打开']);
   });
 
   it('jumping to the source library resets the view context and focuses the item', () => {
     const st = fakeState('all');
     const sections = buildItemContextMenu(ITEM, st);
-    sections.find(s => s.label === 'Source')!.items[0].onClick!();
+    sections.find(s => s.label === '来源')!.items[0].onClick!();
 
     expect(st.setActiveLibrary).toHaveBeenCalledWith('abs-lib');
     expect(st.setSearch).toHaveBeenCalledWith('');
@@ -68,7 +68,7 @@ describe('combined-shelf context menu (All Libraries boundary)', () => {
     const sections = buildItemContextMenu(ITEM, fakeState(undefined));
     const labels = sections.map(s => s.label);
 
-    expect(labels).not.toContain('Source');
-    expect(labels).toContain('Organize');
+    expect(labels).not.toContain('来源');
+    expect(labels).toContain('整理');
   });
 });

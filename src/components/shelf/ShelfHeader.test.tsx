@@ -94,17 +94,17 @@ describe('ShelfHeader tab row', () => {
     // removing the only way to reach them instead of letting the strip scroll.
     render(<ShelfHeader st={state()} />);
 
-    expect(screen.getByText('Collections')).toBeTruthy();
-    expect(screen.getByText('Home')).toBeTruthy();
-    expect(screen.getByText('Recently Added')).toBeTruthy();
+    expect(screen.getByText('合集')).toBeTruthy();
+    expect(screen.getByText('首页')).toBeTruthy();
+    expect(screen.getByText('最近添加')).toBeTruthy();
   });
 
   it('still honours the tabs turned off in settings', () => {
     // Scrolling replaces width-based hiding, not the user's own choice.
     render(<ShelfHeader st={state()} />);
 
-    expect(screen.queryByText('Playlists')).toBeNull();
-    expect(screen.queryByText('Narrators')).toBeNull();
+    expect(screen.queryByText('播放列表')).toBeNull();
+    expect(screen.queryByText('讲述人')).toBeNull();
   });
 });
 
@@ -119,7 +119,7 @@ describe('ShelfHeader series count', () => {
     // in your library" down there.
     getLibrarySeries.mockResolvedValue(seriesList(8));
     render(<ShelfHeader st={onSeriesTab()} />);
-    await waitFor(() => expect(screen.getByText('8 series')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('8 个系列')).toBeTruthy());
 
     getLibrarySeries.mockResolvedValue(seriesList(9));
     act(() => {
@@ -129,7 +129,7 @@ describe('ShelfHeader series count', () => {
     // window closes.
     expect(getLibrarySeries).toHaveBeenCalledTimes(1);
 
-    await waitFor(() => expect(screen.getByText('9 series')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('9 个系列')).toBeTruthy());
     expect(getLibrarySeries).toHaveBeenCalledTimes(2);
   });
 
@@ -155,6 +155,6 @@ describe('ShelfHeader series count', () => {
 
     rerender(<ShelfHeader st={onSeriesTab()} />);
 
-    await waitFor(() => expect(screen.getByText('8 series')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('8 个系列')).toBeTruthy());
   });
 });

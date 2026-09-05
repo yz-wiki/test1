@@ -17,7 +17,7 @@ describe('Toast accessibility contract', () => {
     expect(toast.getAttribute('aria-live')).toBe('assertive');
     expect(toast.getAttribute('aria-atomic')).toBe('true');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }));
+    fireEvent.click(screen.getByRole('button', { name: '关闭通知' }));
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 

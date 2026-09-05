@@ -54,7 +54,7 @@ function state(podcastDetailId: string): OnyxState {
   } as unknown as OnyxState;
 }
 
-const directionButton = () => screen.getByRole('button', { name: /^Up next · / });
+const directionButton = () => screen.getByRole('button', { name: /^接下来播放 · / });
 
 beforeEach(() => { localStorage.clear(); });
 
@@ -63,11 +63,11 @@ describe('the per-show advance direction', () => {
     localStorage.setItem(DIRECTION('p1'), JSON.stringify('newest'));
     // p2 has no stored direction, so it is the default: oldest first.
     const { rerender } = render(<PodcastDetail st={state('p1')} />);
-    expect(directionButton().textContent).toBe('Up next · newest first');
+    expect(directionButton().textContent).toBe('接下来播放 · 从新到旧');
 
     rerender(<PodcastDetail st={state('p2')} />);
 
-    expect(directionButton().textContent).toBe('Up next · oldest first');
+    expect(directionButton().textContent).toBe('接下来播放 · 从旧到新');
   });
 
   it('toggles from the new show’s value, and writes under its key', () => {
@@ -80,7 +80,7 @@ describe('the per-show advance direction', () => {
     // Toggling a stale "newest" would have written oldest-first and appeared to
     // do nothing, while the control claimed an order resolution never used.
     expect(localStorage.getItem(DIRECTION('p2'))).toBe(JSON.stringify('newest'));
-    expect(directionButton().textContent).toBe('Up next · newest first');
+    expect(directionButton().textContent).toBe('接下来播放 · 从新到旧');
     expect(localStorage.getItem(DIRECTION('p1'))).toBe(JSON.stringify('newest'));
   });
 });

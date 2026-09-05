@@ -23,7 +23,7 @@ describe('bookAuthor', () => {
     expect(bookAuthor(item({ authorName: 'Miles Cameron' }))).toBe('Miles Cameron');
     expect(bookAuthor(item({ authorName: { name: 'One Author' } }))).toBe('One Author');
     expect(bookAuthor(item({ authorName: [{ name: 'A' }, { name: 'B' }] }))).toBe('A, B');
-    expect(bookAuthor(item({}))).toBe('Unknown Author');
+    expect(bookAuthor(item({}))).toBe('未知作者');
   });
 });
 

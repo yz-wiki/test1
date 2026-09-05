@@ -20,9 +20,9 @@ function state(): OnyxState {
 describe('MiniPlayer accessibility', () => {
   it('names icon controls and exposes keyboard seeking', () => {
     render(<MiniPlayer st={state()} />);
-    expect(screen.getByRole('button', { name: 'Return to now playing: Test Book' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy();
-    const slider = screen.getByRole('slider', { name: 'Seek in Test Book' });
+    expect(screen.getByRole('button', { name: '返回正在播放：Test Book' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '暂停' })).toBeTruthy();
+    const slider = screen.getByRole('slider', { name: '在 Test Book 中定位' });
     expect(slider.getAttribute('aria-valuenow')).toBe('30');
     const bubbledKeydown = vi.fn();
     window.addEventListener('keydown', bubbledKeydown);

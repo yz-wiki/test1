@@ -82,9 +82,9 @@ describe('SyncSection connection confirmation', () => {
     render(<SyncSection st={st} embedded />);
     await act(async () => {});
 
-    expect(screen.getByText('Degraded')).toBeTruthy();
+    expect(screen.getByText('降级')).toBeTruthy();
     expect(screen.getByText('2')).toBeTruthy();
-    expect(screen.getByText('Phone (conflict)')).toBeTruthy();
+    expect(screen.getByText('Phone（冲突）')).toBeTruthy();
   });
 
   it('does not arm a stale timeout when authentication arrives before connect resolves', async () => {
@@ -101,7 +101,7 @@ describe('SyncSection connection confirmation', () => {
     // Rust can emit this from inside connect_socket before the invoke promise
     // resolves back to JavaScript. It must clear an already-armed timer.
     act(() => { tauri.emit('socket-authenticated'); });
-    expect(screen.getByText('Connected')).toBeTruthy();
+    expect(screen.getByText('已连接')).toBeTruthy();
 
     await act(async () => {
       resolveConnect?.();

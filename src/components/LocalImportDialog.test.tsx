@@ -68,12 +68,12 @@ describe('shared local import dialog', () => {
     const { asOnyx } = fakeState('elsewhere');
     render(<LocalImportDialog st={asOnyx} library={LIBRARY} onClose={() => {}} />);
 
-    expect(screen.getByText('Add books to “On this PC”')).toBeTruthy();
-    expect(screen.getByText('Add files')).toBeTruthy();
-    expect(screen.getByText('Add folder')).toBeTruthy();
-    expect(screen.getByText('Open Staging')).toBeTruthy();
-    expect(screen.getByText('What happens to your files')).toBeTruthy();
-    expect(screen.getByText(/Copy and keep originals/)).toBeTruthy();
+    expect(screen.getByText('添加图书到“On this PC”')).toBeTruthy();
+    expect(screen.getByText('添加文件')).toBeTruthy();
+    expect(screen.getByText('添加文件夹')).toBeTruthy();
+    expect(screen.getByText('打开暂存文件夹')).toBeTruthy();
+    expect(screen.getByText('你的文件将如何处理')).toBeTruthy();
+    expect(screen.getByText(/复制并保留原件/)).toBeTruthy();
   });
 
   it('imports picked files, reports the added count, and refreshes the active library in place', async () => {
@@ -85,14 +85,14 @@ describe('shared local import dialog', () => {
     const onClose = vi.fn();
     render(<LocalImportDialog st={asOnyx} library={LIBRARY} onClose={onClose} />);
 
-    fireEvent.click(screen.getByText('Add files'));
+    fireEvent.click(screen.getByText('添加文件'));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(tauri.calls.find(c => c.cmd === 'ingest_local_paths')?.args).toMatchObject({
       libraryId: LIBRARY.id, sources: ['C:/in/book.m4b'],
     });
     expect(st.setToast).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('1 added'), type: 'success',
+      message: expect.stringContaining('1 个已添加'), type: 'success',
     }));
     await waitFor(() => expect(st.setActiveLibrary).toHaveBeenCalledWith(LIBRARY.id));
     expect(st.refreshLibrary).not.toHaveBeenCalled();
@@ -107,7 +107,7 @@ describe('shared local import dialog', () => {
     const onClose = vi.fn();
     render(<LocalImportDialog st={asOnyx} library={LIBRARY} onClose={onClose} />);
 
-    fireEvent.click(screen.getByText('Add files'));
+    fireEvent.click(screen.getByText('添加文件'));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     await waitFor(() => expect(st.refreshLibrary).toHaveBeenCalled());
@@ -124,11 +124,11 @@ describe('shared local import dialog', () => {
     const onClose = vi.fn();
     render(<LocalImportDialog st={asOnyx} library={LIBRARY} onClose={onClose} />);
 
-    fireEvent.click(screen.getByText('Add folder'));
+    fireEvent.click(screen.getByText('添加文件夹'));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(st.setToast).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('1 added, 1 need attention'), type: 'success',
+      message: expect.stringContaining('1 个已添加，1 条待处理'), type: 'success',
     }));
   });
 
@@ -139,9 +139,9 @@ describe('shared local import dialog', () => {
     const onClose = vi.fn();
     render(<LocalImportDialog st={asOnyx} library={LIBRARY} onClose={onClose} />);
 
-    fireEvent.click(screen.getByText('Add files'));
+    fireEvent.click(screen.getByText('添加文件'));
 
-    await waitFor(() => expect(screen.getByText(/Could not import/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/无法从该位置导入/)).toBeTruthy());
     expect(onClose).not.toHaveBeenCalled();
     expect(st.setToast).not.toHaveBeenCalled();
   });

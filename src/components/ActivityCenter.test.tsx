@@ -10,18 +10,18 @@ describe('ActivityCenter', () => {
     const clearActivity = vi.fn();
     const st = {
       activity: [
-        { id: 'new', timestamp: Date.now(), category: 'downloads', outcome: 'error', message: 'Download failed' },
-        { id: 'old', timestamp: Date.now() - 60_000, category: 'sync', outcome: 'success', message: 'Sync restored' },
+        { id: 'new', timestamp: Date.now(), category: 'downloads', outcome: 'error', message: '下载失败' },
+        { id: 'old', timestamp: Date.now() - 60_000, category: 'sync', outcome: 'success', message: '同步已恢复' },
       ],
       clearActivity,
     } as unknown as OnyxState;
     render(<ActivityCenter st={st} />);
 
-    const trigger = screen.getByRole('button', { name: 'Recent activity, 2 items' });
+    const trigger = screen.getByRole('button', { name: '最近活动，2 条' });
     fireEvent.click(trigger);
-    expect(screen.getByRole('dialog', { name: 'Recent activity' })).toBeTruthy();
-    expect(screen.getAllByText(/Download failed|Sync restored/).map(node => node.textContent)).toEqual(['Download failed', 'Sync restored']);
-    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(screen.getByRole('dialog', { name: '最近活动' })).toBeTruthy();
+    expect(screen.getAllByText(/下载失败|同步已恢复/).map(node => node.textContent)).toEqual(['下载失败', '同步已恢复']);
+    fireEvent.click(screen.getByRole('button', { name: '清空' }));
     expect(clearActivity).toHaveBeenCalledOnce();
 
     fireEvent.keyDown(document, { key: 'Escape' });

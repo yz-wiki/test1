@@ -236,27 +236,27 @@ describe('useLiveSync runtime preference lifecycle', () => {
       tauri.emit('session-sync-warning', { currentTime: 125, queued: true });
     });
     expect(stableDeps.setToast).toHaveBeenLastCalledWith({
-      message: 'Progress sync is temporarily offline — your position was saved locally.',
+      message: '进度同步暂时离线——你的收听位置已保存在本地。',
       type: 'info',
     });
     expect(stableDeps.recordActivity).toHaveBeenLastCalledWith({
-      category: 'sync', outcome: 'error', message: 'Progress sync interrupted — position saved locally',
+      category: 'sync', outcome: 'error', message: '进度同步中断——收听位置已保存在本地',
     });
     expect(stableDeps.surfaceCorruptPersistenceNotices).toHaveBeenCalledTimes(1);
 
     act(() => { tauri.emit('session-sync-warning', { currentTime: 130, queued: false }); });
     expect(stableDeps.setToast).toHaveBeenLastCalledWith({
-      message: 'Progress sync failed and your position could not be saved locally.',
+      message: '进度同步失败，无法在本地保存你的收听位置。',
       type: 'error',
     });
     expect(stableDeps.recordActivity).toHaveBeenLastCalledWith({
-      category: 'sync', outcome: 'error', message: 'Progress sync interrupted — local fallback failed',
+      category: 'sync', outcome: 'error', message: '进度同步中断——本地回退保存失败',
     });
 
     act(() => { tauri.emit('session-sync-restored', { currentTime: 140 }); });
-    expect(stableDeps.setToast).toHaveBeenLastCalledWith({ message: 'Progress sync restored', type: 'success' });
+    expect(stableDeps.setToast).toHaveBeenLastCalledWith({ message: '进度同步已恢复', type: 'success' });
     expect(stableDeps.recordActivity).toHaveBeenLastCalledWith({
-      category: 'sync', outcome: 'success', message: 'Progress sync restored',
+      category: 'sync', outcome: 'success', message: '进度同步已恢复',
     });
   });
 

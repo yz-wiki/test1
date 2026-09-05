@@ -138,7 +138,7 @@ describe('auth-expired routing (Auth Token Refresh roadmap)', () => {
     expect(result.current.screen).toBe('login');
     expect(result.current.authToken).toBe('');
     expect(localStorage.getItem('skald.hasAuth')).toBeNull();
-    expect(result.current.toast?.message).toMatch(/sign in again/i);
+    expect(result.current.toast?.message).toMatch(/请重新登录/);
     // The address is a convenience, not a credential — it survives.
     expect(localStorage.getItem('skald.serverUrl')).toBe('https://abs.example');
   });

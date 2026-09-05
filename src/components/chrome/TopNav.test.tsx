@@ -48,19 +48,19 @@ describe('TopNav selector accessibility', () => {
   it('exposes the library trigger and listbox relationship', () => {
     render(<TopNav st={state()} />);
 
-    const trigger = screen.getByTitle('Switch library');
+    const trigger = screen.getByTitle('切换书库');
     expect(trigger.getAttribute('aria-haspopup')).toBe('listbox');
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
     fireEvent.click(trigger);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByRole('listbox', { name: 'Choose library' })).toBeTruthy();
+    expect(screen.getByRole('listbox', { name: '选择书库' })).toBeTruthy();
     expect(screen.getAllByRole('option')).toHaveLength(3);
   });
 
   it('moves through library options and returns focus on Escape', () => {
     render(<TopNav st={state()} />);
-    const trigger = screen.getByTitle('Switch library');
+    const trigger = screen.getByTitle('切换书库');
     fireEvent.click(trigger);
     const options = screen.getAllByRole('option');
 
@@ -69,14 +69,14 @@ describe('TopNav selector accessibility', () => {
     expect(document.activeElement).toBe(options[1]);
 
     fireEvent.keyDown(options[1], { key: 'Escape' });
-    expect(screen.queryByRole('listbox', { name: 'Choose library' })).toBeNull();
+    expect(screen.queryByRole('listbox', { name: '选择书库' })).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
 
   it('switches libraries without erasing the source library search', () => {
     const st = state();
     render(<TopNav st={st} />);
-    fireEvent.click(screen.getByTitle('Switch library'));
+    fireEvent.click(screen.getByTitle('切换书库'));
     fireEvent.click(screen.getByRole('option', { name: /Two/ }));
 
     expect(st.setActiveLibrary).toHaveBeenCalledWith('two');
@@ -85,9 +85,9 @@ describe('TopNav selector accessibility', () => {
 
   it('marks the search-scope selection and supports Home and End', () => {
     render(<TopNav st={state()} />);
-    const trigger = screen.getByRole('button', { name: 'Search field scope' });
+    const trigger = screen.getByRole('button', { name: '搜索范围' });
     fireEvent.click(trigger);
-    const listbox = screen.getByRole('listbox', { name: 'Search field scope' });
+    const listbox = screen.getByRole('listbox', { name: '搜索范围' });
     const options = Array.from(listbox.querySelectorAll<HTMLElement>('[role="option"]'));
 
     expect(options[0].getAttribute('aria-selected')).toBe('true');
