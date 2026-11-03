@@ -60,8 +60,12 @@ pub fn register_shortcuts(
                 continue;
             }
         };
+        // Capture the id first: `register` takes the shortcut by value, and
+        // whether `Shortcut` happens to be Copy is an implementation detail of
+        // global-hotkey we do not want to depend on.
+        let id = shortcut.id();
         match app.global_shortcut().register(shortcut) {
-            Ok(()) => { map.insert(shortcut.id(), binding.action.clone()); }
+            Ok(()) => { map.insert(id, binding.action.clone()); }
             Err(e) => failures.push(ShortcutFailure {
                 action: binding.action.clone(),
                 shortcut: binding.shortcut.clone(),
