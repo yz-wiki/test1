@@ -2,6 +2,7 @@
 // editor from cluster H.
 // Moved verbatim out of AccountSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { SERIF, MONO, Pill } from '../shared';
 import type { AdminUser, UserPermissions } from '../../../api/abs';
 import { useModalFocus } from '../../../hooks/useModalFocus';
@@ -74,6 +75,7 @@ export default function UserModal({
   onSubmit,
   onCancel,
 }: UserModalProps) {
+  const { t } = useI18n();
   const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState('');
   // Clamp to 'admin' or 'user'; 'root' cannot be assigned through the UI.
@@ -221,12 +223,12 @@ export default function UserModal({
         {/* Identity — username + password side by side */}
         <div style={twoCol}>
           <div>
-            <div style={fieldLabel}>Username</div>
+            <div style={fieldLabel}>{t('userModal.username')}</div>
             <input
               style={fieldInput}
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="username"
+              placeholder={t('userModal.usernamePlaceholder')}
               spellCheck={false}
               // Auto-focus the first field when the modal opens.
               autoFocus
@@ -257,7 +259,7 @@ export default function UserModal({
 
         {/* Email — full width */}
         <div>
-          <div style={fieldLabel}>Email <span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>(optional)</span></div>
+          <div style={fieldLabel}>{t('userModal.email')}<span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>(optional)</span></div>
           <input
             style={fieldInput}
             type="email"
@@ -271,14 +273,14 @@ export default function UserModal({
         {/* Account type + enable, side by side */}
         <div style={twoCol}>
           <div>
-            <div style={fieldLabel}>Account type</div>
+            <div style={fieldLabel}>{t('userModal.accountType')}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <Pill active={userType === 'user'} onClick={() => setUserType('user')}>user</Pill>
               <Pill active={userType === 'admin'} onClick={() => setUserType('admin')}>admin</Pill>
             </div>
           </div>
           <div>
-            <div style={fieldLabel}>Enabled</div>
+            <div style={fieldLabel}>{t('userModal.enabled')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 30 }}>
               <PermToggle on={enable} onChange={setEnable} />
               <span style={{ fontSize: 12, color: 'var(--onyx-text-dim)' }}>{enable ? 'Account active' : 'Account disabled'}</span>
@@ -288,25 +290,25 @@ export default function UserModal({
 
         {/* ── Permissions (shown for both add + edit) — two columns of toggles ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 8, borderTop: '1px solid var(--onyx-line)' }}>
-          <div style={fieldLabel}>Permissions</div>
+          <div style={fieldLabel}>{t('userModal.permissions')}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28, rowGap: 13 }}>
-            <PermRow label="Can Download"                on={canDownload}        onChange={setCanDownload} />
-            <PermRow label="Can Update"                  on={canUpdate}          onChange={setCanUpdate} />
-            <PermRow label="Can Delete"                  on={canDelete}          onChange={setCanDelete} />
-            <PermRow label="Can Upload"                  on={canUpload}          onChange={setCanUpload} />
-            <PermRow label="Can Create Ereader"          on={canCreateEreader}   onChange={setCanCreateEreader} />
-            <PermRow label="Can Access Explicit Content" on={accessExplicit}     onChange={setAccessExplicit} />
-            <PermRow label="Can Access All Libraries"    on={accessAllLibraries} onChange={setAccessAllLibraries} />
-            <PermRow label="Can Access All Tags"         on={accessAllTags}      onChange={setAccessAllTags} />
+            <PermRow label={t('userModal.canDownload')}                on={canDownload}        onChange={setCanDownload} />
+            <PermRow label={t('userModal.canUpdate')}                  on={canUpdate}          onChange={setCanUpdate} />
+            <PermRow label={t('userModal.canDelete')}                  on={canDelete}          onChange={setCanDelete} />
+            <PermRow label={t('userModal.canUpload')}                  on={canUpload}          onChange={setCanUpload} />
+            <PermRow label={t('userModal.canEreader')}          on={canCreateEreader}   onChange={setCanCreateEreader} />
+            <PermRow label={t('userModal.canExplicit')} on={accessExplicit}     onChange={setAccessExplicit} />
+            <PermRow label={t('userModal.canAllLibraries')}    on={accessAllLibraries} onChange={setAccessAllLibraries} />
+            <PermRow label={t('userModal.canAllTags')}         on={accessAllTags}      onChange={setAccessAllTags} />
           </div>
 
           {/* Library picker — shown when access-all is off (full width, 2-col list). */}
           {!accessAllLibraries && (
             <div style={pickerBox}>
-              <div style={fieldLabel}>Accessible libraries</div>
+              <div style={fieldLabel}>{t('userModal.accessibleLibraries')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 20px', maxHeight: 150, overflowY: 'auto' }}>
-                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>No libraries found.</div>}
+                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>{t('userModal.noLibraries')}</div>}
                 {libraries.map(lib => (
                   <label key={lib.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
                     <input type="checkbox" style={{ accentColor: 'var(--onyx-accent)' }} checked={librariesAccessible.includes(lib.id)} onChange={() => setLibrariesAccessible(prev => toggleInArray(prev, lib.id))} />
@@ -321,13 +323,13 @@ export default function UserModal({
               plus the selectable tag chips. */}
           {!accessAllTags && (
             <div style={pickerBox}>
-              <div style={fieldLabel}>Accessible tags</div>
+              <div style={fieldLabel}>{t('userModal.accessibleTags')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>only selected</Pill>
                 <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>all except</Pill>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 150, overflowY: 'auto' }}>
-                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>No tags in the loaded library.</div>}
+                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>{t('userModal.noTags')}</div>}
                 {availableTags.map(tag => {
                   const on = itemTagsSelected.includes(tag);
                   return (
@@ -370,7 +372,7 @@ export default function UserModal({
               cursor: 'pointer',
             }}
           >
-            Cancel
+            {t('userModal.cancel')}
           </button>
           <button
             type="submit"

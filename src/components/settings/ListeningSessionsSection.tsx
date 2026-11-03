@@ -6,7 +6,8 @@
 //   2. Open Listening Sessions — currently active sessions from GET /api/users/online
 //      (openSessions field), auto-refreshed every 30 s.
 
-import { useState, useEffect, useCallback } from 'react'; // useMemo removed — sort is now server-side
+import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n'; // useMemo removed — sort is now server-side
 import type { OnyxState } from '../../state/onyx';
 import { SERIF, MONO } from './shared';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -170,6 +171,7 @@ function SessionRow({
   showDelete: boolean;   // only admin sees the delete button
   onDelete: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <tr>
       {/* ITEM: title + author in muted subtext */}
@@ -232,7 +234,7 @@ function SessionRow({
         <td style={{ padding: '10px 0', borderTop: '1px solid var(--onyx-line)', verticalAlign: 'top' }}>
           <button
             onClick={onDelete}
-            title="Delete session"
+            title={t('sessions.delete')}
             style={{
               width: 28,
               height: 28,
@@ -262,6 +264,7 @@ export interface ListeningSessionsSectionProps {
 }
 
 export default function ListeningSessionsSection({ st }: ListeningSessionsSectionProps) {
+  const { t } = useI18n();
   // Admin gate — drives the user-filter dropdown and the delete button.
   const isAdmin = st.isAdmin;
 
@@ -459,7 +462,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         {/* Card header: title + admin user-filter dropdown */}
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
-            Listening Sessions
+            {t('sessions.title')}
           </div>
 
           {/* Admin-only filter dropdown — not shown to non-admins */}
@@ -486,9 +489,9 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               }}
             >
               {/* All Users — default for admins; maps to null → GET /api/sessions */}
-              <option value="">All Users</option>
+              <option value="">{t('sessions.allUsers')}</option>
               {/* My sessions — '__me__' sentinel → GET /api/me/listening-sessions */}
-              <option value="__me__">My sessions</option>
+              <option value="__me__">{t('sessions.mySessions')}</option>
               {/* Per-user options — specific user ID → GET /api/users/{id}/listening-sessions */}
               {allUsers.map(u => (
                 <option key={u.id} value={u.id}>{u.username}</option>
@@ -524,14 +527,14 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
             <thead>
               <tr>
                 {/* Each sortable header is clickable; active/dir drive the ▲/▼ indicator */}
-                <TH onClick={() => handleSort('displayTitle', 'desc')} active={sortKey === 'displayTitle'} dir={sortDir}>Item</TH>
+                <TH onClick={() => handleSort('displayTitle', 'desc')} active={sortKey === 'displayTitle'} dir={sortDir}>{t('sessions.colItem')}</TH>
                 {/* USER column only visible to admins; sorts by userId server-side */}
-                {isAdmin && <TH w={90} onClick={() => handleSort('username', 'asc')} active={sortKey === 'username'} dir={sortDir}>User</TH>}
+                {isAdmin && <TH w={90} onClick={() => handleSort('username', 'asc')} active={sortKey === 'username'} dir={sortDir}>{t('sessions.colUser')}</TH>}
                 {/* DEVICE sorts client-side only — deviceInfo.clientName is not a top-level field */}
-                <TH w={120} onClick={() => handleSort('device', 'asc')} active={sortKey === 'device'} dir={sortDir}>Device</TH>
-                <TH w={80} onClick={() => handleSort('timeListening', 'desc')} active={sortKey === 'timeListening'} dir={sortDir}>Listened</TH>
-                <TH w={80} onClick={() => handleSort('currentTime', 'desc')} active={sortKey === 'currentTime'} dir={sortDir}>Position</TH>
-                <TH w={80} onClick={() => handleSort('updatedAt', 'desc')} active={sortKey === 'updatedAt'} dir={sortDir}>Updated</TH>
+                <TH w={120} onClick={() => handleSort('device', 'asc')} active={sortKey === 'device'} dir={sortDir}>{t('sessions.colDevice')}</TH>
+                <TH w={80} onClick={() => handleSort('timeListening', 'desc')} active={sortKey === 'timeListening'} dir={sortDir}>{t('sessions.colListened')}</TH>
+                <TH w={80} onClick={() => handleSort('currentTime', 'desc')} active={sortKey === 'currentTime'} dir={sortDir}>{t('sessions.colPosition')}</TH>
+                <TH w={80} onClick={() => handleSort('updatedAt', 'desc')} active={sortKey === 'updatedAt'} dir={sortDir}>{t('sessions.colUpdated')}</TH>
                 {/* Delete column header — not sortable */}
                 {isAdmin && <TH w={32}></TH>}
               </tr>
@@ -548,7 +551,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 // Empty state
                 <tr>
                   <td colSpan={isAdmin ? 7 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
-                    No sessions found.
+                    {t('sessions.empty')}
                   </td>
                 </tr>
               ) : (
@@ -575,7 +578,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
           {/* Rows-per-page selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Rows per page:</span>
+            <span>{t('sessions.rowsPerPage')}</span>
             <select
               value={itemsPerPage}
               onChange={e => {
@@ -648,7 +651,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--onyx-line)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18 }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
-            Open Listening Sessions
+            {t('sessions.open')}
           </div>
           {/* Auto-refresh indicator */}
           <span style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
@@ -660,12 +663,12 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
           <table style={tableStyle}>
             <thead>
               <tr>
-                <TH>Item</TH>
-                {isAdmin && <TH w={90}>User</TH>}
-                <TH w={120}>Device</TH>
-                <TH w={80}>Listened</TH>
-                <TH w={80}>Position</TH>
-                <TH w={80}>Updated</TH>
+                <TH>{t('sessions.colItem')}</TH>
+                {isAdmin && <TH w={90}>{t('sessions.colUser')}</TH>}
+                <TH w={120}>{t('sessions.colDevice')}</TH>
+                <TH w={80}>{t('sessions.colListened')}</TH>
+                <TH w={80}>{t('sessions.colPosition')}</TH>
+                <TH w={80}>{t('sessions.colUpdated')}</TH>
                 {/* No delete in the open sessions panel — admins can delete via the history table */}
               </tr>
             </thead>
@@ -701,7 +704,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       {/* Delete confirmation dialog — rendered at the top level so it overlays everything */}
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete session?"
+          title={t('sessions.deleteConfirm')}
           message="This will permanently remove the session record from the server. This cannot be undone."
           confirmLabel={deletePending ? 'Deleting…' : 'Delete'}
           danger

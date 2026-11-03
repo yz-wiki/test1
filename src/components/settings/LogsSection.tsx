@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import type { OnyxState } from '../../state/onyx';
 import { getLoggerData, startLogStream, stopLogStream, LOGGER_LEVELS, readSkaldLog, openLogDir, type LogEntry } from '../../api/abs';
@@ -20,6 +21,7 @@ const LEVEL_RANK: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error
 const SKALD_CATS: Array<LogCategory | 'all'> = ['all', 'app', 'auth', 'library', 'playback', 'sync', 'downloads', 'sharing', 'metadata'];
 
 function SkaldLogPanel() {
+  const { t } = useI18n();
   // Re-render when the ring buffer changes.
   const [, force] = useState(0);
   useEffect(() => subscribeLog(() => force(n => n + 1)), []);
@@ -51,7 +53,7 @@ function SkaldLogPanel() {
   const fmtTs = (ts: number) => `${new Date(ts).toLocaleTimeString(undefined, { hour12: false })}.${String(ts % 1000).padStart(3, '0')}`;
 
   return (
-    <Panel label="Skald app log">
+    <Panel label={t('logs.skaldLog')}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
         <select value={minRank} onChange={e => setMinRank(Number(e.target.value))} style={{ ...inputStyle, cursor: 'pointer' }}>
           {SKALD_LEVELS.map(l => <option key={l.value} value={l.rank}>{l.label}+</option>)}
@@ -59,12 +61,12 @@ function SkaldLogPanel() {
         <select value={cat} onChange={e => setCat(e.target.value as LogCategory | 'all')} style={{ ...inputStyle, cursor: 'pointer' }}>
           {SKALD_CATS.map(c => <option key={c} value={c}>{c === 'all' ? 'All categories' : c}</option>)}
         </select>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="filter text…" style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('logs.filterPlaceholder')} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
-          Auto-scroll
+          {t('logs.autoScroll')}
         </label>
-        <button onClick={() => clearLogBuffer()} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>Clear</button>
+        <button onClick={() => clearLogBuffer()} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>{t('logs.clear')}</button>
         <button
           onClick={() => {
             if (fullFile !== null) { setFullFile(null); return; }
@@ -74,7 +76,7 @@ function SkaldLogPanel() {
         >
           {fullFile !== null ? 'Live buffer' : 'Full file'}
         </button>
-        <button onClick={() => { void openLogDir(); }} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>Open folder</button>
+        <button onClick={() => { void openLogDir(); }} style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}>{t('logs.openFolder')}</button>
       </div>
 
       <div
@@ -84,10 +86,10 @@ function SkaldLogPanel() {
       >
         {fullFile !== null ? (
           fullFile.trim() === ''
-            ? <div style={{ color: 'var(--onyx-text-mute)' }}>Log file is empty.</div>
+            ? <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.emptyFile')}</div>
             : <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--onyx-text)' }}>{fullFile}</pre>
         ) : filtered.length === 0 ? (
-          <div style={{ color: 'var(--onyx-text-mute)' }}>No log entries this session.</div>
+          <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.emptySession')}</div>
         ) : filtered.map((e, i) => (
           <div key={i} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <span style={{ color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{fmtTs(e.ts)}</span>
@@ -127,6 +129,7 @@ export default function LogsSection({ st }: LogsSectionProps) {
 }
 
 function LogsSectionInner({ st }: LogsSectionProps) {
+  const { t } = useI18n();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [minLevel, setMinLevel] = useState(2); // Info and above by default
   const [fatalOnly, setFatalOnly] = useState(false); // crash-level preset (cluster L)
@@ -208,18 +211,18 @@ function LogsSectionInner({ st }: LogsSectionProps) {
 
   return (
     <div>
-      <SectionHead title="Logs" subtitle="Server and Skald app logs for diagnosing failures. Admin only." />
+      <SectionHead title={t('logs.title')} subtitle="Server and Skald app logs for diagnosing failures. Admin only." />
 
       {/* Source switcher: Audiobookshelf server log vs Skald's own app log */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-        <Seg active={subtab === 'server'} onClick={() => switchSubtab('server')}>Server</Seg>
+        <Seg active={subtab === 'server'} onClick={() => switchSubtab('server')}>{t('logs.tabServer')}</Seg>
         <Seg active={subtab === 'skald'} onClick={() => switchSubtab('skald')}>Skald</Seg>
       </div>
 
       {subtab === 'skald' && <SkaldLogPanel />}
 
       {subtab === 'server' && (
-      <Panel label="Server log">
+      <Panel label={t('logs.serverLog')}>
       {/* Controls */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
         <select
@@ -235,7 +238,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
             crash-log endpoint, so these surface via the normal daily log). */}
         <button
           onClick={() => setFatalOnly(v => !v)}
-          title="Show only FATAL (crash-level) entries"
+          title={t('logs.fatalOnlyTitle')}
           style={{
             ...inputStyle, cursor: 'pointer',
             background: fatalOnly ? 'var(--onyx-accent-dim)' : 'var(--onyx-panel2)',
@@ -244,12 +247,12 @@ function LogsSectionInner({ st }: LogsSectionProps) {
             fontWeight: fatalOnly ? 600 : 400,
           }}
         >
-          FATAL only
+          {t('logs.fatalOnly')}
         </button>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="filter text…"
+          placeholder={t('logs.filterPlaceholder')}
           style={{ ...inputStyle, flex: 1, minWidth: 160 }}
         />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
@@ -291,7 +294,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
           }}
         >
           {filtered.length === 0 && (
-            <div style={{ color: 'var(--onyx-text-mute)' }}>No log entries match.</div>
+            <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.noMatch')}</div>
           )}
           {filtered.map((l, i) => (
             <div key={`${l.timestamp}-${i}`} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={l.source}>

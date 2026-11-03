@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import type { OnyxState, Chapter } from '../state/onyx';
 import { seekAudio, createBookmark, getMe } from '../api/abs';
@@ -44,6 +45,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; chIdx: number; chapterCount: number; chapters: Chapter[] }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        title="Jump to chapter"
+        title={t('focus.jumpToChapter')}
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
@@ -84,7 +86,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Chapters</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.chapters')}</div>
           <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {chapterCount}
           </div>
@@ -103,7 +105,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
           padding: 6, zIndex: 100, display: 'flex', flexDirection: 'column',
         }}>
           <div style={{ padding: '6px 8px 4px', fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Jump to chapter
+            {t('focus.jumpToChapter')}
           </div>
           <div ref={listRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {chapters.map((c, i) => {
@@ -146,6 +148,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
 }
 
 function SpeedStat({ st }: { st: OnyxState }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -162,7 +165,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        title="Change playback speed"
+        title={t('focus.changeSpeed')}
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
@@ -172,7 +175,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Speed</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.speed')}</div>
           <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {st.speed}×
           </div>
@@ -190,7 +193,7 @@ function SpeedStat({ st }: { st: OnyxState }) {
           padding: 6, zIndex: 100, minWidth: 130,
         }}>
           <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>
-            Playback Speed
+            {t('focus.speedHeading')}
           </div>
           {SPEEDS.map(s => (
             <button
@@ -251,6 +254,7 @@ function CollapseHandle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
 }
 
 export default function FocusPanel({ st }: FocusPanelProps) {
+  const { t } = useI18n();
   const [drawerTab, setDrawerTab] = useState<'bookmarks' | 'synopsis'>('synopsis');
 
   const focus = st.currentBook;
@@ -355,7 +359,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
       <CollapseHandle collapsed={false} onToggle={() => st.setFocusCollapsed(true)} />
 
       <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.18em', color: 'var(--onyx-text-mute)', textTransform: 'uppercase', marginBottom: 16 }}>
-        In focus
+        {t('focus.inFocus')}
       </div>
 
       <div onClick={() => openBook(focus.id)} style={{ cursor: 'pointer' }}>
@@ -421,7 +425,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           {st.playing && st.currentBookId === focus.id ? 'Pause' : 'Play'}
         </button>
         <button
-          title="Bookmark this moment"
+          title={t('focus.bookmark')}
           onClick={async () => {
             try {
               const { chapter } = chapterAt(st.currentBookChapters, st.position);
@@ -460,7 +464,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
             color: drawerTab === 'synopsis' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
           }}
         >
-          Synopsis
+          {t('focus.synopsis')}
         </button>
         <button
           onClick={() => setDrawerTab('bookmarks')}
@@ -498,7 +502,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
               ))}
             </div>
           ) : (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '12px 0' }}>No bookmarks yet.</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '12px 0' }}>{t('focus.noBookmarks')}</div>
           )
         ) : focus.media.metadata.description ? (
           <div
@@ -508,13 +512,13 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           />
         ) : (
           <div style={{ fontFamily: SERIF, fontSize: 13.5, lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 4 }}>
-            No synopsis available.
+            {t('focus.noSynopsis')}
           </div>
         )}
       </div>
 
       <div style={{ marginTop: 0, paddingTop: 20, borderTop: '1px solid var(--onyx-line)', display: 'flex', gap: 24, overflow: 'visible' }}>
-        <Stat label="Duration" value={bookDur(focus)} />
+        <Stat label={t('focus.duration')} value={bookDur(focus)} />
         <ChaptersStat st={st} chIdx={chIdx} chapterCount={chapterCount} chapters={chapters} />
         <SpeedStat st={st} />
       </div>

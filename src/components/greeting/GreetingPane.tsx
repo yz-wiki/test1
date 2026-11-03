@@ -11,6 +11,7 @@
 //   · footer strip — In library / In progress / Finished (always present, local data)
 
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { bookAuthor, mergeUserStats, computeLocalLibraryStats } from '../../state/onyx';
 import type { UserStats, LibraryStats } from '../../api/abs';
@@ -252,6 +253,7 @@ function GreetStat({ label, value }: { label: string; value: string | number }) 
 // ── Your stats page ────────────────────────────────────────────────────────
 
 function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: boolean }) {
+  const { t } = useI18n();
   const ph = loading ? '…' : '—'; // placeholder value while fetching
 
   // Derive sparkline data from the ABS days map (empty map → all-zero bars).
@@ -273,13 +275,13 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
         <BigStat
           // totalTime is SECONDS (ABS unit; local stats match) — /60 for minutes.
           value={stats ? Math.round((stats.totalTime ?? 0) / 60).toLocaleString() : ph}
-          label="Minutes"
+          label={t('greeting.minutes')}
         />
         <BigStat
           // ABS's payload omits numDaysListened (it arrives 0) — fall back to
           // counting the day keys, which is how the ABS web client shows it too.
           value={stats ? (stats.numDaysListened || Object.keys(stats.days ?? {}).length) : ph}
-          label="Days listened"
+          label={t('greeting.daysListened')}
         />
         {/* Finished BigStat removed — it duplicated the Finished GreetStat in the footer */}
       </div>
@@ -290,16 +292,16 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
         <SparkBars data={last7} />
         {/* 4-up summary row below the sparkline — centered with even gaps */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 14 }}> {/* centered, gap: 24 */}
-          <MiniStat value={loading ? ph : weekMinutes} unit="min" label="This week" />
-          <MiniStat value={loading ? ph : dailyAvg}    unit="min" label="Daily avg" />
-          <MiniStat value={loading ? ph : bestDay}     unit="min" label="Best day" />
-          <MiniStat value={loading ? ph : streak} unit={streak === 1 ? 'day' : 'days'} label="Streak" />
+          <MiniStat value={loading ? ph : weekMinutes} unit="min" label={t('greeting.thisWeek')} />
+          <MiniStat value={loading ? ph : dailyAvg}    unit="min" label={t('greeting.dailyAvg')} />
+          <MiniStat value={loading ? ph : bestDay}     unit="min" label={t('greeting.bestDay')} />
+          <MiniStat value={loading ? ph : streak} unit={streak === 1 ? 'day' : 'days'} label={t('greeting.streak')} />
         </div>
       </div>
 
       {/* Recent sessions */}
       <div>
-        <SubHead>Recent sessions</SubHead>
+        <SubHead>{t('greeting.recentSessions')}</SubHead>
         <div style={{ marginTop: 6 }}>
           {loading ? (
             // Subtle loading placeholder — one muted line of text
@@ -308,7 +310,7 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
             </div>
           ) : recentSessions.length === 0 ? (
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-              No recent sessions.
+              {t('greeting.noRecentSessions')}
             </div>
           ) : (
             recentSessions.map((r, i) => (
@@ -353,6 +355,7 @@ function LibraryStatsPage({
   loading: boolean;
   library: OnyxState['library'];
 }) {
+  const { t } = useI18n();
   const ph = loading ? '…' : '—';
 
   // totalDuration is SECONDS (ABS unit; the local computation matches) — /3600 for hours.
@@ -379,16 +382,16 @@ function LibraryStatsPage({
       {/* Hero quad: Hours · Authors · Tracks · GB */}
       {/* Widths tuned to fit the four numbers in one row at 360px. */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <BigStat value={loading ? ph : hours}                           label="Hours"   w={74} />
-        <BigStat value={stats ? stats.totalAuthors   : ph}              label="Authors" w={56} />
-        <BigStat value={stats ? stats.numAudioTracks : ph}              label="Tracks"  w={56} />
+        <BigStat value={loading ? ph : hours}                           label={t('greeting.hours')}   w={74} />
+        <BigStat value={stats ? stats.totalAuthors   : ph}              label={t('greeting.authors')} w={56} />
+        <BigStat value={stats ? stats.numAudioTracks : ph}              label={t('greeting.tracks')}  w={56} />
         <BigStat value={loading ? ph : sizeGb}                         label="GB"      w={58} />
       </div>
 
       {/* Top genres — ranked bars without a rank number */}
       {topGenres.length > 0 && (
         <div>
-          <SubHead>Top genres</SubHead>
+          <SubHead>{t('greeting.topGenres')}</SubHead>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
             {topGenres.map((g, i) => (
               <RankBar key={i} label={g.label} display={`${g.pct}%`} pct={g.pct} />
@@ -400,7 +403,7 @@ function LibraryStatsPage({
       {/* Top authors — ranked bars with 1-based rank number in gutter */}
       {topAuthors.length > 0 && (
         <div>
-          <SubHead>Top authors</SubHead>
+          <SubHead>{t('greeting.topAuthors')}</SubHead>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
             {topAuthors.map((a, i) => (
               <RankBar
@@ -427,6 +430,7 @@ export interface GreetingPaneProps {
 }
 
 export default function GreetingPane({ st, name }: GreetingPaneProps) {
+  const { t } = useI18n();
   // Toggle state — persisted to localStorage so the user's choice survives reloads.
   const [page, setPage] = useState<'user' | 'library'>(
     () => (localStorage.getItem('onyx.greeting.tab') as 'user' | 'library') ?? 'user',
@@ -654,11 +658,11 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         gap: 32, // wider gap to match the hero row
       }}>
         {/* Total items in the loaded library */}
-        <GreetStat label="In library" value={st.library.length} />
+        <GreetStat label={t('greeting.inLibrary')} value={st.library.length} />
         {/* Items with 0 < progress < 0.98 */}
-        <GreetStat label="In progress" value={inProg} />
+        <GreetStat label={t('greeting.inProgress')} value={inProg} />
         {/* Items with progress ≥ 0.98 */}
-        <GreetStat label="Finished" value={finished} />
+        <GreetStat label={t('greeting.finished')} value={finished} />
       </div>
     </Glass>
   );

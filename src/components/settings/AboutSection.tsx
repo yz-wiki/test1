@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import lyreIcon from '../../assets/lyre.png';
@@ -50,6 +51,7 @@ async function loadNotices(): Promise<string> {
 }
 
 function LicensesModal({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const [status, setStatus] = useState('');
   // Shared modal contract: Escape to close, Tab containment, focus restore. Without
   // it this modal had no Escape handler and no focus trap — a keyboard user could
@@ -81,12 +83,12 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Open source licenses" style={{ width: '100%', maxWidth: 520, maxHeight: '85vh', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('about.licensesAria')} style={{ width: '100%', maxWidth: 520, maxHeight: '85vh', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em' }}>Open source licenses</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Components bundled with Skald</div>
+            <div style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em' }}>{t('about.licensesAria')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{t('about.componentsBundled')}</div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
@@ -124,7 +126,7 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
           <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', flex: 1 }}>
             {status || 'Full third-party notices'}
           </span>
-          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void copyFull()}>Copy all</button>
+          <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void copyFull()}>{t('about.copyAll')}</button>
           <button style={{ ...ghostBtn, padding: '6px 12px' }} onClick={() => void saveFull()}>Save…</button>
         </div>
       </div>
@@ -133,6 +135,7 @@ function LicensesModal({ onClose }: { onClose: () => void }) {
 }
 
 function HelpModal({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   // Shared modal contract (Escape, Tab containment, focus restore) — replaces the
   // ad-hoc Escape-only listener this modal had, which left no focus trap so a
   // keyboard user could Tab out into the settings shell behind it.
@@ -141,8 +144,8 @@ function HelpModal({ onClose }: { onClose: () => void }) {
     <div onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, zIndex: 500, padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)' }}>
       <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="quick-start-title" style={{ width: '100%', maxWidth: 700, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 16, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel)', boxShadow: '0 40px 100px rgba(0,0,0,0.72)' }}>
         <div style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--onyx-line)' }}>
-          <h2 id="quick-start-title" style={{ margin: 0, fontFamily: SERIF, fontSize: 20 }}>Quick start and troubleshooting</h2>
-          <button onClick={onClose} aria-label="Close quick start" style={{ width: 30, height: 30, border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontSize: 17 }}>×</button>
+          <h2 id="quick-start-title" style={{ margin: 0, fontFamily: SERIF, fontSize: 20 }}>{t('about.quickStartHeading')}</h2>
+          <button onClick={onClose} aria-label={t('about.closeQuickStart')} style={{ width: 30, height: 30, border: 0, background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontSize: 17 }}>×</button>
         </div>
         <pre className="onyx-selectable" style={{ margin: 0, padding: '20px 24px 28px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12.5, lineHeight: 1.65, color: 'var(--onyx-text-dim)' }}>{quickStart}</pre>
       </section>
@@ -151,6 +154,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function AboutSection({ st }: { st: OnyxState }) {
+  const { t } = useI18n();
   const [showLicenses, setShowLicenses] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   // Read the app version from Tauri (sourced from tauri.conf.json) so the About
@@ -169,7 +173,7 @@ export default function AboutSection({ st }: { st: OnyxState }) {
 
   return (
     <div>
-      <SectionHead title="About" />
+      <SectionHead title={t('about.title')} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '0 0 24px', borderBottom: '1px solid var(--onyx-line)' }}>
         <img
           src={lyreIcon}
@@ -183,16 +187,16 @@ export default function AboutSection({ st }: { st: OnyxState }) {
         </div>
       </div>
 
-      <Row label="Open source licenses" hint="Third-party components bundled with Skald and their licenses.">
-        <button style={ghostBtn} onClick={() => setShowLicenses(true)}>View</button>
+      <Row label={t('about.licensesAria')} hint={t('about.licensesHint')}>
+        <button style={ghostBtn} onClick={() => setShowLicenses(true)}>{t('about.view')}</button>
       </Row>
 
-      <Row label="Quick start & troubleshooting" hint="Connection, offline use, local-library safety, Staging, diagnostics, and current feature boundaries.">
-        <button style={ghostBtn} onClick={() => setShowHelp(true)}>Open guide</button>
+      <Row label={t('about.quickStart')} hint={t('about.quickStartHint')}>
+        <button style={ghostBtn} onClick={() => setShowHelp(true)}>{t('about.openGuide')}</button>
       </Row>
 
-      <Row label="Run setup again" hint="Re-open the first-launch walkthrough — connect a server, create a local library, or review the folders. Your existing setup is kept.">
-        <button style={ghostBtn} onClick={runSetupAgain}>Run setup</button>
+      <Row label={t('about.rerunSetup')} hint={t('about.rerunSetupHint')}>
+        <button style={ghostBtn} onClick={runSetupAgain}>{t('about.runSetup')}</button>
       </Row>
 
       {showLicenses && <LicensesModal onClose={() => setShowLicenses(false)} />}

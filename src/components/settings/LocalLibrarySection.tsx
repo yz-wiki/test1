@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n';
 import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
 import type { OnyxState } from '../../state/onyx';
@@ -47,6 +48,7 @@ function PathChip({ label, hint, path }: { label: string; hint?: string; path: s
 export interface LocalLibrarySectionProps { st: OnyxState; embedded?: boolean; }
 
 export default function LocalLibrarySection({ st, embedded = false }: LocalLibrarySectionProps) {
+  const { t } = useI18n();
   // Busy id: the library currently scanning (or '__new__' while adding), so the
   // relevant button shows a spinner and is disabled.
   const [busy, setBusy] = useState<string | null>(null);
@@ -165,13 +167,13 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
     <div>
       {!embedded && (
         <SectionHead
-          title="Local Library"
+          title={t('localLib.title')}
           subtitle="Build a library from audiobooks on this computer — no server required. Skald reads each book's embedded tags and chapters, sorts them into Author / Series / Title folders, and tracks playback progress locally. Use Match or Edit Metadata on a book to fill in or correct details — changes are written back to the files."
         />
       )}
 
       <Panel
-        label="Your local libraries"
+        label={t('localLib.yourLibraries')}
         action={
           <button
             onClick={() => { setCreating(c => !c); setNewName(''); setNewParent(null); }}
@@ -226,7 +228,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
         {locals.length === 0 && !creating ? (
           <div style={{ padding: '22px 4px', color: 'var(--onyx-text-mute)', fontSize: 13 }}>
-            No local libraries yet. Create one to get started.
+            {t('localLib.empty')}
           </div>
         ) : (
           locals.map(lib => {
@@ -243,37 +245,37 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                     <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--onyx-text)' }}>{lib.name}</span>
                     {active && (
                       <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: DIM_GOLD }}>
-                        Active
+                        {t('localLib.active')}
                       </span>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     {!active && (
-                      <button onClick={() => st.setActiveLibrary(lib.id)} style={btn()} title="Switch to this library">Open</button>
+                      <button onClick={() => st.setActiveLibrary(lib.id)} style={btn()} title={t('localLib.switchTo')}>{t('localLib.open')}</button>
                     )}
                     {lib.mediaType !== 'podcast' && (
                       <button
                         onClick={() => setImportLibrary(lib)}
                         style={btn()}
-                        title="Add audiobook files, scan a folder, or open Staging."
+                        title={t('localLib.addHint')}
                       >
-                        Add books
+                        {t('localLib.addBooks')}
                       </button>
                     )}
                     <button
                       onClick={() => rescan(lib)}
                       disabled={scanning}
                       style={btn(scanning)}
-                      title="Sync with disk — adds books found in the folder and drops ones that were deleted. Your saved metadata is preserved."
+                      title={t('localLib.syncHint')}
                     >
                       {scanning ? 'Scanning…' : 'Rescan'}
                     </button>
                     <button
                       onClick={() => removeLibrary(lib)}
                       style={btn(false, true)}
-                      title="Remove from Skald only — your files on disk are left untouched."
+                      title={t('localLib.removeHint')}
                     >
-                      Remove
+                      {t('localLib.remove')}
                     </button>
                   </div>
                 </div>
@@ -293,9 +295,9 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                 {/* Folder paths — aligned glass buttons that open the location.
                     Staging is auto-organized by the app-wide watcher on drop. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-                  <PathChip label="Library folder" path={rootPath(lib)} />
+                  <PathChip label={t('localLib.folder')} path={rootPath(lib)} />
                   {lib.stagingPath && (
-                    <PathChip label="Staging" hint="drop files here to auto-import" path={lib.stagingPath} />
+                    <PathChip label={t('localLib.staging')} hint={t('localLib.stagingHint')} path={lib.stagingPath} />
                   )}
                 </div>
               </div>
@@ -306,7 +308,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
       {/* Needs attention — quarantined books awaiting a metadata match. */}
       {locals.some(l => (unidentified[l.id]?.length ?? 0) > 0) && (
-        <Panel label="Needs attention">
+        <Panel label={t('localLib.needsAttention')}>
           {locals.flatMap(lib =>
             (unidentified[lib.id] ?? []).map(item => (
               <div
