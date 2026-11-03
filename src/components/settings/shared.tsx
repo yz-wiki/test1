@@ -28,9 +28,9 @@ export function useLocal<T>(key: string, def: T): [T, (v: T) => void] {
 export interface SectionHeadProps { title: string; subtitle?: string; }
 export function SectionHead({ title, subtitle }: SectionHeadProps) {
   return (
-    <div style={{ marginBottom: 28, paddingBottom: 18, borderBottom: '1px solid var(--onyx-line)' }}>
-      <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 500, letterSpacing: '-0.01em' }}>{title}</div>
-      {subtitle && <div style={{ marginTop: 6, fontSize: 13.5, color: 'var(--onyx-text-dim)', maxWidth: 540 }}>{subtitle}</div>}
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontFamily: 'var(--mac-font-ui)', fontSize: 20, fontWeight: 650, letterSpacing: '-0.015em' }}>{title}</div>
+      {subtitle && <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--onyx-text-dim)', maxWidth: 560, lineHeight: 1.55 }}>{subtitle}</div>}
     </div>
   );
 }
@@ -38,7 +38,7 @@ export function SectionHead({ title, subtitle }: SectionHeadProps) {
 export interface RowProps { label: string; hint?: string; children?: ReactNode; align?: 'center' | 'top'; }
 export function Row({ label, hint, children, align = 'center' }: RowProps) {
   return (
-    <div style={{ display: 'flex', alignItems: align === 'top' ? 'flex-start' : 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--onyx-line)', gap: 24 }}>
+    <div style={{ display: 'flex', alignItems: align === 'top' ? 'flex-start' : 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--mac-hairline)', gap: 24 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, color: 'var(--onyx-text)', fontWeight: 500 }}>{label}</div>
         {hint && <div style={{ marginTop: 4, fontSize: 12, color: 'var(--onyx-text-mute)', maxWidth: 480, lineHeight: 1.45 }}>{hint}</div>}
@@ -50,23 +50,17 @@ export function Row({ label, hint, children, align = 'center' }: RowProps) {
 
 export interface ToggleProps { on: boolean; onChange: (v: boolean) => void; }
 export function Toggle({ on, onChange }: ToggleProps) {
+  // The macOS switch: a track plus a travelling knob, driven entirely by CSS
+  // (.mac-switch in src/styles/macos.css) so track colour, knob shadow and the
+  // 16px translation stay consistent with every other switch in the app.
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      className="mac-switch"
       onClick={() => onChange(!on)}
-      style={{
-        width: 36, height: 20, borderRadius: 10, padding: 0,
-        background: on ? 'var(--onyx-accent)' : 'rgba(255,255,255,0.12)',
-        border: 'none', cursor: 'pointer', position: 'relative',
-        transition: 'background 0.15s',
-      }}
-    >
-      <div style={{
-        position: 'absolute', top: 2, left: on ? 18 : 2,
-        width: 16, height: 16, borderRadius: 8,
-        background: on ? 'var(--onyx-bg)' : '#ebe7df',
-        transition: 'left 0.15s',
-      }} />
-    </button>
+    />
   );
 }
 
@@ -111,7 +105,7 @@ export function Panel({ label, action, children, style, bodyStyle }: PanelProps)
     // sub-section of the surrounding pane (cf. Appearance's "Shelf tabs" divider).
     return (
       <div style={{ marginTop: 16, ...style }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '4px 0 8px', borderBottom: '1px solid var(--onyx-line)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '4px 0 8px', borderBottom: '1px solid var(--mac-hairline)' }}>
           <span style={eyebrowStyle}>{label}</span>
           {action}
         </div>
@@ -121,20 +115,19 @@ export function Panel({ label, action, children, style, bodyStyle }: PanelProps)
   }
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.02)',
-      border: '1px solid var(--onyx-glass-edge)',
-      borderRadius: 14,
+      background: 'var(--mac-control-bg)',
+      border: '1px solid var(--mac-hairline)',
+      borderRadius: 'var(--mac-radius-card)',
       overflow: 'hidden',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
       boxSizing: 'border-box',
       marginTop: 20,
       ...style,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--onyx-line)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '11px 18px', borderBottom: '1px solid var(--mac-hairline)' }}>
         <span style={eyebrowStyle}>{label}</span>
         {action}
       </div>
-      <div style={{ padding: '2px 20px 8px', ...bodyStyle }}>{children}</div>
+      <div style={{ padding: '2px 18px 6px', ...bodyStyle }}>{children}</div>
     </div>
   );
 }
@@ -145,22 +138,21 @@ export interface SegProps { active: boolean; onClick: () => void; children: Reac
 export function Seg({ active, onClick, children }: SegProps) {
   return (
     <button
+      type="button"
+      aria-pressed={active}
+      className={`mac-segmented__item${active ? ' mac-segmented__item--active' : ''}`}
       onClick={onClick}
-      style={{
-        padding: '6px 11px', borderRadius: 6, fontFamily: MONO, fontSize: 10,
-        letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer',
-        background: active ? 'var(--onyx-accent-dim)' : 'transparent',
-        border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-        color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-        fontWeight: active ? 600 : 400,
-      }}
     >{children}</button>
   );
 }
 
 // Right-aligned wrapping group for a Row's segmented buttons.
 export function SegGroup({ children }: { children: ReactNode }) {
-  return <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>{children}</div>;
+  return (
+    <div className="mac-segmented" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      {children}
+    </div>
+  );
 }
 
 export interface TextInputProps {
@@ -177,11 +169,10 @@ export function TextInput({ value, onChange, placeholder, type = 'text', mono = 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      className="mac-field"
       style={{
-        padding: '8px 12px', minWidth: 280, fontSize: 13,
-        background: 'rgba(0,0,0,0.3)', borderRadius: 8,
-        color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)',
-        outline: 'none', fontFamily: mono ? MONO : 'inherit',
+        minWidth: 280,
+        fontFamily: mono ? MONO : 'inherit',
       }}
     />
   );

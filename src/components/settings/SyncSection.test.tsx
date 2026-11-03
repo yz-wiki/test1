@@ -94,7 +94,9 @@ describe('SyncSection connection confirmation', () => {
     render(<Harness />);
     await act(async () => {}); // settle async Tauri listener registration
 
-    fireEvent.click(screen.getByRole('button'));
+    // The shared Toggle now exposes correct switch semantics (role="switch",
+    // aria-checked) rather than an unlabelled generic button.
+    fireEvent.click(screen.getByRole('switch'));
     expect(socket.connect).toHaveBeenCalledWith('http://abs.local');
     expect(screen.getByTestId('enabled').textContent).toBe('true');
 

@@ -19,22 +19,14 @@ import CommandPalette from './CommandPalette';
 import { ShellChromeContext } from './ShellContext';
 import { useI18n } from '../../i18n';
 import { libraryDisplayLabel } from '../../lib/libraryPresentation';
+import { toggleSidebarVisible, useSidebarVisible } from '../../lib/uiPrefs';
 
 export interface ShellProps {
   st: OnyxState;
   children: ReactNode;
 }
 
-const SIDEBAR_KEY = 'skald.ui.sidebar';
 const COMPACT_BREAKPOINT = 1000;
-
-function readSidebarVisible(): boolean {
-  try {
-    return localStorage.getItem(SIDEBAR_KEY) !== 'false';
-  } catch {
-    return true;
-  }
-}
 
 /** Platform-appropriate modifier glyph for the palette hint. */
 function paletteShortcutLabel(): string {
@@ -44,7 +36,9 @@ function paletteShortcutLabel(): string {
 
 export default function Shell({ st, children }: ShellProps) {
   const { t } = useI18n();
-  const [sidebarVisible, setSidebarVisible] = useState(readSidebarVisible);
+  // Shared with Settings → Appearance through lib/uiPrefs, so toggling it in
+  // either place updates the other immediately.
+  const sidebarVisible = useSidebarVisible();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [narrow, setNarrow] = useState(() =>
     typeof window === 'undefined' ? false : window.innerWidth < COMPACT_BREAKPOINT);
@@ -59,11 +53,7 @@ export default function Shell({ st, children }: ShellProps) {
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setSidebarVisible((visible) => {
-      const next = !visible;
-      try { localStorage.setItem(SIDEBAR_KEY, String(next)); } catch { /* ignore */ }
-      return next;
-    });
+    toggleSidebarVisible();
   }, []);
 
   // ⌘K / Ctrl+K opens the palette. Bound here rather than in useGlobalShortcuts

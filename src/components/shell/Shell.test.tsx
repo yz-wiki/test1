@@ -23,6 +23,7 @@ vi.mock('@tauri-apps/api/window', () => ({
 }));
 
 import Shell from './Shell';
+import { resetUiPrefsCache } from '../../lib/uiPrefs';
 
 const library = {
   id: 'lib-1',
@@ -89,6 +90,9 @@ function renderShell(st: OnyxState) {
 describe('Shell', () => {
   beforeEach(() => {
     localStorage.clear();
+    // The sidebar preference is memoised in module scope (shared with Settings);
+    // drop it so each test starts from the documented default.
+    resetUiPrefsCache();
     vi.clearAllMocks();
   });
 

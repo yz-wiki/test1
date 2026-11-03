@@ -2,6 +2,8 @@ import { useRef, useEffect, useState, type CSSProperties } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import { SectionHead, Row, Toggle, Panel, Seg, SegGroup, eyebrowStyle } from './shared';
 import { COVER_SIZES } from '../shelf/LibraryShelf';
+import { ACCENT_PRESETS } from '../../state/theme';
+import { useSidebarVisible, setSidebarVisible } from '../../lib/uiPrefs';
 
 export interface AppearanceSectionProps { st: OnyxState; }
 
@@ -14,8 +16,9 @@ const SORTS = [
 ];
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
-// Accent swatches — the selectable accent colours (six, matching the reference).
-const SWATCHES = ['#d4a64a', '#c96442', '#7aa86a', '#5a8fc4', '#a86a8e', '#9b7fd0'];
+// Accent swatches — the macOS system colour set plus Skald gold, defined once in
+// state/theme.ts so any other accent-aware surface reads the same list.
+const SWATCHES = ACCENT_PRESETS.map(preset => preset.hex);
 
 // Below this content width the two panels stack vertically (and the surrounding
 // settings pane scrolls). Above it they sit side by side as in the reference.
@@ -26,6 +29,7 @@ const subEyebrow: CSSProperties = { ...eyebrowStyle, padding: '16px 0 8px' };
 
 export default function AppearanceSection({ st }: AppearanceSectionProps) {
   const currentHex = (st.accentColor || '').toLowerCase();
+  const sidebarVisible = useSidebarVisible();
 
   // Responsive layout: observe the section's own width (not the window) so the
   // breakpoint reacts to the settings pane, which is narrower than the viewport.
@@ -97,6 +101,10 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
 
         <Row label="Translucent surfaces" hint="Glass effect on cards. Disable for performance on older hardware.">
           <Toggle on={st.translucent} onChange={st.setTranslucent} />
+        </Row>
+
+        <Row label="Sidebar navigation" hint="Show a persistent navigation sidebar. Turn off for the compact top-bar layout.">
+          <Toggle on={sidebarVisible} onChange={setSidebarVisible} />
         </Row>
     </Panel>
   );
