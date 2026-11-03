@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import {
   getNotifications,
@@ -89,6 +90,7 @@ function UrlEditor({
   input: string;
   setInput: (v: string) => void;
 }) {
+  const { t } = useI18n();
   function add() {
     const v = input.trim();
     if (v && !urls.includes(v)) onChange([...urls, v]);
@@ -100,7 +102,7 @@ function UrlEditor({
         <button
           key={u}
           onClick={() => onChange(urls.filter(x => x !== u))}
-          title="Click to remove"
+          title={t('notify.clickToRemove')}
           style={{
             fontFamily: MONO, fontSize: 11, background: 'var(--onyx-accent-dim)',
             border: '1px solid var(--onyx-accent-edge)', borderRadius: 6,
@@ -116,7 +118,7 @@ function UrlEditor({
         onChange={e => setInput(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
         onBlur={add}
-        placeholder="ntfy://topic  (Enter to add)"
+        placeholder={t('notify.ntfyPlaceholder')}
         style={{
           fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)',
           color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)',
@@ -138,6 +140,7 @@ interface EditorProps {
 }
 
 function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProps) {
+  const { t } = useI18n();
   // Seed local form state from the rule being edited, or sensible defaults.
   const [eventName, setEventName] = useState(initial?.eventName || events[0]?.name || 'onTest');
   const [libraryId, setLibraryId] = useState(initial?.libraryId || '');
@@ -199,7 +202,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Event */}
       <div>
-        <div style={labelStyle}>Event</div>
+        <div style={labelStyle}>{t('notify.event')}</div>
         <select value={eventName} onChange={e => setEventName(e.target.value)} style={{ ...selectStyle, width: '100%' }}>
           {events.map(ev => <option key={ev.name} value={ev.name}>{ev.name}</option>)}
         </select>
@@ -211,7 +214,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       {/* Library (only for events that require one) */}
       {requiresLibrary && (
         <div>
-          <div style={labelStyle}>Library</div>
+          <div style={labelStyle}>{t('notify.library')}</div>
           <select value={libraryId} onChange={e => setLibraryId(e.target.value)} style={{ ...selectStyle, width: '100%' }}>
             <option value="">— select a library —</option>
             {libraries.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
@@ -221,7 +224,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Target URLs */}
       <div>
-        <div style={labelStyle}>Apprise URLs</div>
+        <div style={labelStyle}>{t('notify.appriseUrls')}</div>
         <UrlEditor urls={urls} onChange={setUrls} input={urlInput} setInput={setUrlInput} />
         <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 6 }}>
           Use an Apprise URL scheme, e.g. <code style={{ fontFamily: MONO }}>ntfy://topic</code>,{' '}
@@ -232,12 +235,12 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Templates */}
       <div>
-        <div style={labelStyle}>Title template</div>
-        <Field value={titleTemplate} onChange={setTitleTemplate} placeholder="e.g. New {{podcastTitle}} Episode!" mono />
+        <div style={labelStyle}>{t('notify.titleTemplate')}</div>
+        <Field value={titleTemplate} onChange={setTitleTemplate} placeholder={t('notify.titleTemplatePlaceholder')} mono />
       </div>
       <div>
-        <div style={labelStyle}>Body template</div>
-        <Field value={bodyTemplate} onChange={setBodyTemplate} placeholder="e.g. {{episodeTitle}} was added." mono />
+        <div style={labelStyle}>{t('notify.bodyTemplate')}</div>
+        <Field value={bodyTemplate} onChange={setBodyTemplate} placeholder={t('notify.bodyTemplatePlaceholder')} mono />
       </div>
 
       {/* Available variables for the chosen event */}
@@ -253,21 +256,21 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       {/* Type + enabled */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         <div>
-          <div style={labelStyle}>Type</div>
+          <div style={labelStyle}>{t('notify.type')}</div>
           <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
             {NOTIFICATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, cursor: 'pointer', marginTop: 18 }}>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
-          Enabled
+          {t('notify.enabled')}
         </label>
       </div>
 
       {/* Actions — Create is gated on having at least one URL (committed OR
           typed-but-not-yet-added) and, for library events, a chosen library. */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-        <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
+        <Btn variant="ghost" onClick={onCancel}>{t('notify.cancel')}</Btn>
         <Btn
           variant="accent"
           onClick={save}
@@ -290,6 +293,7 @@ export default function NotificationsSection({ st }: NotificationsSectionProps) 
 }
 
 function NotificationsSectionInner({ st }: NotificationsSectionProps) {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [events, setEvents] = useState<NotificationEventData[]>([]);
   const [libraries, setLibraries] = useState<Library[]>([]);
@@ -383,7 +387,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   if (loading) {
     return (
       <div>
-        <SectionHead title="Notifications" subtitle="Event-driven notifications via Apprise. Admin only." />
+        <SectionHead title={t('notify.title')} subtitle="Event-driven notifications via Apprise. Admin only." />
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
           Loading notification settings…
         </div>
@@ -394,14 +398,14 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   if (error || !settings) {
     return (
       <div>
-        <SectionHead title="Notifications" subtitle="Event-driven notifications via Apprise. Admin only." />
+        <SectionHead title={t('notify.title')} subtitle="Event-driven notifications via Apprise. Admin only." />
         <div style={{
           fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
           padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
           border: '1px solid var(--onyx-glass-edge)',
         }}>
           Couldn't load notification settings{error ? `: ${error}` : ''}.
-          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>Retry</Btn></div>
+          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>{t('notify.retry')}</Btn></div>
         </div>
       </div>
     );
@@ -413,12 +417,12 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Notifications"
+        title={t('notify.title')}
         subtitle="Send event-driven notifications (podcast downloads, backups, RSS failures) through an Apprise API server. Admin only."
       />
 
       {/* ── Apprise connection ───────────────────────────────────────────── */}
-      <Panel label="Apprise connection">
+      <Panel label={t('notify.appriseConnection')}>
 
       {/* Persistent explanatory note — the #1 source of confusion is that ABS
           does not bundle Apprise and needs an external Apprise API server. */}
@@ -428,19 +432,19 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
         borderRadius: 8, padding: '12px 14px', margin: '12px 0',
       }}>
         Audiobookshelf does not include Apprise itself — it forwards notifications to a
-        separate <strong>Apprise API server</strong> that you host (typically via Docker).
+        separate <strong>{t('notify.appriseServer')}</strong> that you host (typically via Docker).
         Set its <code style={{ fontFamily: MONO }}>/notify</code> endpoint URL below. Without a
         reachable Apprise API server, no notifications will be delivered.{' '}
         <a href={APPRISE_API_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--onyx-accent)' }}>
-          Apprise API setup
+          {t('notify.appriseSetup')}
         </a>
         {' · '}
         <a href={APPRISE_DOCS_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--onyx-accent)' }}>
-          ABS notification docs
+          {t('notify.absDocs')}
         </a>
       </div>
 
-      <Row label="Apprise API URL" hint="The full URL of your Apprise API server's notify endpoint." align="top">
+      <Row label={t('notify.appriseUrl')} hint={t('notify.appriseUrlHint')} align="top">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
           <input
             value={appriseDraft}
@@ -459,7 +463,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
             }}
           />
           <Btn variant="ghost" onClick={() => void fireTest()} disabled={!hasApprise}>
-            Send test event
+            {t('notify.sendTest')}
           </Btn>
         </div>
       </Row>
@@ -467,11 +471,11 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       </Panel>
 
       {/* ── Notification rules ───────────────────────────────────────────── */}
-      <Panel label="Notifications">
+      <Panel label={t('notify.title')}>
 
       {rules.length === 0 && editing !== 'new' && (
         <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 0' }}>
-          No notifications configured yet.
+          {t('notify.empty')}
         </div>
       )}
 
@@ -501,14 +505,14 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <Btn variant="ghost" onClick={() => rule.id && void testRule(rule.id)} disabled={!hasApprise}>Test</Btn>
-            <Btn variant="ghost" onClick={() => setEditing(rule)}>Edit</Btn>
+            <Btn variant="ghost" onClick={() => rule.id && void testRule(rule.id)} disabled={!hasApprise}>{t('notify.test')}</Btn>
+            <Btn variant="ghost" onClick={() => setEditing(rule)}>{t('notify.edit')}</Btn>
             <Btn variant="danger" onClick={() => rule.id && st.setConfirmDialog({
               title: 'Delete notification',
               message: `Delete the "${rule.eventName}" notification rule? This cannot be undone.`,
               confirmLabel: 'Delete',
               onConfirm: () => void removeRule(rule.id!),
-            })}>Delete</Btn>
+            })}>{t('notify.delete')}</Btn>
           </div>
         </div>
       ))}
@@ -542,23 +546,23 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       </Panel>
 
       {/* ── Advanced ─────────────────────────────────────────────────────── */}
-      <Panel label="Advanced">
+      <Panel label={t('notify.advanced')}>
 
-      <Row label="Max failed attempts" hint="Consecutive failures before a notification is automatically disabled.">
+      <Row label={t('notify.maxFailed')} hint={t('notify.maxFailedHint')}>
         <NumField
           value={settings.maxFailedAttempts ?? 5}
           min={1} max={20}
           onCommit={v => void patchSettings({ maxFailedAttempts: v })}
         />
       </Row>
-      <Row label="Max notification queue" hint="Maximum notifications held in the send queue before new ones are dropped.">
+      <Row label={t('notify.maxQueue')} hint={t('notify.maxQueueHint')}>
         <NumField
           value={settings.maxNotificationQueue ?? 20}
           min={1} max={100}
           onCommit={v => void patchSettings({ maxNotificationQueue: v })}
         />
       </Row>
-      <Row label="Notification delay" hint="Minimum delay between dispatched notifications.">
+      <Row label={t('notify.delay')} hint={t('notify.delayHint')}>
         <NumField
           value={settings.notificationDelay ?? 1000}
           min={0} max={60000} suffix="ms"

@@ -3,6 +3,7 @@
 // (PATCH /api/me/password). Admin and root users additionally see a paginated user
 // list with CRUD controls.
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import { SectionHead, Row, SERIF, MONO } from './shared';
 import type { OnyxState } from '../../state/onyx';
@@ -32,6 +33,7 @@ export interface AccountSectionProps {
 }
 
 export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
+  const { t } = useI18n();
   // Admin check — used to gate the user-list section and the "Add User" button.
   const isAdmin = st.isAdmin;
   // True when connected to an Audiobookshelf server. Local-only users get a
@@ -279,7 +281,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Account"
+        title={t('account.title')}
         subtitle={hasAbs
           ? 'Your profile on this Audiobookshelf server.'
           : 'Your profile on this device. Server accounts appear here after you connect to Audiobookshelf.'}
@@ -346,12 +348,12 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
 
       {/* ── Local-only view: editable display name (no account type / password) ── */}
       {!hasAbs && (
-        <Row label="Display name" hint="Shown in your library greeting. Stored on this device.">
+        <Row label={t('account.displayName')} hint={t('account.displayNameHint')}>
           <input
             type="text"
             value={localName}
             onChange={e => saveLocalName(e.target.value)}
-            placeholder="Reader"
+            placeholder={t('account.readerPlaceholder')}
             maxLength={40}
             style={{
               padding: '8px 12px',
@@ -371,15 +373,15 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* ── Admin self-service: password change + read-only SSO status ── */}
       {isAdmin && (
         <>
-          <Row label="Password" hint="Change your own account password.">
+          <Row label={t('account.password')} hint={t('account.passwordHint')}>
             <button
               onClick={() => setShowChangePw(true)}
               style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', borderRadius: 7, color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
             >
-              Change password
+              {t('account.changePassword')}
             </button>
           </Row>
-          <Row label="Single sign-on (SSO)" hint="OpenID Connect is enabled in this server's Audiobookshelf auth settings. SSO login from Skald is not yet available.">
+          <Row label={t('account.sso')} hint={t('account.ssoHint')}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', flexShrink: 0 }} />
               {oidcEnabled ? 'Enabled · OpenID' : 'Not configured'}
@@ -392,7 +394,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {!isAdmin && hasAbs && (
         <>
           {/* Username row — read-only; ABS has no public rename endpoint */}
-          <Row label="Display name" hint="Name is managed by your Audiobookshelf server.">
+          <Row label={t('account.displayName')} hint={t('account.nameManaged')}>
             <input
               type="text"
               value={displayName}
@@ -416,13 +418,13 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           </Row>
 
           {/* Account type row */}
-          <Row label="Account type" hint="Role assigned to your account on this server.">
+          <Row label={t('account.accountType')} hint={t('account.accountTypeHint')}>
             <TypeBadge type={st.user?.type ?? 'user'} />
           </Row>
 
           {/* Change password — self-service. Guests cannot (server returns 403). */}
           <Row
-            label="Password"
+            label={t('account.password')}
             hint={isGuest ? 'Guest accounts cannot change their password.' : 'Change your account password.'}
           >
             <button
@@ -456,7 +458,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>
-                Users
+                {t('account.users')}
               </div>
               {/* Member count — plain mono text, shown once the list has loaded */}
               {!loading && !listError && (
@@ -525,11 +527,11 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
                 <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 14, padding: '9px 18px', borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.02)' }}>
-                  <span style={headCell}>Name</span>
-                  <span style={headCell}>Role</span>
-                  <span style={headCell}>Last seen</span>
-                  <span style={headCell}>Joined</span>
-                  <span style={{ ...headCell, textAlign: 'right' }}>Actions</span>
+                  <span style={headCell}>{t('account.colName')}</span>
+                  <span style={headCell}>{t('account.colRole')}</span>
+                  <span style={headCell}>{t('account.colLastSeen')}</span>
+                  <span style={headCell}>{t('account.colJoined')}</span>
+                  <span style={{ ...headCell, textAlign: 'right' }}>{t('account.colActions')}</span>
                 </div>
 
                 {/* Rows */}
@@ -609,7 +611,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             textTransform: 'uppercase' as const,
           }}
         >
-          Sign out
+          {t('account.signOut')}
         </button>
       </div>
 
@@ -628,7 +630,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* Add User modal */}
       {showAdd && (
         <UserModal
-          title="Add User"
+          title={t('account.addUser')}
           libraries={libraryOptions}
           availableTags={availableTags}
           onSubmit={handleCreate}
@@ -639,7 +641,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       {/* Edit User modal — pre-filled with the target user's current values */}
       {editTarget && (
         <UserModal
-          title="Edit User"
+          title={t('account.editUser')}
           initialUsername={editTarget.username}
           initialType={editTarget.type}
           isEdit

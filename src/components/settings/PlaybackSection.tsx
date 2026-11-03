@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../i18n';
 import { setAutoRewindCfg } from '../../api/abs';
 import { autoRewindCfg } from '../../lib/playbackPrefs';
 import { log } from '../../lib/log';
@@ -18,6 +19,7 @@ export interface PlaybackSectionProps {
 }
 
 export default function PlaybackSection({ st }: PlaybackSectionProps) {
+  const { t } = useI18n();
   // Active subtab — persisted so the user returns to the same tab on re-open.
   const [tab, setTab] = useState<PlaybackTab>(() => {
     const stored = localStorage.getItem('onyx.playback.tab');
@@ -84,7 +86,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
   return (
     <div>
-      <SectionHead title="Playback" subtitle="Defaults applied when starting a new book." />
+      <SectionHead title={t('playback.title')} subtitle="Defaults applied when starting a new book." />
 
       {/* Subtab pill toggle — Playback settings vs Listening Sessions */}
       <div style={{
@@ -130,8 +132,8 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
       {/* Playback tab — existing speed/skip/sleep/auto-play controls, wrapped in a Panel */}
       {tab === 'playback' && (
-        <Panel label="Playback" style={{ marginTop: 0 }}>
-          <Row label="Default playback speed" hint="Applied when you open a book for the first time. Per-book speed overrides this.">
+        <Panel label={t('playback.title')} style={{ marginTop: 0 }}>
+          <Row label={t('playback.defaultSpeed')} hint={t('playback.defaultSpeedHint')}>
             <SegGroup>
               {SPEEDS.map(s => (
                 <Seg key={s} active={s === speed} onClick={() => setSpeed(s)}>{s}×</Seg>
@@ -140,15 +142,15 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
           </Row>
 
           <Row
-            label="Remember speed per book"
-            hint="Each book keeps the speed you last chose for it. Off means every book uses the default above."
+            label={t('playback.rememberSpeed')}
+            hint={t('playback.rememberSpeedHint')}
           >
             <Toggle on={perBookSpeed} onChange={setPerBookSpeed} />
           </Row>
 
           {perBookSpeed && (
             <Row
-              label="Saved book speeds"
+              label={t('playback.savedSpeeds')}
               hint={rememberedCount === 0
                 ? 'No book has its own speed yet.'
                 : `${rememberedCount} book${rememberedCount === 1 ? '' : 's'} play at their own speed.`}
@@ -163,26 +165,26 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
                   setRememberedCount(rememberedSpeedCount());
                 }}
               >
-                Reset all
+                {t('playback.resetAll')}
               </Pill>
             </Row>
           )}
 
-          <Row label="Skip duration" hint="Used by the −/+ skip buttons and ←/→ keys.">
+          <Row label={t('playback.skipDuration')} hint={t('playback.skipDurationHint')}>
             <SegGroup>
               {SKIP.map(v => <Seg key={v} active={v === skipDur} onClick={() => setSkipDur(v)}>{v}</Seg>)}
             </SegGroup>
           </Row>
 
-          <Row label="Auto-rewind on resume" hint="Step backwards a few seconds when you resume after a pause.">
+          <Row label={t('playback.autoRewind')} hint={t('playback.autoRewindHint')}>
             <SegGroup>
               {REWIND.map(v => <Seg key={v} active={v === rewindOnResume} onClick={() => setRewindOnResume(v)}>{v}</Seg>)}
             </SegGroup>
           </Row>
 
           <Row
-            label="Scale rewind with time away"
-            hint="Rewind further after a long break than after a short one. Replaces the fixed step above."
+            label={t('playback.scaleRewind')}
+            hint={t('playback.scaleRewindHint')}
           >
             <Toggle on={adaptive} onChange={setAdaptive} />
           </Row>
@@ -192,7 +194,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
               does not. */}
           {adaptive && (
             <>
-              <Row label="Shortest rewind" hint="Applied after a brief pause.">
+              <Row label={t('playback.shortestRewind')} hint={t('playback.shortestRewindHint')}>
                 <SegGroup>
                   {MIN_STEPS.map(v => (
                     <Seg key={v} active={v === rewindMin} onClick={() => setRewindMin(v)}>{v}s</Seg>
@@ -200,7 +202,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
                 </SegGroup>
               </Row>
 
-              <Row label="Longest rewind" hint="Applied after several hours away.">
+              <Row label={t('playback.longestRewind')} hint={t('playback.longestRewindHint')}>
                 <SegGroup>
                   {MAX_STEPS.map(v => (
                     <Seg key={v} active={v === rewindMax} onClick={() => setRewindMax(v)}>{v}s</Seg>
@@ -208,7 +210,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
                 </SegGroup>
               </Row>
 
-              <Row label="Ignore pauses shorter than" hint="Skip the rewind entirely for a quick interruption.">
+              <Row label={t('playback.ignoreShortPauses')} hint={t('playback.ignoreShortPausesHint')}>
                 <SegGroup>
                   {DELAYS.map(v => (
                     <Seg key={v} active={v === rewindDelay} onClick={() => setRewindDelay(v)}>
@@ -218,13 +220,13 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
                 </SegGroup>
               </Row>
 
-              <Row label="Stay within the chapter" hint="Never rewind past the start of the chapter you are in.">
+              <Row label={t('playback.stayInChapter')} hint={t('playback.stayInChapterHint')}>
                 <Toggle on={chapterBarrier} onChange={setChapterBarrier} />
               </Row>
             </>
           )}
 
-          <Row label="Auto-play next chapter" hint="Continue without pausing when a chapter ends. Applies within one book or episode.">
+          <Row label={t('playback.autoNextChapter')} hint={t('playback.autoNextChapterHint')}>
             <Toggle on={autoPlayNext} onChange={setAutoPlayNext} />
           </Row>
 
@@ -232,7 +234,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
               chapter continuity above — it opens a new session and starts
               something the listener has not chosen — so it gets its own
               controls rather than riding on that toggle. */}
-          <Row label="When a book ends" hint="Continue with the next book in the same series.">
+          <Row label={t('playback.bookEnds')} hint={t('playback.bookEndsHint')}>
             <SegGroup>
               {UP_NEXT_MODES.map(m => (
                 <Seg key={m.value} active={m.value === bookUpNext} onClick={() => setBookUpNext(m.value)}>
@@ -242,7 +244,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
             </SegGroup>
           </Row>
 
-          <Row label="When an episode ends" hint="Continue with the next episode. Each show keeps its own oldest- or newest-first order.">
+          <Row label={t('playback.episodeEnds')} hint={t('playback.episodeEndsHint')}>
             <SegGroup>
               {UP_NEXT_MODES.map(m => (
                 <Seg key={m.value} active={m.value === podcastUpNext} onClick={() => setPodcastUpNext(m.value)}>
@@ -253,7 +255,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
           </Row>
 
           {(bookUpNext === 'prompt' || podcastUpNext === 'prompt') && (
-            <Row label="Ask for" hint="How long the “Up next” panel waits before playing.">
+            <Row label={t('playback.askFor')} hint={t('playback.askForHint')}>
               <SegGroup>
                 {COUNTDOWNS.map(v => (
                   <Seg key={v} active={v === upNextCountdown} onClick={() => setUpNextCountdown(v)}>{v}s</Seg>
@@ -262,7 +264,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
             </Row>
           )}
 
-          <Row label="Sleep timer default" hint="Pre-fill when you open the sleep timer.">
+          <Row label={t('playback.sleepDefault')} hint={t('playback.sleepDefaultHint')}>
             <SegGroup>
               {SLEEP.map(v => <Seg key={v} active={v === sleepDefault} onClick={() => setSleepDefault(v)}>{v}</Seg>)}
             </SegGroup>

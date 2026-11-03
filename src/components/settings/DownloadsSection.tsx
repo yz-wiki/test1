@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { OnyxState } from '../../state/onyx';
@@ -47,6 +48,7 @@ function relativeTime(ms: number): string {
 
 // Read-only path field + Open/Change buttons for a relocatable storage root.
 function StorageControls({ value, busy, onOpen, onChange }: { value: string; busy: boolean; onOpen: () => void; onChange: () => void }) {
+  const { t } = useI18n();
   const btn = {
     padding: '7px 14px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
     textTransform: 'uppercase' as const, background: 'transparent',
@@ -56,7 +58,7 @@ function StorageControls({ value, busy, onOpen, onChange }: { value: string; bus
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input
         readOnly
-        value={value || 'Loading…'}
+        value={value || t('common.loading')}
         onFocus={e => e.currentTarget.select()}
         title={value}
         style={{
@@ -66,9 +68,9 @@ function StorageControls({ value, busy, onOpen, onChange }: { value: string; bus
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}
       />
-      <button onClick={onOpen} style={{ ...btn, cursor: 'pointer' }}>Open</button>
+      <button onClick={onOpen} style={{ ...btn, cursor: 'pointer' }}>{t('downloads.open')}</button>
       <button onClick={onChange} disabled={busy} style={{ ...btn, cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.6 : 1 }}>
-        {busy ? 'Moving…' : 'Change…'}
+        {busy ? t('downloads.moving') : t('downloads.change')}
       </button>
     </div>
   );
@@ -84,6 +86,7 @@ interface InProgressEntry {
 interface Props { st: OnyxState; }
 
 export default function DownloadsSection({ st }: Props) {
+  const { t } = useI18n();
   // The two relocatable storage roots (Onboarding roadmap, Phase 4 / gap #1):
   // downloadsDir holds offline audio; coverCacheDir holds covers + the offline
   // library/chapter caches. relocating guards the active move.
@@ -250,7 +253,7 @@ export default function DownloadsSection({ st }: Props) {
 
   return (
     <div>
-      <SectionHead title="Downloads" subtitle="Offline copies and cache." />
+      <SectionHead title={t('downloads.title')} subtitle="Offline copies and cache." />
 
       {/* Total storage used — pill in lieu of a hard cache limit (none configured). */}
       {totalBytes > 0 && (
@@ -266,8 +269,8 @@ export default function DownloadsSection({ st }: Props) {
       {/* ── Storage locations ────────────────────────────────────────────── */}
       {/* Two independently relocatable roots (Onboarding roadmap, Resolved #1):
           downloaded audio, and the cover/library cache. */}
-      <Panel label="Storage">
-        <Row label="Downloads folder" hint="Where downloaded audio files are stored on this device.">
+      <Panel label={t('downloads.storage')}>
+        <Row label={t('downloads.downloadsFolder')} hint={t('downloads.downloadsFolderHint')}>
           <StorageControls
             value={downloadsDir}
             busy={relocating === 'downloads'}
@@ -275,7 +278,7 @@ export default function DownloadsSection({ st }: Props) {
             onChange={() => relocate('downloads')}
           />
         </Row>
-        <Row label="Cache folder" hint="Where cover images and the offline library cache are kept.">
+        <Row label={t('downloads.cacheFolder')} hint={t('downloads.cacheFolderHint')}>
           <StorageControls
             value={coverCacheDir}
             busy={relocating === 'cache'}
@@ -287,7 +290,7 @@ export default function DownloadsSection({ st }: Props) {
 
       {/* ── Downloading (only while transfers are active) ──────────────────── */}
       {inProgress.size > 0 && (
-        <Panel label="Downloading">
+        <Panel label={t('downloads.downloading')}>
           {Array.from(inProgress.entries()).map(([itemId, { title, bytesDownloaded, totalBytes: total }], i, arr) => {
             // pct is null when the server didn't send Content-Length — shows indeterminate bar.
             const pct = total > 0 ? Math.min(100, (bytesDownloaded / total) * 100) : null;
@@ -323,7 +326,7 @@ export default function DownloadsSection({ st }: Props) {
                     border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, color: 'var(--onyx-text-dim)', cursor: 'pointer',
                   }}
                 >
-                  Cancel
+                  {t('downloads.cancel')}
                 </button>
               </div>
             );
@@ -333,14 +336,14 @@ export default function DownloadsSection({ st }: Props) {
 
       {/* ── Downloaded books ───────────────────────────────────────────────── */}
       <Panel
-        label="Download history"
+        label={t('downloads.history')}
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             {records.length > 1 && (
-              <select aria-label="Sort download history" value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9.5 }}>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="largest">Largest</option>
+              <select aria-label={t('downloads.sortHistory')} value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9.5 }}>
+                <option value="newest">{t('downloads.newest')}</option>
+                <option value="oldest">{t('downloads.oldest')}</option>
+                <option value="largest">{t('downloads.largest')}</option>
               </select>
             )}
             <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{records.length} book{records.length === 1 ? '' : 's'}</span>
@@ -349,7 +352,7 @@ export default function DownloadsSection({ st }: Props) {
       >
         {records.length === 0 ? (
           <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontSize: 12, fontFamily: MONO, letterSpacing: '0.04em' }}>
-            No downloads yet.
+            {t('downloads.empty')}
           </div>
         ) : (
           <>
@@ -383,7 +386,7 @@ export default function DownloadsSection({ st }: Props) {
                     <div style={{ marginTop: 7, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <Chip>{fmtSize(record.fileSize)}</Chip>
                       <Chip><time dateTime={new Date(record.downloadedAt).toISOString()} title={new Date(record.downloadedAt).toLocaleString()}>{relativeTime(record.downloadedAt)}</time></Chip>
-                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: '2px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>Open location</button>
+                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: '2px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>{t('downloads.openLocation')}</button>
                     </div>
                     {/* Server-deleted warning — local copy retained and still playable offline. */}
                     {record.serverDeleted && (
@@ -403,7 +406,7 @@ export default function DownloadsSection({ st }: Props) {
                       border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
                     }}
                   >
-                    Delete
+                    {t('downloads.delete')}
                   </button>
                 </div>
               );
@@ -419,7 +422,7 @@ export default function DownloadsSection({ st }: Props) {
                   border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
                 }}
               >
-                Clear all downloads
+                {t('downloads.clearAll')}
               </button>
             </div>
           </>
@@ -427,11 +430,11 @@ export default function DownloadsSection({ st }: Props) {
       </Panel>
 
       {/* ── Behaviour ──────────────────────────────────────────────────────── */}
-      <Panel label="Behaviour">
-        <Row label="Auto-download next in series" hint="When you finish a book, automatically download the next one in its series (server libraries only).">
+      <Panel label={t('downloads.behaviour')}>
+        <Row label={t('downloads.autoNext')} hint={t('downloads.autoNextHint')}>
           <Toggle on={autoNextInSeries} onChange={setAutoNextInSeries} />
         </Row>
-        <Row label="Keep downloads after finishing" hint="Keep the local file when you finish a book. Turn off to free space by removing it automatically.">
+        <Row label={t('downloads.keepAfterFinish')} hint={t('downloads.keepAfterFinishHint')}>
           <Toggle on={keepAfterFinish} onChange={setKeepAfterFinish} />
         </Row>
       </Panel>
@@ -453,7 +456,7 @@ export default function DownloadsSection({ st }: Props) {
       {/* Clear all confirmation */}
       {pendingClearAll && (
         <ConfirmDialog
-          title="Clear all downloads?"
+          title={t('downloads.clearConfirm')}
           message="This will delete all downloaded audio files from your device. This cannot be undone."
           confirmLabel="Clear All"
           danger

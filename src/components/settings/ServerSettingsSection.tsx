@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState, ServerSettings } from '../../state/onyx';
 import { SectionHead, Row, Toggle, MONO, SERIF, Panel } from './shared';
 import {
@@ -97,6 +98,7 @@ function PrefixEditor({
   prefixes: string[];
   onChange: (p: string[]) => void;
 }) {
+  const { t } = useI18n();
   const [input, setInput] = useState('');
 
   function add() {
@@ -115,7 +117,7 @@ function PrefixEditor({
         <button
           key={p}
           onClick={() => remove(p)}
-          title="Click to remove"
+          title={t('serverSettings.clickToRemove')}
           style={{
             fontFamily: MONO, fontSize: 11,
             background: 'var(--onyx-accent-dim)',
@@ -132,7 +134,7 @@ function PrefixEditor({
         value={input}
         onChange={e => setInput(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') add(); }}
-        placeholder="+ add"
+        placeholder={t('serverSettings.addPlaceholder')}
         style={{
           fontFamily: MONO, fontSize: 11,
           background: 'var(--onyx-panel2)',
@@ -156,6 +158,7 @@ export default function ServerSettingsSection({ st, embedded = false }: ServerSe
 }
 
 function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSectionProps) {
+  const { t } = useI18n();
   // Local copy of settings — mutated optimistically on each toggle/change.
   // Seeded from st.serverSettings, which is captured at login and refreshed on
   // every app launch via POST /api/authorize (ABS has no standalone GET endpoint
@@ -166,13 +169,13 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
   // divider sub-heading when embedded under the Server panel.
   const head = embedded ? (
     <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--onyx-line)', marginBottom: 8 }}>
-      <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>Server administration</div>
+      <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{t('serverSettings.adminTitle')}</div>
       <div style={{ marginTop: 4, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>
-        Global Audiobookshelf server configuration. Admin only.
+        {t('serverSettings.adminSubtitle')}
       </div>
     </div>
   ) : (
-    <SectionHead title="Server Settings" subtitle="Global Audiobookshelf server configuration. Admin only." />
+    <SectionHead title={t('serverSettings.title')} subtitle={t('serverSettings.adminSubtitle')} />
   );
 
   // Keep local state in sync if the parent state is updated externally
@@ -237,11 +240,11 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       {head}
 
       {/* ── Scanner ──────────────────────────────────────────────────────── */}
-      <Panel label="Scanner">
+      <Panel label={t('serverSettings.scanner')}>
 
       <Row
-        label="Find covers online"
-        hint="Automatically download cover art from the selected provider during library scans."
+        label={t('serverSettings.findCovers')}
+        hint={t('serverSettings.findCoversHint')}
       >
         <Toggle
           on={s.scannerFindCovers ?? false}
@@ -252,7 +255,7 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
         />
       </Row>
 
-      <Row label="Cover provider" hint="Source used when downloading covers automatically.">
+      <Row label={t('serverSettings.coverProvider')} hint={t('serverSettings.coverProviderHint')}>
         <Dropdown
           value={s.scannerCoverProvider ?? 'google'}
           options={coverProviderOptions}
@@ -264,8 +267,8 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Row>
 
       <Row
-        label="Parse subtitle from title"
-        hint="Extract a subtitle when the filename contains a colon or dash separator."
+        label={t('serverSettings.parseSubtitle')}
+        hint={t('serverSettings.parseSubtitleHint')}
       >
         <Toggle
           on={s.scannerParseSubtitle ?? false}
@@ -277,8 +280,8 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Row>
 
       <Row
-        label="Prefer matched metadata"
-        hint="During scans, use previously matched metadata rather than re-scanning file tags."
+        label={t('serverSettings.preferMatched')}
+        hint={t('serverSettings.preferMatchedHint')}
       >
         <Toggle
           on={s.scannerPreferMatchedMetadata ?? false}
@@ -290,8 +293,8 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Row>
 
       <Row
-        label="Disable folder watcher"
-        hint="Stop watching library folders for file system changes. Scans must be triggered manually."
+        label={t('serverSettings.disableWatcher')}
+        hint={t('serverSettings.disableWatcherHint')}
       >
         <Toggle
           on={s.scannerDisableWatcher ?? false}
@@ -305,11 +308,11 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Panel>
 
       {/* ── Metadata storage ─────────────────────────────────────────────── */}
-      <Panel label="Metadata storage">
+      <Panel label={t('serverSettings.metadataStorage')}>
 
       <Row
-        label="Store cover with item"
-        hint="Save the cover image file inside each item's folder on the server disk."
+        label={t('serverSettings.storeCover')}
+        hint={t('serverSettings.storeCoverHint')}
       >
         <Toggle
           on={s.storeCoverWithItem ?? false}
@@ -321,8 +324,8 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Row>
 
       <Row
-        label="Store metadata with item"
-        hint="Save a metadata.json file inside each item's folder on the server disk."
+        label={t('serverSettings.storeMetadata')}
+        hint={t('serverSettings.storeMetadataHint')}
       >
         <Toggle
           on={s.storeMetadataWithItem ?? false}
@@ -336,10 +339,10 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Panel>
 
       {/* ── Sorting ──────────────────────────────────────────────────────── */}
-      <Panel label="Sorting">
+      <Panel label={t('serverSettings.sorting')}>
 
       <Row
-        label="Ignore sort prefixes"
+        label={t('serverSettings.ignoreSortPrefixes')}
         hint='Sort "The Great Gatsby" under G, not T.'
       >
         <Toggle
@@ -355,8 +358,8 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
           otherwise to avoid implying it has any effect. */}
       {(s.sortingIgnorePrefix ?? false) && (
         <Row
-          label="Prefixes"
-          hint="Click a prefix to remove it. Press Enter to add. Triggers a full title re-index."
+          label={t('serverSettings.prefixes')}
+          hint={t('serverSettings.prefixesHint')}
           align="top"
         >
           <PrefixEditor
@@ -372,11 +375,11 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Panel>
 
       {/* ── Podcasts ─────────────────────────────────────────────────────── */}
-      <Panel label="Podcasts">
+      <Panel label={t('serverSettings.podcasts')}>
 
       <Row
-        label="Episode check schedule"
-        hint="How often new podcast episodes are checked. Default: every hour."
+        label={t('serverSettings.episodeSchedule')}
+        hint={t('serverSettings.episodeScheduleHint')}
         align="top"
       >
         <CronEditor
@@ -391,9 +394,9 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       </Panel>
 
       {/* ── Logging ──────────────────────────────────────────────────────── */}
-      <Panel label="Logging">
+      <Panel label={t('serverSettings.logging')}>
 
-      <Row label="Log level" hint="Controls verbosity of the server log files.">
+      <Row label={t('serverSettings.logLevel')} hint={t('serverSettings.logLevelHint')}>
         <Dropdown
           value={s.logLevel ?? 1}
           options={logLevelOptions}
@@ -404,7 +407,7 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
         />
       </Row>
 
-      <Row label="Daily logs to keep" hint="Number of days of server logs retained on disk.">
+      <Row label={t('serverSettings.dailyLogs')} hint={t('serverSettings.dailyLogsHint')}>
         <NumInput
           value={s.loggerDailyLogsToKeep ?? 7}
           min={1}
@@ -417,7 +420,7 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
         />
       </Row>
 
-      <Row label="Scanner logs to keep">
+      <Row label={t('serverSettings.scannerLogs')}>
         <NumInput
           value={s.loggerScannerLogsToKeep ?? 2}
           min={1}

@@ -875,7 +875,7 @@ export default function Player({ st }: PlayerProps) {
             {episodePending && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, minHeight: 160, textAlign: 'center' }}>
                 <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
-                  Episode not downloaded
+                  {t('playerUi.episodeNotDownloaded')}
                 </div>
                 <button
                   onClick={downloadAndPlay}
@@ -918,7 +918,7 @@ export default function Player({ st }: PlayerProps) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  <Icon name="play" size={13} /> Play this book
+                  <Icon name="play" size={13} /> {t('playerUi.playThisBook')}
                 </button>
               </div>
             )}
@@ -1032,7 +1032,7 @@ export default function Player({ st }: PlayerProps) {
                   /* In compact mode, device selector moves here to sit left of bookmark/sleep */
                   <DeviceSelector st={st} compact style={{ flex: '0 0 auto', minWidth: 0, maxWidth: 120 }} />
                 )}
-                <button onClick={addBookmark} aria-label="Bookmark this moment" style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()} title="Bookmark this moment">
+                <button onClick={addBookmark} aria-label={t('playerUi.bookmarkMoment')} style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()} title={t('playerUi.bookmarkMoment')}>
                   <Icon name="bookmark" size={isCompact ? 11 : 15} />
                 </button>
                 <div ref={sleepRef} style={{ position: 'relative', zIndex: 200 }}>
@@ -1060,7 +1060,7 @@ export default function Player({ st }: PlayerProps) {
                   </button>
                   {sleepOpen && (
                     <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 10, boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', padding: 6, zIndex: 300, minWidth: 170 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>Sleep Timer</div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>{t('playerUi.sleepTimer')}</div>
                       {SLEEP_OPTIONS.map(opt => {
                         const active = sleepMode === opt.id;
                         return (
@@ -1167,7 +1167,7 @@ export default function Player({ st }: PlayerProps) {
                       {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                     </>
                   ) : (
-                    <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Not started</div>
+                    <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
                   );
 
                   // ── Podcast / episode details ──────────────────────────────
@@ -1200,7 +1200,7 @@ export default function Player({ st }: PlayerProps) {
                   return (
                     <>
                       {/* Book details */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 4, paddingBottom: 4 }}>Book</div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 4, paddingBottom: 4 }}>{t('playerUi.typeBook')}</div>
                       {detailRow('Publisher',  meta?.publisher    || dash)}
                       {detailRow('Genre',      genres.join(', ')  || dash)}
                       {detailRow('Year',       meta?.publishedYear || dash)}
@@ -1215,7 +1215,7 @@ export default function Player({ st }: PlayerProps) {
                       )}
 
                       {/* Listening stats */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>Listening</div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>{t('playerUi.listening')}</div>
                       {prog ? (
                         <>
                           {detailRow('Progress',
@@ -1228,7 +1228,7 @@ export default function Player({ st }: PlayerProps) {
                           {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                         </>
                       ) : (
-                        <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Not started</div>
+                        <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
                       )}
 
                       {/* Open Library */}
@@ -1238,7 +1238,7 @@ export default function Player({ st }: PlayerProps) {
                           {olWorkKey === undefined ? (
                             <div aria-live="polite" style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>Loading Open Library details…</div>
                           ) : olWorkKey === null ? (
-                            <div style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>No data found</div>
+                            <div style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{t('playerUi.noData')}</div>
                           ) : (
                             <>
                               <div style={{ padding: '8px 0', borderBottom: '1px solid var(--onyx-line)', fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>
@@ -1289,23 +1289,23 @@ export default function Player({ st }: PlayerProps) {
               {/* Podcast episodes carry no chapter markers in this model. */}
               {isPodcast && displayChapters.length === 0 && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  No chapters for this episode
+                  {t('playerUi.noEpisodeChapters')}
                 </div>
               )}
               {/* Contextual hint above the list — message varies by lock reason */}
               {isFocusedDifferent && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  Press Play to enable chapter navigation
+                  {t('playerUi.enableChapters')}
                 </div>
               )}
               {/* Not yet started: same book but position is 0 and not playing */}
               {!isFocusedDifferent && !st.playing && st.position === 0 && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  Press play to begin
+                  {t('playerUi.pressPlay')}
                 </div>
               )}
               {chapterListDiverged && (
-                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 8, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9.5 }}>Return to current chapter</button>
+                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 8, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9.5 }}>{t('playerUi.returnToChapter')}</button>
               )}
               <div ref={chapterListRef} onWheel={markChapterListManual} onTouchMove={markChapterListManual} style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 8 }}>
                 {displayChapters.map((c, i) => {
@@ -1395,8 +1395,8 @@ export default function Player({ st }: PlayerProps) {
 
                 {/* Add-bookmark button — only shown on the Saved tab */}
                 {bookmarkTab === 'bookmarks' && (
-                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} title="Bookmark current moment">
-                    <Icon name="plus" size={11} /> ADD HERE
+                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} title={t('playerUi.bookmarkCurrent')}>
+                    <Icon name="plus" size={11} /> {t('playerUi.addHere')}
                   </button>
                 )}
               </div>
@@ -1409,7 +1409,7 @@ export default function Player({ st }: PlayerProps) {
                   //    title, meta = chapter. Gold dot when labelled, muted if not. ──
                   playerBookmarks.length === 0 ? (
                     <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-                      No bookmarks yet
+                      {t('playerUi.noBookmarks')}
                     </div>
                   ) : playerBookmarks.map((bm, i) => {
                     const ch = chapterAtPos(bm.time, displayChapters);
@@ -1430,7 +1430,7 @@ export default function Player({ st }: PlayerProps) {
                   //    at, meta = when it was recorded. ──
                   stopPoints.length === 0 ? (
                     <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-                      No local history yet
+                      {t('playerUi.noLocalHistory')}
                     </div>
                   ) : stopPoints.map((point, i) => {
                     const ch = chapterAtPos(point.position, chapters);
