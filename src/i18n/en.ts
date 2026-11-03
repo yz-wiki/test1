@@ -61,6 +61,7 @@ const en = {
   'nav.expandSidebar': 'Show sidebar',
   'nav.addLocalLibrary': 'Add local library',
   'nav.account': 'Account & settings',
+  'nav.back': 'Back',
 
   // ── Top bar / search ───────────────────────────────────────────────────────
   'search.placeholder': 'Search {count} titles…',
@@ -167,6 +168,8 @@ const en = {
   'appearance.sidebar': 'Sidebar',
   'appearance.sidebarHint': 'Show a persistent navigation sidebar. Turn off for the compact top-bar layout.',
   'appearance.scale': 'Interface scale',
+  'appearance.sidebarCompact': 'Collapse sidebar',
+  'appearance.sidebarCompactHint': 'Shrink the navigation to an icon rail. The sidebar is never hidden, so the library switcher stays reachable.',
   'appearance.reduceMotion': 'Reduce motion',
   'appearance.reduceMotionHint': 'Disable animations and transitions. Useful for motion sensitivity or slower machines.',
   'appearance.density': 'Density',
@@ -199,6 +202,28 @@ const en = {
   'login.submit': 'Sign in',
   'login.useApiKey': 'Use an API key',
   'login.localOnly': 'Continue without a server',
+
+  // ── Context menu ───────────────────────────────────────────────────────────
+  'menu.playBook': 'Play Book',
+  'menu.deleteDownload': 'Delete Download',
+  'menu.download': 'Download',
+  'menu.markFinished': 'Mark as Finished',
+  'menu.removeFromPickItUp': 'Remove from Pick it up',
+  'menu.addToPlaylist': 'Add to Playlist',
+  'menu.addToCollection': 'Add to Collection',
+  'menu.sectionPlayback': 'Playback',
+  'menu.sectionOrganize': 'Organize',
+  'menu.sectionSource': 'Source',
+  'menu.sectionManage': 'Manage',
+  'menu.libraryTools': 'Library tools',
+  'menu.editMetadata': 'Edit Metadata',
+  'menu.match': 'Match',
+  'menu.delete': 'Delete',
+  'menu.share': 'Share & Publish…',
+  'menu.changeCover': 'Change Cover',
+  'menu.files': 'Files',
+  'menu.rescan': 'Re-Scan',
+  'menu.openIn': 'Open in {name}',
 
   // ── Misc ───────────────────────────────────────────────────────────────────
   'misc.reader': 'Reader',

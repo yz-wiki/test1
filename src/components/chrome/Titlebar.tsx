@@ -7,7 +7,6 @@
 // pills, no toolbar actions).
 import type { CSSProperties, ReactNode } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import TrafficLights from '../shell/TrafficLights';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import lyreIcon from '../../assets/lyre.png';
@@ -31,6 +30,9 @@ export interface TitlebarProps {
   /** Command-palette affordance. Omit to hide. */
   onOpenPalette?: () => void;
   paletteShortcut?: string;
+  /** "Back" affordance — steps one level up in the navigation history. */
+  onBack?: () => void;
+  canGoBack?: boolean;
 }
 
 type DragStyle = CSSProperties & { WebkitAppRegion?: string };
@@ -49,6 +51,31 @@ const RESIZE_EDGES: Array<{ direction: ResizeDirection; style: CSSProperties }> 
 
 const NO_DRAG_SELECTOR = 'button, input, textarea, select, a, [data-tauri-drag-region="false"]';
 
+/** Minimise / maximise / close, in the native Windows order and hit size. */
+function WindowButton({ kind, label }: { kind: 'min' | 'max' | 'close'; label: string }) {
+  const onClick = () => {
+    const win = getCurrentWindow();
+    if (kind === 'min') void win.minimize().catch(() => {});
+    else if (kind === 'max') void win.toggleMaximize().catch(() => {});
+    else void win.close().catch(() => {});
+  };
+
+  return (
+    <button
+      type="button"
+      className={`mac-winbtn mac-winbtn--${kind}`}
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      data-tauri-drag-region="false"
+    >
+      {kind === 'min' && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5h7" /></svg>}
+      {kind === 'max' && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.6" y="1.6" width="6.8" height="6.8" rx="1" /></svg>}
+      {kind === 'close' && <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.8 1.8l6.4 6.4M8.2 1.8L1.8 8.2" /></svg>}
+    </button>
+  );
+}
+
 export default function Titlebar({
   subtitle,
   minimal,
@@ -61,6 +88,8 @@ export default function Titlebar({
   sidebarVisible,
   onOpenPalette,
   paletteShortcut,
+  onBack,
+  canGoBack,
 }: TitlebarProps) {
   const { t, formatDateTime } = useI18n();
   const drag: DragStyle = { WebkitAppRegion: 'drag' };
@@ -108,9 +137,22 @@ export default function Titlebar({
         />
       ))}
 
-      <TrafficLights />
+      {onBack && (
+        <button
+          type="button"
+          className="mac-iconbtn"
+          onClick={onBack}
+          disabled={!canGoBack}
+          title={t('nav.back')}
+          aria-label={t('nav.back')}
+          data-tauri-drag-region="false"
+          style={{ opacity: canGoBack ? 1 : 0.35 }}
+        >
+          <Icon name="chevron-left" size={16} />
+        </button>
+      )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, marginLeft: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, marginLeft: onBack ? 2 : 6 }}>
         <img
           src={lyreIcon}
           alt=""
@@ -169,6 +211,15 @@ export default function Titlebar({
             <Icon name="list" size={14} />
           </button>
         )}
+
+        {/* Native-style window controls. The macOS traffic lights were the wrong
+            idiom for a Windows/Linux app: keep them where users expect them, with
+            the standard hover affordances (red close). */}
+        <div style={{ display: 'flex', marginLeft: 4, marginRight: -16, height: '100%' }}>
+          <WindowButton kind="min" label={t('window.minimize')} />
+          <WindowButton kind="max" label={t('window.maximize')} />
+          <WindowButton kind="close" label={t('window.close')} />
+        </div>
       </div>
     </header>
   );

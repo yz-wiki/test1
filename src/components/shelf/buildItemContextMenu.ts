@@ -4,6 +4,7 @@ import { updateProgress, deleteProgress, closeActiveSession, rescanItem, deleteI
 // Canonical play function — routes through shared resume and UI-sync logic
 import { playBook } from '../../api/playbook';
 import { log } from '../../lib/log';
+import { t } from '../../i18n';
 
 // Guard against double-invocation (React portal event bubbling / StrictMode).
 const pendingItems = new Set<string>();
@@ -46,7 +47,7 @@ export function buildItemContextMenu(
   // ── PLAYBACK ───────────────────────────────────────────────────────────────
   const playback: ContextMenuItem[] = [
     {
-      label: 'Play Book',
+      label: t('menu.playBook'),
       icon: 'play',
       primary: true,
       onClick: async () => {
@@ -68,7 +69,7 @@ export function buildItemContextMenu(
         ? {
             // Already downloaded — offer deletion so the user can free up space directly
             // from the shelf without navigating to Settings → Downloads.
-            label: 'Delete Download',
+            label: t('menu.deleteDownload'),
             icon: 'trash',
             danger: true,
             onClick: () => {
@@ -91,7 +92,7 @@ export function buildItemContextMenu(
           }
         : {
             // Not yet downloaded — fires the Rust streaming command.
-            label: 'Download',
+            label: t('menu.download'),
             icon: 'download',
             onClick: () => {
               const title = item.media?.metadata?.title ?? item.id;
@@ -109,7 +110,7 @@ export function buildItemContextMenu(
           },
     ] as ContextMenuItem[]),
     {
-      label: 'Mark as Finished',
+      label: t('menu.markFinished'),
       icon: 'check-circle',
       onClick: async () => {
         if (pendingItems.has(item.id)) return;
@@ -166,7 +167,7 @@ export function buildItemContextMenu(
   // Pick-it-up shelf — right-clicking the same book on the main shelf omits it.
   if (fromPickItUp) {
     playback.push({
-      label: 'Remove from Pick it up',
+      label: t('menu.removeFromPickItUp'),
       icon: 'clock',
       onClick: () => {
         // The DELETE endpoint requires the progress record's own id, not the library item id.
@@ -188,16 +189,16 @@ export function buildItemContextMenu(
 
   // ── ORGANIZE ─────────────────────────────────────────────────────────────
   const organize: ContextMenuItem[] = isLocal || isCombinedShelf ? [] : [
-    { label: 'Add to Playlist', icon: 'playlist', onClick: () => setPlaylistItem?.(item), disabled: !setPlaylistItem },
+    { label: t('menu.addToPlaylist'), icon: 'playlist', onClick: () => setPlaylistItem?.(item), disabled: !setPlaylistItem },
   ];
   if (!isLocal && !isCombinedShelf && isAdmin) {
-    organize.push({ label: 'Add to Collection', icon: 'layers', onClick: () => setCollectionItem?.(item), disabled: !setCollectionItem });
+    organize.push({ label: t('menu.addToCollection'), icon: 'layers', onClick: () => setCollectionItem?.(item), disabled: !setCollectionItem });
   }
 
   const sections: ContextMenuSection[] = [
-    { label: 'Playback', items: playback },
+    { label: t('menu.sectionPlayback'), items: playback },
   ];
-  if (organize.length > 0) sections.push({ label: 'Organize', items: organize });
+  if (organize.length > 0) sections.push({ label: t('menu.sectionOrganize'), items: organize });
 
   // ── SOURCE (combined shelf only) ───────────────────────────────────────────
   // All Libraries deliberately exposes search/play only (review L1) — organize
@@ -209,9 +210,9 @@ export function buildItemContextMenu(
     const sourceLib = st.libraries.find(l => l.id === item.libraryId);
     if (sourceLib) {
       sections.push({
-        label: 'Source',
+        label: t('menu.sectionSource'),
         items: [{
-          label: `Open in ${sourceLib.name}`,
+          label: t('menu.openIn', { name: sourceLib.name }),
           icon: 'grid',
           onClick: () => {
             log.info('library', 'open source library from combined shelf', { itemId: item.id, libraryId: sourceLib.id });
@@ -235,16 +236,16 @@ export function buildItemContextMenu(
   // no server user.
   if (isLocal) {
     sections.push({
-      label: 'Manage',
+      label: t('menu.sectionManage'),
       items: [
         {
-          label: 'Library tools',
+          label: t('menu.libraryTools'),
           icon: 'sliders',
           submenu: [
-            { label: 'Edit Metadata', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
-            { label: 'Match', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
+            { label: t('menu.editMetadata'), icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
+            { label: t('menu.match'), icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
             {
-              label: 'Delete',
+              label: t('menu.delete'),
               icon: 'trash',
               danger: true,
               onClick: () => {
@@ -270,19 +271,19 @@ export function buildItemContextMenu(
     });
   } else if (isAdmin) {
     sections.push({
-      label: 'Manage',
+      label: t('menu.sectionManage'),
       items: [
-        { label: 'Share & Publish…', icon: 'share', onClick: () => setShareItem?.(item), disabled: !setShareItem },
+        { label: t('menu.share'), icon: 'share', onClick: () => setShareItem?.(item), disabled: !setShareItem },
         {
-          label: 'Library tools',
+          label: t('menu.libraryTools'),
           icon: 'sliders',
           submenu: [
-            { label: 'Edit Metadata', icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
-            { label: 'Change Cover', icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
-            { label: 'Match', icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
-            { label: 'Files', icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
+            { label: t('menu.editMetadata'), icon: 'edit', onClick: () => setEditItem?.(item), disabled: !setEditItem },
+            { label: t('menu.changeCover'), icon: 'image', onClick: () => setCoverItem?.(item), disabled: !setCoverItem },
+            { label: t('menu.match'), icon: 'target', onClick: () => setMatchItem?.(item), disabled: !setMatchItem },
+            { label: t('menu.files'), icon: 'file', onClick: () => setFilesItem?.(item), disabled: !setFilesItem },
             {
-              label: 'Re-Scan',
+              label: t('menu.rescan'),
               icon: 'refresh',
               onClick: () => {
                 const title = item.media?.metadata?.title ?? item.id;
@@ -300,7 +301,7 @@ export function buildItemContextMenu(
     sections.push({
       items: [
         {
-          label: 'Delete',
+          label: t('menu.delete'),
           icon: 'trash',
           danger: true,
           onClick: () => {

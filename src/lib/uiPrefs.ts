@@ -67,6 +67,30 @@ export function useSidebarVisible(): boolean {
   return useSyncExternalStore(sidebarPref.subscribe, sidebarPref.get, sidebarPref.get);
 }
 
+// ─── Sidebar compact (icon rail) ─────────────────────────────────────────────
+//
+// The sidebar is always present; the toggle narrows it to an icon rail instead of
+// removing it. Hiding it entirely made the library switcher and the account entry
+// point disappear, which is not a trade any of the macOS-style apps make.
+
+const sidebarCompactPref = createStoredPref('skald.ui.sidebarCompact', false, raw => raw === 'true');
+
+export function getSidebarCompact(): boolean {
+  return sidebarCompactPref.get();
+}
+
+export function setSidebarCompact(compact: boolean): void {
+  sidebarCompactPref.set(compact);
+}
+
+export function toggleSidebarCompact(): void {
+  setSidebarCompact(!getSidebarCompact());
+}
+
+export function useSidebarCompact(): boolean {
+  return useSyncExternalStore(sidebarCompactPref.subscribe, sidebarCompactPref.get, sidebarCompactPref.get);
+}
+
 // ─── Library focus column ────────────────────────────────────────────────────
 //
 // 'auto'   — show the panel only while nothing is playing here. While playback
@@ -136,6 +160,7 @@ export function useReduceMotion(): boolean {
 /** Drop memoised values so a fresh localStorage read happens (tests only). */
 export function resetUiPrefsCache(): void {
   sidebarPref.reset();
+  sidebarCompactPref.reset();
   focusRailPref.reset();
   reduceMotionPref.reset();
 }

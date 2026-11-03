@@ -240,6 +240,41 @@ html[data-locale='zh-CN'] body {
   align-items: center;
   gap: var(--mac-space-2);
   flex: 0 0 auto;
+  height: 100%;
+}
+
+/* ─── Window controls (Windows/Linux order) ───────────────────────────────── */
+
+.mac-winbtn {
+  width: 46px;
+  height: 100%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--mac-glyph-dim);
+  cursor: default;
+  transition: background var(--mac-dur-fast) var(--mac-ease),
+    color var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-winbtn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mac-winbtn:hover {
+  background: var(--mac-hover);
+  color: var(--onyx-text);
+}
+
+.mac-winbtn--close:hover {
+  background: #e81123;
+  color: #fff;
 }
 
 /* ─── Traffic lights ──────────────────────────────────────────────────────── */

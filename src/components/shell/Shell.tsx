@@ -9,7 +9,7 @@
 // The screens themselves are untouched by this file: they still receive the one
 // shared `st` object and render into `children`. That is deliberate — a shell
 // rewrite should not ripple into 12k lines of screen code.
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import Titlebar from '../chrome/Titlebar';
 import ActivityCenter from '../ActivityCenter';
@@ -20,7 +20,7 @@ import NowPlayingBar from './NowPlayingBar';
 import { ShellChromeContext } from './ShellContext';
 import { useI18n } from '../../i18n';
 import { libraryDisplayLabel } from '../../lib/libraryPresentation';
-import { toggleSidebarVisible, useSidebarVisible } from '../../lib/uiPrefs';
+import { toggleSidebarCompact, useSidebarCompact } from '../../lib/uiPrefs';
 
 export interface ShellProps {
   st: OnyxState;
@@ -38,8 +38,9 @@ function paletteShortcutLabel(): string {
 export default function Shell({ st, children }: ShellProps) {
   const { t } = useI18n();
   // Shared with Settings → Appearance through lib/uiPrefs, so toggling it in
-  // either place updates the other immediately.
-  const sidebarVisible = useSidebarVisible();
+  // either place updates the other immediately. The rail is never removed — it
+  // collapses to icons, because it owns the library switcher and the account.
+  const sidebarCompactPref = useSidebarCompact();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [narrow, setNarrow] = useState(() =>
     typeof window === 'undefined' ? false : window.innerWidth < COMPACT_BREAKPOINT);
@@ -53,8 +54,39 @@ export default function Shell({ st, children }: ShellProps) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // ── Back navigation ────────────────────────────────────────────────────────
+  // A tiny stack of previous screens. Suppressed while the back action itself is
+  // driving the change, otherwise the effect would immediately re-push the screen
+  // we just left.
+  const [history, setHistory] = useState<string[]>([]);
+  const previousScreen = useRef(st.screen);
+  const navigatingBack = useRef(false);
+
+  useEffect(() => {
+    if (navigatingBack.current) {
+      navigatingBack.current = false;
+      previousScreen.current = st.screen;
+      return;
+    }
+    if (previousScreen.current === st.screen) return;
+    const from = previousScreen.current;
+    previousScreen.current = st.screen;
+    setHistory(stack => [...stack.slice(-19), from]);
+  }, [st.screen]);
+
+  const goBack = useCallback(() => {
+    setHistory(stack => {
+      const target = stack[stack.length - 1];
+      if (target) {
+        navigatingBack.current = true;
+        st.setScreen(target);
+      }
+      return stack.slice(0, -1);
+    });
+  }, [st.setScreen]);
+
   const toggleSidebar = useCallback(() => {
-    toggleSidebarVisible();
+    toggleSidebarCompact();
   }, []);
 
   // ⌘K / Ctrl+K opens the palette. Bound here rather than in useGlobalShortcuts
@@ -91,7 +123,8 @@ export default function Shell({ st, children }: ShellProps) {
     subtitle = st.library.length > 0 ? t('misc.books', { count: st.library.length }) : t('misc.library');
   }
 
-  const chrome = { hasSidebar: sidebarVisible, sidebarCompact: narrow && sidebarVisible };
+  const sidebarCompact = sidebarCompactPref || narrow;
+  const chrome = { hasSidebar: true, sidebarCompact };
 
   return (
     <ShellChromeContext.Provider value={chrome}>
@@ -107,15 +140,15 @@ export default function Shell({ st, children }: ShellProps) {
           isUnencrypted={!!st.authToken && !!st.serverUrl && st.serverUrl.startsWith('http://')}
           trailing={<ActivityCenter st={st} />}
           onToggleSidebar={toggleSidebar}
-          sidebarVisible={sidebarVisible}
+          sidebarVisible={!sidebarCompact}
           onOpenPalette={() => setPaletteOpen(true)}
           paletteShortcut={paletteShortcutLabel()}
+          onBack={goBack}
+          canGoBack={history.length > 0}
         />
 
         <div className="mac-body">
-          {sidebarVisible && (
-            <Sidebar st={st} compact={narrow} onNavigate={() => setPaletteOpen(false)} />
-          )}
+          <Sidebar st={st} compact={sidebarCompact} onNavigate={() => setPaletteOpen(false)} />
           <main className="mac-content">
             <div className="mac-content__inner">{children}</div>
             {/* Playback stays reachable from every screen. The Player screen

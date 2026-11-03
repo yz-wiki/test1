@@ -137,11 +137,11 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
   }
 
   // ── Device-level destinations ──────────────────────────────────────────────
+  // Rendered in the footer, directly above the account card: these are
+  // destinations you reach for constantly, so they should not scroll away with
+  // the library list.
   const downloadCount = st.downloads.length;
-  sections.push({
-    id: 'device',
-    label: t('nav.section.thisDevice'),
-    rows: [
+  const footerRows: NavRow[] = [
       {
         id: 'now-playing',
         label: t('nav.nowPlaying'),
@@ -166,8 +166,7 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
         state: st.screen === 'settings' && st.settingsSection !== 'downloads' ? 'active' : 'idle',
         onSelect: openSettings(),
       },
-    ],
-  });
+  ];
 
   const displayName = st.user?.username || st.localDisplayName || t('misc.reader');
   const role = st.isAdmin ? 'Admin' : st.localMode ? t('misc.local') : 'User';
@@ -285,6 +284,23 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
       </div>
 
       <div className="mac-sidebar__footer">
+        {footerRows.map(row => (
+          <button
+            key={row.id}
+            type="button"
+            className={`mac-nav-item${row.state === 'active' ? ' mac-nav-item--active' : ''}`}
+            aria-current={row.state === 'active' ? 'page' : undefined}
+            disabled={row.state === 'disabled'}
+            onClick={row.onSelect}
+            title={compact ? row.label : undefined}
+            style={row.state === 'disabled' ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+          >
+            <span className="mac-nav-item__icon"><Icon name={row.icon} size={15} /></span>
+            <span className="mac-nav-item__label">{row.label}</span>
+            {row.badge && <span className="mac-nav-item__badge">{row.badge}</span>}
+          </button>
+        ))}
+        <div className="mac-hairline" style={{ margin: '6px 8px' }} />
         <button
           type="button"
           className="mac-account"

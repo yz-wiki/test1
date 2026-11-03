@@ -9,7 +9,8 @@ import Cover from './Cover';
 import Icon from './Icon';
 import ContextMenu from './ContextMenu';
 import { buildItemContextMenu } from './shelf/buildItemContextMenu';
-import { pauseAudio, getContinueListening } from '../api/abs';
+import { getContinueListening } from '../api/abs';
+import { playBook, togglePlayback } from '../api/playbook';
 import { log } from '../lib/log';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
@@ -95,21 +96,21 @@ export default function PickItUp({ st }: PickItUpProps) {
   };
 
   const handlePickItUpClick = async (book: LibraryItem) => {
-    // If this book is already the current book, do nothing — the sidebar
-    // play button will handle play/pause as normal.
-    if (book.id === st.currentBookId) return;
-
-    // If a book is actively playing, pause it before switching.
-    // This prevents audio from continuing over the transition.
-    if (st.playing) {
-      await pauseAudio().catch(e => log.error('playback', 'pause before book switch failed', { err: String(e) }));
-      st.setPlaying(false);
+    // Clicking a cover in "Pick it up" starts playback — that is what a poster in
+    // a music app does. Re-clicking the item that is already loaded toggles it
+    // instead, so the same card works as a pause button.
+    st.setFocusedBookId(book.id);
+    if (book.id === st.currentBookId) {
+      await togglePlayback(st).catch(e =>
+        log.error('playback', 'pick-it-up toggle failed', { err: String(e) }));
+      return;
     }
 
-    // Update currentBookId to the selected book so the Focus panel
-    // and sidebar play button now target this book.
+    // playBook owns session teardown, resume position, session open, UI sync and
+    // playAudio, so nothing here should pre-pause or pre-set currentBookId.
     st.setCurrentBookId(book.id);
-    st.setFocusedBookId(book.id);
+    await playBook(st, book.id).catch(e =>
+      log.error('playback', 'pick-it-up play failed', { err: String(e), itemId: book.id }));
 
     // Reset session state so the sidebar knows no session is open
     // for the new book — the play button will open a fresh one.

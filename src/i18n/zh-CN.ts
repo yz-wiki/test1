@@ -58,6 +58,7 @@ const zhCN: Dict = {
   'nav.expandSidebar': '显示侧边栏',
   'nav.addLocalLibrary': '添加本地书库',
   'nav.account': '账户与设置',
+  'nav.back': '返回上一级',
 
   // ── 顶栏 / 搜索 ────────────────────────────────────────────────────────────
   'search.placeholder': '在 {count} 本有声书中搜索…',
@@ -164,6 +165,8 @@ const zhCN: Dict = {
   'appearance.sidebar': '侧边栏',
   'appearance.sidebarHint': '常驻显示导航侧边栏。关闭后回到紧凑的顶栏布局。',
   'appearance.scale': '界面缩放',
+  'appearance.sidebarCompact': '折叠侧边栏',
+  'appearance.sidebarCompactHint': '把导航收成图标栏。侧边栏不会被隐藏，书库切换器始终可用。',
   'appearance.reduceMotion': '减少动态效果',
   'appearance.reduceMotionHint': '关闭动画与过渡。适合对动效敏感的用户或性能较弱的设备。',
   'appearance.density': '密度',
@@ -198,6 +201,28 @@ const zhCN: Dict = {
   'login.submit': '登录',
   'login.useApiKey': '使用 API 密钥',
   'login.localOnly': '无服务器，继续使用本地模式',
+
+  // ── 右键菜单 ───────────────────────────────────────────────────────────────
+  'menu.playBook': '播放本书',
+  'menu.deleteDownload': '删除已下载副本',
+  'menu.download': '下载',
+  'menu.markFinished': '标记为已完成',
+  'menu.removeFromPickItUp': '从「继续收听」移除',
+  'menu.addToPlaylist': '加入播放列表',
+  'menu.addToCollection': '加入合集',
+  'menu.sectionPlayback': '播放',
+  'menu.sectionOrganize': '整理',
+  'menu.sectionSource': '来源',
+  'menu.sectionManage': '管理',
+  'menu.libraryTools': '书库工具',
+  'menu.editMetadata': '编辑元数据',
+  'menu.match': '匹配',
+  'menu.delete': '删除',
+  'menu.share': '分享与发布…',
+  'menu.changeCover': '更换封面',
+  'menu.files': '文件',
+  'menu.rescan': '重新扫描',
+  'menu.openIn': '在「{name}」中打开',
 
   // ── 其他 ───────────────────────────────────────────────────────────────────
   'misc.reader': '读者',

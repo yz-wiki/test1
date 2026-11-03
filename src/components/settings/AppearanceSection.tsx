@@ -3,7 +3,7 @@ import type { OnyxState } from '../../state/onyx';
 import { SectionHead, Row, Toggle, Panel, Seg, SegGroup, eyebrowStyle } from './shared';
 import { COVER_SIZES } from '../shelf/LibraryShelf';
 import { ACCENT_PRESETS } from '../../state/theme';
-import { useSidebarVisible, setSidebarVisible, useReduceMotion, setReduceMotion } from '../../lib/uiPrefs';
+import { useSidebarCompact, setSidebarCompact, useReduceMotion, setReduceMotion } from '../../lib/uiPrefs';
 import { useI18n } from '../../i18n';
 
 export interface AppearanceSectionProps { st: OnyxState; }
@@ -31,7 +31,7 @@ const subEyebrow: CSSProperties = { ...eyebrowStyle, padding: '16px 0 8px' };
 export default function AppearanceSection({ st }: AppearanceSectionProps) {
   const { t } = useI18n();
   const currentHex = (st.accentColor || '').toLowerCase();
-  const sidebarVisible = useSidebarVisible();
+  const sidebarCompact = useSidebarCompact();
   const reduceMotion = useReduceMotion();
 
   // Responsive layout: observe the section's own width (not the window) so the
@@ -106,8 +106,8 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
           <Toggle on={st.translucent} onChange={st.setTranslucent} />
         </Row>
 
-        <Row label={t('appearance.sidebar')} hint={t('appearance.sidebarHint')}>
-          <Toggle on={sidebarVisible} onChange={setSidebarVisible} />
+        <Row label={t('appearance.sidebarCompact')} hint={t('appearance.sidebarCompactHint')}>
+          <Toggle on={sidebarCompact} onChange={setSidebarCompact} />
         </Row>
 
         <Row label={t('appearance.reduceMotion')} hint={t('appearance.reduceMotionHint')}>

@@ -137,13 +137,14 @@ describe('Shell', () => {
     expect(screen.queryByText(/Nothing matches/i)).toBeTruthy();
   });
 
-  it('persists the sidebar visibility preference when toggled', () => {
+  it('collapses the sidebar to an icon rail instead of hiding it', () => {
     renderShell(makeState());
     const toggle = screen.getByRole('button', { name: /sidebar/i });
     fireEvent.click(toggle);
-    expect(localStorage.getItem('skald.ui.sidebar')).toBe('false');
-    // Sidebar nav is gone once hidden.
-    expect(screen.queryByText('reader')).toBeNull();
+    // The rail stays mounted — it owns the library switcher and the account — so
+    // the preference is "compact", not "hidden".
+    expect(localStorage.getItem('skald.ui.sidebarCompact')).toBe('true');
+    expect(screen.getByText('reader')).toBeTruthy();
   });
 
   it('navigates to Settings from the sidebar', () => {
