@@ -97,4 +97,12 @@ describe('TopNav selector accessibility', () => {
     fireEvent.keyDown(options[options.length - 1], { key: 'Home' });
     expect(document.activeElement).toBe(options[0]);
   });
+
+  it('applies the chosen search scope when an option is clicked', () => {
+    const st = state();
+    render(<TopNav st={st} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Search field scope' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Title' }));
+    expect(st.setSearchScope).toHaveBeenCalledWith('title');
+  });
 });

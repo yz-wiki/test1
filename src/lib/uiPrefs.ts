@@ -69,9 +69,9 @@ export function useSidebarVisible(): boolean {
 
 // ─── Library focus column ────────────────────────────────────────────────────
 //
-// 'auto'   — show the panel only while a book from this library is playing.
-//            The Greeting pane no longer reserves 360px of shelf width when
-//            nothing is happening, which is how macOS music apps behave.
+// 'auto'   — show the panel only while nothing is playing here. While playback
+//            runs, the shell's now-playing bar is the single transport, so the
+//            column would be a second copy of the same controls.
 // 'shown'  — always reserve it, restoring the original always-on layout.
 // 'hidden' — never show it; the shelf takes the full width.
 

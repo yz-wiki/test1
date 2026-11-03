@@ -850,6 +850,10 @@ export default function Player({ st }: PlayerProps) {
 
           <div className="mac-panel" style={{
             padding: (isFocusedDifferent && !showTransport) ? '14px 26px' : 26,
+            // The collapsed "Play this book" strip used to span the full window,
+            // which read as an empty toolbar. Keep it a compact centred bar.
+            maxWidth: (isFocusedDifferent && !showTransport) ? 560 : undefined,
+            alignSelf: (isFocusedDifferent && !showTransport) ? 'center' : undefined,
             maxHeight: (isFocusedDifferent && !showTransport) ? 68 : 700,
             overflow: 'hidden',
             transition: 'max-height 350ms ease-out, padding 300ms ease-out',
@@ -1097,7 +1101,7 @@ export default function Player({ st }: PlayerProps) {
             )}
 
             {/* ── Details panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 300px', minWidth: 0, padding: 16, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Details</div>
                 {!isPodcast && !b.localPath && (
@@ -1266,7 +1270,7 @@ export default function Player({ st }: PlayerProps) {
             </div>
 
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 16, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Chapters</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
@@ -1346,7 +1350,7 @@ export default function Player({ st }: PlayerProps) {
             </div>
 
             {/* ── Bookmarks panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 280px', minWidth: 0, padding: 16, display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
               {/* ── Panel header: title + tab switcher + add button ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -1442,7 +1446,7 @@ export default function Player({ st }: PlayerProps) {
 
             {/* ── Synopsis panel — compact-only tab; on large windows the synopsis
                 renders inline in the left column instead, so this stays hidden. ── */}
-            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 320px', minWidth: 0, padding: 16, display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 12 }}>{detailLabel}</div>
               <div style={{ flex: 1, overflowY: 'auto', marginRight: -8, paddingRight: 8 }}>
                 {descriptionHtml ? (

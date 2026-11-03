@@ -61,11 +61,13 @@ export default function Library({ st }: LibraryProps) {
   const playingBookInLib = !!st.currentBookId && st.library.some(b => b.id === st.currentBookId);
   const showFocus = playingBookInLib && !playingIsPodcast;
 
-  // The left column reserves 360px. 'auto' only pays that cost while something
-  // from this library is actually playing; 'shown' pins it (the previous
-  // always-on behaviour) and 'hidden' hands the width to the shelf.
+  // The left column reserves 360px. In 'auto' it shows the Greeting pane only
+  // while nothing from this library is playing: once playback starts, the shell's
+  // now-playing bar is the single transport, so a second playback card here would
+  // duplicate the cover, title and controls. 'shown' pins the panel (and brings
+  // FocusPanel back), 'hidden' hands the width to the shelf.
   const focusRailMode = useFocusRailMode();
-  const showFocusColumn = focusRailMode === 'shown' || (focusRailMode === 'auto' && showFocus);
+  const showFocusColumn = focusRailMode === 'shown' || (focusRailMode === 'auto' && !showFocus);
 
   const focusColumn = (
     <div style={{

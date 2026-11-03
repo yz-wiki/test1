@@ -56,6 +56,18 @@ moved is everything around it.
   and line-height for Chinese.
 
 ### Fixes found by running the 1.3.0 build against a live server
+- **The content area rendered as a black pane.** `OnyxWash` is absolutely
+  positioned, so it painted *above* the statically-positioned `.mac-body` and
+  covered every screen; only the z-indexed chrome (titlebar, sidebar, now-playing
+  bar) stayed visible. The body now establishes its own stacking level.
+- **Two playback surfaces are one.** The Library's left "in focus" column no
+  longer appears while a book is playing — the shell's now-playing bar is the
+  single transport, so the cover/title/controls are no longer duplicated. The
+  column still shows the greeting when idle, and can be pinned from the toolbar.
+- Player: the three panes no longer split evenly (chapters take the slack, details
+  and bookmarks are fixed-width), pane padding tightened, and the collapsed
+  "Play this book" strip is a compact centred bar instead of a full-width band.
+- Search-scope options respond to the press before any focus hand-off.
 - **Every log line was written twice.** `tauri-plugin-log`'s builder starts with
   a default `LogDir` target whose file name is the package name (`Skald.log`);
   adding our own `skald.log` target pointed at the same file on Windows'

@@ -515,6 +515,13 @@ html[data-locale='zh-CN'] body {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+  /* OnyxWash is an absolutely positioned full-bleed layer painted *after*
+     static in-flow content, so without an explicit stacking level it covers the
+     entire content region — the symptom was a solid dark pane with only the
+     chrome (titlebar/sidebar/now-playing bar, all z-indexed) visible.
+     z-index 1 keeps the body above the wash and below the titlebar (60). */
+  position: relative;
+  z-index: 1;
 }
 
 .mac-content {

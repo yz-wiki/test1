@@ -402,8 +402,18 @@ export default function TopNav({ st }: TopNavProps) {
                       // Roving tabindex — see the library listbox above. Options are Arrow-key
                       // navigable only; -1 keeps Tab from cycling through them instead of exiting.
                       tabIndex={-1}
+                      type="button"
                       role="option"
                       aria-selected={active}
+                      // Handle the pick on mousedown: it fires before the document
+                      // listener and before any focus change, so the selection is
+                      // applied even if the menu is torn down in the same tick.
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        st.setSearchScope(s.value);
+                        setScopeOpen(false);
+                      }}
                       onClick={() => { st.setSearchScope(s.value); setScopeOpen(false); }}
                       onMouseEnter={() => setHoverScope(s.value)}
                       onMouseLeave={() => setHoverScope(prev => (prev === s.value ? null : prev))}
