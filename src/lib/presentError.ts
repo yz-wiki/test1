@@ -24,6 +24,13 @@ export function presentError(error: unknown, context: ErrorPresentationContext =
   const raw = errorText(error).toLowerCase();
   const authentication = context.operation === 'authenticate';
   if (/certificate|cert |tls|ssl|unknown issuer|invalid peer/.test(raw)) return { kind: 'tls', title: 'Secure connection failed', message: 'Skald could not verify the server certificate.', action: 'Check the HTTPS address or certificate, then try again.', showLogHint: true };
+  // The single most common self-hosted mistake: typing https:// for a server that
+  // only listens on plain HTTP. reqwest reports that as a generic send failure, so
+  // without this branch the user is told to "check the address" — which is exactly
+  // what they did check. Name the scheme mismatch instead.
+  if (raw.includes('https://') && /error sending request|handshake|connection (closed|reset|refused)|unexpected eof|tls|ssl/.test(raw)) {
+    return { kind: 'tls', title: 'HTTPS handshake failed', message: 'The address uses https://, but Audiobookshelf may only be serving plain HTTP on that port.', action: 'Try the same address with http:// — this is typical for a self-hosted server on a local network.', showLogHint: true };
+  }
   if (/401|unauthori[sz]ed|invalid (api )?key|invalid credentials|incorrect password|authentication failed/.test(raw)) {
     const credential = context.credential === 'api-key' ? 'API key' : context.credential === 'saved-session' ? 'saved sign-in' : 'username and password';
     return { kind: 'unauthorized', title: 'Sign-in was not accepted', message: `The server did not accept your ${credential}.`, action: context.credential === 'api-key' ? 'Create or copy a valid key from the Audiobookshelf WebUI, then try again.' : 'Check your credentials and try again.', showLogHint: false };

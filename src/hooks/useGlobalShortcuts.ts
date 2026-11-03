@@ -51,7 +51,17 @@ export function useGlobalShortcuts(st: OnyxState): void {
 
     const bindings = loadBindings();
     // Safe to re-run on a later mount: the Rust command unregister_alls first.
-    registerShortcuts(bindings).catch(shortcutErr);
+    // Bindings are registered independently, so a key owned by another app comes
+    // back as a failure entry rather than aborting the rest of the list.
+    registerShortcuts(bindings)
+      .then(failures => {
+        if (!failures?.length) return;
+        log.warn('playback', 'some global shortcuts are unavailable', {
+          shortcuts: failures.map(f => `${f.shortcut} (${f.action})`).join(', '),
+          reason: failures[0].error,
+        });
+      })
+      .catch(shortcutErr);
 
     const unlisteners: Array<() => void> = [];
     // Cleanup can run BEFORE the listen() promises resolve (StrictMode's fake

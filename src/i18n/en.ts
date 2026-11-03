@@ -135,6 +135,7 @@ const en = {
   'settings.about': 'About',
   'settings.signOut': 'Sign out',
   'settings.searchEmpty': 'No setting matches “{query}”',
+  'keyboard.conflictBody': '{shortcuts} is already used by another application. Click the row to choose a different combination.',
 
   // ── Language & region ──────────────────────────────────────────────────────
   'language.title': 'Language & Region',

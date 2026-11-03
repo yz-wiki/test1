@@ -4,6 +4,8 @@ import type { ShortcutBinding } from '../../api/abs';
 import { DEFAULT_SHORTCUTS } from '../../hooks/useGlobalShortcuts';
 import { SectionHead, MONO, SERIF, Panel } from './shared';
 import { log } from '../../lib/log';
+import type { ShortcutFailure } from '../../api/abs';
+import { useI18n } from '../../i18n';
 
 const ACTION_LABELS: Record<string, string> = {
   play_pause:   'Play / Pause',
@@ -89,6 +91,10 @@ function ShortcutChord({ shortcut, active }: { shortcut: string; active: boolean
 }
 
 export default function KeyboardSection() {
+  const { t } = useI18n();
+  // Bindings the OS refused (another app already owns the combination). Shown as
+  // an inline notice so the user can remap right here instead of hunting the log.
+  const [conflicts, setConflicts] = useState<ShortcutFailure[]>([]);
   const [bindings, setBindings] = useState<ShortcutBinding[]>(loadBindings);
   const [listeningFor, setListeningFor] = useState<string | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
@@ -123,7 +129,9 @@ export default function KeyboardSection() {
       );
       setBindings(newBindings);
       localStorage.setItem('onyx.shortcuts', JSON.stringify(newBindings));
-      registerShortcuts(newBindings).catch(e => log.error('playback', 'register shortcuts failed', { err: String(e) }));
+      registerShortcuts(newBindings)
+        .then(failures => setConflicts(failures ?? []))
+        .catch(e => { setConflicts([]); log.error('playback', 'register shortcuts failed', { err: String(e) }); });
       setListeningFor(null);
     };
 
@@ -134,7 +142,9 @@ export default function KeyboardSection() {
   function resetDefaults() {
     setBindings(DEFAULT_SHORTCUTS);
     localStorage.setItem('onyx.shortcuts', JSON.stringify(DEFAULT_SHORTCUTS));
-    registerShortcuts(DEFAULT_SHORTCUTS).catch(e => log.error('playback', 'reset shortcuts to defaults failed', { err: String(e) }));
+    registerShortcuts(DEFAULT_SHORTCUTS)
+      .then(failures => setConflicts(failures ?? []))
+      .catch(e => { setConflicts([]); log.error('playback', 'reset shortcuts to defaults failed', { err: String(e) }); });
     setListeningFor(null);
   }
 
@@ -143,6 +153,19 @@ export default function KeyboardSection() {
       <SectionHead title="Keyboard" subtitle="Global shortcuts — work even when Skald is in the background." />
 
       <Panel label="Global shortcuts">
+        {conflicts.length > 0 && (
+          <div style={{
+            display: 'flex', gap: 8, margin: '10px 0 2px', padding: '8px 10px',
+            borderRadius: 8, border: '1px solid rgba(212,131,74,0.4)',
+            background: 'rgba(212,131,74,0.08)', color: '#d4834a',
+            fontSize: 12, lineHeight: 1.5,
+          }}>
+            <span style={{ flexShrink: 0 }}>!</span>
+            <span>
+              {t('keyboard.conflictBody', { shortcuts: conflicts.map(c => c.shortcut).join(', ') })}
+            </span>
+          </div>
+        )}
         {bindings.map(b => {
           const isListening = listeningFor === b.action;
           return (

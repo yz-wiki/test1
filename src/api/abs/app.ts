@@ -8,7 +8,15 @@ export interface ShortcutBinding {
   shortcut: string;
 }
 
-export function registerShortcuts(bindings: ShortcutBinding[]): Promise<void> {
+/** A binding the OS refused. Registration continues past failures, so this is a
+ *  report — not an error — and the caller decides how loudly to surface it. */
+export interface ShortcutFailure {
+  action: string;
+  shortcut: string;
+  error: string;
+}
+
+export function registerShortcuts(bindings: ShortcutBinding[]): Promise<ShortcutFailure[]> {
   return invoke('register_shortcuts', { bindings });
 }
 

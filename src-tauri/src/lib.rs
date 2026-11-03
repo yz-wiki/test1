@@ -109,6 +109,14 @@ pub fn run() {
         // "skald::sync"). See the Diagnostic Logging roadmap.
         .plugin(
             tauri_plugin_log::Builder::new()
+                // The builder STARTS with [Stdout, LogDir{file_name: None}], where
+                // None means "use the package name" (Skald.log). Adding a LogDir
+                // target of our own therefore registers a SECOND file target;
+                // because Windows paths are case-insensitive, `skald.log` and
+                // `Skald.log` resolve to the same file and every record is written
+                // twice. clear_targets() makes the intent explicit instead of
+                // depending on the defaults.
+                .clear_targets()
                 .target(tauri_plugin_log::Target::new(
                     tauri_plugin_log::TargetKind::Stdout,
                 ))

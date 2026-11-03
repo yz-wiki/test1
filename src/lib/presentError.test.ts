@@ -21,6 +21,20 @@ describe('presentError', () => {
     expect(result.action).toContain('Audiobookshelf WebUI');
   });
 
+  it('names the https-on-plain-http mistake instead of a generic connect error', () => {
+    // reqwest surfaces this as "error sending request for url (https://…)" — the
+    // URL is the only clue that the scheme, not the host, is wrong.
+    const result = presentError('error sending request for url (https://10.10.1.153:13378/login)', { operation: 'authenticate', credential: 'password' });
+    expect(result.kind).toBe('tls');
+    expect(result.title).toContain('HTTPS');
+    expect(result.action).toContain('http://');
+  });
+
+  it('keeps the certificate message when the failure really is a certificate', () => {
+    const result = presentError('invalid peer certificate: UnknownIssuer');
+    expect(result.message).toContain('certificate');
+  });
+
   it('uses safe generic copy for arbitrary response objects', () => {
     const result = presentError({ response: '<script>unsafe()</script>' }, { operation: 'save' });
     expect(result.kind).toBe('unexpected');

@@ -55,6 +55,20 @@ moved is everything around it.
 - CJK-aware typography: a PingFang / YaHei / Noto Sans stack plus looser tracking
   and line-height for Chinese.
 
+### Fixes found by running the 1.3.0 build against a live server
+- **Every log line was written twice.** `tauri-plugin-log`'s builder starts with
+  a default `LogDir` target whose file name is the package name (`Skald.log`);
+  adding our own `skald.log` target pointed at the same file on Windows'
+  case-insensitive filesystem. Targets are now declared explicitly after
+  `clear_targets()`.
+- **One unavailable global shortcut aborted the whole registration.** Bindings are
+  now registered independently and the failures are reported; Settings → Keyboard
+  shows which combination another application already owns and lets you remap it
+  without reading the log.
+- **`https://` against a plain-HTTP server gave a useless error.** The sign-in
+  failure now names the scheme mismatch and suggests `http://`, instead of
+  telling the user to "check the address" they had just typed correctly.
+
 ### Packaging
 - `pnpm package` builds an arbitrary selection of targets:
   **portable green zip**, **NSIS `.exe`**, **MSI**, **AppImage**, **deb**, **rpm**.

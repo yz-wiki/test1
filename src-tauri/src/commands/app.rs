@@ -9,6 +9,16 @@ pub struct ShortcutBinding {
     pub shortcut: String,
 }
 
+/// A shortcut the OS refused to hand over (usually because another running
+/// application already owns that key combination). Reported back to the UI so it
+/// can name the offending binding instead of failing the whole registration.
+#[derive(serde::Serialize)]
+pub struct ShortcutFailure {
+    pub action: String,
+    pub shortcut: String,
+    pub error: String,
+}
+
 // register_shortcuts can be invoked twice near-simultaneously (React StrictMode
 // double-mounts useGlobalShortcuts in dev) and sync commands run on a thread
 // pool, so two calls interleave their unregister_all/register pairs — the loser
@@ -22,7 +32,7 @@ pub fn register_shortcuts(
     bindings: Vec<ShortcutBinding>,
     app: tauri::AppHandle,
     action_map: tauri::State<'_, ShortcutActionMap>,
-) -> Result<(), String> {
+) -> Result<Vec<ShortcutFailure>, String> {
     use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
     // Poison-tolerant: a panic in a previous call must not wedge shortcuts.
@@ -35,16 +45,32 @@ pub fn register_shortcuts(
     let mut map = action_map.write().unwrap();
     map.clear();
 
+    // Register each binding independently: a single key already taken by another
+    // application must not silently disable every binding after it in the list.
+    let mut failures = Vec::new();
     for binding in bindings {
-        let shortcut: Shortcut = binding.shortcut.parse()
-            .map_err(|e| format!("Invalid shortcut '{}': {e}", binding.shortcut))?;
-        map.insert(shortcut.id(), binding.action.clone());
-        app.global_shortcut()
-            .register(shortcut)
-            .map_err(|e| e.to_string())?;
+        let shortcut: Shortcut = match binding.shortcut.parse() {
+            Ok(shortcut) => shortcut,
+            Err(e) => {
+                failures.push(ShortcutFailure {
+                    action: binding.action.clone(),
+                    shortcut: binding.shortcut.clone(),
+                    error: format!("invalid shortcut: {e}"),
+                });
+                continue;
+            }
+        };
+        match app.global_shortcut().register(shortcut) {
+            Ok(()) => { map.insert(shortcut.id(), binding.action.clone()); }
+            Err(e) => failures.push(ShortcutFailure {
+                action: binding.action.clone(),
+                shortcut: binding.shortcut.clone(),
+                error: e.to_string(),
+            }),
+        }
     }
 
-    Ok(())
+    Ok(failures)
 }
 
 // ── Admin user-management commands ──────────────────────────────────────────

@@ -132,6 +132,7 @@ const zhCN: Dict = {
   'settings.about': '关于',
   'settings.signOut': '退出登录',
   'settings.searchEmpty': '“{query}”没有匹配的设置项',
+  'keyboard.conflictBody': '{shortcuts} 已被其他程序占用。点击对应行可以重新绑定。',
 
   // ── 语言与区域 ─────────────────────────────────────────────────────────────
   'language.title': '语言与区域',
