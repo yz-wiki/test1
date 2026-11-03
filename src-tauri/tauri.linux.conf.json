@@ -4,7 +4,7 @@
     "beforeBuildCommand": "pnpm build:linux"
   },
   "bundle": {
-    "targets": ["appimage", "deb", "rpm"],
+    "targets": ["appimage"],
     "category": "AudioVideo",
     "shortDescription": "Native audiobook player for Audiobookshelf",
     "longDescription": "Skald is a native Linux desktop client for Audiobookshelf and a standalone audiobook and podcast player. It supports local folders without a server, RSS/OPML podcast subscriptions, offline downloads and live progress sync.",

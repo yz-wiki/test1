@@ -69,6 +69,8 @@ const zhCN: Dict = {
   'search.scope.series': '系列',
   'search.empty': '“{query}”没有匹配结果',
   'search.hint': '按 {key} 开始搜索',
+  'shelf.panelShow': '显示信息面板',
+  'shelf.panelHide': '隐藏信息面板',
 
   // ── 命令面板 ───────────────────────────────────────────────────────────────
   'palette.title': '命令面板',
@@ -161,6 +163,8 @@ const zhCN: Dict = {
   'appearance.sidebar': '侧边栏',
   'appearance.sidebarHint': '常驻显示导航侧边栏。关闭后回到紧凑的顶栏布局。',
   'appearance.scale': '界面缩放',
+  'appearance.reduceMotion': '减少动态效果',
+  'appearance.reduceMotionHint': '关闭动画与过渡。适合对动效敏感的用户或性能较弱的设备。',
   'appearance.density': '密度',
 
   // ── 提示与状态 ─────────────────────────────────────────────────────────────

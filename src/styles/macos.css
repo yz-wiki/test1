@@ -1267,6 +1267,18 @@ html[data-locale='zh-CN'] body {
 
 /* ─── Reduced motion ──────────────────────────────────────────────────────── */
 
+/* Explicit opt-in from Settings → Appearance. The media query below handles the
+   OS preference; this attribute handles a user who wants no animation on a
+   machine that still reports "reduce motion: no". */
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mac-enter,
   .mac-sheet,

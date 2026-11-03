@@ -12,7 +12,9 @@ export type IconName =
   | 'home' | 'grid' | 'list' | 'kbd' | 'cast' | 'sleep' | 'bell' | 'info'
   // Context-menu action icons
   | 'download' | 'upload' | 'check-circle' | 'clock' | 'playlist' | 'layers' | 'share'
-  | 'sliders' | 'trash' | 'edit' | 'image' | 'target' | 'file' | 'refresh';
+  | 'sliders' | 'trash' | 'edit' | 'image' | 'target' | 'file' | 'refresh'
+  // Shell / layout affordances
+  | 'panel-left';
 
 export interface IconProps {
   name: IconName;
@@ -128,6 +130,9 @@ export default function Icon({ name, size = 16, color, className }: IconProps) {
       return <svg style={s} className={className} viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" {...stroke} /><circle cx="8" cy="8" r="2.6" {...stroke} /><circle cx="8" cy="8" r="0.6" {...fill} /></svg>;
     case 'file':
       return <svg style={s} className={className} viewBox="0 0 16 16"><path d="M4 2 L9 2 L12 5 L12 14 L4 14 Z" {...stroke} /><path d="M9 2 L9 5 L12 5" {...stroke} /></svg>;
+    case 'panel-left':
+      // A rounded panel with a divider: "toggle the side panel".
+      return <svg style={s} className={className} viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5" {...stroke} /><path d="M6.2 3 L6.2 13" {...stroke} /></svg>;
     case 'refresh':
       return <svg style={s} className={className} viewBox="0 0 16 16"><path d="M12.5 6 A 5 5 0 1 0 13 9.5" {...stroke} /><path d="M12.8 2.5 L12.8 6 L9.3 6" {...stroke} /></svg>;
     default:

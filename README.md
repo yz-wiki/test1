@@ -23,6 +23,8 @@ packaging pipeline were rebuilt; the library and player logic is untouched.
   source-list navigation, traffic-light window controls, a unified titlebar that
   names the destination and the current library, and automatic collapse to an
   icon rail on narrow windows.
+- **Collapsible library panel**: the Focus / Greeting column now appears only
+  while something is playing, with a toolbar toggle to pin or hide it.
 - **Persistent now-playing bar** on every screen but the Player — cover, title,
   transport, scrub and volume, with arrow-key seeking on the scrub line.
 - **Command palette** on `Ctrl+K` / `⌘K`: every screen, every library, every

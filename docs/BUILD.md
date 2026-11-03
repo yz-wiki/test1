@@ -83,6 +83,27 @@ sudo pacman -S --needed base-devel rust nodejs pnpm webkit2gtk-4.1 \
 
 Steps 1–4 are one `tauri build` invocation; step 5 is Windows-only and runs after.
 
+## Continuous integration
+
+Three workflows exist under `.github/workflows/`. All are on-demand
+(`workflow_dispatch`) and also fire on a `v*` tag for releases:
+
+| Workflow | Produces | Notes |
+|---|---|---|
+| `build-windows.yml` | NSIS, MSI, portable zip | Checkbox选择产物；运行时暂存脚本会自行下载 LibVLC / ffprobe / tone，无需预装 |
+| `linux-appimage.yml` | AppImage | Runs `pnpm verify` before building |
+| `linux-packages.yml` | deb, rpm | Installs `rpm` and `dpkg-dev`; calls `scripts/build.mjs --targets … --ci` |
+
+`linux-packages.yml` is the reference for how CI should invoke the bundler:
+`node scripts/build.mjs --targets deb,rpm --ci`. In `--ci` mode an unsupported
+target fails the job instead of being skipped, so a green run always means every
+requested artifact exists.
+
+Note that `src-tauri/tauri.linux.conf.json` keeps `targets: ["appimage"]` so a
+bare `pnpm tauri build` on Linux behaves exactly as before. The `--bundles` flag
+that `build.mjs` passes overrides it, and the `linux.deb` / `linux.rpm`
+dependency declarations in the same file apply whenever those targets are built.
+
 ## Verifying before you package
 
 ```bash

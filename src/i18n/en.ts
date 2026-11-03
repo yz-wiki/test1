@@ -72,6 +72,8 @@ const en = {
   'search.scope.series': 'Series',
   'search.empty': 'No results for “{query}”',
   'search.hint': 'Press {key} to search',
+  'shelf.panelShow': 'Show information panel',
+  'shelf.panelHide': 'Hide information panel',
 
   // ── Command palette ────────────────────────────────────────────────────────
   'palette.title': 'Command palette',
@@ -164,6 +166,8 @@ const en = {
   'appearance.sidebar': 'Sidebar',
   'appearance.sidebarHint': 'Show a persistent navigation sidebar. Turn off for the compact top-bar layout.',
   'appearance.scale': 'Interface scale',
+  'appearance.reduceMotion': 'Reduce motion',
+  'appearance.reduceMotionHint': 'Disable animations and transitions. Useful for motion sensitivity or slower machines.',
   'appearance.density': 'Density',
 
   // ── Toasts / status ────────────────────────────────────────────────────────

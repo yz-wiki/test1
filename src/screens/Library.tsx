@@ -19,6 +19,7 @@ import { prefetchReviews } from '../api/reviewCache';
 import { shelfTabForSource } from '../lib/shelfTabs';
 import { recentlyAddedItems } from '../lib/recentlyAdded';
 import { log } from '../lib/log';
+import { useFocusRailMode } from '../lib/uiPrefs';
 
 export interface LibraryProps {
   st: OnyxState;
@@ -60,6 +61,12 @@ export default function Library({ st }: LibraryProps) {
   const playingBookInLib = !!st.currentBookId && st.library.some(b => b.id === st.currentBookId);
   const showFocus = playingBookInLib && !playingIsPodcast;
 
+  // The left column reserves 360px. 'auto' only pays that cost while something
+  // from this library is actually playing; 'shown' pins it (the previous
+  // always-on behaviour) and 'hidden' hands the width to the shelf.
+  const focusRailMode = useFocusRailMode();
+  const showFocusColumn = focusRailMode === 'shown' || (focusRailMode === 'auto' && showFocus);
+
   const focusColumn = (
     <div style={{
       alignSelf: 'stretch',     // fill the cross-axis height of the Library flex container
@@ -87,7 +94,7 @@ export default function Library({ st }: LibraryProps) {
   if (isPodcast) {
     return (
       <div style={{ flex: 1, display: 'flex', gap: 24, padding: '8px 24px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
-        {focusColumn}
+        {showFocusColumn && focusColumn}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
           <TopNav st={st} />
           <PodcastBrowse st={st} />
@@ -99,7 +106,7 @@ export default function Library({ st }: LibraryProps) {
   return (
     <div style={{ flex: 1, display: 'flex', gap: 24, padding: '8px 24px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
       {/* overflow: visible required — TopNav active tab indicator protrudes below nav bar via position:absolute */}
-      {focusColumn}
+      {showFocusColumn && focusColumn}
 
       {/* RIGHT — shelf column. minHeight:0 lets the flex:1 LibraryShelf shrink to
           the column height instead of growing to its (virtualized, very tall)

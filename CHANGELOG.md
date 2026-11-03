@@ -30,6 +30,12 @@ moved is everything around it.
 - Sidebar collapses to an icon rail automatically on narrow windows, and can be
   hidden entirely from the titlebar; the compact layout falls back to the
   original top-bar chrome.
+- **Library information panel** is now collapsible from the shelf toolbar, and
+  defaults to appearing only while a book from that library is playing — the
+  shelf no longer reserves 360px for a greeting card when nothing is happening.
+  Pin it open to restore the old always-on layout.
+- **Reduce motion** switch in Settings → Appearance, applied through a document
+  attribute so it also covers machines whose OS reports "no preference".
 - New macOS surface system: 12/14 px radii, three-step elevation, hairline
   separators, capsule scrollbars, spring easing, `prefers-reduced-motion`
   respected throughout.
@@ -56,6 +62,8 @@ moved is everything around it.
   loudly instead of being skipped.
 - Linux packages now declare their WebKitGTK / GTK / LibVLC / libsecret
   dependencies.
+- New `linux-packages.yml` workflow builds deb/rpm through
+  `scripts/build.mjs --ci`, alongside the existing Windows and AppImage jobs.
 - See `docs/BUILD.md` and `docs/I18N.md`.
 
 ## 1.2.0 (2026-07-11)

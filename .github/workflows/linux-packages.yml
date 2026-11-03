@@ -1,0 +1,137 @@
+# =============================================================================
+# linux-packages.yml — Linux deb / rpm 构建（按需）
+#
+# 为什么单独一个 workflow：
+#   linux-appimage.yml 只出 AppImage，且不安装 rpm 工具链。deb/rpm 是发行版
+#   安装包，依赖链不同（需要 rpmbuild/dpkg），单独跑可以避免互相拖慢，也便于
+#   各自失败时定位。
+#
+# 触发：Actions 手动 Run workflow（可勾选产物），或推送 v* 标签（发版）。
+#
+# 产物：src-tauri/target/release/bundle/{deb,rpm}/*
+#
+# 实际调用仓库统一的构建入口 scripts/build.mjs --ci，因此命令行参数的校验、
+# 平台检查、产物路径汇报与本地构建完全一致（见 docs/BUILD.md）。
+# =============================================================================
+
+name: Linux 安装包构建（deb / rpm，按需）
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 需要构建哪些产物
+        type: choice
+        options:
+          - deb,rpm
+          - deb
+          - rpm
+        default: deb,rpm
+  push:
+    tags:
+      - "v*"
+
+env:
+  RUST_BACKTRACE: full
+  CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: "5"
+  CI: "true"
+  BUILD_TARGETS: ${{ (inputs.targets != '' && inputs.targets) || 'deb,rpm' }}
+
+jobs:
+  packages:
+    name: Linux x64 ${{ github.event.inputs.targets || 'deb,rpm' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: 0 · 检出代码
+        uses: actions/checkout@v4
+
+      - name: 1 · Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 2 · pnpm + Node.js 22
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # rpm 提供 rpmbuild，deb 提供 dpkg-deb —— Tauri 的两个包格式各自依赖其一。
+      - name: 3 · 安装构建依赖（webkit2gtk / VLC / libsecret / rpm / dpkg）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libsecret-1-dev \
+            patchelf \
+            vlc \
+            libvlc-dev \
+            rpm \
+            dpkg-dev
+
+      - name: 4 · pnpm install（冻结 lockfile）
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
+          pnpm install --frozen-lockfile 2>&1 |
+            tee "$GITHUB_WORKSPACE/gha-logs/04-pnpm-install.log"
+          exit ${PIPESTATUS[0]}
+
+      - name: 5 · 仓库校验套件（pnpm verify）
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
+          pnpm verify 2>&1 |
+            tee "$GITHUB_WORKSPACE/gha-logs/05-verify.log"
+          exit ${PIPESTATUS[0]}
+
+      # build.mjs --ci：非交互模式，目标不支持时直接失败而不是跳过。
+      - name: 6 · 构建 ${{ env.BUILD_TARGETS }}
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gha-logs"
+          node scripts/build.mjs --targets "$BUILD_TARGETS" --ci 2>&1 |
+            tee "$GITHUB_WORKSPACE/gha-logs/06-build.log"
+          exit ${PIPESTATUS[0]}
+
+      - name: 7 · 产物清单
+        if: always()
+        run: |
+          echo "::group::产物清单"
+          ls -lh src-tauri/target/release/bundle/deb/ 2>/dev/null || echo 'no deb produced'
+          ls -lh src-tauri/target/release/bundle/rpm/ 2>/dev/null || echo 'no rpm produced'
+          echo "::endgroup::"
+
+      - name: 8 · 上传构建日志（成功/失败都会上传）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-linux-packages-logs-${{ github.run_id }}
+          path: gha-logs
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 9 · 上传 deb
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-linux-deb-${{ github.run_id }}
+          path: src-tauri/target/release/bundle/deb/*.deb
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 10 · 上传 rpm
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skald-linux-rpm-${{ github.run_id }}
+          path: src-tauri/target/release/bundle/rpm/*.rpm
+          if-no-files-found: ignore
+          retention-days: 14

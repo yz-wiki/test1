@@ -13,9 +13,34 @@ import { isServerOnlyShelfTab } from '../../lib/shelfTabs';
 import { useEntityInvalidation } from '../../state/liveEntities';
 import { seriesGroupName } from './tabs/SeriesView';
 import { recentlyAddedItems } from '../../lib/recentlyAdded';
+import Icon from '../Icon';
+import { useI18n } from '../../i18n';
+import { toggleFocusRailMode, useFocusRailMode } from '../../lib/uiPrefs';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
+
+// Toggles the Library's left information column (Focus / Greeting panel). Lives
+// in the shelf toolbar because it acts on the shelf's own width — the analogue of
+// macOS apps' "show/hide sidebar" button, one level down.
+function FocusRailToggle() {
+  const { t } = useI18n();
+  const mode = useFocusRailMode();
+  const visible = mode !== 'hidden';
+  const label = visible ? t('shelf.panelHide') : t('shelf.panelShow');
+  return (
+    <button
+      type="button"
+      className={`mac-iconbtn${visible ? ' mac-iconbtn--active' : ''}`}
+      onClick={toggleFocusRailMode}
+      aria-pressed={visible}
+      title={label}
+      aria-label={label}
+    >
+      <Icon name="panel-left" size={15} />
+    </button>
+  );
+}
 
 // Core tabs are always shown; optional ones are toggled in Settings → Library →
 // Display (st.optionalTabs), defaulting off to keep the bar short.
@@ -349,6 +374,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
 
         {toggleInline && (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+            <FocusRailToggle />
             <div style={{ marginRight: pillsInline ? 6 : 0 }}>
               <ViewModeToggle st={st} />
             </div>
@@ -397,6 +423,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
       {/* Second row — shown below 900px */}
       {!pillsInline && (
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 10 }}>
+          <FocusRailToggle />
           {!toggleInline && <ViewModeToggle st={st} />}
           {filterPills}
           <FilterPopover st={st} />
