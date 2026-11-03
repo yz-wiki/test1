@@ -1,7 +1,10 @@
 import Icon from '../Icon';
 import type { OnyxState } from '../../state/onyx';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const MONO = UI_STACK;
 
 export interface ViewModeToggleProps {
   st: OnyxState;

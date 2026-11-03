@@ -2,6 +2,54 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 1.4.0 (2026-11-03)
+
+A ground-up front-end reconstruction. The old design mixed an editorial voice
+(serif display type, monospace labels, gold gradients, glass cards) with
+macOS-ish chrome, and every screen carried its own pixel decisions. That is now
+replaced by one design system, and 25+ surfaces were rebuilt on top of it.
+
+### The system (`src/styles/system.css`, `src/ui/`)
+- **One type family.** Interface copy is a single sans stack with CJK fallbacks.
+  Monospace is reserved for content where character alignment matters (paths,
+  URLs, cron, keys) and serif is gone. Previously 487 inline `fontFamily: MONO`
+  and 116 `fontFamily: SERIF` declarations were spread across 48 files.
+- **One spacing scale** (4px base, `--s-1`…`--s-12`), **one radius scale**
+  (6 / 10 / 14), **one control height set** (26 / 30 / 34).
+- **Four surface roles** — canvas, raised, overlay, popover — separated by a
+  1px hairline instead of layered glass and nested shadows.
+- **One component vocabulary**: button (4 tones × 3 sizes), icon button, field,
+  input, select, switch, segmented, card, list, tabs, badge, empty state,
+  overlay sheet, popover, progress, keyboard hint, scroll container.
+  `src/ui/index.tsx` exposes them as typed React primitives that take semantic
+  props only — screens no longer pass arbitrary styles.
+
+### Rebuilt on the system
+- **Sidebar** — a plain source list (no glass, no accent-bordered pill rows),
+  library switcher as a bordered header control, account pinned at the bottom,
+  collapse to a 60px icon rail.
+- **Titlebar / now-playing bar** — same hairlines and control heights as the rest
+  of the app; the decorative background wash layer is gone, so the window is a
+  flat canvas (this also removes the stacking-context hazard that once painted
+  every screen black).
+- **Settings** — nav rail is now a list, the content column scrolls separately,
+  and all thirteen panes inherit the rebuilt `shared.tsx` primitives at once.
+- **Player** — panes use the shared card surface, the narrow-window pane switch
+  is the shared segmented control, gutters and padding moved onto the scale.
+- **Library / Podcast detail** — same padding and gutter tokens as every screen.
+- **Login** — rewritten from a two-column editorial poster (serif display type,
+  gold gradient CTA, grain overlay) into a single centred card using the same
+  inputs, segmented control and primary button as the rest of the app.
+  Hard-coded English validation strings are now translated.
+- **Confirm dialog** — the app-wide confirmation uses the shared overlay sheet,
+  so destructive prompts match every other dialog.
+
+### Accessibility / correctness carried by the rewrite
+- Every switch is a real `role="switch"` with `aria-checked`; segmented controls
+  use `aria-pressed`; tabs use `role="tab"`/`aria-selected`.
+- Numbers that change under the user (timecodes, counts, progress) use tabular
+  figures, so nothing jitters as digits update.
+
 ## 1.3.2 (2026-11-03)
 
 A localisation-completeness release. No layout or logic changes.

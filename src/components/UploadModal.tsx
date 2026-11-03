@@ -17,9 +17,11 @@ import { useModalFocus } from '../hooks/useModalFocus';
 import { log } from '../lib/log';
 import Icon from './Icon';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 
+const MONO = UI_STACK;
+const SERIF = UI_STACK;
 // Extensions offered by the file picker: the playable audio set (matches the
 // local scanner / resolve_upload_files) plus cover-art and reader extras that
 // ABS stores alongside the audio.

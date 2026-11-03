@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
 
 export interface SectionProps {
   title: string;

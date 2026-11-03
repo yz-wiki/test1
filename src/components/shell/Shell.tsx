@@ -13,7 +13,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { OnyxState } from '../../state/onyx';
 import Titlebar from '../chrome/Titlebar';
 import ActivityCenter from '../ActivityCenter';
-import OnyxWash from '../chrome/OnyxWash';
 import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
 import NowPlayingBar from './NowPlayingBar';
@@ -128,9 +127,7 @@ export default function Shell({ st, children }: ShellProps) {
 
   return (
     <ShellChromeContext.Provider value={chrome}>
-      <div className="mac-window">
-        <OnyxWash isDark={st.theme !== 'light'} />
-
+      <div className="mac-window ui-root">
         <Titlebar
           title={title}
           subtitle={subtitle}

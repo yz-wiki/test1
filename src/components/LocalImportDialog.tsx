@@ -12,8 +12,11 @@ import Icon, { type IconName } from './Icon';
 import MatchModal, { makeLocalQuarantineAdapter } from './MatchModal';
 import { useModalFocus } from '../hooks/useModalFocus';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const MONO = UI_STACK;
+const SERIF = UI_STACK;
 const AUDIO_EXTENSIONS = ['m4b', 'm4a', 'mp3', 'flac', 'ogg', 'opus', 'aac', 'wav'];
 
 export interface LocalImportDialogProps {

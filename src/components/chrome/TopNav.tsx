@@ -25,7 +25,7 @@ const SCOPES: { value: SearchScope; labelKey: 'search.scope.all' | 'search.scope
 ];
 
 export default function TopNav({ st }: TopNavProps) {
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const mono = 'var(--font-ui)';
   const { t } = useI18n();
   // When the shell renders a sidebar, library switching and the account entry
   // point already live there — rendering them again here would give the user two

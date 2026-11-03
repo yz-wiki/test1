@@ -10,8 +10,10 @@ import { listen } from '@tauri-apps/api/event';
 import { cancelDownload, downloadItem } from '../../api/abs';
 import { log } from '../../lib/log';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 
+const MONO = UI_STACK;
 // Shape of a single active download tracked in local state.
 interface ProgressEntry {
   title: string;

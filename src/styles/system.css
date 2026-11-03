@@ -1,0 +1,1294 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Skald UI system
+   ───────────────────────────────────────────────────────────────────────────
+   The single source of truth for the application's visual language. Every
+   component renders `ui-*` classes; screens do not carry their own padding,
+   radius, font or colour decisions any more.
+
+   Rules this file enforces:
+     1. ONE type family for interface text. Monospace is reserved for content
+        where character alignment matters (paths, URLs, cron, log lines,
+        timestamps in tables). Serif is gone.
+     2. ONE spacing scale (4px base). No arbitrary 7px / 11px / 13px paddings.
+     3. ONE radius scale. Controls 6, containers 10, overlays 14.
+     4. FOUR surface roles: canvas → surface → raised → overlay. Elevation is a
+        hairline border plus (at most) one soft shadow — not a glass stack.
+     5. Colour always comes from the `--onyx-*` tokens, which state/theme.ts
+        rewrites at runtime for every preset and accent.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Spacing (4px base) ───────────────────────────────────────────────── */
+  --s-0: 0px;
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --r-control: 6px;
+  --r-card: 10px;
+  --r-overlay: 14px;
+  --r-pill: 999px;
+
+  /* ── Type scale ───────────────────────────────────────────────────────── */
+  --font-ui: var(--mac-font-ui, 'Inter', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', system-ui, sans-serif);
+  /* Only for aligned technical content — never for interface labels. */
+  --font-tech: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-1: 11px;   /* micro labels, badges */
+  --fs-2: 12px;   /* secondary text, hints */
+  --fs-3: 13px;   /* body */
+  --fs-4: 15px;   /* emphasised body, list titles */
+  --fs-5: 17px;   /* section headings */
+  --fs-6: 20px;   /* screen titles */
+  --fs-7: 24px;   /* rare large title */
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.45;
+  --lh-loose: 1.6;
+
+  /* Tabular figures everywhere numbers can change under the user's eyes
+     (timecodes, progress, counts) so they don't jitter. */
+  --num-feature: 'tnum' 1, 'lnum' 1;
+
+  /* ── Control geometry ─────────────────────────────────────────────────── */
+  --h-sm: 26px;
+  --h-md: 30px;
+  --h-lg: 34px;
+
+  /* ── Surface roles ────────────────────────────────────────────────────── */
+  --surface-canvas: var(--onyx-bg);
+  --surface-raised: var(--onyx-panel);
+  --surface-overlay: var(--onyx-panel2);
+  --hairline: var(--onyx-line);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --dur-fast: 110ms;
+  --dur: 160ms;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ─── Reset scoped to the app ─────────────────────────────────────────────── */
+
+.ui-root,
+.ui-root * {
+  box-sizing: border-box;
+}
+
+.ui-root {
+  font-family: var(--font-ui);
+  font-size: var(--fs-3);
+  line-height: var(--lh-normal);
+  color: var(--onyx-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Interface text never uses serif or monospace by accident: any element that
+   inherited a different family is normalised here, and the two exceptions opt
+   back in explicitly (.ui-tech / .ui-num). */
+.ui-root button,
+.ui-root input,
+.ui-root select,
+.ui-root textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.ui-tech {
+  font-family: var(--font-tech);
+  font-size: var(--fs-2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.ui-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: var(--num-feature);
+}
+
+/* ─── Typography roles ────────────────────────────────────────────────────── */
+
+.ui-title {
+  font-size: var(--fs-6);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: var(--lh-tight);
+  margin: 0;
+}
+
+.ui-h2 {
+  font-size: var(--fs-5);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+  margin: 0;
+}
+
+.ui-h3 {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: 0;
+}
+
+.ui-label {
+  font-size: var(--fs-3);
+  font-weight: 550;
+  color: var(--onyx-text);
+}
+
+.ui-text {
+  font-size: var(--fs-3);
+  color: var(--onyx-text);
+}
+
+.ui-sub {
+  font-size: var(--fs-2);
+  color: var(--onyx-text-dim);
+  line-height: var(--lh-normal);
+}
+
+.ui-mute {
+  font-size: var(--fs-2);
+  color: var(--onyx-text-mute);
+}
+
+/* Group label above a cluster of rows — replaces the old uppercase mono
+   eyebrows, which read as decoration rather than hierarchy. */
+.ui-group-label {
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+  padding: 0 var(--s-1);
+}
+
+.ui-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ui-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ui-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: var(--h-md);
+  padding: 0 var(--s-3);
+  border-radius: var(--r-control);
+  border: 1px solid var(--hairline);
+  background: var(--onyx-glass);
+  color: var(--onyx-text);
+  font-size: var(--fs-3);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.ui-btn:hover:not(:disabled) {
+  background: var(--onyx-glass-hover);
+}
+
+.ui-btn:active:not(:disabled) {
+  background: var(--onyx-glass-strong);
+}
+
+.ui-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* Primary: the one action a surface is asking for. Solid accent, dark glyph. */
+.ui-btn--primary {
+  background: var(--onyx-accent);
+  border-color: transparent;
+  color: #101014;
+  font-weight: 600;
+}
+
+.ui-btn--primary:hover:not(:disabled) {
+  background: var(--onyx-accent-bright);
+}
+
+.ui-btn--primary:active:not(:disabled) {
+  background: var(--onyx-accent);
+  filter: brightness(0.94);
+}
+
+/* Destructive: only for irreversible actions, and only after confirmation. */
+.ui-btn--danger {
+  color: #e2685f;
+  border-color: rgba(226, 104, 95, 0.35);
+  background: rgba(226, 104, 95, 0.08);
+}
+
+.ui-btn--danger:hover:not(:disabled) {
+  background: rgba(226, 104, 95, 0.16);
+}
+
+/* Ghost: toolbar and inline actions that should not draw a box until hovered. */
+.ui-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--onyx-text-dim);
+}
+
+.ui-btn--ghost:hover:not(:disabled) {
+  background: var(--onyx-glass);
+  color: var(--onyx-text);
+}
+
+.ui-btn--sm {
+  height: var(--h-sm);
+  padding: 0 var(--s-2);
+  font-size: var(--fs-2);
+  gap: var(--s-1);
+}
+
+.ui-btn--lg {
+  height: var(--h-lg);
+  padding: 0 var(--s-4);
+  font-size: var(--fs-4);
+}
+
+.ui-btn--block {
+  width: 100%;
+}
+
+/* Icon-only button. Square, aligns to the same three heights as .ui-btn. */
+.ui-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: var(--h-md);
+  height: var(--h-md);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--onyx-text-dim);
+  cursor: default;
+  flex: 0 0 auto;
+  transition: background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.ui-iconbtn:hover:not(:disabled) {
+  background: var(--onyx-glass);
+  color: var(--onyx-text);
+}
+
+.ui-iconbtn:disabled {
+  opacity: 0.35;
+}
+
+.ui-iconbtn--active {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+.ui-iconbtn--active:hover:not(:disabled) {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+.ui-iconbtn--sm {
+  width: var(--h-sm);
+  height: var(--h-sm);
+}
+
+/* ─── Form controls ───────────────────────────────────────────────────────── */
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.ui-field__label {
+  font-size: var(--fs-2);
+  font-weight: 550;
+  color: var(--onyx-text-dim);
+}
+
+.ui-field__hint {
+  font-size: var(--fs-1);
+  color: var(--onyx-text-mute);
+  line-height: var(--lh-normal);
+}
+
+.ui-input,
+.ui-select,
+.ui-textarea {
+  height: var(--h-md);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-control);
+  background: var(--onyx-bg-deep);
+  color: var(--onyx-text);
+  font-size: var(--fs-3);
+  outline: none;
+  min-width: 0;
+  transition: border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.ui-textarea {
+  height: auto;
+  min-height: 72px;
+  padding: var(--s-2);
+  line-height: var(--lh-normal);
+  resize: vertical;
+}
+
+.ui-input::placeholder,
+.ui-textarea::placeholder {
+  color: var(--onyx-text-mute);
+}
+
+.ui-input:focus,
+.ui-select:focus,
+.ui-textarea:focus {
+  border-color: var(--onyx-accent-edge);
+  box-shadow: 0 0 0 3px var(--onyx-accent-dim);
+}
+
+.ui-input:disabled,
+.ui-select:disabled {
+  opacity: 0.5;
+}
+
+.ui-select {
+  appearance: none;
+  padding-right: var(--s-6);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: default;
+}
+
+.ui-input--tech,
+.ui-textarea--tech {
+  font-family: var(--font-tech);
+  font-size: var(--fs-2);
+}
+
+/* Switch — a real one, used everywhere a boolean is toggled. */
+.ui-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--onyx-glass-strong);
+  cursor: default;
+  transition: background var(--dur) var(--ease);
+}
+
+.ui-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: transform var(--dur) var(--ease);
+}
+
+.ui-switch[aria-checked='true'] {
+  background: var(--onyx-accent);
+}
+
+.ui-switch[aria-checked='true']::after {
+  transform: translateX(16px);
+}
+
+.ui-switch:disabled {
+  opacity: 0.4;
+}
+
+/* Segmented control — replaces the old stack of individually bordered pills. */
+.ui-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-control);
+  background: var(--onyx-bg-deep);
+}
+
+.ui-seg__item {
+  height: calc(var(--h-sm) - 2px);
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: calc(var(--r-control) - 2px);
+  background: transparent;
+  color: var(--onyx-text-dim);
+  font-size: var(--fs-2);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.ui-seg__item:hover:not([aria-pressed='true']) {
+  color: var(--onyx-text);
+}
+
+.ui-seg__item[aria-pressed='true'] {
+  background: var(--onyx-panel2);
+  color: var(--onyx-text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* Range input — progress scrubbing, volume, EQ bands. */
+.ui-range {
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: default;
+  width: 100%;
+}
+
+.ui-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--onyx-glass-strong);
+}
+
+.ui-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--onyx-text);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.ui-range:hover::-webkit-slider-thumb {
+  background: var(--onyx-accent);
+}
+
+/* ─── Surfaces ────────────────────────────────────────────────────────────── */
+
+.ui-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.ui-card--flush {
+  padding: 0;
+}
+
+.ui-card--pad {
+  padding: var(--s-4);
+}
+
+.ui-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.ui-card__body {
+  padding: var(--s-1) var(--s-4) var(--s-2);
+}
+
+.ui-divider {
+  height: 1px;
+  background: var(--hairline);
+  border: none;
+  margin: 0;
+}
+
+/* Settings-style row: label + hint on the left, control on the right. */
+.ui-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.ui-row:last-child {
+  border-bottom: none;
+}
+
+.ui-row__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ui-row__control {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* ─── List ────────────────────────────────────────────────────────────────── */
+
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--s-2) var(--s-3);
+  border: none;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--onyx-text);
+  font-size: var(--fs-3);
+  text-align: left;
+  cursor: default;
+}
+
+.ui-list__item:hover {
+  background: var(--onyx-glass);
+}
+
+.ui-list__item[aria-selected='true'],
+.ui-list__item--active {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-text);
+}
+
+.ui-list__item:disabled {
+  opacity: 0.45;
+}
+
+.ui-list__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  color: var(--onyx-text-mute);
+}
+
+.ui-list__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-list__meta {
+  flex: 0 0 auto;
+  font-size: var(--fs-1);
+  color: var(--onyx-text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
+
+.ui-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  border-bottom: 1px solid var(--hairline);
+  padding: 0 var(--s-1);
+}
+
+.ui-tabs__item {
+  position: relative;
+  height: 34px;
+  padding: 0 var(--s-3);
+  border: none;
+  background: transparent;
+  color: var(--onyx-text-dim);
+  font-size: var(--fs-3);
+  font-weight: 500;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.ui-tabs__item:hover {
+  color: var(--onyx-text);
+}
+
+.ui-tabs__item[aria-selected='true'] {
+  color: var(--onyx-text);
+  font-weight: 600;
+}
+
+.ui-tabs__item[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: var(--s-2);
+  right: var(--s-2);
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--onyx-accent);
+}
+
+/* ─── Badges ──────────────────────────────────────────────────────────────── */
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: 18px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--onyx-glass);
+  color: var(--onyx-text-dim);
+  font-size: var(--fs-1);
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-badge--accent {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+.ui-badge--warn {
+  background: rgba(212, 131, 74, 0.14);
+  color: #d4834a;
+}
+
+.ui-badge--danger {
+  background: rgba(226, 104, 95, 0.14);
+  color: #e2685f;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.ui-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  flex-wrap: nowrap;
+}
+
+.ui-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-10) var(--s-4);
+  text-align: center;
+  color: var(--onyx-text-mute);
+}
+
+.ui-empty__title {
+  font-size: var(--fs-4);
+  font-weight: 550;
+  color: var(--onyx-text-dim);
+}
+
+.ui-empty__body {
+  font-size: var(--fs-2);
+  max-width: 340px;
+  line-height: var(--lh-loose);
+}
+
+/* ─── Overlays ────────────────────────────────────────────────────────────── */
+
+.ui-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  z-index: 200;
+}
+
+.ui-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  background: var(--surface-overlay);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-overlay);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.ui-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--hairline);
+  flex: 0 0 auto;
+}
+
+.ui-sheet__title {
+  font-size: var(--fs-5);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.ui-sheet__body {
+  padding: var(--s-4) var(--s-5);
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.ui-sheet__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--hairline);
+  flex: 0 0 auto;
+}
+
+/* Popover used by menus / dropdowns / chapter pickers. */
+.ui-popover {
+  background: var(--surface-overlay);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  padding: var(--s-1);
+  min-width: 180px;
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 150;
+}
+
+.ui-popover__label {
+  padding: var(--s-2) var(--s-2) var(--s-1);
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+}
+
+/* ─── Progress ────────────────────────────────────────────────────────────── */
+
+.ui-progress {
+  position: relative;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--onyx-glass-strong);
+  overflow: hidden;
+}
+
+.ui-progress__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--onyx-accent);
+}
+
+/* Thin bar drawn along the bottom of a cover thumbnail. */
+.ui-cover-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.ui-cover-progress__fill {
+  height: 100%;
+  background: var(--onyx-accent);
+}
+
+/* ─── Keyboard hint ───────────────────────────────────────────────────────── */
+
+.ui-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--s-1);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--onyx-glass);
+  color: var(--onyx-text-mute);
+  font-size: var(--fs-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Scroll containers ───────────────────────────────────────────────────── */
+
+.ui-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--onyx-glass-strong) transparent;
+}
+
+.ui-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ui-scroll::-webkit-scrollbar-thumb {
+  background: var(--onyx-glass-strong);
+  border-radius: var(--r-pill);
+}
+
+.ui-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--onyx-glass-hover);
+}
+
+.ui-scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+/* ─── Layout helpers used by screens ──────────────────────────────────────── */
+
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ui-rowline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.ui-grow {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Screen scaffold: one consistent padding and max width for every screen. */
+.ui-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-screen__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--s-5) var(--s-6) var(--s-6);
+  overflow-y: auto;
+}
+
+.ui-screen__body--flush {
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .ui-screen__body {
+    padding: var(--s-4);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Navigation rail
+   ───────────────────────────────────────────────────────────────────────────
+   The rail is a list of `ui-list__item`s. Nothing here introduces a new control
+   vocabulary — only width, collapse behaviour and the pinned header/footer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ui-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 236px;
+  flex: 0 0 236px;
+  min-height: 0;
+  padding: var(--s-2);
+  gap: var(--s-1);
+  border-right: 1px solid var(--hairline);
+  background: var(--surface-canvas);
+  transition: width var(--dur) var(--ease), flex-basis var(--dur) var(--ease);
+}
+
+.ui-sidebar--compact {
+  width: 60px;
+  flex-basis: 60px;
+  padding: var(--s-2) var(--s-1);
+}
+
+.ui-sidebar__header {
+  flex: 0 0 auto;
+}
+
+.ui-sidebar__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.ui-sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: var(--s-2);
+}
+
+.ui-sidebar__section:first-child {
+  margin-top: 0;
+}
+
+.ui-sidebar__label {
+  padding: var(--s-2) var(--s-2) var(--s-1);
+}
+
+.ui-sidebar__footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--hairline);
+}
+
+/* Library switcher: the rail's headline control, not a nav row. */
+.ui-sidebar__switch {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  color: var(--onyx-text);
+  text-align: left;
+  cursor: default;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.ui-sidebar__switch:hover {
+  background: var(--onyx-panel2);
+}
+
+.ui-sidebar__switch-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+.ui-sidebar__switch-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  line-height: 1.25;
+}
+
+.ui-sidebar__switch-name {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-sidebar__switch-sub {
+  font-size: var(--fs-1);
+  color: var(--onyx-text-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Account row pinned at the bottom. */
+.ui-sidebar__account {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2);
+  border: none;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--onyx-text);
+  text-align: left;
+  cursor: default;
+}
+
+.ui-sidebar__account:hover {
+  background: var(--onyx-glass);
+}
+
+.ui-sidebar__avatar {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--onyx-accent);
+  color: #101014;
+  font-size: var(--fs-2);
+  font-weight: 700;
+}
+
+/* Compact rail: icons only, labels hidden, everything centred. */
+.ui-sidebar--compact .ui-list__label,
+.ui-sidebar--compact .ui-list__meta,
+.ui-sidebar--compact .ui-sidebar__switch-text,
+.ui-sidebar--compact .ui-sidebar__label,
+.ui-sidebar--compact .ui-sidebar__account-text {
+  display: none;
+}
+
+.ui-sidebar--compact .ui-list__item,
+.ui-sidebar--compact .ui-sidebar__switch,
+.ui-sidebar--compact .ui-sidebar__account {
+  justify-content: center;
+  padding: var(--s-2) 0;
+}
+
+.ui-sidebar--compact .ui-list__icon {
+  width: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Now-playing bar
+   ───────────────────────────────────────────────────────────────────────────
+   Redefined here (same class names the component already uses) so the bar drops
+   the old glass treatment and matches every other surface: one hairline, one
+   shadow-free plane, one accent.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.mac-nowbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex: 0 0 64px;
+  height: 64px;
+  padding: 0 var(--s-4);
+  border-top: 1px solid var(--hairline);
+  background: var(--surface-canvas);
+  position: relative;
+  z-index: 30;
+}
+
+.mac-nowbar__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  flex: 0 1 260px;
+  padding: var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  border: none;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.mac-nowbar__meta:hover {
+  background: var(--onyx-glass);
+}
+
+.mac-nowbar__cover {
+  display: block;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mac-nowbar__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.mac-nowbar__title {
+  font-size: var(--fs-3);
+  font-weight: 600;
+  color: var(--onyx-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mac-nowbar__subtitle {
+  font-size: var(--fs-1);
+  color: var(--onyx-text-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mac-nowbar__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mac-nowbar__transport {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.mac-nowbar__play {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--onyx-text);
+  color: var(--surface-canvas);
+  cursor: default;
+  transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.mac-nowbar__play:hover {
+  opacity: 0.88;
+}
+
+.mac-nowbar__scrub {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  max-width: 620px;
+}
+
+.mac-nowbar__time {
+  font-size: var(--fs-1);
+  color: var(--onyx-text-mute);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.mac-nowbar__track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--onyx-glass-strong);
+  cursor: default;
+  outline: none;
+}
+
+.mac-nowbar__track:focus-visible {
+  box-shadow: 0 0 0 3px var(--onyx-accent-dim);
+}
+
+.mac-nowbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--onyx-accent);
+}
+
+.mac-nowbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 0 1 240px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1000px) {
+  .mac-nowbar__right .mac-nowbar__volume {
+    display: none;
+  }
+  .mac-nowbar__meta {
+    flex-basis: 180px;
+  }
+}

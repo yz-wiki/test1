@@ -8,9 +8,12 @@ import { useModalFocus } from '../../hooks/useModalFocus';
 import { errorMessage } from '../../lib/presentError';
 import { log } from '../../lib/log';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const SANS = "'Inter', system-ui, -apple-system, sans-serif";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const MONO = UI_STACK;
+const SERIF = UI_STACK;
+const SANS = UI_STACK;
 
 // Muted gold tint for the column headers — accent hue, dimmed so it reads as a
 // label rather than competing with the type badges below.

@@ -16,8 +16,11 @@ import { bustCover } from '../lib/coverBust';
 import { log } from '../lib/log';
 import { useModalFocus } from '../hooks/useModalFocus';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO  = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
+const MONO  = 'var(--font-ui)';
 const SANS  = "'Inter', system-ui, -apple-system, sans-serif";
 
 /* Local design tokens for the match review screen — see design-handoff/metadata_match/shared.jsx */
@@ -29,9 +32,9 @@ const MATCH_ONYX = {
   accentDim: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)', accentEdge: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
   glass: 'rgba(255,255,255,0.04)', glassStrong: 'rgba(255,255,255,0.07)', glassEdge: 'rgba(255,255,255,0.09)',
   add: '#5ac88a', addDim: 'rgba(90,200,138,0.14)', addEdge: 'rgba(90,200,138,0.32)',
-  sans: '"Inter", -apple-system, system-ui, sans-serif',
-  serif: '"Source Serif Pro", Georgia, serif',
-  mono: '"JetBrains Mono", ui-monospace, Menlo, monospace',
+  sans: 'var(--font-ui)',
+  serif: 'var(--font-ui)',
+  mono: 'var(--font-ui)',
 };
 
 // Used only if the live GET /api/search/providers fetch fails or returns nothing.

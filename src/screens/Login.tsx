@@ -1,6 +1,9 @@
-// Saga login screen — a split-panel sign-in window matching the design reference.
-// Left: editorial "manuscript" panel with wash background and display serif text.
-// Right: quiet underline-only form fields with entrance animation.
+// Sign-in screen.
+//
+// Deliberately plain: one centred card on the app canvas, the same controls the
+// rest of the app uses. The previous version was a two-column editorial poster
+// with serif display type, a gold gradient CTA and a grain overlay — none of
+// which shared a single token with the application it was signing you into.
 import { useState, useRef, useEffect } from 'react';
 import { useI18n } from '../i18n';
 import type { OnyxState } from '../state/onyx';
@@ -9,67 +12,49 @@ import Titlebar from '../components/chrome/Titlebar';
 import lyreIcon from '../assets/lyre.png';
 import { errorMessage } from '../lib/presentError';
 import { log } from '../lib/log';
-
-// Typography constants matching the Saga design tokens
-const SERIF = '"Source Serif 4", "Source Serif Pro", Georgia, serif';
-const MONO  = "'JetBrains Mono', ui-monospace, monospace";
-const SANS  = "'Inter', system-ui, -apple-system, sans-serif";
+import { Button, Field, Input, Segmented } from '../ui';
 
 export interface LoginProps {
-  // The global app state — needed to persist token and navigate after login
   st: OnyxState;
 }
 
 export default function Login({ st }: LoginProps) {
   const { t } = useI18n();
-  // ── Form state (local only — never touches global state until submit succeeds) ──
+
   const lastServer = (() => {
     try { return new URL(localStorage.getItem('skald.lastServerUrl') ?? ''); } catch { return null; }
   })();
   const [scheme, setScheme] = useState<'http' | 'https'>(() => lastServer?.protocol === 'https:' ? 'https' : 'http');
-  const [host, setHost]     = useState(() => lastServer?.host ?? '');
-  const [user, setUser]     = useState('');         // No prefilled username
-  const [pass, setPass]     = useState('');         // No prefilled password
-  const [schemeOpen, setSchemeOpen] = useState(false);                  // dropdown open state
-  const [pending, setPending] = useState(false);                        // request in flight
-  const [error, setError]   = useState('');                             // validation/server error
-  // API key is the primary login method — better experience than password
+  const [host, setHost] = useState(() => lastServer?.host ?? '');
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  // API key is the primary method — one paste instead of two credentials.
   const [method, setMethod] = useState<'password' | 'apikey'>('apikey');
-  const [apiKey, setApiKey] = useState('');         // No prefilled API key
+  const [apiKey, setApiKey] = useState('');
 
-  // Ref for the scheme dropdown wrapper — used to detect outside-click dismissal
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Close the scheme dropdown when the user clicks anywhere outside it
+  // Focus the first empty field on mount so the keyboard flow starts correctly.
   useEffect(() => {
-    if (!schemeOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setSchemeOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [schemeOpen]);
+    const target = formRef.current?.querySelector<HTMLElement>('input, textarea');
+    target?.focus();
+  }, []);
 
-  // ── Submit handler ──────────────────────────────────────────────────────────
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Server URL is required for both auth methods
-    if (!host.trim()) return setError('A server address is required.');
+    if (!host.trim()) return setError(t('loginUi.errServerRequired'));
     const serverUrl = `${scheme}://${host.trim()}`;
 
-    // ── API key method ──────────────────────────────────────────────────────
     if (method === 'apikey') {
-      if (!apiKey.trim()) return setError('An API key is required.');
+      if (!apiKey.trim()) return setError(t('loginUi.errKeyRequired'));
       setError('');
       setPending(true);
       try {
-        // Validate the API key — returns user profile + session JWT from /api/me.
         const result = await loginWithApiKey(serverUrl, apiKey.trim());
-        // Store the session JWT, not the raw API key. The JWT is what the
-        // socket auth middleware validates; the API key was only used once
-        // to obtain it.
+        // Store the session JWT, not the raw API key: the socket auth middleware
+        // validates the JWT, and the key was only used once to obtain it.
         await saveToken(result.token);
         localStorage.setItem('skald.lastServerUrl', serverUrl);
         st.setAuthToken(result.token);
@@ -87,28 +72,22 @@ export default function Login({ st }: LoginProps) {
       return;
     }
 
-    // ── Password method ─────────────────────────────────────────────────────
-    if (!user.trim()) return setError('Your name is required.');
-    if (!pass)        return setError('A password is required.');
+    if (!user.trim()) return setError(t('loginUi.errNameRequired'));
+    if (!pass) return setError(t('loginUi.errPasswordRequired'));
     setError('');
     setPending(true);
     try {
-      // Call the Tauri login command; throws on authentication failure
       const { user: loggedInUser, serverSettings } = await login(serverUrl, user.trim(), pass);
-      // Capture server settings returned with the login payload
       if (serverSettings) st.setServerSettings(serverSettings);
       // No saveToken here: the login command already wrote the full credential
       // set (access + refresh + legacy) to the keyring. Re-saving the single
-      // bearer token from this side would overwrite that with a legacy-only
-      // entry and throw the refresh token away.
+      // bearer token would overwrite it with a legacy-only entry.
       localStorage.setItem('skald.lastServerUrl', serverUrl);
-      // Write all auth/server state into global OnyxState so App.tsx gate opens
       st.setAuthToken(loggedInUser.token);
       st.setServerUrl(serverUrl);
       st.setUserId(loggedInUser.id);
       st.setUsername(loggedInUser.username);
       st.setUser(loggedInUser);
-      // Navigate into the library — the auth gate in App.tsx will also flip
       st.setScreen('library');
     } catch (err) {
       log.warn('auth', 'password sign-in failed', { err: String(err) });
@@ -117,391 +96,134 @@ export default function Login({ st }: LoginProps) {
     }
   };
 
-  // Shared underline-only input style — all three fields share this base
-  const underline: React.CSSProperties = {
-    width: '100%',
-    boxSizing: 'border-box',
-    background: 'transparent',
-    border: 'none',
-    // Bottom border only — the "underline" affordance from the spec
-    borderBottom: '1px solid rgba(255,255,255,0.12)',
-    outline: 'none',
-    color: '#ebe7df',
-    fontSize: 16,
-    fontFamily: SERIF,
-    padding: '0 0 9px',
-    letterSpacing: '0.01em',
-  };
-
   return (
-    // Outermost container — fills the entire native window; no card framing.
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      display: 'flex',
-      overflow: 'hidden',
-      background: '#0b0b0e',
-      color: '#ebe7df',
-      fontFamily: SANS,
-    }}>
-        {/* Titlebar: absolutely positioned, left: 0, right: 0 — spans the full window width */}
-        <Titlebar isDark minimal />
+    <div className="ui-root" style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface-canvas)', color: 'var(--onyx-text)' }}>
+      <Titlebar minimal />
 
-        {/* ── LEFT PANEL — 268px manuscript column ───────────────────────── */}
-        <div style={{
-          position: 'relative',
-          width: 268,
-          flexShrink: 0,
-          overflow: 'hidden',
-          // Gold rule separating the two columns
-          borderRight: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
-        }}>
-          {/* Wash background at 1.4× intensity (inline because OnyxWash has no intensity prop).
-              Values: standard glow ×1.4 — 0.14→0.196, 0.08→0.112. */}
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#0b0b0e', pointerEvents: 'none' }}>
-            <div style={{ position: 'absolute', left: '-15%', top: '-25%', width: '70%', height: '120%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.196), transparent 65%)', filter: 'blur(90px)' }} />
-            <div style={{ position: 'absolute', right: '-10%', top: '20%', width: '60%', height: '80%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.112), transparent 60%)', filter: 'blur(110px)' }} />
-            <div style={{ position: 'absolute', left: '20%', bottom: '-30%', width: '70%', height: '90%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(60,40,20,0.6), transparent 65%)', filter: 'blur(120px)' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.55))' }} />
-            {/* Subtle grain overlay */}
-            <div style={{ position: 'absolute', inset: 0, opacity: 0.05, mixBlendMode: 'overlay', backgroundImage: 'repeating-radial-gradient(circle at 13% 27%, rgba(255,255,255,0.6) 0 0.5px, transparent 0.5px 3px), repeating-radial-gradient(circle at 73% 67%, rgba(255,255,255,0.5) 0 0.5px, transparent 0.5px 3px)' }} />
-          </div>
-          {/* Extra gold radial overlay from top-left corner (soft-light blend) */}
-          <div style={{ position: 'absolute', inset: 0, opacity: 0.5, mixBlendMode: 'soft-light', pointerEvents: 'none', background: 'radial-gradient(120% 80% at 0% 0%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35), transparent 55%)' }} />
-
-          {/* Panel content: top block pinned to top, quote pinned to bottom */}
-          <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '54px 30px 30px' }}>
-            {/* Top block: eyebrow → gold rule → display heading */}
-            <div>
-              {/* "Skald" eyebrow in mono */}
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>
-                Skald
-              </div>
-              {/* 26×1px gold rule */}
-              <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
-              {/* Display heading — 33px/600 serif, "hall" in italic accent gold */}
-              <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-                {t('loginUi.teller')}<br />returns to<br />the{' '}
-                <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>hall</span>.
-              </div>
-            </div>
-
-            {/* Lyre logo mark — centered in the left panel between headline and footer quote */}
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px 0',
-            }}>
-              <img
-                src={lyreIcon}
-                alt="Skald"
-                style={{
-                  width: 200,
-                  height: 200,
-                  objectFit: 'contain',
-                  opacity: 0.85,
-                  filter: 'drop-shadow(0 0 18px rgba(var(--onyx-accent-r), var(--onyx-accent-g), var(--onyx-accent-b), 0.35))',
-                }}
-              />
-            </div>
-
-            {/* Bottom quote block — italic serif, 13px, maxWidth 200px */}
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, lineHeight: 1.55, color: 'rgba(235,231,223,0.62)', maxWidth: 200 }}>
-              "Every tale you keep awaits you here — bound, voiced, and ready to resume."
-              {/* Attribution line — NOT italic, mono, very muted */}
-              <div style={{ fontStyle: 'normal', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.38)', marginTop: 14 }}>
-                — the keeper's note
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT PANEL — form, with saga-in entrance animation ─────────── */}
+      <div style={{ flex: 1, display: 'grid', placeItems: 'center', padding: 'var(--s-6)', overflowY: 'auto' }}>
         <form
+          ref={formRef}
           onSubmit={submit}
-          className="saga-in" // triggers the slide-in keyframe defined in index.css
-          style={{
-            position: 'relative',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            padding: '54px 44px 40px',
-            zIndex: 10, // sits above the wash layers
-          }}
+          className="ui-card ui-card--pad"
+          style={{ width: '100%', maxWidth: 400, padding: 'var(--s-8)', display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' }}
         >
-          {/* Header: title + subtitle */}
-          <div style={{ marginBottom: 30 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 600, letterSpacing: '-0.01em', color: '#ebe7df' }}>
-              {t('loginUi.enterHall')}
+          {/* Wordmark + heading */}
+          <header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
+            <div className="ui-rowline" style={{ gap: 'var(--s-2)' }}>
+              <img src={lyreIcon} alt="" aria-hidden="true" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+              <span style={{ fontSize: 'var(--fs-4)', fontWeight: 650, letterSpacing: '-0.01em' }}>Skald</span>
             </div>
-            <div style={{ fontSize: 13, fontFamily: SANS, color: 'rgba(235,231,223,0.62)', marginTop: 6 }}>
-              {t('loginUi.connectHint')}
-            </div>
-          </div>
+            <h1 className="ui-title" style={{ fontSize: 'var(--fs-6)' }}>{t('loginUi.enterHall')}</h1>
+            <p className="ui-sub" style={{ margin: 0 }}>{t('loginUi.connectHint')}</p>
+          </header>
 
-          {/* Auth method toggle — pill with two options: Password / API Key */}
-          <div style={{ display: 'flex', marginBottom: 24 }}>
-            <div style={{
-              display: 'flex',
-              borderRadius: 999,
-              border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)',
-              overflow: 'hidden',
-            }}>
-              {/* API Key tab rendered first (left), Password second (right) */}
-              {(['apikey', 'password'] as const).map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => { setMethod(m); setError(''); }}
-                  style={{
-                    // Active tab: subtle gold fill; inactive: transparent
-                    background: method === m ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.15)' : 'transparent',
-                    border: 'none',
-                    color: method === m ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.38)',
-                    fontFamily: MONO,
-                    fontSize: 10,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    padding: '5px 16px',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s, color 0.15s',
-                  }}
+          {/* Auth method */}
+          <Segmented
+            value={method}
+            onChange={(next) => { setMethod(next); setError(''); }}
+            label={t('loginUi.method')}
+            options={[
+              { value: 'apikey', label: t('loginUi.methodApiKey') },
+              { value: 'password', label: t('loginUi.methodPassword') },
+            ]}
+          />
+
+          {/* Server */}
+          <div style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'flex-end' }}>
+            <div style={{ width: 96, flex: '0 0 96px' }}>
+              <Field label={t('loginUi.scheme')}>
+                <select
+                  className="ui-select"
+                  value={scheme}
+                  onChange={(e) => setScheme(e.target.value as 'http' | 'https')}
+                  aria-label={t('loginUi.scheme')}
                 >
-                  {m === 'password' ? 'Password' : 'API Key'}
-                </button>
-              ))}
+                  <option value="https">https://</option>
+                  <option value="http">http://</option>
+                </select>
+              </Field>
             </div>
-          </div>
-
-          {/* Fields — 24px gap between each */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-            {/* ── Field 1: Server URL (scheme dropdown + host input) ── */}
-            <label style={{ display: 'block' }}>
-              {/* Italic serif label above the field */}
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                {t('loginUi.serverQuestion')}
-              </div>
-              {/* Flex row: scheme dropdown on the left, host input on the right */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-
-                {/* Custom scheme dropdown: trigger button + absolute menu */}
-                <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
-                  {/* Trigger button — shows "{scheme}://" with rotating caret */}
-                  <button
-                    type="button"
-                    onClick={() => setSchemeOpen(o => !o)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: '1px solid rgba(255,255,255,0.12)',
-                      color: 'var(--onyx-accent)', // accent gold for the scheme text
-                      fontFamily: SERIF,
-                      fontSize: 16,
-                      padding: '0 4px 9px 0',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    {scheme}://
-                    {/* Caret rotates 180° when the menu is open */}
-                    <span style={{
-                      fontSize: 10,
-                      color: 'rgba(235,231,223,0.38)',
-                      display: 'inline-block',
-                      transform: schemeOpen ? 'rotate(180deg)' : 'none',
-                      transition: 'transform 0.15s',
-                    }}>▾</span>
-                  </button>
-
-                  {/* Dropdown menu — only rendered when open */}
-                  {schemeOpen && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 6px)',
-                      left: 0,
-                      background: '#1a1a22', // panel-2 from design tokens
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      borderRadius: 8,
-                      boxShadow: '0 16px 32px rgba(0,0,0,0.5)',
-                      padding: 5,
-                      zIndex: 30,
-                      minWidth: 132,
-                    }}>
-                      {/* https listed first (TLS preferred), http second (PLAIN) */}
-                      {(['https', 'http'] as const).map(s => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => { setScheme(s); setSchemeOpen(false); }}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: 12,
-                            width: '100%',
-                            textAlign: 'left',
-                            // Highlight the currently-selected scheme
-                            background: s === scheme ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)' : 'transparent',
-                            border: 'none',
-                            borderRadius: 5,
-                            padding: '8px 10px',
-                            cursor: 'pointer',
-                            fontFamily: SERIF,
-                            fontSize: 14,
-                            color: s === scheme ? 'var(--onyx-accent)' : '#ebe7df',
-                          }}
-                        >
-                          {s}://
-                          {/* Right-side tag: TLS or PLAIN */}
-                          <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(235,231,223,0.38)', letterSpacing: '0.06em' }}>
-                            {s === 'http' ? 'PLAIN' : 'TLS'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Host input — takes remaining width */}
-                <input
-                  className="saga-input" // focus rule in index.css
-                  style={{ ...underline, flex: 1 }}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Field label={t('loginUi.serverQuestion')}>
+                <Input
                   value={host}
-                  onChange={e => setHost(e.target.value)}
-                  placeholder="library.example.com or 192.168.1.20:13378"
-                  spellCheck={false}
-                />
-              </div>
-            </label>
-
-            {method === 'password' ? (
-              // ── Password fields ─────────────────────────────────────────
-              <>
-                {/* Field 2: Username */}
-                <label style={{ display: 'block' }}>
-                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    {t('loginUi.nameQuestion')}
-                  </div>
-                  <input
-                    className="saga-input"
-                    style={underline}
-                    value={user}
-                    onChange={e => setUser(e.target.value)}
-                    placeholder={t('loginUi.usernamePlaceholder')}
-                    spellCheck={false}
-                  />
-                </label>
-
-                {/* Field 3: Password */}
-                <label style={{ display: 'block' }}>
-                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    {t('loginUi.password')}
-                  </div>
-                  <input
-                    className="saga-input"
-                    style={underline}
-                    type="password"
-                    value={pass}
-                    onChange={e => setPass(e.target.value)}
-                    placeholder="••••••••••"
-                  />
-                </label>
-              </>
-            ) : (
-              // ── API key field ───────────────────────────────────────────
-              <label style={{ display: 'block' }}>
-                <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                  {t('loginUi.apiKey')}
-                </div>
-                {/* Textarea for long JWT-format keys — resize disabled so it stays tidy */}
-                <textarea
-                  className="saga-input"
-                  rows={3}
-                  style={{
-                    ...underline,
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    letterSpacing: '0.03em',
-                    resize: 'none',
-                    lineHeight: 1.6,
-                    paddingTop: 4,
-                  }}
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  placeholder={t('loginUi.apiKeyPlaceholder')}
+                  onChange={(e) => setHost(e.target.value)}
+                  placeholder={t('loginUi.serverPlaceholder')}
                   spellCheck={false}
                   autoComplete="off"
                 />
-                {/* Helper text pointing the user to where keys are generated */}
-                <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>
-                  Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.
-                </div>
-              </label>
-            )}
+              </Field>
+            </div>
           </div>
 
-          {/* Validation / connection error — italic serif, danger color */}
+          {/* Credentials */}
+          {method === 'password' ? (
+            <>
+              <Field label={t('loginUi.nameQuestion')}>
+                <Input
+                  value={user}
+                  onChange={(e) => setUser(e.target.value)}
+                  placeholder={t('loginUi.usernamePlaceholder')}
+                  spellCheck={false}
+                  autoComplete="username"
+                />
+              </Field>
+              <Field label={t('loginUi.password')}>
+                <Input
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  placeholder="••••••••••"
+                  autoComplete="current-password"
+                />
+              </Field>
+            </>
+          ) : (
+            <Field label={t('loginUi.apiKey')} hint={t('loginUi.apiKeyHint')}>
+              <textarea
+                className="ui-textarea ui-textarea--tech"
+                rows={3}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={t('loginUi.apiKeyPlaceholder')}
+                spellCheck={false}
+                autoComplete="off"
+                style={{ resize: 'none' }}
+              />
+            </Field>
+          )}
+
           {error && (
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: '#f1a89a', marginTop: 18 }}>
+            <div
+              role="alert"
+              style={{
+                padding: 'var(--s-2) var(--s-3)',
+                borderRadius: 'var(--r-control)',
+                border: '1px solid rgba(226, 104, 95, 0.35)',
+                background: 'rgba(226, 104, 95, 0.1)',
+                color: '#e2685f',
+                fontSize: 'var(--fs-2)',
+                lineHeight: 'var(--lh-normal)',
+              }}
+            >
               {error}
             </div>
           )}
 
-          {/* Action row: gold pill CTA */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 32 }}>
-            {/* Primary "Enter" button — gold pill with gradient */}
-            <button
-              type="submit"
-              disabled={pending}
-              className="saga-cta" // hover/active rules in index.css
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                // Three-stop gold gradient matching the spec
-                background: 'linear-gradient(180deg, #e9bb5e, #d4a64a 55%, #a37d2e)',
-                border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
-                borderRadius: 999, // pill shape
-                color: '#1a1306', // near-black text on gold
-                fontFamily: SERIF,
-                fontWeight: 600,
-                fontSize: 15,
-                padding: '11px 28px',
-                cursor: pending ? 'wait' : 'pointer',
-                letterSpacing: '0.01em',
-                boxShadow: '0 8px 24px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.22), inset 0 1px 0 rgba(255,255,255,0.2)',
-                transition: 'transform 0.12s, box-shadow 0.18s, filter 0.12s',
-              }}
-            >
-              {/* Button label — "Opening…" while request is in flight */}
-              {pending ? 'Opening…' : 'Enter'}
-              {/* Arrow slides right on CTA hover (via .saga-arrow rule in index.css) */}
-              <span className="saga-arrow" style={{ display: 'flex', transition: 'transform 0.2s' }}>→</span>
-            </button>
+          <Button type="submit" tone="primary" size="lg" block disabled={pending}>
+            {pending ? t('loginUi.opening') : t('loginUi.enterHall')}
+          </Button>
 
-            {/* Secondary path — use Skald with only on-disk local libraries, no
-                server. Opens the shell via the localMode gate in App.tsx. */}
-            <button
-              type="button"
-              onClick={() => { st.setLocalMode(true); st.setScreen('library'); }}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: SERIF, fontStyle: 'italic', fontSize: 13,
-                color: 'rgba(235,231,223,0.62)', padding: '6px 4px', textDecoration: 'underline',
-                textUnderlineOffset: 3, textDecorationColor: 'rgba(235,231,223,0.25)',
-              }}
-            >
-              {t('loginUi.localMode')}
-            </button>
-
-          </div>
+          <button
+            type="button"
+            onClick={() => { st.setLocalMode(true); st.setScreen('library'); }}
+            className="ui-btn ui-btn--ghost ui-btn--sm"
+            style={{ alignSelf: 'center' }}
+          >
+            {t('loginUi.localMode')}
+          </button>
         </form>
+      </div>
     </div>
   );
 }

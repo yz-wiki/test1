@@ -17,7 +17,7 @@ export interface VolumeControlProps {
 export default function VolumeControl({ st, compact, style }: VolumeControlProps) {
   const { t } = useI18n();
   const v = st.muted ? 0 : st.volume;
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const mono = 'var(--font-ui)';
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     st.setMuted(false);

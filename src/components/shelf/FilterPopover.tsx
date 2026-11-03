@@ -3,7 +3,10 @@ import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { EMPTY_ADV_FILTER } from '../../lib/shelfFilters';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const MONO = UI_STACK;
 
 // ── Curated tag taxonomy ──────────────────────────────────────────────────────
 // Real library tags have no inherent grouping, so each available tag is assigned

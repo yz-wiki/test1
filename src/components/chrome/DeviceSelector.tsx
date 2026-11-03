@@ -19,7 +19,7 @@ export interface DeviceSelectorProps {
 export default function DeviceSelector({ st, compact, style }: DeviceSelectorProps) {
   const { t } = useI18n();
   const [devices, setDevices] = useState<AudioDevice[]>([]);
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const mono = 'var(--font-ui)';
 
   // Ref on the outer wrapper — used to detect clicks on the trigger area.
   const ref = useRef<HTMLDivElement>(null);

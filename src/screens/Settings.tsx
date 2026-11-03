@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { OnyxState } from '../state/onyx';
 import { logout } from '../api/abs';
-import Glass from '../components/chrome/Glass';
 import Icon from '../components/Icon';
 import type { IconName } from '../components/Icon';
 import { matchesSettingsSearch } from '../lib/settingsSearch';
 import { useI18n, type TranslationKey } from '../i18n';
-import { useShellChrome } from '../components/shell/ShellContext';
 import {
   AccountSection,
   ServerSection,
@@ -24,8 +22,6 @@ import {
   LogsSection,
   SharingSection,
 } from '../components/settings';
-
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
 
 export interface SettingsProps { st: OnyxState; onLogout: () => void; }
 
@@ -77,7 +73,6 @@ function sectionVisible(section: NavSection, hasAbs: boolean, isAdmin: boolean):
 
 export default function Settings({ st, onLogout }: SettingsProps) {
   const { t } = useI18n();
-  const chrome = useShellChrome();
   const requestedSection = NAV.some(item => item.id === st.settingsSection)
     ? st.settingsSection as SectionId
     : 'account';
@@ -127,72 +122,51 @@ export default function Settings({ st, onLogout }: SettingsProps) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 32px 24px', minHeight: 0 }}>
-      {/* Breadcrumb */}
-      {/* Breadcrumb — only needed when there is no sidebar to orient the user
-          (the macOS-native pattern is a source list, which already shows where
-          you are). */}
-      {!chrome.hasSidebar && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18, fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
-        <button
-          onClick={() => st.setScreen('library')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' as const }}
-        >
-          <Icon name="chevron-left" size={12} /> {t('settings.backToLibrary')}
-        </button>
-        <span>·</span>
-        <span style={{ color: 'var(--onyx-text)' }}>{t('settings.title')}</span>
-      </div>
-      )}
-
-      <div style={{ flex: 1, display: 'flex', gap: 24, minHeight: 0 }}>
-        {/* Sidebar — scrolls vertically when the nav list is taller than the pane
-            (low-resolution windows would otherwise spill the last items out). */}
-        <Glass translucent={st.translucent} style={{ width: 260, padding: '20px 14px', display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: 0, overflowY: 'auto' }}>
+    <div className="ui-stack" style={{ flex: 1, minHeight: 0, padding: 'var(--s-4) var(--s-6) var(--s-5)' }}>
+      <div className="ui-grow" style={{ display: 'flex', gap: 'var(--s-5)' }}>
+        {/* Navigation rail. Uses the same list vocabulary as the app sidebar so
+            Settings reads as part of the product, not a separate window. */}
+        <aside className="ui-card ui-scroll" style={{ width: 248, flex: '0 0 248px', padding: 'var(--s-3)', display: 'flex', flexDirection: 'column', gap: 'var(--s-1)' }}>
           <input
             value={navQuery}
             onChange={e => setNavQuery(e.target.value)}
             placeholder={t('settings.findPlaceholder')}
             aria-label={t('settings.findPlaceholder')}
-            style={{ margin: '0 8px 14px', padding: '8px 10px', borderRadius: 7, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 12 }}
+            className="ui-input"
+            style={{ marginBottom: 'var(--s-2)' }}
           />
           {visibleGroups.map((group, groupIndex) => (
-            <div key={group.labelKey} style={{ marginTop: groupIndex === 0 ? 0 : 14 }}>
-              <div style={{ padding: '0 12px 6px', fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
+            <div key={group.labelKey} style={{ marginTop: groupIndex === 0 ? 0 : 'var(--s-3)' }}>
+              <div className="ui-group-label" style={{ padding: '0 var(--s-2) var(--s-1)' }}>
                 {t(group.labelKey)}
               </div>
               {group.sections.map(s => {
-                // Downloads keeps its at-a-glance stored-book count.
                 const downloadCount = s.id === 'downloads' ? st.downloads.length : 0;
-                const label = downloadCount > 0 ? `${t(s.labelKey)} (${downloadCount})` : t(s.labelKey);
+                const active = section === s.id;
                 return (
                   <button
                     key={s.id}
+                    type="button"
+                    className={`ui-list__item${active ? ' ui-list__item--active' : ''}`}
+                    aria-current={active ? 'page' : undefined}
                     onClick={() => { setSection(s.id); st.setSettingsSection(s.id); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-                      padding: '9px 12px', borderRadius: 8,
-                      background: section === s.id ? 'var(--onyx-accent-dim)' : 'transparent',
-                      border: `1px solid ${section === s.id ? 'var(--onyx-accent-edge)' : 'transparent'}`,
-                      cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' as const,
-                      color: section === s.id ? 'var(--onyx-accent)' : 'var(--onyx-text)',
-                      fontSize: 13, fontWeight: section === s.id ? 500 : 400,
-                      marginBottom: 2,
-                    }}
+                    style={active ? { color: 'var(--onyx-text)' } : undefined}
                   >
-                    <Icon name={s.icon} size={14} color={section === s.id ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)'} />
-                    {label}
+                    <span className="ui-list__icon" style={active ? { color: 'var(--onyx-accent)' } : undefined}>
+                      <Icon name={s.icon} size={15} />
+                    </span>
+                    <span className="ui-list__label">{t(s.labelKey)}</span>
+                    {downloadCount > 0 && <span className="ui-list__meta">{downloadCount}</span>}
                   </button>
                 );
               })}
             </div>
           ))}
+          <div className="ui-grow" />
+        </aside>
 
-          <div style={{ flex: 1 }} />
-        </Glass>
-
-        {/* Content panel */}
-        <Glass translucent={st.translucent} style={{ flex: 1, padding: '28px 36px', overflow: 'auto', minWidth: 0 }}>
+        {/* Content column scrolls on its own so the rail stays put. */}
+        <main className="ui-grow ui-scroll" style={{ paddingRight: 'var(--s-1)' }}>
           {section === 'account'          && <AccountSection st={st} onSignOut={handleSignOut} />}
           {section === 'server'           && <ServerSection st={st} />}
           {section === 'notifications'    && <NotificationsSection st={st} />}
@@ -200,16 +174,15 @@ export default function Settings({ st, onLogout }: SettingsProps) {
           {section === 'scheduled-tasks'  && <ScheduledTasksSection st={st} />}
           {section === 'logs'             && <LogsSection st={st} />}
           {section === 'sharing'          && <SharingSection st={st} />}
-          {/* st is passed so the Sessions subtab can access serverUrl and user type */}
           {section === 'playback'   && <PlaybackSection st={st} />}
           {section === 'audio'      && <AudioSection />}
           {section === 'library'    && <LibraryManagementSection st={st} />}
           {section === 'downloads'  && <DownloadsSection st={st} />}
           {section === 'appearance' && <AppearanceSection st={st} />}
           {section === 'language'   && <LanguageSection />}
-          {section === 'keyboard'      && <KeyboardSection />}
-          {section === 'about'         && <AboutSection st={st} />}
-        </Glass>
+          {section === 'keyboard'   && <KeyboardSection />}
+          {section === 'about'      && <AboutSection st={st} />}
+        </main>
       </div>
     </div>
   );

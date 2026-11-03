@@ -10,8 +10,11 @@ import { findCovers, setCoverUrl, uploadCover, removeCover, getCover, COVER_PROV
 import { bustCover } from '../lib/coverBust';
 import { useModalFocus } from '../hooks/useModalFocus';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO  = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
+const MONO  = 'var(--font-ui)';
 
 // Accent focus ring for text fields / selects (theme-safe).
 const accentFocus = {

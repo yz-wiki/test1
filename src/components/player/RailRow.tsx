@@ -1,10 +1,13 @@
+
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 // One row of the Player's bookmarks/stop-points timeline rail: a connecting
 // line + dot, then time/label/meta. Pure props → JSX; kept as a render helper
 // (not a mounted component) so the caller's list keys stay on the button.
 // Moved verbatim out of Player.tsx (God-File Decomposition roadmap, L3/L7).
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const SERIF = UI_STACK;
+const MONO = UI_STACK;
 
 export interface RailRowOpts {
   keyId: string;

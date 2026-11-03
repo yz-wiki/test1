@@ -1,15 +1,10 @@
 // Primary navigation rail.
 //
-// This replaces the "everything in a top bar" model with the macOS
-// source-list pattern: a persistent translucent sidebar on the left, grouped
-// sections with quiet uppercase headers, a leading glyph + optional count badge
-// per row, and the account pinned to the bottom.
-//
-// Two responsibilities moved here out of TopNav:
-//   1. library switching (the old accent "Library" chip),
-//   2. the account/settings entry point (the old avatar button).
-// TopNav hides both when it detects a sidebar through ShellChromeContext, so the
-// compact layout still works exactly as before for users who collapse the rail.
+// A source list: grouped sections of `ui-list__item` rows, the current library
+// pinned at the top as a switcher, and the account pinned at the bottom. The
+// rail is never hidden — collapsing it narrows it to an icon rail, because it
+// owns two things you cannot reach anywhere else: library switching and the
+// account entry point.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import Icon from '../Icon';
@@ -111,10 +106,9 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
       { id: 'authors', label: t('nav.authors'), icon: 'edit', state: shelfActive('authors') ? 'active' : 'idle', onSelect: selectShelfTab('authors') },
     ];
 
-    // Collections / Playlists are server-scoped; hide them for local-only
-    // libraries instead of showing a row that would bounce back to Home.
-    const source = active.source;
-    if (source !== 'local' && st.optionalTabs?.collections !== false) {
+    // Collections are server-scoped; hide them for local-only libraries instead
+    // of showing a row that would bounce back to Home.
+    if (active.source !== 'local' && st.optionalTabs?.collections !== false) {
       rows.push({ id: 'collections', label: t('nav.collections'), icon: 'grid', state: shelfActive('collections') ? 'active' : 'idle', onSelect: selectShelfTab('collections') });
     }
 
@@ -137,47 +131,68 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
   }
 
   // ── Device-level destinations ──────────────────────────────────────────────
-  // Rendered in the footer, directly above the account card: these are
-  // destinations you reach for constantly, so they should not scroll away with
-  // the library list.
+  // In the footer, above the account: reached constantly, so they must not
+  // scroll away with the library list.
   const downloadCount = st.downloads.length;
   const footerRows: NavRow[] = [
-      {
-        id: 'now-playing',
-        label: t('nav.nowPlaying'),
-        icon: 'headphones',
-        // Without a loaded book there is nothing for the Player screen to show,
-        // so the row is disabled rather than opening an empty transport.
-        state: st.screen === 'player' ? 'active' : st.currentBookId ? 'idle' : 'disabled',
-        onSelect: go(() => st.setScreen('player')),
-      },
-      {
-        id: 'downloads',
-        label: t('nav.downloads'),
-        icon: 'download',
-        state: st.screen === 'settings' && st.settingsSection === 'downloads' ? 'active' : 'idle',
-        badge: downloadCount > 0 ? String(downloadCount) : undefined,
-        onSelect: openSettings('downloads'),
-      },
-      {
-        id: 'settings',
-        label: t('nav.settings'),
-        icon: 'sliders',
-        state: st.screen === 'settings' && st.settingsSection !== 'downloads' ? 'active' : 'idle',
-        onSelect: openSettings(),
-      },
+    {
+      id: 'now-playing',
+      label: t('nav.nowPlaying'),
+      icon: 'headphones',
+      state: st.screen === 'player' ? 'active' : st.currentBookId ? 'idle' : 'disabled',
+      onSelect: go(() => st.setScreen('player')),
+    },
+    {
+      id: 'downloads',
+      label: t('nav.downloads'),
+      icon: 'download',
+      state: st.screen === 'settings' && st.settingsSection === 'downloads' ? 'active' : 'idle',
+      badge: downloadCount > 0 ? String(downloadCount) : undefined,
+      onSelect: openSettings('downloads'),
+    },
+    {
+      id: 'settings',
+      label: t('nav.settings'),
+      icon: 'sliders',
+      state: st.screen === 'settings' && st.settingsSection !== 'downloads' ? 'active' : 'idle',
+      onSelect: openSettings(),
+    },
   ];
 
   const displayName = st.user?.username || st.localDisplayName || t('misc.reader');
-  const role = st.isAdmin ? 'Admin' : st.localMode ? t('misc.local') : 'User';
+  const role = st.isAdmin ? t('nav.roleAdmin') : st.localMode ? t('misc.local') : t('nav.roleUser');
+
+  const renderRow = (row: NavRow) => {
+    const activeRow = row.state === 'active';
+    return (
+      <button
+        key={row.id}
+        type="button"
+        className={`ui-list__item${activeRow ? ' ui-list__item--active' : ''}`}
+        aria-current={activeRow ? 'page' : undefined}
+        disabled={row.state === 'disabled'}
+        onClick={row.onSelect}
+        title={compact ? row.label : undefined}
+      >
+        <span className="ui-list__icon" style={activeRow ? { color: 'var(--onyx-accent)' } : undefined}>
+          <Icon name={row.icon} size={15} />
+        </span>
+        <span className="ui-list__label">{row.label}</span>
+        {row.badge && <span className="ui-list__meta">{row.badge}</span>}
+      </button>
+    );
+  };
 
   return (
-    <aside className={`mac-sidebar${compact ? ' mac-sidebar--compact' : ''}`} aria-label={t('nav.section.library')}>
-      {/* Library switcher — the macOS "source list header" slot. */}
-      <div ref={switcherRef} style={{ position: 'relative', marginBottom: 10, flex: '0 0 auto' }}>
+    <aside
+      className={`ui-sidebar${compact ? ' ui-sidebar--compact' : ''}`}
+      aria-label={t('nav.section.library')}
+    >
+      {/* Library switcher — the rail's headline control. */}
+      <div ref={switcherRef} className="ui-sidebar__header" style={{ position: 'relative' }}>
         <button
           type="button"
-          className="mac-account"
+          className="ui-sidebar__switch"
           onClick={() => {
             if (libraryChoices.length > 1) setSwitcherOpen(open => !open);
             else openSettings('library');
@@ -191,28 +206,18 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
           aria-haspopup={libraryChoices.length > 1 ? 'listbox' : undefined}
           aria-expanded={libraryChoices.length > 1 ? switcherOpen : undefined}
           title={libraryChoices.length > 1 ? t('nav.switchLibrary') : t('nav.libraries')}
-          style={{ padding: '7px 8px' }}
         >
-          <span
-            className="mac-avatar"
-            style={{
-              background: 'var(--onyx-accent-dim)',
-              color: 'var(--onyx-accent)',
-              borderRadius: 7,
-              width: 26,
-              height: 26,
-            }}
-          >
-            <Icon name="layers" size={14} />
-          </span>
-          <span className="mac-sidebar__footer-meta" style={{ flex: '1 1 auto' }}>
-            <span className="mac-sidebar__footer-name" style={{ display: 'block' }}>
+          <span className="ui-sidebar__switch-mark"><Icon name="layers" size={14} /></span>
+          <span className="ui-sidebar__switch-text">
+            <span className="ui-sidebar__switch-name">
               {active ? libraryDisplayLabel(active) : t('misc.noLibrary')}
             </span>
-            <span className="mac-sidebar__footer-role">{active ? librarySourceBadge(active) : t('nav.libraries')}</span>
+            <span className="ui-sidebar__switch-sub">
+              {active ? librarySourceBadge(active) : t('nav.libraries')}
+            </span>
           </span>
           {libraryChoices.length > 1 && !compact && (
-            <span style={{ display: 'inline-flex', color: 'var(--onyx-text-mute)', transform: switcherOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms var(--mac-ease)' }}>
+            <span style={{ display: 'inline-flex', color: 'var(--onyx-text-mute)', transform: switcherOpen ? 'rotate(180deg)' : 'none', transition: 'transform var(--dur-fast) var(--ease)' }}>
               <Icon name="chevron-down" size={11} />
             </span>
           )}
@@ -222,35 +227,22 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
           <div
             role="listbox"
             aria-label={t('nav.switchLibrary')}
-            className="mac-panel"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              marginTop: 6,
-              zIndex: 200,
-              padding: 5,
-              maxHeight: 320,
-              overflowY: 'auto',
-              background: 'var(--mac-panel-bg-strong)',
-            }}
+            className="ui-popover"
+            style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 'var(--s-1)', zIndex: 200 }}
           >
             {libraryChoices.map((library) => {
               const isActive = library.id === st.currentLibraryId;
               return (
                 <button
                   key={library.id}
+                  type="button"
                   role="option"
                   aria-selected={isActive}
                   onClick={() => switchLibrary(library.id)}
-                  className="mac-nav-item"
-                  style={isActive ? { background: 'var(--mac-active)', fontWeight: 600 } : undefined}
+                  className={`ui-list__item${isActive ? ' ui-list__item--active' : ''}`}
                 >
-                  <span className="mac-nav-item__label">{libraryDisplayLabel(library)}</span>
-                  <span className="mac-nav-item__badge" style={{ background: 'transparent', padding: 0 }}>
-                    {librarySourceBadge(library)}
-                  </span>
+                  <span className="ui-list__label">{libraryDisplayLabel(library)}</span>
+                  <span className="ui-list__meta">{librarySourceBadge(library)}</span>
                   {isActive && <Icon name="check" size={12} color="var(--onyx-accent)" />}
                 </button>
               );
@@ -259,58 +251,27 @@ export default function Sidebar({ st, compact, onNavigate }: SidebarProps) {
         )}
       </div>
 
-      <div className="mac-sidebar__scroll mac-scroll">
+      <div className="ui-sidebar__scroll ui-scroll">
         {sections.map(section => (
-          <div key={section.id} className="mac-sidebar__section">
-            <div className="mac-sidebar__label">{section.label}</div>
-            {section.rows.map(row => (
-              <button
-                key={row.id}
-                type="button"
-                className={`mac-nav-item${row.state === 'active' ? ' mac-nav-item--active' : ''}`}
-                aria-current={row.state === 'active' ? 'page' : undefined}
-                disabled={row.state === 'disabled'}
-                onClick={row.onSelect}
-                title={compact ? row.label : undefined}
-                style={row.state === 'disabled' ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
-              >
-                <span className="mac-nav-item__icon"><Icon name={row.icon} size={15} /></span>
-                <span className="mac-nav-item__label">{row.label}</span>
-                {row.badge && <span className="mac-nav-item__badge">{row.badge}</span>}
-              </button>
-            ))}
+          <div key={section.id} className="ui-sidebar__section">
+            <div className="ui-sidebar__label"><span className="ui-group-label">{section.label}</span></div>
+            {section.rows.map(renderRow)}
           </div>
         ))}
       </div>
 
-      <div className="mac-sidebar__footer">
-        {footerRows.map(row => (
-          <button
-            key={row.id}
-            type="button"
-            className={`mac-nav-item${row.state === 'active' ? ' mac-nav-item--active' : ''}`}
-            aria-current={row.state === 'active' ? 'page' : undefined}
-            disabled={row.state === 'disabled'}
-            onClick={row.onSelect}
-            title={compact ? row.label : undefined}
-            style={row.state === 'disabled' ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
-          >
-            <span className="mac-nav-item__icon"><Icon name={row.icon} size={15} /></span>
-            <span className="mac-nav-item__label">{row.label}</span>
-            {row.badge && <span className="mac-nav-item__badge">{row.badge}</span>}
-          </button>
-        ))}
-        <div className="mac-hairline" style={{ margin: '6px 8px' }} />
+      <div className="ui-sidebar__footer">
+        {footerRows.map(renderRow)}
         <button
           type="button"
-          className="mac-account"
+          className="ui-sidebar__account"
           onClick={openSettings('account')}
           title={t('nav.account')}
         >
-          <span className="mac-avatar">{displayName[0]?.toUpperCase() ?? '?'}</span>
-          <span className="mac-sidebar__footer-meta">
-            <span className="mac-sidebar__footer-name">{displayName}</span>
-            <span className="mac-sidebar__footer-role">{role}</span>
+          <span className="ui-sidebar__avatar">{displayName[0]?.toUpperCase() ?? '?'}</span>
+          <span className="ui-sidebar__switch-text ui-sidebar__account-text">
+            <span className="ui-sidebar__switch-name">{displayName}</span>
+            <span className="ui-sidebar__switch-sub">{role}</span>
           </span>
         </button>
       </div>

@@ -80,7 +80,7 @@ export default function Library({ st }: LibraryProps) {
       // title in the MiniPlayer can't stretch the column's intrinsic width past
       // the card — the title then ellipsizes instead. maxWidth (not width) so
       // the collapsed FocusPanel rail (76px) still shrinks the column to fit.
-      maxWidth: 360,
+      maxWidth: 340,
     }}>
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {showFocus
@@ -95,9 +95,9 @@ export default function Library({ st }: LibraryProps) {
   // consistency. The library switcher in TopNav toggles between the two.
   if (isPodcast) {
     return (
-      <div style={{ flex: 1, display: 'flex', gap: 24, padding: '8px 24px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
+      <div style={{ flex: 1, display: 'flex', gap: 'var(--s-5)', padding: 'var(--s-4) var(--s-6) var(--s-6)', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
         {showFocusColumn && focusColumn}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', minWidth: 0 }}>
           <TopNav st={st} />
           <PodcastBrowse st={st} />
         </div>
@@ -106,15 +106,15 @@ export default function Library({ st }: LibraryProps) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', gap: 24, padding: '8px 24px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
-      {/* overflow: visible required — TopNav active tab indicator protrudes below nav bar via position:absolute */}
+    <div style={{ flex: 1, display: 'flex', gap: 'var(--s-5)', padding: 'var(--s-4) var(--s-6) var(--s-6)', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'visible' }}>
+      {/* overflow: visible required — TopNav's tab indicator protrudes below the bar */}
       {showFocusColumn && focusColumn}
 
       {/* RIGHT — shelf column. minHeight:0 lets the flex:1 LibraryShelf shrink to
           the column height instead of growing to its (virtualized, very tall)
           content — without it the shelf's scroll container can resolve to a
           fragile/near-zero height, which the virtualizer then measures. */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0, minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', minWidth: 0, minHeight: 0 }}>
         <TopNav st={st} />
         <PickItUp st={st} />
         <ShelfHeader st={st} />

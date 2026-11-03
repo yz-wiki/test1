@@ -8,9 +8,12 @@ import Titlebar from '../chrome/Titlebar';
 import lyreIcon from '../../assets/lyre.png';
 import { useI18n } from '../../i18n';
 
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
 // Typography constants — identical tokens to Login.tsx so the two screens match.
-export const SERIF = '"Source Serif 4", "Source Serif Pro", Georgia, serif';
-export const MONO  = "'JetBrains Mono', ui-monospace, monospace";
+export const SERIF = UI_STACK;
+export const MONO  = 'var(--font-ui)';
 export const SANS  = "'Inter', system-ui, -apple-system, sans-serif";
 
 // Shared gold-pill CTA — the same gradient/shape as Login's "Enter" button.

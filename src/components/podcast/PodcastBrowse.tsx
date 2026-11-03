@@ -27,11 +27,14 @@ import { buildPodcastContextMenu } from './buildPodcastContextMenu';
 import { buildEpisodeContextMenu } from './buildEpisodeContextMenu';
 import type { PodcastEpisode } from '../../api/abs';
 
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
 export interface PodcastBrowseProps {
   st: OnyxState;
 }
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const MONO = UI_STACK;
 
 // Stored cover URL a podcast item already carries (imageUrl, or raw-feed `image`).
 function directImage(it: LibraryItem): string | undefined {

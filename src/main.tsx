@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import "./styles/macos.css";
+// The design system loads last: it owns the type scale, spacing, radius and
+// component vocabulary, so it must win over the older shell-specific rules.
+import "./styles/system.css";
 import App from "./App";
 import { initLogging } from "./lib/log";
 import { I18nProvider } from "./i18n";

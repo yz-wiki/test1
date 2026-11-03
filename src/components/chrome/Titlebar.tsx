@@ -140,7 +140,7 @@ export default function Titlebar({
       {onBack && (
         <button
           type="button"
-          className="mac-iconbtn"
+          className="ui-iconbtn"
           onClick={onBack}
           disabled={!canGoBack}
           title={t('nav.back')}
@@ -166,14 +166,14 @@ export default function Titlebar({
       </div>
 
       {!minimal && isOffline && (
-        <span className="mac-badge mac-badge--warn" title={lastRefresh ? formatDateTime(lastRefresh) : undefined}>
+        <span className="ui-badge ui-badge--warn" title={lastRefresh ? formatDateTime(lastRefresh) : undefined}>
           {t('window.offlinePill')}
           {lastRefresh ? ` · ${t('window.refreshedAt', { when: formatDateTime(lastRefresh) })}` : ''}
         </span>
       )}
 
       {!minimal && isUnencrypted && (
-        <span className="mac-badge mac-badge--warn" title={t('window.unencryptedHint')}>
+        <span className="ui-badge ui-badge--warn" title={t('window.unencryptedHint')}>
           {t('window.unencryptedPill')}
         </span>
       )}
@@ -187,7 +187,7 @@ export default function Titlebar({
         {!minimal && onOpenPalette && (
           <button
             type="button"
-            className="mac-iconbtn"
+            className="ui-iconbtn"
             onClick={onOpenPalette}
             title={t('palette.action.commandPalette')}
             aria-label={t('palette.action.commandPalette')}
@@ -195,20 +195,20 @@ export default function Titlebar({
             style={{ width: 'auto', padding: '0 8px', gap: 6, display: 'inline-flex' }}
           >
             <Icon name="search" size={13} />
-            {paletteShortcut && <span className="mac-kbd">{paletteShortcut}</span>}
+            {paletteShortcut && <span className="ui-kbd">{paletteShortcut}</span>}
           </button>
         )}
         {!minimal && onToggleSidebar && (
           <button
             type="button"
-            className="mac-iconbtn"
+            className="ui-iconbtn"
             onClick={onToggleSidebar}
             title={sidebarVisible ? t('nav.collapseSidebar') : t('nav.expandSidebar')}
             aria-label={sidebarVisible ? t('nav.collapseSidebar') : t('nav.expandSidebar')}
             aria-pressed={sidebarVisible}
             data-tauri-drag-region="false"
           >
-            <Icon name="list" size={14} />
+            <Icon name="panel-left" size={15} />
           </button>
         )}
 

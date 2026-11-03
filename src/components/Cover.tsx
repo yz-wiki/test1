@@ -92,7 +92,7 @@ export default function Cover({ item, size = 180, scale = 1, fill = false, class
     color: accent,
     flexShrink: 0,
     boxShadow: '0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25)',
-    fontFamily: '"Source Serif 4", "Iowan Old Style", Georgia, serif',
+    fontFamily: 'var(--font-ui)',
     cursor: onClick ? 'pointer' : undefined,
     ...style,
   };

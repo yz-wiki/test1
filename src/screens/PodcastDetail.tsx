@@ -39,7 +39,7 @@ function episodeTime(ep: PodcastEpisode): number {
 
 export default function PodcastDetail({ st }: PodcastDetailProps) {
   const { t } = useI18n();
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const mono = 'var(--font-ui)';
   const [showSettings, setShowSettings] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
   // Episode right-click menu + the Add-to-Playlist picker it can open.
@@ -108,7 +108,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
 
   if (!item) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 13 }}>
+      <div className="ui-empty" style={{ flex: 1 }}>
         {t('podDetail.notFound')}
       </div>
     );
@@ -174,7 +174,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
   const undownloaded = episodes.filter(e => !e.downloaded).map(e => e.ep);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, padding: '8px 24px 24px', minHeight: 0, width: '100%', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', padding: 'var(--s-4) var(--s-6) var(--s-6)', minHeight: 0, width: '100%', overflow: 'hidden' }}>
       {/* Back */}
       <button
         onClick={back}

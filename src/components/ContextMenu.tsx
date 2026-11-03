@@ -3,8 +3,10 @@ import { useI18n } from '../i18n';
 import ReactDOM from 'react-dom';
 import Icon, { type IconName } from './Icon';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 
+const MONO = UI_STACK;
 export interface ContextMenuItem {
   label: string;
   /** Optional when the item only opens a submenu. */

@@ -10,9 +10,11 @@ import Cover from '../Cover';
 import Icon from '../Icon';
 import { log } from '../../lib/log';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 
+const MONO = UI_STACK;
+const SERIF = UI_STACK;
 const BARS = 64;
 
 export interface MiniPlayerProps {

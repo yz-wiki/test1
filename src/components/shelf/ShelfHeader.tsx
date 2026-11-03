@@ -17,8 +17,11 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { toggleFocusRailMode, useFocusRailMode } from '../../lib/uiPrefs';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
+const MONO = UI_STACK;
 
 // Toggles the Library's left information column (Focus / Greeting panel). Lives
 // in the shelf toolbar because it acts on the shelf's own width — the analogue of

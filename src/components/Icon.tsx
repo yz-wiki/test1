@@ -14,7 +14,9 @@ export type IconName =
   | 'download' | 'upload' | 'check-circle' | 'clock' | 'playlist' | 'layers' | 'share'
   | 'sliders' | 'trash' | 'edit' | 'image' | 'target' | 'file' | 'refresh'
   // Shell / layout affordances
-  | 'panel-left';
+  | 'panel-left'
+  // Overlay dismiss affordance (sheets, popovers, toasts)
+  | 'close';
 
 export interface IconProps {
   name: IconName;
@@ -130,6 +132,8 @@ export default function Icon({ name, size = 16, color, className }: IconProps) {
       return <svg style={s} className={className} viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" {...stroke} /><circle cx="8" cy="8" r="2.6" {...stroke} /><circle cx="8" cy="8" r="0.6" {...fill} /></svg>;
     case 'file':
       return <svg style={s} className={className} viewBox="0 0 16 16"><path d="M4 2 L9 2 L12 5 L12 14 L4 14 Z" {...stroke} /><path d="M9 2 L9 5 L12 5" {...stroke} /></svg>;
+    case 'close':
+      return <svg style={s} className={className} viewBox="0 0 16 16"><path d="M4 4 L12 12 M12 4 L4 12" {...stroke} /></svg>;
     case 'panel-left':
       // A rounded panel with a divider: "toggle the side panel".
       return <svg style={s} className={className} viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5" {...stroke} /><path d="M6.2 3 L6.2 13" {...stroke} /></svg>;

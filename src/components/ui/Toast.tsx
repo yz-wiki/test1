@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../../i18n';
 
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
 export type ToastType = 'success' | 'error' | 'info';
 
 export interface ToastProps {
@@ -27,7 +30,7 @@ const ICON: Record<ToastType, string | null> = {
   info:    null,
 };
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const MONO = UI_STACK;
 
 export default function Toast({ message, type, onDismiss }: ToastProps) {
   const { t } = useI18n();

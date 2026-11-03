@@ -12,8 +12,11 @@ import Cover from '../../Cover';
 import CollectionDetail from '../CollectionDetail';
 import { useEntityChanges, removeById, upsertById } from '../../../state/liveEntities';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
+const MONO = UI_STACK;
 
 
 export interface CollectionsViewProps {

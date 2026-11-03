@@ -102,7 +102,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
         <div className="mac-nowbar__transport">
           <button
             type="button"
-            className="mac-iconbtn"
+            className="ui-iconbtn"
             onClick={() => seekChapter(st, -1)}
             title={t('palette.action.prevChapter')}
             aria-label={t('palette.action.prevChapter')}
@@ -120,7 +120,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
           </button>
           <button
             type="button"
-            className="mac-iconbtn"
+            className="ui-iconbtn"
             onClick={() => seekChapter(st, 1)}
             title={t('palette.action.nextChapter')}
             aria-label={t('palette.action.nextChapter')}
@@ -165,7 +165,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
           <div ref={chaptersRef} style={{ position: 'relative' }}>
             <button
               type="button"
-              className={`mac-iconbtn${chaptersOpen ? ' mac-iconbtn--active' : ''}`}
+              className={`ui-iconbtn${chaptersOpen ? ' ui-iconbtn--active' : ''}`}
               onClick={() => setChaptersOpen(open => !open)}
               title={t('player.selectChapter')}
               aria-label={t('player.selectChapter')}
@@ -178,7 +178,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
               <div
                 role="listbox"
                 aria-label={t('player.selectChapter')}
-                className="mac-panel mac-scroll"
+                className="ui-popover"
                 style={{
                   position: 'absolute',
                   bottom: 'calc(100% + 10px)',
@@ -200,13 +200,13 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
                       type="button"
                       role="option"
                       aria-selected={active}
-                      className="mac-nav-item"
+                      className="ui-list__item"
                       onClick={() => {
                         st.setPosition(at);
                         void seekAudio(at).catch(() => {});
                         setChaptersOpen(false);
                       }}
-                      style={active ? { background: 'var(--mac-active)', fontWeight: 600 } : undefined}
+                      style={active ? { background: 'var(--onyx-accent-dim)', fontWeight: 600 } : undefined}
                     >
                       <span className="mac-nav-item__icon">
                         <span style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
@@ -229,7 +229,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
         </span>
         <button
           type="button"
-          className="mac-iconbtn"
+          className="ui-iconbtn"
           onClick={onExpand}
           title={t('palette.action.openPlayer')}
           aria-label={t('palette.action.openPlayer')}

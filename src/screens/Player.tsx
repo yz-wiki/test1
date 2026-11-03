@@ -43,7 +43,10 @@ import FileTrackInspectorModal from '../components/player/FileTrackInspectorModa
 import { useShellChrome } from '../components/shell/ShellContext';
 import { useI18n } from '../i18n';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
 
 /** i18n keys for the four bottom panes, in tab-strip order. */
 const PANE_LABEL_KEY = {
@@ -52,7 +55,7 @@ const PANE_LABEL_KEY = {
   bookmarks: 'player.bookmarks',
   synopsis: 'player.synopsis',
 } as const;
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
+const MONO = UI_STACK;
 
 const transportBtn = (): CSSProperties => ({
   width: 44, height: 44, borderRadius: 10,
@@ -766,9 +769,9 @@ export default function Player({ st }: PlayerProps) {
   // points were recorded against the playing book (chapters).
   const chapterAtPos = (pos: number, chs: typeof displayChapters) => (chs.length ? chapterAt(chs, pos).chapter : null);
   return (
-    <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 32px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
+    <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'var(--s-3) var(--s-6) var(--s-6)', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: isCompact ? 8 : 18, /* Reduced in compact mode — volume/device controls move to transport bar */ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
+      <div className='ui-rowline' style={{ gap: 'var(--s-3)', marginBottom: isCompact ? 'var(--s-2)' : 'var(--s-4)', color: 'var(--onyx-text-mute)' }}>
         {!chrome.hasSidebar && (
           <>
             <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
@@ -787,7 +790,7 @@ export default function Player({ st }: PlayerProps) {
         )}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', gap: 32, alignItems: 'stretch', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', gap: 'var(--s-6)', alignItems: 'stretch', minHeight: 0, overflow: 'hidden' }}>
 
         <div ref={leftColRef} style={{ minWidth: 0, maxWidth: 360, flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', minHeight: 0 }}>
           <div style={{ position: 'absolute', inset: '5% 5% 0 5%', borderRadius: 24, background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.28), transparent 70%)', filter: 'blur(60px)', zIndex: 0 }} />
@@ -857,7 +860,7 @@ export default function Player({ st }: PlayerProps) {
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
 
-          <div className="mac-panel" style={{
+          <div className="ui-card" style={{
             padding: (isFocusedDifferent && !showTransport) ? '14px 26px' : 26,
             // The collapsed "Play this book" strip used to span the full window,
             // which read as an empty toolbar. Keep it a compact centred bar.
@@ -1080,28 +1083,18 @@ export default function Player({ st }: PlayerProps) {
           </div>
 
           {/* Bottom row — three columns when wide enough, single tabbed pane when narrow */}
-          <div ref={bottomRowRef} style={{ flex: 1, display: 'flex', flexDirection: panesStacked ? 'column' : 'row', gap: panesStacked ? 0 : 18, minHeight: 0, overflow: 'hidden' }}>
+          <div ref={bottomRowRef} style={{ flex: 1, display: 'flex', flexDirection: panesStacked ? 'column' : 'row', gap: panesStacked ? 0 : 'var(--s-4)', minHeight: 0, overflow: 'hidden' }}>
 
             {/* Stacked-only pill tab strip — switches the single visible pane */}
             {panesStacked && (
-              <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexShrink: 0 }}>
+              <div className="ui-seg" style={{ marginBottom: 'var(--s-2)', flexShrink: 0, alignSelf: 'flex-start' }}>
                 {(['details', 'chapters', 'bookmarks'] as const).map(pane => (
                   <button
                     key={pane}
+                    type="button"
+                    className="ui-seg__item"
+                    aria-pressed={activePane === pane}
                     onClick={() => setActivePane(pane)}
-                    style={{
-                      // Active pill: gold tint; inactive: ghost
-                      background: activePane === pane ? 'var(--onyx-accent-dim)' : 'transparent',
-                      border: `1px solid ${activePane === pane ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-                      borderRadius: 999,
-                      color: activePane === pane ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-                      fontFamily: MONO,
-                      fontSize: 10,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase' as const,
-                      padding: '3px 12px',
-                      cursor: 'pointer',
-                    }}
                   >
                     {t(PANE_LABEL_KEY[pane])}
                   </button>
@@ -1110,7 +1103,7 @@ export default function Player({ st }: PlayerProps) {
             )}
 
             {/* ── Details panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 300px', minWidth: 0, padding: 16, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 300px', minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.details')}</div>
                 {!isPodcast && !b.localPath && (
@@ -1279,7 +1272,7 @@ export default function Player({ st }: PlayerProps) {
             </div>
 
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 16, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="ui-card" style={{ flex: 1, minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.chapters')}</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
@@ -1359,7 +1352,7 @@ export default function Player({ st }: PlayerProps) {
             </div>
 
             {/* ── Bookmarks panel — hidden in compact mode unless selected ── */}
-            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 280px', minWidth: 0, padding: 16, display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 280px', minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
               {/* ── Panel header: title + tab switcher + add button ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -1455,7 +1448,7 @@ export default function Player({ st }: PlayerProps) {
 
             {/* ── Synopsis panel — compact-only tab; on large windows the synopsis
                 renders inline in the left column instead, so this stays hidden. ── */}
-            <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 320px', minWidth: 0, padding: 16, display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 320px', minWidth: 0, padding: 'var(--s-4)', display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 12 }}>{detailLabel}</div>
               <div style={{ flex: 1, overflowY: 'auto', marginRight: -8, paddingRight: 8 }}>
                 {descriptionHtml ? (

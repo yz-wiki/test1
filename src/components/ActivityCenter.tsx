@@ -4,13 +4,15 @@ import type { CSSProperties } from 'react';
 import type { OnyxState } from '../state/onyx';
 import Icon from './Icon';
 
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
 export interface ActivityCenterProps { st: OnyxState; }
 
 // The trigger lives inside the titlebar's drag region, so it must opt out of
 // window-drag to stay clickable (WebkitAppRegion isn't in the CSSProperties type).
 type NoDragStyle = CSSProperties & { WebkitAppRegion?: string };
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-
+const MONO = UI_STACK;
 function relativeTime(timestamp: number): string {
   const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
   if (seconds < 60) return 'just now';

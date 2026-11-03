@@ -10,9 +10,11 @@ import { useModalFocus } from '../hooks/useModalFocus';
 import { errorMessage } from '../lib/presentError';
 import { log } from '../lib/log';
 
-const MONO = "'JetBrains Mono', ui-monospace, monospace";
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
 
+const MONO = UI_STACK;
+const SERIF = UI_STACK;
 const footBtn: CSSProperties = {
   width: '100%', fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
   padding: '9px 14px', borderRadius: 8, cursor: 'pointer', lineHeight: 1, background: 'transparent',

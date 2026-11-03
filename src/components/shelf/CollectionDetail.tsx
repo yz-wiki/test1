@@ -9,8 +9,11 @@ import Cover from '../Cover';
 import { playBook } from '../../api/playbook';
 import { log } from '../../lib/log';
 
-const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
-const MONO  = "'JetBrains Mono', ui-monospace, monospace";
+// One family for interface text; monospace is opt-in via .ui-tech.
+const UI_STACK = 'var(--font-ui)';
+
+const SERIF = UI_STACK;
+const MONO  = 'var(--font-ui)';
 
 export interface CollectionDetailProps {
   collection: Collection;
