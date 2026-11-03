@@ -67,10 +67,11 @@ const mainCap: React.CSSProperties = {
 };
 
 function ShortcutChord({ shortcut, active }: { shortcut: string; active: boolean }) {
+  const { t } = useI18n();
   if (active) {
     return (
       <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)', letterSpacing: '0.06em' }}>
-        Press a key combination…
+        {t('kbdMod.pressCombo')}
       </span>
     );
   }
@@ -150,9 +151,9 @@ export default function KeyboardSection() {
 
   return (
     <div>
-      <SectionHead title="Keyboard" subtitle="Global shortcuts — work even when Skald is in the background." />
+      <SectionHead title={t('kbdMod.title')} subtitle="Global shortcuts — work even when Skald is in the background." />
 
-      <Panel label="Global shortcuts">
+      <Panel label={t('kbdMod.globalShortcuts')}>
         {conflicts.length > 0 && (
           <div style={{
             display: 'flex', gap: 8, margin: '10px 0 2px', padding: '8px 10px',
@@ -196,7 +197,7 @@ export default function KeyboardSection() {
         {/* Footer: system-wide note + reset */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 2px 6px' }}>
           <span style={{ fontSize: 12, color: 'var(--onyx-text-mute)', lineHeight: 1.4 }}>
-            Shortcuts are registered system-wide and may conflict with other apps.
+            {t('kbdMod.globalShortcutsHint')}
           </span>
           <button
             onClick={resetDefaults}
@@ -214,7 +215,7 @@ export default function KeyboardSection() {
               textTransform: 'uppercase' as const,
             }}
           >
-            Reset to defaults
+            {t('kbdMod.resetDefaults')}
           </button>
         </div>
       </Panel>

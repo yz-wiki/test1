@@ -4,6 +4,7 @@
 // shows a live connection indicator with graceful degradation on persistent failure.
 
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import { SectionHead, Row, Toggle, MONO } from './shared';
 import type { OnyxState } from '../../state/onyx';
@@ -34,6 +35,7 @@ export interface SyncSectionProps {
 }
 
 export default function SyncSection({ st, embedded = false }: SyncSectionProps) {
+  const { t } = useI18n();
   // The preference lives in useOnyxState so its socket listeners react to a
   // runtime toggle instead of reading localStorage only when auth changes.
   const liveSync = st.liveSyncEnabled;
@@ -248,8 +250,8 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   // ── Live sync toggle row ── (shared by the standalone and embedded layouts)
   const liveSyncRow = (
     <Row
-      label="Live sync"
-      hint="Maintain a live connection to the server for real-time progress and library updates."
+      label={t('sync.liveSync')}
+      hint={t('sync.liveSyncHint')}
     >
       {/* Right-side slot: connection indicator (only when active) + toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -297,22 +299,22 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   } as const;
   const healthRows = (
     <>
-      <Row label="Server delivery" hint="HTTP session writes are authoritative; failed writes stay in Skald's local recovery queue.">
+      <Row label={t('sync.serverDelivery')} hint={t('sync.serverDeliveryHint')}>
         <span style={{ ...healthValueStyle, color: health.degraded ? '#f59e0b' : '#4caf50' }}>
           {health.degraded ? 'Degraded' : 'Healthy'}
         </span>
       </Row>
-      <Row label="Last server sync" hint="The most recent playback position acknowledged by ABS.">
+      <Row label={t('sync.lastSync')} hint={t('sync.lastSyncHint')}>
         <span style={healthValueStyle}>
           {health.lastSuccessfulServerSync
             ? new Date(health.lastSuccessfulServerSync).toLocaleTimeString()
             : 'Not yet this session'}
         </span>
       </Row>
-      <Row label="Queued updates" hint="Local progress writes waiting for conflict-safe delivery to ABS.">
+      <Row label={t('sync.queuedUpdates')} hint={t('sync.queuedUpdatesHint')}>
         <span style={healthValueStyle}>{health.queuedUpdates}</span>
       </Row>
-      <Row label="Playback device" hint="A remote device only moves Skald after you choose which position to keep.">
+      <Row label={t('sync.playbackDevice')} hint={t('sync.playbackDeviceHint')}>
         <span style={healthValueStyle}>
           {st.syncConflict ? `${st.syncConflict.deviceDescription} (conflict)` : 'Skald'}
         </span>
@@ -327,7 +329,7 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   return (
     <div>
       <SectionHead
-        title="Sync"
+        title={t('sync.title')}
         subtitle="Control how Skald stays in sync with your server."
       />
       {liveSyncRow}

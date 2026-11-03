@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import Titlebar from '../chrome/Titlebar';
 import lyreIcon from '../../assets/lyre.png';
+import { useI18n } from '../../i18n';
 
 // Typography constants — identical tokens to Login.tsx so the two screens match.
 export const SERIF = '"Source Serif 4", "Source Serif Pro", Georgia, serif';
@@ -80,6 +81,7 @@ export interface StepFrameProps {
 }
 
 export default function StepFrame({ eyebrow, title, subtitle, children, footer, stepKey }: StepFrameProps) {
+  const { t } = useI18n();
   return (
     <div style={{
       position: 'fixed', inset: 0, display: 'flex', overflow: 'hidden',
@@ -111,8 +113,8 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
             </div>
             <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
             <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-              Let us<br />ready the{' '}
-              <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>hall</span>.
+              {t('frame.lead')}<br />{t('frame.mid')}{' '}
+              <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>{t('frame.accent')}</span>{t('frame.tail')}
             </div>
           </div>
 
@@ -125,9 +127,9 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
           </div>
 
           <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, lineHeight: 1.55, color: 'rgba(235,231,223,0.62)', maxWidth: 200 }}>
-            "First we set the table; then the telling begins."
+            {t('frame.quote')}
             <div style={{ fontStyle: 'normal', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.38)', marginTop: 14 }}>
-              — the keeper's note
+              {t('frame.attribution')}
             </div>
           </div>
         </div>

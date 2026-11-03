@@ -130,10 +130,10 @@ export default function DownloadsSection({ st }: Props) {
       log.info('downloads', 'relocate storage root', { which });
       if (which === 'downloads') { await setDownloadsDir(picked); setDownloadsDirState(await getDownloadsDir()); }
       else { await setCacheDir(picked); setCoverCacheDir(await getCacheDir()); }
-      st.setToast({ message: which === 'downloads' ? 'Downloads folder moved' : 'Cache folder moved', type: 'success' });
+      st.setToast({ message: t(`downloads.${which === 'downloads' ? 'downloadsMoved' : 'cacheMoved'}`), type: 'success' });
     } catch (e) {
       log.error('downloads', 'relocate storage root failed', { which, err: String(e) });
-      st.setToast({ message: 'Could not move the folder', type: 'error' });
+      st.setToast({ message: t('downloads.moveFolderFailed'), type: 'error' });
     } finally {
       setRelocating(null);
     }
@@ -218,10 +218,10 @@ export default function DownloadsSection({ st }: Props) {
     st.setDownloads(prev => prev.filter(r => r.itemId !== record.itemId));
     try {
       await removeDownload(record.itemId);
-      st.setToast({ message: `"${record.title}" removed from downloads`, type: 'success' });
+      st.setToast({ message: t('downloads.removedOne', { title: record.title }), type: 'success' });
     } catch {
       // File was already deleted outside the app — registry is still cleaned up by Rust.
-      st.setToast({ message: `"${record.title}" was already gone — removed from list`, type: 'info' });
+      st.setToast({ message: t('downloads.alreadyGone', { title: record.title }), type: 'info' });
     }
   };
 

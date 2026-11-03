@@ -257,13 +257,13 @@ function LogsSectionInner({ st }: LogsSectionProps) {
         />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
-          Auto-scroll
+          {t('logsMod.autoScroll')}
         </label>
         <button
           onClick={() => setLogs([])}
           style={{ ...inputStyle, cursor: 'pointer', color: 'var(--onyx-text-dim)' }}
         >
-          Clear
+          {t('logsMod.clear')}
         </button>
       </div>
 

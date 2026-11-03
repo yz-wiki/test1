@@ -15,6 +15,7 @@ import { resolveUpNext } from '../state/upNextTarget';
 import { playBook, playEpisode } from '../api/playbook';
 import { upNextCountdownSeconds, upNextMode } from '../lib/upNextPrefs';
 import { log } from '../lib/log';
+import { t } from '../i18n';
 
 export interface UpNextPrompt {
   target: UpNextTarget;
@@ -149,7 +150,7 @@ export function useUpNext(st: OnyxState): UseUpNext {
       if (mode === 'auto') {
         // Auto still says what happened — audio changing with no explanation is
         // the thing that makes continuation feel like a malfunction.
-        stRef.current.setToast({ message: `Up next: ${describe(target)}`, type: 'info' });
+        stRef.current.setToast({ message: t('toastMsg.upNext', { target: describe(target) }), type: 'info' });
         play(target);
         return;
       }

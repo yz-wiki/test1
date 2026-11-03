@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import ReactDOM from 'react-dom';
 import type { CSSProperties } from 'react';
 import type { OnyxState } from '../../state/onyx';
@@ -16,6 +17,7 @@ export interface DeviceSelectorProps {
 }
 
 export default function DeviceSelector({ st, compact, style }: DeviceSelectorProps) {
+  const { t } = useI18n();
   const [devices, setDevices] = useState<AudioDevice[]>([]);
   const mono = "'JetBrains Mono', ui-monospace, monospace";
 
@@ -117,7 +119,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
           ref={panelRef}
           id="onyx-device-listbox"
           role="listbox"
-          aria-label="Audio output device"
+          aria-label={t('deviceSel.deviceAria')}
           style={{
             position: 'fixed',
             top: dropPos.top,
@@ -131,7 +133,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
             zIndex: 9999,
           }}
         >
-          <div style={{ fontFamily: mono, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px' }}>OUTPUT DEVICE</div>
+          <div style={{ fontFamily: mono, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px' }}>{t('deviceSel.heading')}</div>
           {devices.length === 0 ? (
             <div style={{ padding: '8px', fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading devices…</div>
           ) : devices.map(d => (

@@ -8,6 +8,7 @@
 // to identify and file it. It refreshes on mount, whenever the local-library set
 // changes, after a staging drop settles (`staging-changed`), and after a match.
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useI18n } from '../i18n';
 import { listen } from '@tauri-apps/api/event';
 import type { OnyxState } from '../state/onyx';
 import type { ScannedItem } from '../api/abs';
@@ -36,6 +37,7 @@ function entryTitle(e: QuarantineEntry): string {
 export interface UnidentifiedNoticeProps { st: OnyxState; }
 
 export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
+  const { t } = useI18n();
   const [entries, setEntries] = useState<QuarantineEntry[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [matchTarget, setMatchTarget] = useState<QuarantineEntry | null>(null);
@@ -117,7 +119,7 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
                   {count} book{count === 1 ? '' : 's'} need matching
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 1 }}>
-                  Click one to identify it
+                  {t('unidentified.clickToIdentify')}
                 </div>
               </div>
               <span style={{ color: 'var(--onyx-text-mute)', display: 'inline-flex', flexShrink: 0 }}>
@@ -146,7 +148,7 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
                     </div>
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', flexShrink: 0 }}>
-                    Match
+                    {t('unidentified.match')}
                   </span>
                 </button>
               ))}

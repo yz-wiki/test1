@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from '../i18n';
 import ReactDOM from 'react-dom';
 import Icon, { type IconName } from './Icon';
 
@@ -50,6 +51,7 @@ const HEADER: React.CSSProperties = {
 };
 
 export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProps) {
+  const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -207,7 +209,7 @@ export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProp
   };
 
   const menu = (
-    <div ref={ref} role="menu" aria-label="Item actions" onKeyDown={onMenuKeyDown} style={{ ...posStyle, ...PANEL }}>
+    <div ref={ref} role="menu" aria-label={t('ctxMenu.aria')} onKeyDown={onMenuKeyDown} style={{ ...posStyle, ...PANEL }}>
       {sections.map((section, si) => (
         <div key={si}>
           {/* Divider above every group after the first; header replaces it when present. */}

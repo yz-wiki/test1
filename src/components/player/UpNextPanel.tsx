@@ -7,6 +7,7 @@
 // a tick that is already in flight, and "Play now" must not start a second
 // session on a double-click.
 import { useEffect, useReducer, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import Cover from '../Cover';
 import type { UpNextTarget } from '../../state/upNextTarget';
 import { countdownReducer, startCountdown } from '../../lib/upNextCountdown';
@@ -28,6 +29,7 @@ const RING_RADIUS = 14;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDismiss }: UpNextPanelProps) {
+  const { t } = useI18n();
   const [state, dispatch] = useReducer(countdownReducer, seconds, startCountdown);
 
   // Restart cleanly if a second item resolves while the panel is still up.
@@ -86,7 +88,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>
-          UP NEXT
+          {t('upNext.heading')}
         </div>
         <div style={{
           fontSize: 13,
@@ -121,7 +123,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
               padding: '4px 10px',
             }}
           >
-            Play now
+            {t('upNext.playNow')}
           </button>
           <button
             onClick={() => dispatch({ type: 'cancel' })}
@@ -135,7 +137,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
               padding: '4px 10px',
             }}
           >
-            Cancel
+            {t('upNext.cancel')}
           </button>
         </div>
       </div>

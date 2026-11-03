@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import type { LibraryItem } from '../state/onyx';
@@ -27,6 +28,7 @@ export interface PlaylistPickerProps {
 }
 
 export default function PlaylistPicker({ item, episode, serverUrl, onClose }: PlaylistPickerProps) {
+  const { t } = useI18n();
   const [playlists, setPlaylists] = useState<Playlist[] | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -101,7 +103,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="playlist-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Add to Playlist</div>
+            <div id="playlist-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('playlistPicker.title')}</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {episode ? `Episode — ${episode.title}` : 'Choose a playlist for this book'}
             </div>
@@ -164,7 +166,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={onNewKeyDown}
-                placeholder="Playlist name…"
+                placeholder={t('playlistPicker.namePlaceholder')}
                 disabled={creating}
                 onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
@@ -192,7 +194,7 @@ export default function PlaylistPicker({ item, episode, serverUrl, onClose }: Pl
             onClick={onClose}
             style={{ ...footBtn, border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
           >
-            Cancel
+            {t('playlistPicker.cancel')}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { EMPTY_ADV_FILTER } from '../../lib/shelfFilters';
 
@@ -37,6 +38,7 @@ function catLabel(c: string): string {
 // Options are derived client-side from the loaded library (st.library). The tag
 // section groups chips into collapsible, searchable categories (accordion).
 export default function FilterPopover({ st }: { st: OnyxState }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   // null = "use default (first non-empty)"; '' = explicitly all-collapsed.
@@ -125,9 +127,9 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
         }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>Filter library</span>
+            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>{t('filter.title')}</span>
             {activeCount > 0 && (
-              <button onClick={() => { st.setAdvFilter(EMPTY_ADV_FILTER); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>Clear</button>
+              <button onClick={() => { st.setAdvFilter(EMPTY_ADV_FILTER); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>{t('filter.clear')}</button>
             )}
           </div>
 
@@ -142,7 +144,7 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Filter tags…"
+              placeholder={t('filter.tagPlaceholder')}
               style={{
                 flex: 1, minWidth: 0, padding: '8px 0', background: 'transparent', border: 'none', outline: 'none',
                 color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 11,
@@ -216,7 +218,7 @@ export default function FilterPopover({ st }: { st: OnyxState }) {
                 width: '100%', fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
                 border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 8px', cursor: 'pointer',
               }}>
-                <option value="">Any language</option>
+                <option value="">{t('filter.anyLanguage')}</option>
                 {allLangs.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </>

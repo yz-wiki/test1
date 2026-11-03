@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { SectionHead, Row, MONO, Panel } from './shared';
 import type { OnyxState } from '../../state/onyx';
 import ServerSettingsSection from './ServerSettingsSection';
@@ -6,15 +7,16 @@ import SyncSection from './SyncSection';
 export interface ServerSectionProps { st: OnyxState; }
 
 export default function ServerSection({ st }: ServerSectionProps) {
+  const { t } = useI18n();
   const connected = Boolean(st.serverUrl && !st.libraryLoading && st.library.length > 0);
 
   return (
     <div>
-      <SectionHead title="Server" subtitle="Your Audiobookshelf server connection." />
+      <SectionHead title={t('srv.title')} subtitle="Your Audiobookshelf server connection." />
 
-      <Panel label="Connection">
+      <Panel label={t('srv.connection')}>
         {/* Connection status — dot + label */}
-        <Row label="Status">
+        <Row label={t('srv.status')}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{
               width: 8, height: 8, borderRadius: 4, flexShrink: 0, display: 'inline-block',
@@ -28,13 +30,13 @@ export default function ServerSection({ st }: ServerSectionProps) {
         </Row>
 
         {/* Server URL — read-only; changing server requires signing out */}
-        <Row label="Server URL" hint="To change servers, sign out and sign back in.">
+        <Row label={t('srv.serverUrl')} hint={t('srv.changeHint')}>
           <input
             type="text"
             value={st.serverUrl}
             readOnly
             disabled
-            title="To change servers, sign out and sign back in"
+            title={t('srv.changeHintTitle')}
             style={{
               padding: '8px 12px',
               minWidth: 280,

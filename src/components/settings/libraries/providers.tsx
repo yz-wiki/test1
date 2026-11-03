@@ -2,6 +2,7 @@
 // integration (community ratings + review-cache reset).
 // Moved verbatim out of LibrariesSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { Row, Toggle, MONO, Panel } from '../shared';
 import type { OnyxState } from '../../../state/onyx';
 import { clearReviewCache } from '../../../api/reviewCache';
@@ -12,7 +13,8 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
   providers: CustomMetadataProvider[];
   onAdd: (p: { name: string; url: string; mediaType: string; authHeaderValue?: string }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-}) {
+}) {  const { t } = useI18n();
+
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [auth, setAuth] = useState('');
@@ -32,13 +34,13 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
   }
 
   return (
-    <Panel label="Custom metadata providers">
+    <Panel label={t('prov.customProviders')}>
       <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px', lineHeight: 1.5 }}>
         Register a community or self-hosted provider; it then appears in the Provider dropdown above and in the Match dialog.
       </div>
 
       {providers.length === 0 && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '4px 0 10px' }}>None registered.</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '4px 0 10px' }}>{t('prov.noneRegistered')}</div>
       )}
       {providers.map(p => (
         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--onyx-line)' }}>
@@ -48,14 +50,14 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
               {p.mediaType} · {p.url}
             </div>
           </div>
-          <SmallBtn danger onClick={() => void onDelete(p.id)}>Delete</SmallBtn>
+          <SmallBtn danger onClick={() => void onDelete(p.id)}>{t('prov.delete')}</SmallBtn>
         </div>
       ))}
 
       {/* Add form */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Field value={name} onChange={setName} placeholder="Provider name" />
+          <Field value={name} onChange={setName} placeholder={t('prov.providerName')} />
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             {(['book', 'podcast'] as const).map(mt => (
               <button key={mt} onClick={() => setMediaType(mt)} style={{
@@ -68,8 +70,8 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
             ))}
           </div>
         </div>
-        <Field value={url} onChange={setUrl} placeholder="https://provider.example/search" mono />
-        <Field value={auth} onChange={setAuth} placeholder="Authorization header value (optional)" mono />
+        <Field value={url} onChange={setUrl} placeholder={t('prov.providerUrl')} mono />
+        <Field value={auth} onChange={setAuth} placeholder={t('prov.providerAuth')} mono />
         {err && <div style={{ fontFamily: MONO, fontSize: 11, color: '#e8716a' }}>{err}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <SmallBtn onClick={add} disabled={busy}>{busy ? 'Adding…' : '+ Add Provider'}</SmallBtn>
@@ -84,22 +86,23 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
 // with Open Library community ratings, so it lives alongside library settings. The
 // review-cache reset is part of the same integration (it clears Open Library data).
 export function OpenLibraryManager({ st }: { st: OnyxState }) {
+  const { t } = useI18n();
   const [cacheCleared, setCacheCleared] = useState(false);
   return (
     <Panel label="Open Library">
       <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px 2px', lineHeight: 1.5 }}>
-        Enrich the player with community ratings and shelf data from Open Library.
+        {t('prov.openLibraryBody')}
       </div>
 
-      <Row label="Open Library" hint="Community ratings and shelf data.">
+      <Row label="Open Library" hint={t('prov.openLibraryHint')}>
         <Toggle on={st.enableOpenLibrary} onChange={st.setEnableOpenLibrary} />
       </Row>
 
-      <Row label="Review cache" hint="Force a fresh fetch of all ratings data on next visit to the Player screen.">
+      <Row label={t('prov.reviewCache')} hint={t('prov.reviewCacheHint')}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {cacheCleared && (
             <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
-              Cache cleared
+              {t('prov.cacheCleared')}
             </span>
           )}
           <button
@@ -115,7 +118,7 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
               letterSpacing: '0.06em', textTransform: 'uppercase' as const,
             }}
           >
-            Clear review cache
+            {t('prov.clearCache')}
           </button>
         </div>
       </Row>

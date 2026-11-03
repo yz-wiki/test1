@@ -10,6 +10,7 @@
 // PanelFlatContext provider, so its internal sub-panels render flat (eyebrow
 // dividers) and the wrapper Panel is the single glass surface for the whole pane.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import LibrariesSection from './LibrariesSection';
 import LocalLibrarySection from './LocalLibrarySection';
@@ -22,6 +23,7 @@ export interface LibraryManagementSectionProps { st: OnyxState; }
 const MULTIPANE_BREAKPOINT = 1040;
 
 export default function LibraryManagementSection({ st }: LibraryManagementSectionProps) {
+  const { t } = useI18n();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [sideBySide, setSideBySide] = useState(false);
 
@@ -46,7 +48,7 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
   if (!st.isAdmin) {
     return (
       <div ref={rootRef}>
-        <SectionHead title="Libraries" subtitle="The local libraries on this computer." />
+        <SectionHead title={t('libMgmt.title')} subtitle="The local libraries on this computer." />
         {pane('On this PC', <LocalLibrarySection st={st} embedded />, { marginTop: 0 })}
       </div>
     );
@@ -59,7 +61,7 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
   return (
     <div ref={rootRef}>
       <SectionHead
-        title="Libraries"
+        title={t('libMgmt.title')}
         subtitle="Your Audiobookshelf server libraries and the local libraries on this computer."
       />
       <div style={{ display: 'flex', flexDirection: sideBySide ? 'row' : 'column', gap: 24, alignItems: 'flex-start' }}>

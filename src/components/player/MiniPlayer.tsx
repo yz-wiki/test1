@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { bookTitle, bookAuthor, fmtTime } from '../../state/onyx';
 import { asPodcastItem } from '../../api/abs';
@@ -25,6 +26,7 @@ export interface MiniPlayerProps {
 }
 
 export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
+  const { t } = useI18n();
   const playing = st.playing;
   // Prefer the stable snapshot so the card survives a library switch; fall back to
   // the active library's derived currentBook for the in-library Player case.
@@ -105,7 +107,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         <button
           onClick={returnToNowPlaying}
           aria-label={`Return to now playing: ${title}`}
-          title="Return to now playing"
+          title={t('miniPlayer.returnToNowPlaying')}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, lineHeight: 0 }}
         >
           <Cover item={item} size={40} serverUrl={st.serverUrl} style={{ borderRadius: 6 }} fallbackImageUrl={fallbackImageUrl} />
@@ -152,7 +154,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         aria-valuenow={Math.max(0, Math.min(st.position, st.bookSecs))}
         aria-valuetext={`${fmtTime(st.position)} of ${fmtTime(st.bookSecs)}`}
         style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}
-        title="Seek"
+        title={t('miniPlayer.seek')}
       >
         {Array.from({ length: BARS }).map((_, i) => (
           <div key={i} style={{

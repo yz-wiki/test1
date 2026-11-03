@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useI18n } from '../i18n';
+import { t as translate, useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import type { LibraryItem, OnyxState } from '../state/onyx';
@@ -42,10 +42,10 @@ function shareUrl(serverUrl: string, slug: string): string {
 async function copy(text: string, st: OnyxState, label: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    st.setToast({ message: `${label} copied to clipboard`, type: 'success' });
+    st.setToast({ message: translate('toastMsg.copiedToClipboard2', { label }), type: 'success' });
   } catch {
     // Clipboard can be blocked; surface the URL so the user can copy manually.
-    st.setToast({ message: `Copy failed — ${text}`, type: 'info' });
+    st.setToast({ message: translate('toastMsg.copyFailed2', { text }), type: 'info' });
   }
 }
 
@@ -159,7 +159,7 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
       };
       addTrackedShare(tracked);
       setShare(tracked);
-      st.setToast({ message: 'Share link created.', type: 'success' });
+      st.setToast({ message: t('toastMsg.shareCreated'), type: 'success' });
       void copy(shareUrl(st.serverUrl, created.slug), st, 'Share link');
     } catch (e) {
       const msg = String(e);
@@ -191,9 +191,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
           removeTrackedShare(share.id);
           setShare(null);
           setSlug(suggestSlug(title));
-          st.setToast({ message: 'Share link revoked.', type: 'success' });
+          st.setToast({ message: t('toastMsg.shareRevoked2'), type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Revoke failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: t('toastMsg.revokeFailed2', { err: String(e) }), type: 'error' });
         } finally {
           setShareBusy(false);
         }
@@ -203,17 +203,17 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
 
   const doOpenFeed = useCallback(async () => {
     const s = feedSlug.trim();
-    if (!s) { st.setToast({ message: 'A feed slug is required.', type: 'error' }); return; }
+    if (!s) { st.setToast({ message: t('toastMsg.feedSlugRequired'), type: 'error' }); return; }
     setFeedBusy(true);
     try {
       // serverAddress is the public ABS origin the feedUrl is built from — use the
       // configured public base when set so feeds work outside the LAN.
       const opened = await openFeed(st.serverUrl, 'item', item.id, publicBase(st.serverUrl), s);
       setFeed(opened);
-      st.setToast({ message: 'RSS feed opened.', type: 'success' });
+      st.setToast({ message: t('toastMsg.feedOpened'), type: 'success' });
       void copy(absoluteFeedUrl(opened.serverAddress, opened.feedUrl, st.serverUrl), st, 'Feed URL');
     } catch (e) {
-      st.setToast({ message: `Open feed failed: ${String(e)}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.openFeedFailed', { err: String(e) }), type: 'error' });
     } finally {
       setFeedBusy(false);
     }
@@ -231,9 +231,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
           await closeFeed(st.serverUrl, feed.id);
           setFeed(null);
           setFeedSlug(suggestSlug(title));
-          st.setToast({ message: 'RSS feed closed.', type: 'success' });
+          st.setToast({ message: t('toastMsg.feedClosed2'), type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Close feed failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: t('toastMsg.closeFeedFailed2', { err: String(e) }), type: 'error' });
         } finally {
           setFeedBusy(false);
         }

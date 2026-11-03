@@ -330,7 +330,7 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
     setBusyId(file.ino);
     try {
       await downloadLibraryFile(st.serverUrl, item.id, file.ino, destination);
-      st.setToast({ message: `Downloaded “${file.metadata.filename}”`, type: 'success' });
+      st.setToast({ message: t('toastMsg.fileDownloaded', { name: file.metadata.filename }), type: 'success' });
     } catch (error) {
       refreshCapabilitiesOnForbidden(error);
       log.warn('downloads', 'individual file download failed', { itemId: item.id, fileId: file.ino, err: String(error) });
@@ -340,7 +340,7 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
 
   const onDelete = (file: LibraryFile | LibraryAudioFile) => {
     if (activeMutationBlocked) {
-      st.setToast({ message: 'Stop this book’s active playback session before deleting files.', type: 'info' });
+      st.setToast({ message: t('toastMsg.stopBeforeDelete'), type: 'info' });
       return;
     }
     const isTrack = audioByIno.has(file.ino);
@@ -355,7 +355,7 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
             setSelectedAudio(null);
             const refreshed = await load();
             if (refreshed) st.updateLibraryItem(refreshed);
-            st.setToast({ message: `Deleted “${file.metadata.filename}”`, type: 'success' });
+            st.setToast({ message: t('toastMsg.fileDeleted', { name: file.metadata.filename }), type: 'success' });
           })
           .catch(error => {
             refreshCapabilitiesOnForbidden(error);
@@ -394,11 +394,11 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
   };
   const saveTracks = async () => {
     if (activeMutationBlocked) {
-      st.setToast({ message: 'Stop this book’s active playback session before changing its tracks.', type: 'info' });
+      st.setToast({ message: t('toastMsg.stopBeforeTracks'), type: 'info' });
       return;
     }
     if (!workingTracks.some(file => !file.exclude)) {
-      st.setToast({ message: 'At least one audio track must remain included.', type: 'error' });
+      st.setToast({ message: t('toastMsg.keepOneTrack'), type: 'error' });
       return;
     }
     setBusyId('tracks');
@@ -410,7 +410,7 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
       setWorkingTracks(ordered);
       initialSignature.current = JSON.stringify(ordered.map(file => [file.ino, file.exclude]));
       setEditing(false);
-      st.setToast({ message: 'Track order updated', type: 'success' });
+      st.setToast({ message: t('toastMsg.trackOrderUpdated'), type: 'success' });
     } catch (error) {
       refreshCapabilitiesOnForbidden(error);
       log.warn('playback', 'track update failed', { itemId: item.id, err: String(error) });

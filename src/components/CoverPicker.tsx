@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties, FocusEvent } from 'react';
 import ReactDOM from 'react-dom';
 import { convertFileSrc } from '@tauri-apps/api/core';
@@ -31,6 +32,7 @@ export interface CoverPickerProps {
 }
 
 export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
+  const { t } = useI18n();
   const dialogRef = useModalFocus<HTMLDivElement>(onClose);
   const meta = item.media.metadata;
   const [provider, setProvider] = useState<string>(COVER_PROVIDERS[0]);
@@ -58,7 +60,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
       const urls = await findCovers(st.serverUrl, title.trim(), author.trim(), provider);
       setResults(urls);
     } catch (e) {
-      st.setToast({ message: `Cover search failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.coverSearchFailed', { err: String(e) }), type: 'error' });
     } finally {
       setSearching(false);
     }
@@ -76,9 +78,9 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     setBusy(true);
     try {
       await setCoverUrl(st.serverUrl, item.id, url);
-      afterChange('Cover updated.');
+      afterChange(t('toastMsg.coverUpdated'));
     } catch (e) {
-      st.setToast({ message: `Failed to set cover: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.setCoverFailed', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -93,9 +95,9 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     setBusy(true);
     try {
       await uploadCover(st.serverUrl, item.id, selected);
-      afterChange('Cover uploaded.');
+      afterChange(t('toastMsg.coverUploaded'));
     } catch (e) {
-      st.setToast({ message: `Upload failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.uploadFailed', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -105,9 +107,9 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     setBusy(true);
     try {
       await removeCover(st.serverUrl, item.id);
-      afterChange('Cover removed.');
+      afterChange(t('toastMsg.coverRemoved'));
     } catch (e) {
-      st.setToast({ message: `Failed to remove: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.removeFailed', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -132,10 +134,10 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '22px 22px 0 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Change Cover</div>
+            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('cover.changeCover')}</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.title ?? item.id}</div>
           </div>
-          <button onClick={onClose} aria-label="Close cover picker" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
+          <button onClick={onClose} aria-label={t('cover.close')} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
         <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
 
@@ -146,10 +148,10 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
               {previewSrc && <img src={convertFileSrc(previewSrc)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={label}>Current cover</div>
+              <div style={label}>{t('cover.current')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => void doUpload()} disabled={busy} style={{ ...btnMono, color: 'var(--onyx-accent)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>Upload…</button>
-                <button onClick={() => void doRemove()} disabled={busy} style={{ ...btnMono, color: '#e08a8a', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)' }}>Remove</button>
+                <button onClick={() => void doRemove()} disabled={busy} style={{ ...btnMono, color: '#e08a8a', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)' }}>{t('cover.remove')}</button>
               </div>
             </div>
           </div>
@@ -157,17 +159,17 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           {/* Search controls */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120 }}>
-              <div style={label}>Provider</div>
+              <div style={label}>{t('cover.provider')}</div>
               <select value={provider} onChange={e => setProvider(e.target.value)} {...accentFocus} style={{ ...input, cursor: 'pointer' }}>
                 {COVER_PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 140 }}>
-              <div style={label}>Title</div>
+              <div style={label}>{t('cover.title')}</div>
               <input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} {...accentFocus} style={input} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 120 }}>
-              <div style={label}>Author</div>
+              <div style={label}>{t('cover.author')}</div>
               <input value={author} onChange={e => setAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} {...accentFocus} style={input} />
             </div>
             <button onClick={() => void doSearch()} disabled={searching || !title.trim()} style={{ ...btnMono, padding: '8px 16px', background: 'var(--onyx-accent)', border: '1px solid transparent', color: 'var(--onyx-bg)', fontWeight: 600, opacity: searching || !title.trim() ? 0.6 : 1 }}>
@@ -179,7 +181,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           {results.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 10 }}>
               {results.map((url, i) => (
-                <button key={i} onClick={() => void pick(url)} disabled={busy} title="Use this cover" style={{ padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
+                <button key={i} onClick={() => void pick(url)} disabled={busy} title={t('cover.useThis')} style={{ padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
                   <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </button>
               ))}
@@ -187,7 +189,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           )}
           {!searching && results.length === 0 && (
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
-              Search a provider for cover art, or upload your own image.
+              {t('cover.hint')}
             </div>
           )}
         </div>

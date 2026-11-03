@@ -5,6 +5,7 @@ import BrowseView, { seriesTotalDur } from '../BrowseView';
 import BrowseList from '../BrowseList';
 import BrowseTile from '../BrowseTile';
 import Initial from '../Initial';
+import { useI18n } from '../../../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -17,6 +18,7 @@ export interface PublishersViewProps {
 }
 
 export default function PublishersView({ st, inline = false }: PublishersViewProps) {
+  const { t } = useI18n();
   const groups: Record<string, LibraryItem[]> = {};
   for (const b of st.library) {
     const p = bookPublisher(b);
@@ -48,7 +50,7 @@ export default function PublishersView({ st, inline = false }: PublishersViewPro
   };
 
   return (
-    <BrowseView st={st} title="Publishers" subtitle={`${list.length} publishers in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title={t('browse.publishers')} subtitle={t('browse.publishersSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(p => (

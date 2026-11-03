@@ -36,6 +36,7 @@ export type { DownloadRecord };
 // Re-exported so consumers keep importing from '../state/onyx' unchanged.
 export * from './bookHelpers';
 import { Chapter, patchLibraryItems, mergeProgress, bookChapters, bookAuthor, chapterStartAt } from './bookHelpers';
+import { t } from '../i18n';
 
 // ─── Local-only interfaces ────────────────────────────────────────────────────
 
@@ -837,7 +838,7 @@ export function useOnyxState(): OnyxState {
             setIsOffline(true);
             setLastLibraryRefresh(readLastRefresh(serverUrl, currentLibraryId));
             if (authToken && screen !== 'login') {
-              setToast({ message: 'Server unreachable — showing cached library', type: 'info' });
+              setToast({ message: t('toastMsg.serverUnreachable'), type: 'info' });
             }
           }
         } catch (ce) {
@@ -1201,7 +1202,7 @@ export function useOnyxState(): OnyxState {
       // stored server address stays as a returning-user convenience.
       setAuthToken('');
       setScreen('login');
-      setToast({ message: 'Your session expired. Please sign in again.', type: 'error' });
+      setToast({ message: t('toastMsg.sessionExpired'), type: 'error' });
     }).then(fn => { unlisten = fn; });
     return () => { unlisten?.(); };
   }, [setAuthToken]);
@@ -1344,7 +1345,7 @@ export function useOnyxState(): OnyxState {
       removeDownload(itemId)
         .then(() => {
           setDownloads(prev => prev.filter(d => d.itemId !== itemId));
-          setToast({ message: 'Removed finished download', type: 'info' });
+          setToast({ message: t('toastMsg.removedFinishedDownload'), type: 'info' });
           log.info('downloads', 'auto-removed finished download', { itemId });
         })
         .catch(e => log.warn('downloads', 'auto-remove on finish failed', { err: String(e) }));
@@ -1360,7 +1361,7 @@ export function useOnyxState(): OnyxState {
           const title = next.media?.metadata?.title ?? next.id;
           downloadItem(serverUrlRef.current, next.id, `${title}.zip`, title, bookAuthor(next))
             .then(() => {
-              setToast({ message: `Downloading next in series: ${title}`, type: 'success' });
+              setToast({ message: t('toastMsg.downloadingNext', { title }), type: 'success' });
               log.info('downloads', 'auto-download next in series', { from: itemId, next: next.id });
             })
             .catch(e => log.warn('downloads', 'auto-download next failed', { err: String(e) }));

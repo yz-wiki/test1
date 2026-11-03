@@ -3,6 +3,7 @@
 // cache is relocatable too but only from Settings → Downloads (Resolved decisions
 // #1–2). (First-Launch Onboarding, Phase 4.)
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { OnyxState } from '../../state/onyx';
 import { getDownloadsDir, setDownloadsDir } from '../../api/abs';
@@ -15,6 +16,7 @@ export interface AbsFoldersStepProps {
 }
 
 export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) {
+  const { t } = useI18n();
   const [dir, setDir] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -29,10 +31,10 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
       await setDownloadsDir(picked);
       const next = await getDownloadsDir();
       setDir(next);
-      st.setToast({ message: 'Downloads folder updated', type: 'success' });
+      st.setToast({ message: t('toastMsg.downloadsFolderUpdated'), type: 'success' });
     } catch (e) {
       log.error('app', 'onboarding relocate downloads dir failed', { err: String(e) });
-      st.setToast({ message: 'Could not move the downloads folder', type: 'error' });
+      st.setToast({ message: t('toastMsg.moveDownloadsFailed'), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -42,7 +44,7 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.45)' }}>
-          Downloads folder
+          {t('onbFolders.downloadsFolder')}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <input
@@ -77,9 +79,9 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <GoldButton onClick={onContinue}>Continue</GoldButton>
+        <GoldButton onClick={onContinue}>{t('onbFolders.continue')}</GoldButton>
         <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 12.5, color: 'rgba(235,231,223,0.4)' }}>
-          The default is fine for most people.
+          {t('onbFolders.defaultFine')}
         </span>
       </div>
     </div>

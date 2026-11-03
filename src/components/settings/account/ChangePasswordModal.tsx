@@ -1,6 +1,7 @@
 // Self-service change-password modal (cluster H).
 // Moved verbatim out of AccountSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { SERIF, MONO } from '../shared';
 import { changePassword } from '../../../api/abs';
 import { useModalFocus } from '../../../hooks/useModalFocus';
@@ -33,6 +34,7 @@ const brassBtnStyle: React.CSSProperties = {
 /** Self-service password change (PATCH /api/me/password). Guests are blocked
  *  server-side; the caller hides this for guest accounts. */
 export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl: string; onClose: () => void }) {
+  const { t } = useI18n();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -70,33 +72,33 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
         onSubmit={submit}
         style={{ width: 400, maxWidth: '90vw', background: 'var(--onyx-panel2)', backdropFilter: 'blur(40px) saturate(120%)', WebkitBackdropFilter: 'blur(40px) saturate(120%)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 12, boxShadow: '0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)', padding: '26px 26px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
-        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>Change password</div>
+        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>{t('chpw.title')}</div>
         {done ? (
           <>
             <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)', lineHeight: 1.5 }}>
-              Your password has been changed.
+              {t('chpw.success')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={onClose} style={brassBtnStyle}>Done</button>
+              <button type="button" onClick={onClose} style={brassBtnStyle}>{t('chpw.done')}</button>
             </div>
           </>
         ) : (
           <>
             <div>
-              <div style={fieldLabelStyle}>Current password</div>
+              <div style={fieldLabelStyle}>{t('chpw.current')}</div>
               <input style={fieldInputStyle} type="password" value={current} onChange={e => setCurrent(e.target.value)} autoFocus />
             </div>
             <div>
-              <div style={fieldLabelStyle}>New password</div>
+              <div style={fieldLabelStyle}>{t('chpw.new')}</div>
               <input style={fieldInputStyle} type="password" value={next} onChange={e => setNext(e.target.value)} />
             </div>
             <div>
-              <div style={fieldLabelStyle}>Confirm new password</div>
+              <div style={fieldLabelStyle}>{t('chpw.confirm')}</div>
               <input style={fieldInputStyle} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} />
             </div>
             {error && <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>{error}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-              <button type="button" onClick={onClose} style={ghostBtnStyle}>Cancel</button>
+              <button type="button" onClick={onClose} style={ghostBtnStyle}>{t('chpw.cancel')}</button>
               <button type="submit" disabled={pending} style={{ ...brassBtnStyle, cursor: pending ? 'wait' : 'pointer' }}>
                 {pending ? 'Saving…' : 'Change'}
               </button>

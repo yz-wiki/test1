@@ -3,6 +3,7 @@
 // Staging folder from the same entry point used by the main shell and Settings.
 // (First-Launch Onboarding, Phase 3.)
 import { useState } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import type { Library } from '../../api/abs';
 import { GoldButton, SERIF, MONO, SANS } from './frame';
@@ -20,6 +21,7 @@ export interface AddBooksStepProps {
 // filed Author/Series/Title shelf — looping. All motion is in index.css keyframes
 // (onb-file / onb-pulse), gated by prefers-reduced-motion.
 function StagingScene() {
+  const { t } = useI18n();
   const box: React.CSSProperties = {
     position: 'absolute', top: '30%', width: 96, height: 62, borderRadius: 10,
     border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.3)',
@@ -34,12 +36,12 @@ function StagingScene() {
       {/* Staging box (left) */}
       <div style={{ ...box, left: '8%' }}>
         <span style={{ fontSize: 18, lineHeight: 1 }}>📁</span>
-        <span style={cap}>Staging</span>
+        <span style={cap}>{t('onbBooks.staging')}</span>
       </div>
       {/* Filed box (right) */}
       <div className="onb-filed" style={{ ...box, right: '8%' }}>
         <span style={{ fontSize: 18, lineHeight: 1 }}>🗂️</span>
-        <span style={cap}>Author / Series</span>
+        <span style={cap}>{t('onbBooks.authorSeries')}</span>
       </div>
       {/* Travelling file glyph */}
       <div className="onb-file" style={{ position: 'absolute', width: 24, height: 28, borderRadius: 4, background: 'linear-gradient(180deg,#e9bb5e,#a37d2e)', boxShadow: '0 6px 16px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1306', fontFamily: MONO, fontSize: 9, fontWeight: 700 }}>
@@ -62,6 +64,7 @@ function RouteCard({ badge, title, children }: { badge: string; title: string; c
 }
 
 export default function AddBooksStep({ st, library, onContinue }: AddBooksStepProps) {
+  const { t } = useI18n();
   const [importOpen, setImportOpen] = useState(false);
 
   return (
@@ -69,19 +72,19 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
       <StagingScene />
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <RouteCard badge="Automatic" title="Drop into Staging">
+        <RouteCard badge="Automatic" title={t('onbBooks.dropToStaging')}>
           Copy audiobooks — files <em>or whole book folders</em> — into the library's{' '}
-          <span style={{ color: 'rgba(235,231,223,0.85)' }}>Staging</span> folder. Skald reads each book's tags and
+          <span style={{ color: 'rgba(235,231,223,0.85)' }}>{t('onbBooks.staging')}</span> folder. Skald reads each book's tags and
           chapters and files it under Author / Series / Title automatically.
         </RouteCard>
-        <RouteCard badge="Manual" title="Add books button">
-          Use <span style={{ color: 'rgba(235,231,223,0.85)' }}>Add books</span> here, in the library bar, or in
-          Settings to choose files, scan a folder, or open Staging from one place.
+        <RouteCard badge="Manual" title={t('onbBooks.addBooksButton')}>
+          {t('onbBooks.manualLead')} <span style={{ color: 'rgba(235,231,223,0.85)' }}>{t('onbBooks.addBooks')}</span>{' '}
+          {t('onbBooks.manualTail')}
         </RouteCard>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 4 }}>
-        <GoldButton onClick={onContinue}>Continue</GoldButton>
+        <GoldButton onClick={onContinue}>{t('onbBooks.continue')}</GoldButton>
         {library ? (
           <button
             type="button"
@@ -96,7 +99,7 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
           </button>
         ) : (
           <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(235,231,223,0.4)' }}>
-            Create a library first to import books.
+            {t('onbBooks.createLibraryFirst')}
           </span>
         )}
       </div>

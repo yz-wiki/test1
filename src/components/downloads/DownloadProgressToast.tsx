@@ -5,6 +5,7 @@
 // content behind it; each individual card re-enables pointer events so the
 // cancel button remains clickable.
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import { cancelDownload, downloadItem } from '../../api/abs';
 import { log } from '../../lib/log';
@@ -59,6 +60,7 @@ function fmtBytes(n: number): string {
 }
 
 export default function DownloadProgressToast({ serverUrl, onComplete, onCancel, onFailed }: DownloadProgressToastProps) {
+  const { t } = useI18n();
   // Map of itemId → current progress info; each entry renders as its own card.
   const [downloads, setDownloads] = useState<Map<string, ProgressEntry>>(new Map());
   const [failed, setFailed] = useState<Map<string, DownloadFailedPayload>>(new Map());
@@ -189,7 +191,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                   file has been cleaned up. */}
               <button
                 onClick={() => cancelDownload(itemId).catch(e => log.error('downloads', 'cancelDownload failed', { itemId, err: String(e) }))}
-                title="Cancel download"
+                title={t('dlToast.cancelDownload')}
                 style={{
                   flexShrink: 0,
                   width: 22,
@@ -256,7 +258,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
             setFailed(prev => { const next = new Map(prev); next.delete(entry.itemId); return next; });
             downloadItem(serverUrl, entry.itemId, `${entry.title}.zip`, entry.title, '')
               .catch(e => log.error('downloads', 'retry download command failed', { itemId: entry.itemId, err: String(e) }));
-          }} style={{ padding: '5px 10px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>RETRY</button>
+          }} style={{ padding: '5px 10px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>{t('dlToast.retry')}</button>
         </div>
       ))}
     </div>

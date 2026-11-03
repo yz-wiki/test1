@@ -56,9 +56,9 @@ export function buildItemContextMenu(
           // Delegate session teardown, resume-position lookup, session open,
           // UI sync, and playAudio to the canonical playBook function.
           await playBook(st, item.id);
-          st.setToast({ message: `Now playing "${title}"`, type: 'success' });
+          st.setToast({ message: t('toastMsg.nowPlaying', { title }), type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Failed to start playback: ${String(e)}`, type: 'error' });
+          st.setToast({ message: t('toastMsg.startPlaybackFailed', { err: String(e) }), type: 'error' });
         }
       },
     },
@@ -82,9 +82,9 @@ export function buildItemContextMenu(
                   try {
                     await removeDownload(item.id);
                     st.setDownloads(prev => prev.filter(d => d.itemId !== item.id));
-                    st.setToast({ message: `Downloaded copy of "${title}" removed`, type: 'success' });
+                    st.setToast({ message: t('toastMsg.downloadRemoved', { title }), type: 'success' });
                   } catch (e) {
-                    st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' });
+                    st.setToast({ message: t('toastMsg.deleteFailedShort', { err: String(e) }), type: 'error' });
                   }
                 },
               });
@@ -104,7 +104,7 @@ export function buildItemContextMenu(
                 .then(() => log.info('downloads', 'download completed', { itemId: item.id }))
                 .catch(e => {
                   log.error('downloads', 'download failed', { itemId: item.id, err: String(e) });
-                  st.setToast({ message: `Download failed: ${String(e)}`, type: 'error' });
+                  st.setToast({ message: t('toastMsg.downloadFailedErr', { err: String(e) }), type: 'error' });
                 });
             },
           },
@@ -173,16 +173,16 @@ export function buildItemContextMenu(
         // The DELETE endpoint requires the progress record's own id, not the library item id.
         const progressRecord = st.mediaProgress.find(p => p.libraryItemId === item.id);
         if (!progressRecord) {
-          st.setToast({ message: 'No progress record found for this book.', type: 'info' });
+          st.setToast({ message: t('toastMsg.noProgressRecord'), type: 'info' });
           return;
         }
         const title = item.media?.metadata?.title ?? item.id;
         deleteProgress(st.serverUrl, progressRecord.id)
           .then(() => {
             st.setMediaProgress(st.mediaProgress.filter(p => p.id !== progressRecord.id));
-            st.setToast({ message: `Removed "${title}" from Pick it up`, type: 'success' });
+            st.setToast({ message: t('toastMsg.removedFromPickUp', { title }), type: 'success' });
           })
-          .catch(e => st.setToast({ message: `Failed to remove: ${String(e)}`, type: 'error' }));
+          .catch(e => st.setToast({ message: t('toastMsg.removeFailedShort', { err: String(e) }), type: 'error' }));
       },
     });
   }
@@ -258,9 +258,9 @@ export function buildItemContextMenu(
                     deleteLocalItem(item.id)
                       .then(() => {
                         st.removeLibraryItem(item.id);
-                        st.setToast({ message: `"${title}" deleted`, type: 'success' });
+                        st.setToast({ message: t('toastMsg.itemDeleted', { title }), type: 'success' });
                       })
-                      .catch(e => st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' }));
+                      .catch(e => st.setToast({ message: t('toastMsg.deleteFailedShort', { err: String(e) }), type: 'error' }));
                   },
                 });
               },
@@ -288,8 +288,8 @@ export function buildItemContextMenu(
               onClick: () => {
                 const title = item.media?.metadata?.title ?? item.id;
                 rescanItem(st.serverUrl, item.id)
-                  .then(() => st.setToast({ message: `Rescan started for "${title}"`, type: 'success' }))
-                  .catch(e => st.setToast({ message: `Rescan failed: ${String(e)}`, type: 'error' }));
+                  .then(() => st.setToast({ message: t('toastMsg.rescanStarted', { title }), type: 'success' }))
+                  .catch(e => st.setToast({ message: t('toastMsg.rescanFailedShort', { err: String(e) }), type: 'error' }));
               },
             },
           ],
@@ -314,9 +314,9 @@ export function buildItemContextMenu(
                 deleteItem(st.serverUrl, item.id)
                   .then(() => {
                     st.removeLibraryItem(item.id);
-                    st.setToast({ message: `"${title}" was deleted`, type: 'success' });
+                    st.setToast({ message: t('toastMsg.itemWasDeleted', { title }), type: 'success' });
                   })
-                  .catch(e => st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' }));
+                  .catch(e => st.setToast({ message: t('toastMsg.deleteFailedShort', { err: String(e) }), type: 'error' }));
               },
             });
           },

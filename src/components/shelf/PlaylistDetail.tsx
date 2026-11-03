@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import ReactDOM from 'react-dom';
 import type { OnyxState } from '../../state/onyx';
 import { bookTitle, bookAuthor } from '../../state/onyx';
@@ -30,6 +31,7 @@ function toInputs(items: PlaylistItem[]): PlaylistItemInput[] {
 export default function PlaylistDetail({
   playlistId, serverUrl, st, onClose, onDeleted, onUpdated,
 }: PlaylistDetailProps) {
+  const { t } = useI18n();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [items, setItems] = useState<PlaylistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +258,7 @@ export default function PlaylistDetail({
               ) : (
                 <div
                   onClick={() => { setPendingName(playlist?.name ?? ''); setEditingField('name'); }}
-                  title="Click to rename"
+                  title={t('playlist.rename')}
                   style={{
                     fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: 'var(--onyx-text)',
                     cursor: 'text', borderBottom: '1px solid transparent',
@@ -277,7 +279,7 @@ export default function PlaylistDetail({
                   onKeyDown={onDescKeyDown}
                   onBlur={onDescBlur}
                   disabled={saving}
-                  placeholder="Add a description…"
+                  placeholder={t('playlist.descPlaceholder')}
                   style={{
                     width: '100%', background: 'transparent',
                     border: 'none', borderBottom: '1px solid var(--onyx-accent-edge)',
@@ -289,7 +291,7 @@ export default function PlaylistDetail({
               ) : (
                 <div
                   onClick={() => { setPendingDescription(playlist?.description ?? ''); setEditingField('description'); }}
-                  title="Click to edit description"
+                  title={t('playlist.editDesc')}
                   style={{
                     marginTop: 6, fontSize: 12.5, cursor: 'text',
                     color: playlist?.description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)',
@@ -351,7 +353,7 @@ export default function PlaylistDetail({
           )}
           {!loading && !error && items.length === 0 && (
             <div style={{ padding: '32px 24px', fontFamily: SERIF, fontSize: 14, color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
-              This playlist is empty.
+              {t('playlist.empty')}
             </div>
           )}
           {items.map((pi, i) => {
@@ -401,7 +403,7 @@ export default function PlaylistDetail({
                     flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)',
                     fontSize: 14, lineHeight: 1, userSelect: 'none', paddingRight: 2,
                   }}
-                  title="Drag to reorder"
+                  title={t('playlist.dragReorder')}
                 >
                   ⠿
                 </div>
@@ -434,7 +436,7 @@ export default function PlaylistDetail({
                 <button
                   onClick={() => handleRemove(pi.libraryItemId)}
                   disabled={removing === pi.libraryItemId}
-                  title="Remove from playlist"
+                  title={t('playlist.removeItem')}
                   style={{
                     flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
                     background: 'transparent', border: '1px solid transparent',

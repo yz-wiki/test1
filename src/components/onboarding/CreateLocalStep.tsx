@@ -3,6 +3,7 @@
 // managed Staging / Audiobooks / Podcasts / Unidentified subfolders. On success it
 // refreshes the library list and advances. (First-Launch Onboarding, Phase 3.)
 import { useState } from 'react';
+import { useI18n } from '../../i18n';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { OnyxState } from '../../state/onyx';
 import type { Library } from '../../api/abs';
@@ -20,6 +21,7 @@ export interface CreateLocalStepProps {
 }
 
 export default function CreateLocalStep({ st, created, onCreated, onSkip }: CreateLocalStepProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [parent, setParent] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'book' | 'podcast'>('book');
@@ -42,7 +44,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
       onCreated(lib);
     } catch (e) {
       log.error('app', 'onboarding local library create failed', { err: String(e) });
-      st.setToast({ message: 'Could not create the library', type: 'error' });
+      st.setToast({ message: t('toastMsg.createLibraryFailed'), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -61,7 +63,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
             </div>
           </div>
         </div>
-        <div><GoldButton onClick={() => onCreated(created)}>Continue</GoldButton></div>
+        <div><GoldButton onClick={() => onCreated(created)}>{t('onbCreate.continue')}</GoldButton></div>
       </div>
     );
   }
@@ -76,7 +78,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Name */}
       <label style={{ display: 'block' }}>
-        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>What shall we call it?</div>
+        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbCreate.nameQuestion')}</div>
         <input
           className="saga-input"
           value={name}
@@ -115,7 +117,7 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
         <GoldButton onClick={create} busy={busy} disabled={!name.trim() || !parent}>
           {busy ? 'Creating…' : 'Create library'}
         </GoldButton>
-        <GhostButton onClick={onSkip}>Skip for now</GhostButton>
+        <GhostButton onClick={onSkip}>{t('onbCreate.skipForNow')}</GhostButton>
       </div>
 
       <div style={{ fontFamily: SANS, fontSize: 11.5, color: 'rgba(235,231,223,0.35)', maxWidth: 440, lineHeight: 1.5 }}>

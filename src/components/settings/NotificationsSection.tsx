@@ -216,7 +216,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
         <div>
           <div style={labelStyle}>{t('notify.library')}</div>
           <select value={libraryId} onChange={e => setLibraryId(e.target.value)} style={{ ...selectStyle, width: '100%' }}>
-            <option value="">— select a library —</option>
+            <option value="">{t('notify.selectLibrary')}</option>
             {libraries.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </div>
@@ -227,7 +227,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
         <div style={labelStyle}>{t('notify.appriseUrls')}</div>
         <UrlEditor urls={urls} onChange={setUrls} input={urlInput} setInput={setUrlInput} />
         <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 6 }}>
-          Use an Apprise URL scheme, e.g. <code style={{ fontFamily: MONO }}>ntfy://topic</code>,{' '}
+          {t('notify.urlScheme')} <code style={{ fontFamily: MONO }}>ntfy://topic</code>,{' '}
           <code style={{ fontFamily: MONO }}>discord://id/token</code>,{' '}
           <code style={{ fontFamily: MONO }}>tgram://bottoken/chatid</code>.
         </div>
@@ -333,9 +333,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
     try {
       const updated = await updateNotificationSettings(st.serverUrl, partial);
       setSettings(updated);
-      st.setToast({ message: 'Notification settings saved.', type: 'success' });
+      st.setToast({ message: t('toastMsg.notifySettingsSaved'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.notifySaveFailed', { err: String(e) }), type: 'error' });
     }
   }
 
@@ -346,9 +346,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
         : await createNotification(st.serverUrl, payload);
       setSettings(updated);
       setEditing(null);
-      st.setToast({ message: id ? 'Notification updated.' : 'Notification created.', type: 'success' });
+      st.setToast({ message: id ? t('toastMsg.notifyUpdated') : t('toastMsg.notifyCreated'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save notification: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.notifySaveOneFailed', { err: String(e) }), type: 'error' });
     }
   }
 
@@ -356,29 +356,29 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
     try {
       const updated = await deleteNotification(st.serverUrl, id);
       setSettings(updated);
-      st.setToast({ message: 'Notification deleted.', type: 'success' });
+      st.setToast({ message: t('toastMsg.notifyDeleted'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to delete: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.notifyDeleteFailed', { err: String(e) }), type: 'error' });
     }
   }
 
   async function testRule(id: string) {
-    st.setToast({ message: 'Sending test notification…', type: 'info' });
+    st.setToast({ message: t('toastMsg.sendingTest'), type: 'info' });
     try {
       await testNotification(st.serverUrl, id);
-      st.setToast({ message: 'Test notification sent.', type: 'success' });
+      st.setToast({ message: t('toastMsg.testSent'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Test failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.testFailed', { err: String(e) }), type: 'error' });
     }
   }
 
   async function fireTest() {
-    st.setToast({ message: 'Firing test event…', type: 'info' });
+    st.setToast({ message: t('toastMsg.firingTestEvent'), type: 'info' });
     try {
       await fireTestNotificationEvent(st.serverUrl);
-      st.setToast({ message: 'Test event fired.', type: 'success' });
+      st.setToast({ message: t('toastMsg.testEventFired'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Test event failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.testEventFailed', { err: String(e) }), type: 'error' });
     }
   }
 

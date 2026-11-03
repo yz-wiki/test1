@@ -10,6 +10,7 @@ import BrowseTile from '../BrowseTile';
 import Cover from '../../Cover';
 import { log } from '../../../lib/log';
 import { useEntityInvalidation } from '../../../state/liveEntities';
+import { useI18n } from '../../../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -47,6 +48,7 @@ export interface SeriesViewProps {
 }
 
 export default function SeriesView({ st, inline = false }: SeriesViewProps) {
+  const { t } = useI18n();
   // Local libraries have no server series endpoint, and the combined shelf has
   // no single library to query — both derive series from the loaded items
   // instead. ABS libraries use the dedicated endpoint (clean names/IDs + a
@@ -115,7 +117,7 @@ export default function SeriesView({ st, inline = false }: SeriesViewProps) {
   };
 
   return (
-    <BrowseView st={st} title="Series" subtitle={`${seriesList.length} series in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title={t('browse.series')} subtitle={t('browse.seriesSubtitle', { count: seriesList.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {seriesList.map(s => (

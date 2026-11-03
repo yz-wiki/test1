@@ -101,6 +101,7 @@ export interface ShelfHeaderProps {
 }
 
 export default function ShelfHeader({ st }: ShelfHeaderProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(9999);
   const isLocalLibrary = st.activeLibrary?.source === 'local';
@@ -407,10 +408,10 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
               background: 'rgba(212,131,74,0.14)', border: '1px solid rgba(212,131,74,0.4)',
               color: '#d4834a', fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
             }}
-          >Retry</button>
+          >{t('shelfHead.retry')}</button>
           <button
             onClick={() => st.dismissAllLibrariesPartial()}
-            aria-label="Dismiss"
+            aria-label={t('shelfHead.dismiss')}
             style={{
               padding: '3px 8px', borderRadius: 999, cursor: 'pointer',
               background: 'transparent', border: '1px solid transparent',

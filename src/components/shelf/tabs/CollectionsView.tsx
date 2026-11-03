@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../../i18n';
 import type { OnyxState, LibraryItem } from '../../../state/onyx';
 import { groupMatchesFilter } from '../../../lib/shelfFilters';
 import { bookTitle, bookAuthor } from '../../../state/onyx';
@@ -21,6 +22,7 @@ export interface CollectionsViewProps {
 }
 
 export default function CollectionsView({ st, inline = false }: CollectionsViewProps) {
+  const { t } = useI18n();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<Collection | null>(null);
@@ -121,7 +123,7 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
   return (
     <BrowseView
       st={st}
-      title="Collections"
+      title={t('collectionsView.title')}
       subtitle={subtitle}
       showModeToggle
       inline={inline}
@@ -154,10 +156,10 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
                   // div (not button) + stopPropagation — valid inside BrowseTile's button.
                   <div
                     onClick={e => { e.stopPropagation(); setDetail(c); }}
-                    title="Manage collection"
+                    title={t('collectionsView.manage')}
                     style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
                   >
-                    Manage
+                    {t('collectionsView.manageLabel')}
                   </div>
                 }
               />
@@ -188,7 +190,7 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
                 manage: (
                   <div onClick={e => { e.stopPropagation(); setDetail(c); }}
                     style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: 5, cursor: 'pointer', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', userSelect: 'none' }}>
-                    Manage
+                    {t('collectionsView.manageLabel')}
                   </div>
                 ),
               },

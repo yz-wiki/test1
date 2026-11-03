@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 // Step 1 — Welcome. Brands the app, states the one-line value prop, and offers a
 // single "Begin" CTA into the path chooser. (First-Launch Onboarding, Phase 1.)
 import { GoldButton, SERIF, MONO } from './frame';
@@ -5,6 +6,7 @@ import { GoldButton, SERIF, MONO } from './frame';
 export interface WelcomeStepProps { onBegin: () => void; }
 
 export default function WelcomeStep({ onBegin }: WelcomeStepProps) {
+  const { t } = useI18n();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ fontSize: 15, lineHeight: 1.6, color: 'rgba(235,231,223,0.8)', fontFamily: SERIF, maxWidth: 460 }}>
@@ -25,7 +27,7 @@ export default function WelcomeStep({ onBegin }: WelcomeStepProps) {
       </div>
 
       <div>
-        <GoldButton onClick={onBegin}>Begin</GoldButton>
+        <GoldButton onClick={onBegin}>{t('onbWelcome.begin')}</GoldButton>
       </div>
     </div>
   );

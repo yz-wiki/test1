@@ -1,6 +1,7 @@
 // Modal ABS server-filesystem browser used by the library form's folder rows.
 // Moved verbatim out of LibrariesSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../../i18n';
 import { MONO, SERIF } from '../shared';
 import { browseServerFilesystem } from '../../../api/abs';
 import type { FsEntry } from '../../../api/abs';
@@ -17,6 +18,7 @@ export interface ServerFolderPickerProps {
 }
 
 export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCancel }: ServerFolderPickerProps) {
+  const { t } = useI18n();
   const startPath = initial.trim() || '/';
   const [currentPath, setCurrentPath] = useState(startPath);
   const [entries, setEntries] = useState<FsEntry[]>([]);
@@ -92,7 +94,7 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
           flexShrink: 0,
         }}>
           <div id="server-folder-title" style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 10 }}>
-            Select Server Folder
+            {t('folderPicker.title')}
           </div>
 
           {/* Breadcrumb strip */}
@@ -156,7 +158,7 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
 
               {entries.length === 0 && (
                 <div style={{ padding: '12px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.05em' }}>
-                  No subdirectories
+                  {t('folderPicker.noSubdirs')}
                 </div>
               )}
 
@@ -196,9 +198,9 @@ export default function ServerFolderPicker({ serverUrl, initial, onSelect, onCan
             {currentPath}
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <SmallBtn muted onClick={onCancel}>Cancel</SmallBtn>
+            <SmallBtn muted onClick={onCancel}>{t('folderPicker.cancel')}</SmallBtn>
             <SmallBtn onClick={() => onSelect(currentPath)} disabled={loading}>
-              Select This Folder
+              {t('folderPicker.selectThis')}
             </SmallBtn>
           </div>
         </div>

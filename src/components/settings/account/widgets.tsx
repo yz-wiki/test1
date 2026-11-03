@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 // Presentational widgets for the account pane's user list — pure props → JSX.
 // Moved verbatim out of AccountSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { MONO } from '../shared';
@@ -83,10 +84,11 @@ export const TrashIcon = (
 export function UserAvatar({ color, initial, online, onClick }: {
   color: string; initial: string; online: boolean; onClick: (e: React.MouseEvent) => void;
 }) {
+  const { t } = useI18n();
   return (
     <button
       onClick={onClick}
-      title="Change colour"
+      title={t('acctWidget.changeColour')}
       style={{
         width: 34, height: 34, borderRadius: 9, flexShrink: 0, padding: 0, cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -111,6 +113,7 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
   value: string; onPick: (hex: string) => void;
   popRef: React.RefObject<HTMLDivElement | null>; pos: { x: number; y: number };
 }) {
+  const { t } = useI18n();
   const W = 168;
   const left = Math.min(pos.x, window.innerWidth - W - 12);
   return (
@@ -152,7 +155,7 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
             style={{ position: 'absolute', inset: -4, width: 'calc(100% + 8px)', height: 'calc(100% + 8px)', border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
           />
         </label>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Custom</span>
+        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('acctWidget.custom')}</span>
         <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-dim)', marginLeft: 'auto', textTransform: 'uppercase' }}>{value}</span>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import { MONO } from './shared';
 
 // A friendly editor for the common cron schedules ABS uses (backups, podcast
@@ -95,6 +96,7 @@ const controlStyle = {
 } as const;
 
 export default function CronEditor({ value, onChange }: CronEditorProps) {
+  const { t } = useI18n();
   const [state, setState] = useState<CronState>(() => parseCron(value));
 
   // Re-sync when the value changes externally (e.g. a successful save round-trip
@@ -125,10 +127,10 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
           }}
           style={{ ...controlStyle, minWidth: 130 }}
         >
-          <option value="hourly">Every hour</option>
-          <option value="everyN">Every few hours</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
+          <option value="hourly">{t('cron.everyHour')}</option>
+          <option value="everyN">{t('cron.everyFewHours')}</option>
+          <option value="daily">{t('cron.daily')}</option>
+          <option value="weekly">{t('cron.weekly')}</option>
           <option value="custom">Custom…</option>
         </select>
 

@@ -5,6 +5,7 @@ import BrowseView, { seriesTotalDur } from '../BrowseView';
 import BrowseList from '../BrowseList';
 import BrowseTile from '../BrowseTile';
 import Initial from '../Initial';
+import { useI18n } from '../../../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -21,6 +22,7 @@ export interface AuthorsViewProps {
 }
 
 export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
+  const { t } = useI18n();
   const groups: Record<string, LibraryItem[]> = {};
   for (const b of st.library) {
     const author = bookAuthor(b);
@@ -51,7 +53,7 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
   };
 
   return (
-    <BrowseView st={st} title="Authors" subtitle={`${list.length} authors in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title={t('browse.authors')} subtitle={t('browse.authorsSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(a => {

@@ -5,6 +5,7 @@
 // is anchored correctly regardless of scroll position.
 
 import { useRef, useState, useEffect, type ReactNode } from 'react';
+import { useI18n } from '../../i18n';
 import { createPortal } from 'react-dom';
 import Icon, { type IconName } from '../Icon';
 import { MONO } from './shared';
@@ -31,6 +32,7 @@ export interface DropdownProps {
 }
 
 export default function Dropdown({ trigger, items, selected, onChange, align = 'right' }: DropdownProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   // Stores the trigger button's viewport rect so the popout can be positioned.
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -175,7 +177,7 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
           ref={dropdownRef}
           id="onyx-dropdown-options"
           role="listbox"
-          aria-label="Output device"
+          aria-label={t('dropdown.outputDevice')}
           onKeyDown={onListKeyDown}
           style={{
             ...popoutStyle,
@@ -196,7 +198,7 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
             letterSpacing: '0.12em', textTransform: 'uppercase',
             padding: '6px 8px 4px',
           }}>
-            Output device
+            {t('dropdown.outputDevice')}
           </div>
 
           {items.map((item, i) => {

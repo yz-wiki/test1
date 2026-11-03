@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../../i18n';
 import type { OnyxState, LibraryItem } from '../../../state/onyx';
 import { bookTitle, bookAuthor } from '../../../state/onyx';
 import { groupMatchesFilter } from '../../../lib/shelfFilters';
@@ -21,6 +22,7 @@ export interface PlaylistsViewProps {
 }
 
 export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps) {
+  const { t } = useI18n();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -134,7 +136,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
 
   return (
     <>
-      <BrowseView st={st} title="Playlists" subtitle={subtitle} showModeToggle inline={inline}>
+      <BrowseView st={st} title={t('playlistsView.title')} subtitle={subtitle} showModeToggle inline={inline}>
 
         {/* Create playlist bar */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: createOpen ? 10 : 20 }}>
@@ -166,7 +168,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                 if (e.key === 'Enter') { void handleCreate(); }
                 if (e.key === 'Escape') { setCreateOpen(false); setNewName(''); }
               }}
-              placeholder="Playlist name…"
+              placeholder={t('playlistsView.namePlaceholder')}
               style={{
                 flex: 1, background: 'transparent', border: 'none', outline: 'none',
                 fontFamily: SERIF, fontSize: 16, color: 'var(--onyx-text)',
@@ -218,10 +220,10 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                     // div (not button) + stopPropagation — valid inside BrowseTile's button.
                     <div
                       onClick={e => { e.stopPropagation(); setDetailPlaylistId(p.id); }}
-                      title="Manage playlist"
+                      title={t('playlistsView.manage')}
                       style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
                     >
-                      Manage
+                      {t('playlistsView.manageLabel')}
                     </div>
                   }
                 />
@@ -262,7 +264,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                         userSelect: 'none',
                       }}
                     >
-                      Manage
+                      {t('playlistsView.manageLabel')}
                     </div>
                   ),
                 },

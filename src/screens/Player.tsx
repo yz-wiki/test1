@@ -262,10 +262,10 @@ export default function Player({ st }: PlayerProps) {
         st.setBookmarks(me.bookmarks);
       }
       // The bookmark list may be off-screen, so make a successful save explicit.
-      st.setToast({ message: 'Bookmark saved', type: 'success' });
+      st.setToast({ message: t('toastMsg.bookmarkSaved'), type: 'success' });
     } catch (err) {
       log.error('playback', 'bookmark create failed', { err: String(err) });
-      st.setToast({ message: 'Could not save bookmark — please try again', type: 'error' });
+      st.setToast({ message: t('toastMsg.bookmarkSaveFailed'), type: 'error' });
     }
   };
 
@@ -315,14 +315,14 @@ export default function Player({ st }: PlayerProps) {
           // carrying episodes[], which is what continuation walks at the end.
           await playEpisode(st, show ?? pid, match).catch(err => {
             log.error('playback', 'play after local episode download failed', { itemId: pid, err: String(err) });
-            st.setToast({ message: 'Downloaded, but playback could not start — tap the episode to retry', type: 'error' });
+            st.setToast({ message: t('toastMsg.downloadedNoPlay'), type: 'error' });
           });
         } else {
-          st.setToast({ message: 'Downloaded — open the episode to play', type: 'info' });
+          st.setToast({ message: t('toastMsg.downloadedOpen'), type: 'info' });
         }
       } catch (e) {
         log.error('downloads', 'local episode download failed', { err: String(e) });
-        st.setToast({ message: 'Download failed', type: 'error' });
+        st.setToast({ message: t('toastMsg.downloadFailedShort'), type: 'error' });
         setDlState('idle');
       }
       return;
@@ -332,7 +332,7 @@ export default function Player({ st }: PlayerProps) {
       await downloadEpisodes(st.serverUrl, pid, [ep]);
     } catch (e) {
       log.error('downloads', 'episode download failed', { err: String(e) });
-      st.setToast({ message: 'Download failed', type: 'error' });
+      st.setToast({ message: t('toastMsg.downloadFailedShort'), type: 'error' });
       setDlState('idle');
       return;
     }
@@ -350,14 +350,14 @@ export default function Player({ st }: PlayerProps) {
           // of this episode has the show's episode list.
           await playEpisode(st, item, match).catch(err => {
             log.error('playback', 'play after episode download failed', { itemId: pid, err: String(err) });
-            st.setToast({ message: 'Downloaded, but playback could not start — tap the episode to retry', type: 'error' });
+            st.setToast({ message: t('toastMsg.downloadedNoPlay'), type: 'error' });
           });
           return;
         }
       } catch { /* keep polling */ }
     }
     setDlState('idle');
-    st.setToast({ message: 'Download is taking a while — it will appear once finished', type: 'info' });
+    st.setToast({ message: t('toastMsg.downloadSlow'), type: 'info' });
   };
 
   useEffect(() => {

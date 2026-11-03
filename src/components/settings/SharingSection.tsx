@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { t as translate, useI18n } from '../../i18n';
 import type { CSSProperties } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import { getFeeds, deleteShare, closeFeed, getShareBySlug, type RssFeed } from '../../api/abs';
@@ -15,21 +16,22 @@ function publicShareUrl(serverUrl: string, slug: string): string {
 async function copy(text: string, st: OnyxState, label: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    st.setToast({ message: `${label} copied to clipboard`, type: 'success' });
+    st.setToast({ message: translate('toastMsg.copiedToClipboard', { label }), type: 'success' });
   } catch {
-    st.setToast({ message: `Copy failed — ${text}`, type: 'info' });
+    st.setToast({ message: translate('toastMsg.copyFailed', { text }), type: 'info' });
   }
 }
 
 /** The URL rendered as an accent link that copies to the clipboard on click. */
 function CopyLink({ url, label, st }: { url: string; label: string; st: OnyxState }) {
+  const { t } = useI18n();
   const [hover, setHover] = useState(false);
   return (
     <span
       onClick={() => void copy(url, st, label)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      title="Click to copy"
+      title={t('sharing.clickToCopy')}
       style={{ color: 'var(--onyx-accent)', cursor: 'pointer', textDecoration: hover ? 'underline' : 'none' }}
     >
       {url}
@@ -46,6 +48,7 @@ function CopyLink({ url, label, st }: { url: string; label: string; st: OnyxStat
  * Per-item creation lives in the shelf's Share & Publish modal.
  */
 export default function SharingSection({ st }: SharingSectionProps) {
+  const { t } = useI18n();
   const [shares, setShares] = useState<TrackedShare[]>([]);
   const [feeds, setFeeds] = useState<RssFeed[]>([]);
   const [feedsLoading, setFeedsLoading] = useState(true);
@@ -78,7 +81,7 @@ export default function SharingSection({ st }: SharingSectionProps) {
       setFeeds(await getFeeds(st.serverUrl));
     } catch (e) {
       log.error('sharing', 'getFeeds failed', { err: String(e) });
-      st.setToast({ message: `Failed to load feeds: ${String(e)}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.loadFeedsFailed', { err: String(e) }), type: 'error' });
     } finally {
       setFeedsLoading(false);
     }
@@ -97,9 +100,9 @@ export default function SharingSection({ st }: SharingSectionProps) {
           await deleteShare(st.serverUrl, s.id);
           removeTrackedShare(s.id);
           setShares(prev => prev.filter(x => x.id !== s.id));
-          st.setToast({ message: 'Share link revoked.', type: 'success' });
+          st.setToast({ message: t('toastMsg.shareRevoked'), type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Revoke failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: t('toastMsg.revokeFailed', { err: String(e) }), type: 'error' });
         } finally {
           setBusyId(null);
         }
@@ -118,9 +121,9 @@ export default function SharingSection({ st }: SharingSectionProps) {
         try {
           await closeFeed(st.serverUrl, f.id);
           setFeeds(prev => prev.filter(x => x.id !== f.id));
-          st.setToast({ message: 'RSS feed closed.', type: 'success' });
+          st.setToast({ message: t('toastMsg.feedClosed'), type: 'success' });
         } catch (e) {
-          st.setToast({ message: `Close failed: ${String(e)}`, type: 'error' });
+          st.setToast({ message: t('toastMsg.closeFeedFailed', { err: String(e) }), type: 'error' });
         } finally {
           setBusyId(null);
         }
@@ -139,12 +142,12 @@ export default function SharingSection({ st }: SharingSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Sharing & RSS"
+        title={t('sharing.title')}
         subtitle="Manage public share links and RSS feeds. Create them per item from the library context menu (Share & Publish). These are admin-only server surfaces."
       />
 
       {/* ── Public link address ── */}
-      <Panel label="Public link address">
+      <Panel label={t('sharing.publicLinkAddress')}>
         <div style={{ padding: '12px 2px 2px' }}>
           <input
             value={pubUrl}
@@ -159,7 +162,7 @@ export default function SharingSection({ st }: SharingSectionProps) {
       </Panel>
 
       {/* ── Share Manager ── */}
-      <Panel label="Share links">
+      <Panel label={t('sharing.shareLinks')}>
         {shares.length === 0 ? (
           <div style={empty}>
             No share links created from this device. ABS provides no way to list shares, so links created on the web client or another device aren't shown here.
@@ -169,19 +172,19 @@ export default function SharingSection({ st }: SharingSectionProps) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{s.title}</div>
               <div style={sub}>
-                <CopyLink url={publicShareUrl(st.serverUrl, s.slug)} label="Share link" st={st} />
+                <CopyLink url={publicShareUrl(st.serverUrl, s.slug)} label={t('sharing.shareLink')} st={st} />
                 {s.expiresAt ? ` · expires ${new Date(s.expiresAt).toLocaleDateString()}` : ' · never expires'}
                 {s.isDownloadable ? ' · downloadable' : ''}
               </div>
             </div>
-            <button onClick={() => void copy(publicShareUrl(st.serverUrl, s.slug), st, 'Share link')} style={ghostBtn}>Copy</button>
-            <button onClick={() => revokeShare(s)} disabled={busyId === s.id} style={dangerBtn}>Revoke</button>
+            <button onClick={() => void copy(publicShareUrl(st.serverUrl, s.slug), st, 'Share link')} style={ghostBtn}>{t('sharing.copy')}</button>
+            <button onClick={() => revokeShare(s)} disabled={busyId === s.id} style={dangerBtn}>{t('sharing.revoke')}</button>
           </div>
         ))}
       </Panel>
 
       {/* ── RSS Feed Manager ── */}
-      <Panel label="Open RSS feeds">
+      <Panel label={t('sharing.openFeeds')}>
         {feedsLoading ? (
           <div style={empty}>Loading…</div>
         ) : feeds.length === 0 ? (
@@ -190,10 +193,10 @@ export default function SharingSection({ st }: SharingSectionProps) {
           <div key={f.id} style={row(i === feeds.length - 1)}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{f.meta?.title || f.slug}</div>
-              <div style={sub}>{f.entityType} · <CopyLink url={absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl)} label="Feed URL" st={st} /></div>
+              <div style={sub}>{f.entityType} · <CopyLink url={absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl)} label={t('sharing.feedUrl')} st={st} /></div>
             </div>
-            <button onClick={() => void copy(absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl), st, 'Feed URL')} style={ghostBtn}>Copy</button>
-            <button onClick={() => close(f)} disabled={busyId === f.id} style={dangerBtn}>Close</button>
+            <button onClick={() => void copy(absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl), st, 'Feed URL')} style={ghostBtn}>{t('sharing.copy')}</button>
+            <button onClick={() => close(f)} disabled={busyId === f.id} style={dangerBtn}>{t('sharing.close')}</button>
           </div>
         ))}
       </Panel>

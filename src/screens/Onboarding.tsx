@@ -8,6 +8,7 @@
 // is skippable, and finishing simply sets authToken / localMode so App.tsx's gate
 // opens. Skip defaults to local-only (Resolved decisions #3).
 import { useEffect, useMemo, useState } from 'react';
+import { useI18n } from '../i18n';
 import type { OnyxState } from '../state/onyx';
 import type { Library } from '../api/abs';
 import { log } from '../lib/log';
@@ -25,6 +26,7 @@ export interface OnboardingProps { st: OnyxState; }
 type StepKey = 'welcome' | 'choose' | 'connect' | 'folders' | 'create' | 'addbooks' | 'done';
 
 export default function Onboarding({ st }: OnboardingProps) {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const [path, setPath] = useState<OnboardingPath | null>(null);
   // The local library created during this run (if any) — threaded into the
@@ -73,7 +75,7 @@ export default function Onboarding({ st }: OnboardingProps) {
     if (skipped) {
       log.info('app', 'onboarding skipped', { atStep: step });
       if (!st.authToken) {
-        st.setToast({ message: 'You can connect a server any time in Settings → Server.', type: 'info' });
+        st.setToast({ message: t('toastMsg.connectLater'), type: 'info' });
       }
     } else {
       log.info('app', 'onboarding completed', { path });
@@ -102,24 +104,24 @@ export default function Onboarding({ st }: OnboardingProps) {
       </div>
       {step !== 'welcome' && <ProgressDots count={branchSteps.length} index={dotIndex} />}
       <div style={{ minWidth: 80, display: 'flex', justifyContent: 'flex-end' }}>
-        {step !== 'done' && <GhostButton onClick={() => finish(true)}>Skip setup</GhostButton>}
+        {step !== 'done' && <GhostButton onClick={() => finish(true)}>{t('onbScreen.skipSetup')}</GhostButton>}
       </div>
     </>
   );
 
   // ── Per-step header copy + body ────────────────────────────────────────────
   const eyebrow = step === 'welcome'
-    ? 'Welcome'
-    : `Step ${dotIndex + 1} of ${branchSteps.length}`;
+    ? t('onbScreen.eyebrowWelcome')
+    : t('onbScreen.eyebrowStep', { index: dotIndex + 1, total: branchSteps.length });
 
   const header: Record<StepKey, { title: React.ReactNode; subtitle?: React.ReactNode }> = {
-    welcome:  { title: <>Welcome to <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>Skald</span></> },
-    choose:   { title: 'How will you use Skald?', subtitle: 'Pick one — you can add the other later in Settings.' },
-    connect:  { title: 'Connect to Audiobookshelf', subtitle: 'Enter your server address and sign in with an API key or password.' },
-    folders:  { title: 'Where downloads live', subtitle: 'Choose where offline copies are stored on this computer.' },
-    create:   { title: 'Create a local library', subtitle: 'Skald builds a managed folder from audiobooks on this PC — no server needed.' },
-    addbooks: { title: 'Getting books in', subtitle: 'Two ways to add books to a local library.' },
-    done:     { title: 'You’re all set', subtitle: undefined },
+    welcome:  { title: <>{t('onbScreen.welcome')} <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>Skald</span></> },
+    choose:   { title: t('onbScreen.chooseTitle'), subtitle: t('onbScreen.chooseSubtitle') },
+    connect:  { title: t('onbScreen.connectTitle'), subtitle: t('onbScreen.connectSubtitle') },
+    folders:  { title: t('onbScreen.foldersTitle'), subtitle: t('onbScreen.foldersSubtitle') },
+    create:   { title: t('onbScreen.createTitle'), subtitle: t('onbScreen.createSubtitle') },
+    addbooks: { title: t('onbScreen.addBooksTitle'), subtitle: t('onbScreen.addBooksSubtitle') },
+    done:     { title: t('onbScreen.doneTitle'), subtitle: undefined },
   };
 
   const body = (() => {

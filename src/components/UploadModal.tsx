@@ -198,7 +198,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
       uploadIdRef.current = null;
       setProgress(null);
       if (msg === 'cancelled') {
-        st.setToast({ message: 'Upload cancelled', type: 'info' });
+        st.setToast({ message: t('toastMsg.uploadCancelled'), type: 'info' });
       } else {
         log.error('library', 'upload failed', { lib: lib.id, err: msg });
         setError(msg);

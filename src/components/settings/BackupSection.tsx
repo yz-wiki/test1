@@ -147,13 +147,13 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
   async function doCreate() {
     setBusy(true);
-    st.setToast({ message: 'Creating backup…', type: 'info' });
+    st.setToast({ message: t('toastMsg.creatingBackup'), type: 'info' });
     try {
       const resp = await createBackup(st.serverUrl);
       setBackups(resp.backups);
-      st.setToast({ message: 'Backup created.', type: 'success' });
+      st.setToast({ message: t('toastMsg.backupCreated'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Backup failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.backupFailed', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -164,9 +164,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
     try {
       const resp = await deleteBackup(st.serverUrl, backup.id);
       setBackups(resp.backups);
-      st.setToast({ message: 'Backup deleted.', type: 'success' });
+      st.setToast({ message: t('toastMsg.backupDeleted'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to delete: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.deleteFailedErr', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -174,12 +174,12 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
   async function doRestore(backup: Backup) {
     setBusy(true);
-    st.setToast({ message: 'Restoring backup — the server will restart…', type: 'info' });
+    st.setToast({ message: t('toastMsg.restoringBackup'), type: 'info' });
     try {
       await applyBackup(st.serverUrl, backup.id);
-      st.setToast({ message: 'Restore started. Audiobookshelf is restarting; reconnect shortly.', type: 'success' });
+      st.setToast({ message: t('toastMsg.restoreStarted'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Restore failed: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.restoreFailed', { err: String(e) }), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -191,9 +191,9 @@ function BackupSectionInner({ st }: BackupSectionProps) {
     try {
       const updated = await updateServerSettings(st.serverUrl, partial);
       st.setServerSettings(updated);
-      st.setToast({ message: 'Backup settings saved.', type: 'success' });
+      st.setToast({ message: t('toastMsg.backupSettingsSaved'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.saveFailedErr', { err: String(e) }), type: 'error' });
     }
   }
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -29,6 +30,7 @@ const ICON: Record<ToastType, string | null> = {
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
 
 export default function Toast({ message, type, onDismiss }: ToastProps) {
+  const { t } = useI18n();
   const dismissRef = useRef(onDismiss);
   useEffect(() => { dismissRef.current = onDismiss; });
 
@@ -75,7 +77,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
       </span>
       <button
         onClick={onDismiss}
-        aria-label="Dismiss notification"
+        aria-label={t('toastUi.dismiss')}
         style={{
           background: 'none',
           border: 'none',
@@ -87,7 +89,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
           padding: '2px 4px',
           flexShrink: 0,
         }}
-        title="Dismiss notification"
+        title={t('toastUi.dismiss')}
       >
         ✕
       </button>

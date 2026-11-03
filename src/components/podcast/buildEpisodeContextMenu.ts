@@ -6,6 +6,7 @@ import {
   closeActiveSession, seekAudio, pauseAudio,
 } from '../../api/abs';
 import { log } from '../../lib/log';
+import { t } from '../../i18n';
 
 // Right-click menu for a single podcast EPISODE (Podcast Episode Context Menu
 // roadmap) — the row-level counterpart of buildPodcastContextMenu's show-level
@@ -175,11 +176,11 @@ export function buildEpisodeContextMenu(
                   // starts clean (the backend cleared its persisted row too).
                   st.setMediaProgress(st.mediaProgress.filter(p => !(p.libraryItemId === item.id && p.episodeId === ep.id)));
                   opts.onDeleted?.(ep);
-                  st.setToast({ message: `Episode "${ep.title}" deleted`, type: 'success' });
+                  st.setToast({ message: t('toastMsg.episodeDeleted', { title: ep.title }), type: 'success' });
                   log.info('library', 'episode deleted', { itemId: item.id, episodeId: ep.id, local: isLocal });
                 } catch (e) {
                   log.error('library', 'episode delete failed', { itemId: item.id, episodeId: ep.id, err: String(e) });
-                  st.setToast({ message: `Delete failed: ${String(e)}`, type: 'error' });
+                  st.setToast({ message: t('toastMsg.episodeDeleteFailed', { err: String(e) }), type: 'error' });
                 }
               },
             });

@@ -5,6 +5,7 @@
 //     the recent-episodes endpoint, re-fetched when the library changes so newly
 //     downloaded episodes appear automatically.
 import React, { useState, useEffect, useRef, type CSSProperties } from 'react';
+import { useI18n } from '../../i18n';
 import { listen } from '@tauri-apps/api/event';
 import type { OnyxState, LibraryItem } from '../../state/onyx';
 import { fmtRemaining, fmtTime } from '../../state/onyx';
@@ -56,6 +57,7 @@ function episodeTime(ep: RecentEpisode): number {
 }
 
 export default function PodcastBrowse({ st }: PodcastBrowseProps) {
+  const { t } = useI18n();
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [feedImages, setFeedImages] = useState<Record<string, string>>({});
   // Published episodes resolved from each podcast's live feed (keyed by podcast).
@@ -257,7 +259,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       st.setScreen('player');
     } catch (e) {
       log.error('playback', 'playEpisode failed', { itemId: pid, episodeId: ep.id, err: String(e) });
-      st.setToast({ message: 'Could not start episode', type: 'error' });
+      st.setToast({ message: t('toastMsg.episodeStartFailed'), type: 'error' });
     }
   };
 
@@ -297,8 +299,8 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
           <div style={{ flex: 1 }} />{subscribeBtn}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 13, letterSpacing: '0.06em', gap: 8 }}>
-          <div>No podcasts in this library yet.</div>
-          <div style={{ fontSize: 11, opacity: 0.7 }}>Use Subscribe to add one by RSS feed or OPML import.</div>
+          <div>{t('podBrowse.empty')}</div>
+          <div style={{ fontSize: 11, opacity: 0.7 }}>{t('podBrowse.emptyHint')}</div>
         </div>
         {modal}
       </div>
@@ -316,7 +318,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
             the covers lead. Active when no single podcast is selected. */}
         <button
           onClick={() => setSelectedId(null)}
-          title="Show all podcasts"
+          title={t('podBrowse.showAll')}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
             background: selectedId === null ? 'var(--onyx-accent-dim)' : 'rgba(0,0,0,0.3)',
@@ -344,7 +346,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
             </button>
             {genreOpen && (
               <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50, minWidth: 160, maxHeight: 280, overflowY: 'auto', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', padding: 4 }}>
-                <button onClick={() => { setGenre(null); setGenreOpen(false); }} style={genreItemStyle(genre === null)}>All genres</button>
+                <button onClick={() => { setGenre(null); setGenreOpen(false); }} style={genreItemStyle(genre === null)}>{t('podBrowse.allGenres')}</button>
                 {genres.map(g => (
                   <button key={g} onClick={() => { setGenre(g); setGenreOpen(false); }} style={genreItemStyle(genre === g)}>{g}</button>
                 ))}
@@ -409,7 +411,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
         {mergedEpisodes.length === 0 && (
           <div style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 12, padding: '16px 2px' }}>
-            No episodes found. Subscribe to a podcast to see its latest episodes.
+            {t('podBrowse.noEpisodes')}
           </div>
         )}
         {mergedEpisodes.map(({ ep, downloaded }) => {

@@ -1,6 +1,7 @@
 import type { LibraryItem, OnyxState } from '../../state/onyx';
 import type { ContextMenuItem, ContextMenuSection } from '../ContextMenu';
 import { rescanItem, deleteItem, deleteLocalPodcast, checkLocalNewEpisodes } from '../../api/abs';
+import { t } from '../../i18n';
 
 // Right-click menu for a podcast in the podcast library (cluster E). Mirrors the
 // audiobook menu's sectioned layout but with podcast-relevant actions — the key
@@ -60,8 +61,8 @@ export function buildPodcastContextMenu(
       icon: 'refresh',
       onClick: () => {
         const p = isLocal ? checkLocalNewEpisodes(item.id).then(() => st.refreshLibrary()) : rescanItem(st.serverUrl, item.id);
-        p.then(() => st.setToast({ message: isLocal ? `Checked "${title}" for new episodes` : `Rescan started for "${title}"`, type: 'success' }))
-          .catch(e => st.setToast({ message: `Failed: ${String(e)}`, type: 'error' }));
+        p.then(() => st.setToast({ message: isLocal ? t('toastMsg.checkedForEpisodes', { title }) : t('toastMsg.podcastRescanStarted', { title }), type: 'success' }))
+          .catch(e => st.setToast({ message: t('toastMsg.opFailed', { err: String(e) }), type: 'error' }));
       },
     });
     sections.push({ label: 'Manage', items: manage });
@@ -85,9 +86,9 @@ export function buildPodcastContextMenu(
                 p.then(() => {
                     st.removeLibraryItem(item.id);
                     onUnsubscribed?.(item.id);
-                    st.setToast({ message: `Unsubscribed from "${title}"`, type: 'success' });
+                    st.setToast({ message: t('toastMsg.unsubscribed', { title }), type: 'success' });
                   })
-                  .catch(e => st.setToast({ message: `Unsubscribe failed: ${String(e)}`, type: 'error' }));
+                  .catch(e => st.setToast({ message: t('toastMsg.unsubscribeFailed', { err: String(e) }), type: 'error' }));
               },
             });
           },

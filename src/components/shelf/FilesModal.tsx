@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { fetchItem } from '../../api/abs';
@@ -70,6 +71,7 @@ function renderName(filename: string) {
 }
 
 export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalProps) {
+  const { t } = useI18n();
   const [files, setFiles] = useState<LibraryFile[] | null>(null);
   const [error, setError] = useState('');
   const [fullPath, setFullPath] = useState(false);
@@ -104,7 +106,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
         {/* Header */}
         <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
           <div id="library-files-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>
-            Library Files
+            {t('filesModal.title')}
           </div>
           {files !== null && (
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
@@ -127,7 +129,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                 cursor: 'pointer',
               }}
             >
-              Full Path
+              {t('filesModal.fullPath')}
             </button>
             <button
               onClick={onClose}
@@ -144,7 +146,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                 cursor: 'pointer',
               }}
             >
-              Close
+              {t('filesModal.close')}
             </button>
           </div>
         </div>
@@ -161,7 +163,7 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
           )}
           {files !== null && files.length === 0 && (
             <div style={{ padding: '24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-              No files found.
+              {t('filesModal.empty')}
             </div>
           )}
           {files !== null && files.length > 0 && (

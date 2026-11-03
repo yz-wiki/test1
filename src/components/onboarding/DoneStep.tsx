@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 // Step 6 — All set. Summarises what was configured and offers the entry CTA into
 // the library. The actual gate-close (setOnboarded / setLocalMode / setScreen) is
 // performed by the host's finish handler. (First-Launch Onboarding, Phase 1.)
@@ -14,6 +15,7 @@ export interface DoneStepProps {
 }
 
 export default function DoneStep({ st, path, created, onFinish }: DoneStepProps) {
+  const { t } = useI18n();
   // Build the summary from what actually happened, not just the chosen path, so a
   // skipped sub-step doesn't claim something that wasn't done.
   const lines: { label: string; value: string }[] = [];
@@ -41,7 +43,7 @@ export default function DoneStep({ st, path, created, onFinish }: DoneStepProps)
           : 'The hall is ready. Open it and begin.'}
       </div>
 
-      <div><GoldButton onClick={onFinish}>Enter the library</GoldButton></div>
+      <div><GoldButton onClick={onFinish}>{t('onbDone.enterLibrary')}</GoldButton></div>
     </div>
   );
 }

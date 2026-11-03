@@ -4,6 +4,7 @@
 // / user into OnyxState exactly as Login does, then advances.
 // (First-Launch Onboarding, Phase 2.)
 import { useState, useRef, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { login, saveToken, loginWithApiKey } from '../../api/abs';
 import { log } from '../../lib/log';
@@ -17,6 +18,7 @@ export interface AbsConnectStepProps {
 }
 
 export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps) {
+  const { t } = useI18n();
   const lastServer = (() => {
     try { return new URL(localStorage.getItem('skald.lastServerUrl') ?? ''); } catch { return null; }
   })();
@@ -111,11 +113,11 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
         }}>
           <span style={{ color: 'var(--onyx-accent)', fontSize: 18 }}>✓</span>
           <div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>Connected to your server</div>
+            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>{t('onbConnect.connected')}</div>
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(235,231,223,0.5)', marginTop: 2 }}>{st.serverUrl}</div>
           </div>
         </div>
-        <div><GoldButton onClick={onConnected}>Continue</GoldButton></div>
+        <div><GoldButton onClick={onConnected}>{t('onbConnect.continue')}</GoldButton></div>
       </div>
     );
   }
@@ -142,7 +144,7 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* Server URL */}
         <label style={{ display: 'block' }}>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Where is your server?</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.serverQuestion')}</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
             <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button type="button" onClick={() => setSchemeOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', color: 'var(--onyx-accent)', fontFamily: SERIF, fontSize: 16, padding: '0 4px 9px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -160,25 +162,25 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
                 </div>
               )}
             </div>
-            <input className="saga-input" style={{ ...underline, flex: 1 }} value={host} onChange={e => setHost(e.target.value)} placeholder="library.example.com or 192.168.1.20:13378" spellCheck={false} />
+            <input className="saga-input" style={{ ...underline, flex: 1 }} value={host} onChange={e => setHost(e.target.value)} placeholder={t('onbConnect.serverPlaceholder')} spellCheck={false} />
           </div>
         </label>
 
         {method === 'password' ? (
           <>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Username</div>
-              <input className="saga-input" style={underline} value={user} onChange={e => setUser(e.target.value)} placeholder="Username" spellCheck={false} />
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.username')}</div>
+              <input className="saga-input" style={underline} value={user} onChange={e => setUser(e.target.value)} placeholder={t('onbConnect.username')} spellCheck={false} />
             </label>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Password</div>
-              <input className="saga-input" style={underline} type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••••" />
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.password')}</div>
+              <input className="saga-input" style={underline} type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder={t('onbConnect.passwordPlaceholder')} />
             </label>
           </>
         ) : (
           <label style={{ display: 'block' }}>
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>Your API key</div>
-            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 4 }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Paste your API key here" spellCheck={false} autoComplete="off" />
+            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.apiKey')}</div>
+            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 4 }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={t('onbConnect.apiKeyPlaceholder')} spellCheck={false} autoComplete="off" />
             <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.</div>
           </label>
         )}

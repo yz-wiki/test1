@@ -88,8 +88,8 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
               type="color"
               value={/^#[0-9a-f]{6}$/i.test(currentHex) ? currentHex : SWATCHES[0]}
               onChange={e => st.setAccentColor(e.target.value)}
-              aria-label="Choose custom accent color"
-              title="Custom accent color"
+              aria-label={t('appearanceMod.customAccentAria')}
+              title={t('appearanceMod.customAccent')}
               style={{ width: 28, height: 28, padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 14, background: 'transparent', cursor: 'pointer' }}
             />
           </div>

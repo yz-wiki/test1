@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import type { LibraryItem } from '../state/onyx';
@@ -24,6 +25,7 @@ export interface CollectionPickerProps {
 }
 
 export default function CollectionPicker({ item, serverUrl, onClose }: CollectionPickerProps) {
+  const { t } = useI18n();
   const [collections, setCollections] = useState<Collection[] | null>(null);
   // Collection ids the book currently belongs to (drives the checkboxes).
   const [members, setMembers] = useState<Set<string>>(new Set());
@@ -110,8 +112,8 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
         {/* Header */}
         <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <div id="collection-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Add to Collection</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Choose a collection for this book</div>
+            <div id="collection-picker-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('collectionPicker.title')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{t('collectionPicker.hint')}</div>
           </div>
           <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
         </div>
@@ -172,7 +174,7 @@ export default function CollectionPicker({ item, serverUrl, onClose }: Collectio
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={onNewKeyDown}
-                placeholder="Collection name…"
+                placeholder={t('collectionPicker.namePlaceholder')}
                 disabled={creating}
                 onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                 onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}

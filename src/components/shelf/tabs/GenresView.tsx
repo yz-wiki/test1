@@ -5,6 +5,7 @@ import BrowseView, { seriesTotalDur } from '../BrowseView';
 import BrowseList from '../BrowseList';
 import BrowseTile from '../BrowseTile';
 import Initial from '../Initial';
+import { useI18n } from '../../../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -17,6 +18,7 @@ export interface GenresViewProps {
 }
 
 export default function GenresView({ st, inline = false }: GenresViewProps) {
+  const { t } = useI18n();
   // A book can belong to several genres, so it appears in each genre's group.
   const groups: Record<string, LibraryItem[]> = {};
   for (const b of st.library) {
@@ -50,7 +52,7 @@ export default function GenresView({ st, inline = false }: GenresViewProps) {
   };
 
   return (
-    <BrowseView st={st} title="Genres" subtitle={`${list.length} genres in your library`} showModeToggle inline={inline}>
+    <BrowseView st={st} title={t('browse.genres')} subtitle={t('browse.genresSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
           {list.map(g => (

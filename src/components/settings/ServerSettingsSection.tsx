@@ -191,9 +191,9 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       const updated = await updateServerSettings(st.serverUrl, partial);
       setSettings(updated);
       st.setServerSettings(updated);
-      st.setToast({ message: 'Server setting saved.', type: 'success' });
+      st.setToast({ message: t('toastMsg.serverSettingSaved'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.notifySaveFailed', { err: String(e) }), type: 'error' });
     }
   }
 
@@ -202,9 +202,9 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       const updated = await updateSortingPrefixes(st.serverUrl, prefixes);
       setSettings(updated);
       st.setServerSettings(updated);
-      st.setToast({ message: 'Sort prefixes updated. Re-index triggered on server.', type: 'success' });
+      st.setToast({ message: t('toastMsg.sortPrefixesUpdated'), type: 'success' });
     } catch (e) {
-      st.setToast({ message: `Failed to save: ${e}`, type: 'error' });
+      st.setToast({ message: t('toastMsg.notifySaveFailed', { err: String(e) }), type: 'error' });
     }
   }
 

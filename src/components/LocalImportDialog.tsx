@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -61,6 +62,7 @@ function Choice({ icon, title, copy, disabled, onClick }: {
 }
 
 export default function LocalImportDialog({ st, library, onClose, onImported }: LocalImportDialogProps) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState<ImportRoute | 'staging' | null>(null);
   const [error, setError] = useState('');
   const [pendingMatch, setPendingMatch] = useState<PendingMatch | null>(null);
@@ -191,16 +193,16 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
         <div style={{ padding: '20px 20px 16px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderBottom: '1px solid var(--onyx-line)' }}>
           <div style={{ minWidth: 0 }}>
             <div id="local-import-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>Add books to “{library.name}”</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>Choose how the books enter this PC library</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{t('localImport.chooseMode')}</div>
           </div>
-          <button onClick={onClose} aria-label="Close local import" disabled={working} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 15 }}>×</button>
+          <button onClick={onClose} aria-label={t('localImport.close')} disabled={working} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 15 }}>×</button>
         </div>
 
         <div style={{ padding: '18px 22px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '10px 12px', borderRadius: 9, background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>What happens to your files</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>{t('localImport.whatHappens')}</div>
             <div style={{ marginTop: 6, fontSize: 11.5, lineHeight: 1.5, color: 'var(--onyx-text-dim)' }}>
-              Source files <span aria-hidden="true">→</span> <strong>{library.organizeMode === 'move' ? 'Move after verification' : 'Copy and keep originals'}</strong> <span aria-hidden="true">→</span> Managed library <span aria-hidden="true">→</span> Needs attention only when a match is uncertain
+              {t('localImport.sourceFiles')}<span aria-hidden="true">→</span> <strong>{library.organizeMode === 'move' ? 'Move after verification' : 'Copy and keep originals'}</strong> <span aria-hidden="true">→</span> {t('localImport.managedLibrary')}<span aria-hidden="true">→</span> {t('localImport.needsAttentionHint')}
             </div>
           </div>
           <Choice icon="file" title={busy === 'files' ? 'Adding files…' : 'Add files'} copy="Choose one or more audiobook files from this PC." disabled={working} onClick={() => void pickFiles()} />

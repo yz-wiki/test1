@@ -23,6 +23,7 @@ import { parseEntityChange, publishEntityChange, useEntityChanges, type EntityKi
 // Type-only, so it erases at build time and no import cycle exists with onyx.ts
 // (which imports this hook).
 import type { ContextFilter } from './onyx';
+import { t } from '../i18n';
 
 export interface LiveSyncDeps {
   serverUrl: string;
@@ -428,7 +429,7 @@ export function useLiveSync({
     if (change.op === 'removed') {
       log.info('sync', 'active collection filter cleared — removed on the server', { id: change.id });
       setContextFilter(null);
-      setToast({ message: `Collection “${filter.value}” was deleted on the server.`, type: 'info' });
+      setToast({ message: t('toastMsg.collectionDeletedRemote', { name: filter.value }), type: 'info' });
       return;
     }
     if (!change.object) return;
@@ -445,7 +446,7 @@ export function useLiveSync({
     if (change.op === 'removed') {
       log.info('sync', 'active playlist filter cleared — removed on the server', { id: change.id });
       setContextFilter(null);
-      setToast({ message: `Playlist “${filter.value}” was deleted on the server.`, type: 'info' });
+      setToast({ message: t('toastMsg.playlistDeletedRemote', { name: filter.value }), type: 'info' });
       return;
     }
     if (!change.object) return;
@@ -767,7 +768,7 @@ export function useLiveSync({
 
     listen<{ currentTime: number }>('session-sync-restored', event => {
       log.info('sync', 'session progress sync restored', { currentTime: event.payload.currentTime });
-      setToast({ message: 'Progress sync restored', type: 'success' });
+      setToast({ message: t('toastMsg.progressSyncRestored'), type: 'success' });
       recordActivity({ category: 'sync', outcome: 'success', message: 'Progress sync restored' });
       setSyncHealth(previous => ({ ...previous, degraded: false }));
       refreshQueuedCount();

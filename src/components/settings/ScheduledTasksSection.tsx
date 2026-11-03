@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import { getTasks, validateCron, type Task } from '../../api/abs';
 import { SectionHead, Row, MONO, Panel } from './shared';
@@ -57,6 +58,7 @@ export default function ScheduledTasksSection({ st }: ScheduledTasksSectionProps
 }
 
 function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
+  const { t } = useI18n();
   // The task list lives in onyx state (st.tasks), kept current by socket events
   // even while this pane is closed. This panel only seeds it and renders it.
   const [loading, setLoading] = useState(true);
@@ -127,12 +129,12 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Scheduled Tasks"
+        title={t('tasks.title')}
         subtitle="Background server activity and the schedules that drive it. Admin only."
       />
 
       {/* ── Activity monitor ─────────────────────────────────────────────── */}
-      <Panel label="Activity">
+      <Panel label={t('tasks.activity')}>
 
       {!liveSyncOn && (
         <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', padding: '10px 0 2px', lineHeight: 1.5 }}>
@@ -214,15 +216,15 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       </Panel>
 
       {/* ── Schedule summary ─────────────────────────────────────────────── */}
-      <Panel label="Schedules">
+      <Panel label={t('tasks.schedules')}>
 
-      <Row label="Automatic backups" hint="Edit in Settings → Backups.">
+      <Row label={t('tasks.autoBackups')} hint={t('tasks.autoBackupsHint')}>
         <span style={{ fontSize: 12.5, color: backupEnabled ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
           {backupEnabled ? cap(describeCron(backupSchedule as string)) : 'Disabled'}
         </span>
       </Row>
 
-      <Row label="Podcast episode check" hint="Edit in Settings → Server.">
+      <Row label={t('tasks.episodeCheck')} hint={t('tasks.episodeCheckHint')}>
         <span style={{ fontSize: 12.5, color: podcastSchedule ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
           {podcastSchedule ? cap(describeCron(podcastSchedule)) : '—'}
         </span>
@@ -231,11 +233,11 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       </Panel>
 
       {/* ── Cron builder & validator ─────────────────────────────────────── */}
-      <Panel label="Cron builder">
+      <Panel label={t('tasks.cronBuilder')}>
 
       <Row
-        label="Build a schedule"
-        hint="Construct a cron expression with the picker. Custom mode accepts raw cron, which you can check against the server."
+        label={t('tasks.buildSchedule')}
+        hint={t('tasks.buildScheduleHint')}
         align="top"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
@@ -256,7 +258,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
                 opacity: cronChecking || !cronInput.trim() ? 0.45 : 1,
               }}
             >
-              Validate
+              {t('tasks.validate')}
             </button>
           </div>
         </div>

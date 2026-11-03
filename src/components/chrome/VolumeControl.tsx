@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import Icon from '../Icon';
 // muteAudio/unmuteAudio pair the LibVLC command with st.setMuted so
@@ -14,6 +15,7 @@ export interface VolumeControlProps {
 }
 
 export default function VolumeControl({ st, compact, style }: VolumeControlProps) {
+  const { t } = useI18n();
   const v = st.muted ? 0 : st.volume;
   const mono = "'JetBrains Mono', ui-monospace, monospace";
 
@@ -35,7 +37,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
         onClick={() => st.muted ? unmuteAudio(st) : muteAudio(st)}
         aria-label={st.muted ? 'Unmute' : 'Mute'}
         style={{ background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 2, display: 'flex' }}
-        title="Mute"
+        title={t('volume.mute')}
       >
         <Icon name={st.muted || st.volume < 0.01 ? 'volume-mute' : 'volume'} size={15} />
       </button>
@@ -53,7 +55,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
         }} />
         <input
           type="range" min={0} max={100} value={Math.round(v * 100)}
-          aria-label="Volume"
+          aria-label={t('volume.volume')}
           onChange={onChange}
           style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer' }}
         />

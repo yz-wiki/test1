@@ -4,6 +4,7 @@
 // in its download-then-play flow. A "Download…" picker queues selected
 // not-yet-downloaded episodes. Reached from PodcastBrowse via setScreen('podcast').
 import { useState, useEffect } from 'react';
+import { useI18n } from '../i18n';
 import type { OnyxState, LibraryItem } from '../state/onyx';
 import { fmtRemaining, fmtTime } from '../state/onyx';
 import { asPodcastItem, fetchItem, type PodcastEpisode, type RecentEpisode } from '../api/abs';
@@ -37,6 +38,7 @@ function episodeTime(ep: PodcastEpisode): number {
 }
 
 export default function PodcastDetail({ st }: PodcastDetailProps) {
+  const { t } = useI18n();
   const mono = "'JetBrains Mono', ui-monospace, monospace";
   const [showSettings, setShowSettings] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
@@ -107,7 +109,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
   if (!item) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 13 }}>
-        Podcast not found.
+        {t('podDetail.notFound')}
       </div>
     );
   }
@@ -147,7 +149,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       st.setScreen('player');
     } catch (e) {
       log.error('playback', 'playEpisode failed', { itemId: item.id, episodeId: ep.id, err: String(e) });
-      st.setToast({ message: 'Could not start episode', type: 'error' });
+      st.setToast({ message: t('toastMsg.episodeStartFailed'), type: 'error' });
     }
   };
 
@@ -182,7 +184,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
           fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)', padding: 0,
         }}
       >
-        <Icon name="chevron-left" size={14} /> LIBRARY
+        <Icon name="chevron-left" size={14} /> {t('podDetail.library')}
       </button>
 
       {/* Header */}
@@ -197,7 +199,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
           {meta.author && <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)' }}>{meta.author}</div>}
           <div style={{ fontFamily: mono, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
             {episodes.length} episode{episodes.length === 1 ? '' : 's'}
-            {pendingCount > 0 ? ` · ${pendingCount} not downloaded` : ''}
+            {pendingCount > 0 ? ` · ${t('podDetail.pending', { count: pendingCount })}` : ''}
             {meta.explicit ? ' · explicit' : ''}
           </div>
           {meta.feedUrl && (
@@ -243,7 +245,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                 setAdvanceDir(next);
                 if (st.podcastDetailId) setEpisodeDirection(st.podcastDetailId, next);
               }}
-              title="Which episode plays after this one, when continuation is on (Settings → Playback)"
+              title={t('podDetail.orderHint')}
               style={{
                 padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
                 background: 'transparent', color: 'var(--onyx-text-dim)',
@@ -259,7 +261,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
         {episodes.length === 0 && (
           <div style={{ color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 12, padding: '16px 0' }}>
-            No episodes found in the feed.
+            {t('podDetail.noEpisodes')}
           </div>
         )}
         {episodes.map(({ ep, downloaded }) => {
@@ -302,8 +304,8 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                 <div style={{ fontFamily: mono, fontSize: 10.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 2, display: 'flex', gap: 10 }}>
                   {date && <span>{date}</span>}
                   {dur > 0 && <span>{fmtRemaining(dur)}</span>}
-                  {!downloaded ? <span style={{ color: 'var(--onyx-text-mute)' }}>not downloaded</span>
-                    : finished ? <span style={{ color: 'var(--onyx-accent)' }}>finished</span>
+                  {!downloaded ? <span style={{ color: 'var(--onyx-text-mute)' }}>{t('podDetail.notDownloaded')}</span>
+                    : finished ? <span style={{ color: 'var(--onyx-accent)' }}>{t('podDetail.finished')}</span>
                     : pct > 0 ? <span>{fmtTime((mp?.currentTime ?? 0))} · {pct}%</span> : null}
                 </div>
                 {pct > 0 && !finished && (

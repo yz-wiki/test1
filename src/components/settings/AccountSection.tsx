@@ -400,7 +400,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               value={displayName}
               readOnly
               disabled
-              title="Name is managed by your Audiobookshelf server"
+              title={t('accountMod.nameManagedTitle')}
               style={{
                 padding: '8px 12px',
                 minWidth: 200,
@@ -445,7 +445,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                 opacity: isGuest ? 0.45 : 1,
               }}
             >
-              Change password
+              {t('accountMod.changePassword')}
             </button>
           </Row>
         </>

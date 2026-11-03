@@ -10,6 +10,7 @@ import Icon from './Icon';
 import ContextMenu from './ContextMenu';
 import { buildItemContextMenu } from './shelf/buildItemContextMenu';
 import { getContinueListening } from '../api/abs';
+import { useI18n } from '../i18n';
 import { playBook, togglePlayback } from '../api/playbook';
 import { log } from '../lib/log';
 
@@ -21,6 +22,7 @@ export interface PickItUpProps {
 }
 
 export default function PickItUp({ st }: PickItUpProps) {
+  const { t } = useI18n();
   const [continueItems, setContinueItems] = useState<LibraryItem[]>([]);
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export default function PickItUp({ st }: PickItUpProps) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '0 4px 12px' }}>
         <button
           onClick={() => st.setPickItUpCollapsed(!st.pickItUpCollapsed)}
-          title={st.pickItUpCollapsed ? 'Expand Pick it up' : 'Collapse Pick it up'}
+          title={st.pickItUpCollapsed ? t('pickUp.expand') : t('pickUp.collapse')}
           style={{ display: 'flex', alignItems: 'baseline', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', color: 'inherit' }}
         >
           <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -136,7 +138,7 @@ export default function PickItUp({ st }: PickItUpProps) {
             }}>
               <Icon name="chevron-down" size={13} />
             </span>
-            Pick it up
+            {t('pickUp.heading')}
           </div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {continueItems.length} in progress

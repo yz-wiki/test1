@@ -4,6 +4,7 @@
 // adds the nav-level guard; this component returns null as a safety net).
 
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n';
 import { SectionHead, MONO, SERIF, Panel } from './shared';
 import type { OnyxState } from '../../state/onyx';
 import {
@@ -33,6 +34,7 @@ export interface LibrariesSectionProps {
 }
 
 export default function LibrariesSection({ st, embedded = false }: LibrariesSectionProps) {
+  const { t } = useI18n();
   const isAdmin = st.isAdmin;
 
   const [libraries, setLibraries] = useState<Library[]>([]);
@@ -150,13 +152,13 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
     <div>
       {!embedded && (
         <SectionHead
-          title="Libraries"
+          title={t('libs.title')}
           subtitle="Manage libraries on your Audiobookshelf server."
         />
       )}
 
       <Panel
-        label="Libraries"
+        label={t('libs.title')}
         action={!createMode ? (
           <SmallBtn onClick={() => { setCreateMode(true); setEditTarget(null); setDeleteTarget(null); }}>
             + New Library
@@ -176,7 +178,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
             fontFamily: SERIF, fontSize: 14, fontWeight: 500,
             color: 'var(--onyx-text-dim)',
           }}>
-            New Library
+            {t('libs.newLibrary')}
           </div>
           <LibraryForm
             initial={DEFAULT_FORM}
@@ -207,7 +209,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
         <div>
           {libraries.length === 0 && !createMode && (
             <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: '12px 0' }}>
-              No libraries found.
+              {t('libs.empty')}
             </div>
           )}
 
@@ -243,7 +245,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                           muted
                           onClick={() => handleScan(lib)}
                           disabled={isScanning}
-                          title="Trigger incremental scan"
+                          title={t('libs.scan')}
                         >
                           {isScanning ? 'Scanning…' : 'Scan'}
                         </SmallBtn>
@@ -265,7 +267,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                             setCreateMode(false);
                           }}
                         >
-                          Delete
+                          {t('libs.delete')}
                         </SmallBtn>
                       </div>
                     )}
@@ -301,7 +303,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                         Files on disk are <strong>not</strong> deleted. This cannot be undone.
                       </div>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <SmallBtn muted onClick={() => setDeleteTarget(null)}>Cancel</SmallBtn>
+                        <SmallBtn muted onClick={() => setDeleteTarget(null)}>{t('libs.cancel')}</SmallBtn>
                         <SmallBtn danger onClick={handleDelete} disabled={deletePending}>
                           {deletePending ? 'Deleting…' : 'Delete Library'}
                         </SmallBtn>

@@ -259,7 +259,7 @@ export default function UserModal({
 
         {/* Email — full width */}
         <div>
-          <div style={fieldLabel}>{t('userModal.email')}<span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>(optional)</span></div>
+          <div style={fieldLabel}>{t('userModal.email')}<span style={{ textTransform: 'none', letterSpacing: '0.04em', fontWeight: 400 }}>{t('userModal.optional')}</span></div>
           <input
             style={fieldInput}
             type="email"
@@ -275,8 +275,8 @@ export default function UserModal({
           <div>
             <div style={fieldLabel}>{t('userModal.accountType')}</div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Pill active={userType === 'user'} onClick={() => setUserType('user')}>user</Pill>
-              <Pill active={userType === 'admin'} onClick={() => setUserType('admin')}>admin</Pill>
+              <Pill active={userType === 'user'} onClick={() => setUserType('user')}>{t('userModal.roleUser')}</Pill>
+              <Pill active={userType === 'admin'} onClick={() => setUserType('admin')}>{t('userModal.roleAdmin')}</Pill>
             </div>
           </div>
           <div>

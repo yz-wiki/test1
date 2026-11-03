@@ -121,7 +121,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
       setNewType('book');
     } catch (e) {
       log.error('library', 'create local library failed', { err: String(e) });
-      st.setToast({ message: 'Could not create library', type: 'error' });
+      st.setToast({ message: t('localLib.createFailed'), type: 'error' });
     } finally {
       setBusy(null);
     }
@@ -134,10 +134,10 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
       const count = await scanLocalLibrary(lib.id);
       // If the rescanned library is the active one, reload its items into the shelf.
       if (st.currentLibraryId === lib.id) await st.setActiveLibrary(lib.id);
-      st.setToast({ message: `Rescanned "${lib.name}" — ${count} item${count === 1 ? '' : 's'}`, type: 'success' });
+      st.setToast({ message: t('localLib.rescanned', { name: lib.name, count }), type: 'success' });
     } catch (e) {
       log.error('library', 'rescan local library failed', { err: String(e) });
-      st.setToast({ message: 'Rescan failed', type: 'error' });
+      st.setToast({ message: t('localLib.rescanFailed'), type: 'error' });
     } finally {
       setBusy(null);
     }
@@ -152,10 +152,10 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
         try {
           await deleteLocalLibrary(lib.id);
           await st.refreshLibrary();
-          st.setToast({ message: `Removed "${lib.name}"`, type: 'info' });
+          st.setToast({ message: t('localLib.removed', { name: lib.name }), type: 'info' });
         } catch (e) {
           log.error('library', 'remove local library failed', { err: String(e) });
-          st.setToast({ message: 'Could not remove library', type: 'error' });
+          st.setToast({ message: t('localLib.removeFailed'), type: 'error' });
         }
       },
     });
@@ -321,7 +321,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                   </div>
                   <div style={{ marginTop: 2, fontSize: 10.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>{lib.name} · unidentified</div>
                 </div>
-                <button onClick={() => setMatchTarget({ libId: lib.id, item })} style={btn()}>Match…</button>
+                <button onClick={() => setMatchTarget({ libId: lib.id, item })} style={btn()}>{t('localLib.match')}</button>
               </div>
             )),
           )}

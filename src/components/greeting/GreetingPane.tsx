@@ -288,7 +288,7 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
 
       {/* 7-day sparkline */}
       <div>
-        <SubHead>Minutes listening · last 7 days</SubHead>
+        <SubHead>{t('greeting.minutesLast7')}</SubHead>
         <SparkBars data={last7} />
         {/* 4-up summary row below the sparkline — centered with even gaps */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 14 }}> {/* centered, gap: 24 */}

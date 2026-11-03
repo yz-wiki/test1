@@ -2,6 +2,7 @@
 // per-library settings block).
 // Moved verbatim out of LibrariesSection.tsx (God-File Decomposition roadmap, L3/L7).
 import { useState, type ReactNode } from 'react';
+import { useI18n } from '../../../i18n';
 import { MONO } from '../shared';
 import {
   LIBRARY_ICONS,
@@ -24,6 +25,7 @@ export interface LibraryFormProps {
 }
 
 export default function LibraryForm({ initial, lockMediaType = false, onSubmit, onCancel, submitLabel, serverUrl, customProviders }: LibraryFormProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState<FormState>(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -99,7 +101,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
     <div style={{ padding: '18px 20px', background: 'rgba(0,0,0,0.18)' }}>
 
       {fRow('Name', (
-        <Field value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="Library name" />
+        <Field value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder={t('libForm.namePlaceholder')} />
       ))}
 
       {!lockMediaType && fRow('Media type', (
@@ -136,7 +138,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
             flex: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            Folders
+            {t('libForm.folders')}
           </div>
           <button
             onClick={addFolder}
@@ -151,10 +153,10 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {form.folders.map((fp, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <Field value={fp} onChange={v => updateFolder(i, v)} placeholder="/path/to/folder" mono />
+              <Field value={fp} onChange={v => updateFolder(i, v)} placeholder={t('libForm.pathPlaceholder')} mono />
               <button
                 onClick={() => browseFolder(i)}
-                title="Browse server filesystem"
+                title={t('libForm.browse')}
                 style={{
                   flexShrink: 0, padding: '7px 10px',
                   background: 'rgba(255,255,255,0.05)',
@@ -169,7 +171,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               {form.folders.length > 1 && (
                 <button
                   onClick={() => removeFolder(i)}
-                  title="Remove folder"
+                  title={t('libForm.removeFolder')}
                   style={{
                     width: 28, height: 28, flexShrink: 0, background: 'transparent',
                     border: 'none', color: 'var(--onyx-text-mute)', cursor: 'pointer',
@@ -189,7 +191,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
         marginTop: 14, marginBottom: 4, fontFamily: MONO, fontSize: 9,
         color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase',
       }}>
-        Settings
+        {t('libForm.settings')}
       </div>
 
       {fRow('File watcher', (
@@ -208,7 +210,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
         <Field
           value={form.autoScanCron}
           onChange={v => setForm(f => ({ ...f, autoScanCron: v }))}
-          placeholder="0 2 * * *  (leave blank to disable)"
+          placeholder={t('libForm.cronPlaceholder')}
           mono
         />
       ))}
@@ -245,7 +247,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-        <SmallBtn muted onClick={onCancel}>Cancel</SmallBtn>
+        <SmallBtn muted onClick={onCancel}>{t('libForm.cancel')}</SmallBtn>
         <SmallBtn onClick={handleSubmit} disabled={saving}>
           {saving ? 'Saving…' : submitLabel}
         </SmallBtn>
