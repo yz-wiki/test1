@@ -1,4 +1,5 @@
-import { useState, useEffect, type CSSProperties } from 'react';
+import { useRef, useState, useEffect, type CSSProperties } from 'react';
+import { log } from '../lib/log';
 // convertFileSrc turns an absolute disk path into an asset:// URL that WebView2
 // can fetch directly through Tauri's asset protocol.
 import { convertFileSrc } from '@tauri-apps/api/core';
@@ -30,6 +31,16 @@ export default function Cover({ item, size = 180, scale = 1, fill = false, class
 
   useEffect(() => subscribeCover(item.id, () => setBust(b => b + 1)), [item.id]);
 
+  // A failing cover used to fall through to the generated art in total silence,
+  // which made "the server has no cover" indistinguishable from "the request
+  // failed". Log the first failure per item so a support log can tell them apart.
+  const reportedFailure = useRef(false);
+  const reportCoverFailure = (err: unknown) => {
+    if (reportedFailure.current) return;
+    reportedFailure.current = true;
+    log.warn('library', 'cover fetch failed — using generated art', { itemId: item.id, err: String(err) });
+  };
+
   useEffect(() => {
     let cancelled = false;
     // Remote fallback (podcast feed art the ABS server doesn't store): cache the
@@ -51,7 +62,7 @@ export default function Cover({ item, size = 180, scale = 1, fill = false, class
       if (!item.hasLocalCover) { useRemoteFallback(); return () => { cancelled = true; }; }
       getLocalCover(item.id, bust)
         .then(path => { if (!cancelled) setCoverSrc(path); })
-        .catch(() => { useRemoteFallback(); });
+        .catch(err => { reportCoverFailure(err); useRemoteFallback(); });
       return () => { cancelled = true; };
     }
     // No server configured (standalone) — go straight to the remote fallback.
@@ -62,7 +73,7 @@ export default function Cover({ item, size = 180, scale = 1, fill = false, class
     // the remote feed image instead of re-downloading it on every render.
     getCover(serverUrl, item.id, 400, bust)
       .then(path => { if (!cancelled) setCoverSrc(path); })
-      .catch(() => { useRemoteFallback(); });
+      .catch(err => { reportCoverFailure(err); useRemoteFallback(); });
     return () => { cancelled = true; };
   }, [serverUrl, item.id, item.localPath, item.hasLocalCover, bust, fallbackImageUrl]);
 

@@ -8,12 +8,12 @@
 //
 // Hidden on the Player screen itself (which already owns the full transport) and
 // when nothing is loaded.
-import { useMemo, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import { bookTitle, bookAuthor, fmtTime } from '../../state/onyx';
 import { asPodcastItem, seekAudio } from '../../api/abs';
 import { togglePlayback } from '../../api/playbook';
-import { seekChapter } from '../../lib/chapterNav';
+import { chapterIndexAt, chapterStarts, seekChapter } from '../../lib/chapterNav';
 import { log } from '../../lib/log';
 import { useI18n } from '../../i18n';
 import Cover from '../Cover';
@@ -27,11 +27,34 @@ export interface NowPlayingBarProps {
 
 export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
   const { t } = useI18n();
+  const [chaptersOpen, setChaptersOpen] = useState(false);
+  const chaptersRef = useRef<HTMLDivElement>(null);
+
+  // Dismiss the chapter popover on any click outside it, and on Escape.
+  useEffect(() => {
+    if (!chaptersOpen) return;
+    const onDown = (event: MouseEvent) => {
+      if (chaptersRef.current && !chaptersRef.current.contains(event.target as Node)) {
+        setChaptersOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setChaptersOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [chaptersOpen]);
 
   // Prefer the stable snapshot so the bar survives a library switch; fall back to
   // the active library's derived current book for the in-library case.
   const item = st.playingItem ?? st.currentBook;
   const episode = st.currentEpisode;
+
+  const chapterList = st.currentBookChapters;
+  const starts = useMemo(() => chapterStarts(st), [st.currentBookChapters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const activeChapter = chapterIndexAt(st, st.position);
 
   const progress = useMemo(() => {
     if (st.bookSecs <= 0) return 0;
@@ -138,7 +161,72 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
 
       {/* ── Utilities ─────────────────────────────────────────────────────── */}
       <div className="mac-nowbar__right">
-        <VolumeControl st={st} compact style={{ padding: '2px 6px', background: 'transparent', border: 'none' }} />
+        {chapterList.length > 0 && (
+          <div ref={chaptersRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className={`mac-iconbtn${chaptersOpen ? ' mac-iconbtn--active' : ''}`}
+              onClick={() => setChaptersOpen(open => !open)}
+              title={t('player.selectChapter')}
+              aria-label={t('player.selectChapter')}
+              aria-haspopup="listbox"
+              aria-expanded={chaptersOpen}
+            >
+              <Icon name="list" size={15} />
+            </button>
+            {chaptersOpen && (
+              <div
+                role="listbox"
+                aria-label={t('player.selectChapter')}
+                className="mac-panel mac-scroll"
+                style={{
+                  position: 'absolute',
+                  bottom: 'calc(100% + 10px)',
+                  right: 0,
+                  width: 300,
+                  maxHeight: 320,
+                  overflowY: 'auto',
+                  padding: 6,
+                  zIndex: 120,
+                  background: 'var(--mac-panel-bg-strong)',
+                }}
+              >
+                {chapterList.map((chapter, index) => {
+                  const at = starts[index] ?? 0;
+                  const active = index === activeChapter;
+                  return (
+                    <button
+                      key={`${chapter.n}-${index}`}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className="mac-nav-item"
+                      onClick={() => {
+                        st.setPosition(at);
+                        void seekAudio(at).catch(() => {});
+                        setChaptersOpen(false);
+                      }}
+                      style={active ? { background: 'var(--mac-active)', fontWeight: 600 } : undefined}
+                    >
+                      <span className="mac-nav-item__icon">
+                        <span style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
+                          {index + 1}
+                        </span>
+                      </span>
+                      <span className="mac-nav-item__label">{chapter.t || `#${index + 1}`}</span>
+                      <span className="mac-nav-item__badge" style={{ background: 'transparent' }}>
+                        {fmtTime(at)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        <span className="mac-nowbar__volume" style={{ display: 'inline-flex' }}>
+          <VolumeControl st={st} compact style={{ padding: '2px 6px', background: 'transparent', border: 'none' }} />
+        </span>
         <button
           type="button"
           className="mac-iconbtn"

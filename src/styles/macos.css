@@ -631,7 +631,8 @@ html[data-locale='zh-CN'] body {
 }
 
 .mac-btn:active {
-  transform: scale(0.975);
+  /* No scale: a 2.5% shrink made neighbouring buttons look like they moved. */
+  filter: brightness(0.94);
 }
 
 .mac-btn--primary {
@@ -1210,7 +1211,7 @@ html[data-locale='zh-CN'] body {
 }
 
 .mac-nowbar__play:active {
-  transform: scale(0.94);
+  filter: brightness(0.92);
 }
 
 .mac-nowbar__scrub {
@@ -1240,7 +1241,9 @@ html[data-locale='zh-CN'] body {
 }
 
 .mac-nowbar__track:hover {
-  height: 5px;
+  /* Height deliberately unchanged: growing the track nudged the time labels and
+     the fill by a pixel on every pointer enter/leave. Only the tint shifts. */
+  background: var(--onyx-text-mute);
 }
 
 .mac-nowbar__fill {
@@ -1264,7 +1267,7 @@ html[data-locale='zh-CN'] body {
     grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) auto;
   }
 
-  .mac-nowbar__right > :first-child {
+  .mac-nowbar__volume {
     display: none;
   }
 }

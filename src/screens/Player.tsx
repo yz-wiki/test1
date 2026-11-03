@@ -44,6 +44,14 @@ import { useShellChrome } from '../components/shell/ShellContext';
 import { useI18n } from '../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
+
+/** i18n keys for the four bottom panes, in tab-strip order. */
+const PANE_LABEL_KEY = {
+  details: 'player.details',
+  chapters: 'player.chapters',
+  bookmarks: 'player.bookmarks',
+  synopsis: 'player.synopsis',
+} as const;
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
 
 const transportBtn = (): CSSProperties => ({
@@ -91,7 +99,7 @@ export default function Player({ st }: PlayerProps) {
   // A podcast episode selected from the feed that isn't downloaded yet: it has no
   // ABS episode id, so there's no session to play — the player offers Download.
   const episodePending = isPodcast && !!st.currentEpisode && !st.currentEpisodeId;
-  const detailLabel = isPodcast ? 'Description' : 'Synopsis';
+  const detailLabel = isPodcast ? t('player.description') : t('player.synopsis');
   // Descriptions are remote HTML (ABS metadata / arbitrary podcast RSS) headed
   // for dangerouslySetInnerHTML — sanitize down to basic formatting first.
   // Memoized because the player re-renders on every 1 Hz playback tick.
@@ -818,11 +826,12 @@ export default function Player({ st }: PlayerProps) {
               </>
             )}
 
-            {/* Synopsis — inline in the left column on large windows. On small
-                (compact) windows it moves to its own right-hand pane instead (see
-                the bottom-row tabs), so it never competes with the MiniPlayer. */}
-            {!panesStacked && (
-              <div style={{ marginTop: 24, width: '100%', textAlign: 'left', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {/* Synopsis always lives under the cover, on every window size. It
+                used to jump to a right-hand tab when the window narrowed, which
+                made the page reflow into a different product at the breakpoint.
+                On narrow windows it is height-capped and scrolls instead. */}
+            {(
+              <div style={{ marginTop: panesStacked ? 14 : 24, width: '100%', textAlign: 'left', flex: panesStacked ? '0 1 auto' : 1, maxHeight: panesStacked ? 170 : undefined, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 8 }}>
                   {detailLabel}
                 </div>
@@ -1076,7 +1085,7 @@ export default function Player({ st }: PlayerProps) {
             {/* Stacked-only pill tab strip — switches the single visible pane */}
             {panesStacked && (
               <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexShrink: 0 }}>
-                {(['details', 'chapters', 'bookmarks', 'synopsis'] as const).map(pane => (
+                {(['details', 'chapters', 'bookmarks'] as const).map(pane => (
                   <button
                     key={pane}
                     onClick={() => setActivePane(pane)}
@@ -1094,7 +1103,7 @@ export default function Player({ st }: PlayerProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    {pane === 'synopsis' ? detailLabel : pane[0].toUpperCase() + pane.slice(1)}
+                    {t(PANE_LABEL_KEY[pane])}
                   </button>
                 ))}
               </div>
@@ -1103,7 +1112,7 @@ export default function Player({ st }: PlayerProps) {
             {/* ── Details panel — hidden in compact mode unless selected ── */}
             <div className="mac-panel" style={{ flex: panesStacked ? 1 : '0 0 300px', minWidth: 0, padding: 16, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Details</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.details')}</div>
                 {!isPodcast && !b.localPath && (
                   <button
                     onClick={() => setShowFileInspector(true)}
@@ -1121,7 +1130,7 @@ export default function Player({ st }: PlayerProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    Files &amp; Tracks
+                    {t('player.filesTracks')}
                   </button>
                 )}
               </div>
@@ -1272,7 +1281,7 @@ export default function Player({ st }: PlayerProps) {
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
             <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 16, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Chapters</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.chapters')}</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
                     show the episode duration instead of NaNm. */}
                 <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>{displayChapters.length} · {fmtRemaining(st.bookSecs)} total</div>
@@ -1354,7 +1363,7 @@ export default function Player({ st }: PlayerProps) {
 
               {/* ── Panel header: title + tab switcher + add button ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Bookmarks</div>
+                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.bookmarks')}</div>
 
                 {/* Tab switcher — pill toggles between server bookmarks and local stop points */}
                 <div style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--onyx-line)', overflow: 'hidden', marginLeft: 4 }}>

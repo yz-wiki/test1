@@ -22,6 +22,7 @@ import {
   applyTheme,
   ONYX_DARK_BASE,
   ONYX_FOLIO_BASE,
+  themeBaseFor,
   Theme,
 } from './theme';
 
@@ -394,7 +395,7 @@ function resolveToBase(mode: string): Theme {
       ? ONYX_DARK_BASE
       : ONYX_FOLIO_BASE;
   }
-  return mode === 'light' ? ONYX_FOLIO_BASE : ONYX_DARK_BASE;
+  return themeBaseFor(mode);
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

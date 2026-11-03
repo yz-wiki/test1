@@ -55,6 +55,25 @@ moved is everything around it.
 - CJK-aware typography: a PingFang / YaHei / Noto Sans stack plus looser tracking
   and line-height for Chinese.
 
+### Localisation and playback polish
+- **Settings → Appearance is fully localised** (theme, accent, scale,
+  translucency, every shelf option and tab toggle), as are the Player pane
+  labels and the item context menu.
+- **Synopsis stays under the cover** at every window size. It used to move into a
+  right-hand tab when the window narrowed, which reflowed the page into a
+  different layout at the breakpoint.
+- **Five theme presets**: Onyx, Folio, Midnight, Nord and Sepia, each a complete
+  surface palette rather than an accent swap.
+- **New seek bar**: a rounded capsule with a playhead dot replaces the 140-bar
+  waveform, which read as an equaliser and moiréd when scaled.
+- **Chapter quick-select** in the now-playing bar: a list button opens a chapter
+  list with positions, current chapter highlighted.
+- **No more button drift**: accent swatches no longer change border width on
+  selection, the seek track no longer grows on hover, and buttons no longer scale
+  on press — each of those nudged neighbouring elements by 1–2px.
+- Cover fetch failures are now logged once per item instead of being swallowed,
+  so "server has no cover" and "request failed" stop looking identical.
+
 ### Fixes found by running the 1.3.0 build against a live server
 - **The content area rendered as a black pane.** `OnyxWash` is absolutely
   positioned, so it painted *above* the statically-positioned `.mac-body` and

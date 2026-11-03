@@ -55,6 +55,54 @@ export const ONYX_FOLIO_BASE: Theme = {
   isDark:      false,
 };
 
+// ─── Theme presets ───────────────────────────────────────────────────────────
+//
+// More than "dark or light": each preset is a complete surface palette. The
+// first two are the originals and stay the defaults; the others are deliberately
+// distinct so switching is visible at a glance rather than a nudge in warmth.
+export interface ThemePreset { id: string; label: string; isDark: boolean; palette: Theme }
+
+export const THEME_PRESETS: ThemePreset[] = [
+  { id: 'dark', label: 'Onyx', isDark: true, palette: ONYX_DARK_BASE },
+  { id: 'light', label: 'Folio', isDark: false, palette: ONYX_FOLIO_BASE },
+  {
+    id: 'midnight', label: 'Midnight', isDark: true,
+    palette: {
+      bg: '#16161f', bgDeep: '#101018', panel: '#1e1e2a', panel2: '#262636',
+      line: 'rgba(255,255,255,0.09)',
+      text: '#e9e9f4', textDim: 'rgba(233,233,244,0.62)', textMute: 'rgba(233,233,244,0.36)',
+      glass: 'rgba(255,255,255,0.05)', glassStrong: 'rgba(255,255,255,0.09)', glassEdge: 'rgba(255,255,255,0.10)',
+      isDark: true,
+    },
+  },
+  {
+    id: 'nord', label: 'Nord', isDark: true,
+    palette: {
+      bg: '#2e3440', bgDeep: '#272c36', panel: '#3b4252', panel2: '#434c5e',
+      line: 'rgba(255,255,255,0.10)',
+      text: '#eceff4', textDim: 'rgba(236,239,244,0.66)', textMute: 'rgba(236,239,244,0.40)',
+      glass: 'rgba(255,255,255,0.06)', glassStrong: 'rgba(255,255,255,0.10)', glassEdge: 'rgba(255,255,255,0.12)',
+      isDark: true,
+    },
+  },
+  {
+    id: 'sepia', label: 'Sepia', isDark: false,
+    palette: {
+      bg: '#f4efe4', bgDeep: '#ebe4d4', panel: '#fbf7ee', panel2: '#f1ead9',
+      line: 'rgba(58,49,38,0.12)',
+      text: '#3a3126', textDim: 'rgba(58,49,38,0.66)', textMute: 'rgba(58,49,38,0.42)',
+      glass: 'rgba(255,252,245,0.66)', glassStrong: 'rgba(255,252,245,0.86)', glassEdge: 'rgba(58,49,38,0.12)',
+      isDark: false,
+    },
+  },
+];
+
+/** Palette for a stored theme id. Unknown ids fall back to the dark default so a
+ *  removed preset can never leave the window unstyled. */
+export function themeBaseFor(mode: string): Theme {
+  return THEME_PRESETS.find(preset => preset.id === mode)?.palette ?? ONYX_DARK_BASE;
+}
+
 // ─── Accent presets ──────────────────────────────────────────────────────────
 //
 // The macOS system colour set, plus Skald's own gold as the brand default. Kept
