@@ -14,7 +14,7 @@ import type { IconName } from '../Icon';
 import { useI18n } from '../../i18n';
 import type { TranslationKey } from '../../i18n';
 import { togglePlayback } from '../../api/playbook';
-import { seekAudio } from '../../api/abs';
+import { seekChapter } from '../../lib/chapterNav';
 import { libraryDisplayLabel } from '../../lib/libraryPresentation';
 import { log } from '../../lib/log';
 
@@ -64,29 +64,9 @@ export default function CommandPalette({ st, open, onClose, onToggleSidebar }: C
     return () => cancelAnimationFrame(frame);
   }, [open]);
 
-  // Chapter entries in OnyxState carry { n, title, duration } only — absolute
-  // start offsets are derived by accumulating durations, which is also how the
-  // rest of the app positions its chapter list.
-  const chapterSeek = (direction: 1 | -1) => {
-    const chapters = st.currentBookChapters;
-    if (!chapters.length) return;
-    const starts: number[] = [];
-    let cursor = 0;
-    for (const chapter of chapters) {
-      starts.push(cursor);
-      cursor += chapter.dur;
-    }
-    let index = -1;
-    for (let i = 0; i < starts.length; i += 1) {
-      if (st.position >= starts[i]) index = i;
-    }
-    const target = index + direction;
-    if (target < 0 || target >= starts.length) return;
-    const at = starts[target];
-    st.setPosition(at);
-    void seekAudio(at).catch(error =>
-      log.warn('playback', 'palette chapter seek failed', { err: String(error) }));
-  };
+  // Shared with the now-playing bar (lib/chapterNav) so both seek to the same
+  // offset for "next chapter".
+  const chapterSeek = (direction: 1 | -1) => { seekChapter(st, direction); };
 
   const commands = useMemo<Command[]>(() => {
     const list: Command[] = [];

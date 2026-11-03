@@ -15,7 +15,6 @@ import { PlaylistsView } from '../components/shelf/tabs';
 import { GenresView } from '../components/shelf/tabs';
 import { PublishersView } from '../components/shelf/tabs';
 import PodcastBrowse from '../components/podcast/PodcastBrowse';
-import MiniPlayer from '../components/player/MiniPlayer';
 import { prefetchReviews } from '../api/reviewCache';
 import { shelfTabForSource } from '../lib/shelfTabs';
 import { recentlyAddedItems } from '../lib/recentlyAdded';
@@ -54,14 +53,12 @@ export default function Library({ st }: LibraryProps) {
   // ── The "In focus" left column (shared by the book + podcast views) ──────────
   // Top: FocusPanel when a *book* is playing in the active library, else the
   // GreetingPane (FocusPanel is book-specific, so podcasts always use Greeting).
-  // Bottom: the MiniPlayer, docked whenever the user has navigated away from the
-  // now-playing item — into another library, or into a podcast library where the
-  // Focus panel can't represent the playing episode — so playback stays
-  // controllable without returning to the original library.
+  // The old per-screen MiniPlayer that used to dock under this card is gone: the
+  // shell's persistent now-playing bar covers exactly the same case (playback
+  // continuing while you browse elsewhere) without occupying shelf width.
   const playingIsPodcast = !!st.currentEpisode;
   const playingBookInLib = !!st.currentBookId && st.library.some(b => b.id === st.currentBookId);
   const showFocus = playingBookInLib && !playingIsPodcast;
-  const showMini = !!st.playingItem && !!st.currentBookId && !showFocus;
 
   const focusColumn = (
     <div style={{
@@ -76,14 +73,11 @@ export default function Library({ st }: LibraryProps) {
       // the collapsed FocusPanel rail (76px) still shrinks the column to fit.
       maxWidth: 360,
     }}>
-      {/* Host stretches the Focus/Greeting card to the available height; the
-          MiniPlayer (when shown) docks below it at the column's width. */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {showFocus
           ? <FocusPanel st={st} />
           : <GreetingPane st={st} name={st.user?.username || st.localDisplayName || 'Reader'} />}
       </div>
-      {showMini && <MiniPlayer st={st} force />}
     </div>
   );
 

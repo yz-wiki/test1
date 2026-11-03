@@ -17,6 +17,13 @@ moved is everything around it.
 - **Unified titlebar**: the destination is the primary label, the current library
   or book count the subtitle, with offline and unencrypted-connection badges
   inline.
+- **Persistent now-playing bar** docked at the bottom of every screen except the
+  Player: cover, title, transport, scrub line with 30-second arrow-key steps, and
+  volume. Playback no longer requires navigating back to a player, and the old
+  per-screen MiniPlayer is gone.
+- The Player screen's panels now use the shared macOS surface instead of the
+  legacy glass cards, and its back-link gives way to the sidebar when one is
+  showing.
 - **Command palette** (`Ctrl+K` / `⌘K`) reaching every screen, every library,
   every settings pane, plus transport actions (play/pause, chapter skip),
   appearance toggle, sidebar toggle and language switch.

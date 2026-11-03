@@ -19,7 +19,6 @@ import {
   SPEEDS, chapterAt, chapterStart, fmtTime, fmtRemaining,
   bookTitle, bookAuthor, bookSeries, bookNarrator, bookDur, bookChapters,
 } from '../state/onyx';
-import Glass from '../components/chrome/Glass';
 import Cover from '../components/Cover';
 import Icon from '../components/Icon';
 import Waveform from '../components/Waveform';
@@ -41,6 +40,8 @@ import { chapterContinuityEnabled } from '../lib/upNextPrefs';
 import { railRow } from '../components/player/RailRow';
 import { SLEEP_OPTIONS, parseSleepDefault, type SleepMode } from '../components/player/sleep';
 import FileTrackInspectorModal from '../components/player/FileTrackInspectorModal';
+import { useShellChrome } from '../components/shell/ShellContext';
+import { useI18n } from '../i18n';
 
 const SERIF = '"Source Serif 4", "Iowan Old Style", Georgia, serif';
 const MONO = "'JetBrains Mono', ui-monospace, monospace";
@@ -64,6 +65,11 @@ export interface PlayerProps {
 }
 
 export default function Player({ st }: PlayerProps) {
+  const { t } = useI18n();
+  // With a sidebar the breadcrumb is redundant chrome — the source list already
+  // says where you are — but the series label and the audio controls in this row
+  // are still useful, so only the back-link is dropped.
+  const chrome = useShellChrome();
   // Metadata derives from the focused book; playback position/state stays on currentBook.
   const b = st.focusedBook ?? st.currentBook;
   if (!b) return null;
@@ -755,10 +761,14 @@ export default function Player({ st }: PlayerProps) {
     <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 32px 24px', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: isCompact ? 8 : 18, /* Reduced in compact mode — volume/device controls move to transport bar */ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
-        <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
-          <Icon name="chevron-left" size={12} /> Library
-        </button>
-        <span>·</span>
+        {!chrome.hasSidebar && (
+          <>
+            <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
+              <Icon name="chevron-left" size={12} /> {t('misc.library')}
+            </button>
+            <span>·</span>
+          </>
+        )}
         <span>{bSeries}</span>
         {/* Volume and device controls — hidden in compact mode, they move to the transport bar */}
         {!isCompact && (
@@ -838,7 +848,7 @@ export default function Player({ st }: PlayerProps) {
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
 
-          <Glass translucent={st.translucent} style={{
+          <div className="mac-panel" style={{
             padding: (isFocusedDifferent && !showTransport) ? '14px 26px' : 26,
             maxHeight: (isFocusedDifferent && !showTransport) ? 68 : 700,
             overflow: 'hidden',
@@ -1054,7 +1064,7 @@ export default function Player({ st }: PlayerProps) {
             </div>
             </div>
             )}
-          </Glass>
+          </div>
 
           {/* Bottom row — three columns when wide enough, single tabbed pane when narrow */}
           <div ref={bottomRowRef} style={{ flex: 1, display: 'flex', flexDirection: panesStacked ? 'column' : 'row', gap: panesStacked ? 0 : 18, minHeight: 0, overflow: 'hidden' }}>
@@ -1087,7 +1097,7 @@ export default function Player({ st }: PlayerProps) {
             )}
 
             {/* ── Details panel — hidden in compact mode unless selected ── */}
-            <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Details</div>
                 {!isPodcast && !b.localPath && (
@@ -1253,10 +1263,10 @@ export default function Player({ st }: PlayerProps) {
               {showFileInspector && !isPodcast && !b.localPath && (
                 <FileTrackInspectorModal item={b} st={st} onClose={() => setShowFileInspector(false)} />
               )}
-            </Glass>
+            </div>
 
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
-            <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>Chapters</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
@@ -1333,10 +1343,10 @@ export default function Player({ st }: PlayerProps) {
                   );
                 })}
               </div>
-            </Glass>
+            </div>
 
             {/* ── Bookmarks panel — hidden in compact mode unless selected ── */}
-            <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
               {/* ── Panel header: title + tab switcher + add button ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -1428,11 +1438,11 @@ export default function Player({ st }: PlayerProps) {
                   })
                 )}
               </div>
-            </Glass>
+            </div>
 
             {/* ── Synopsis panel — compact-only tab; on large windows the synopsis
                 renders inline in the left column instead, so this stays hidden. ── */}
-            <Glass translucent={st.translucent} style={{ flex: 1, minWidth: 0, padding: 20, display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div className="mac-panel" style={{ flex: 1, minWidth: 0, padding: 20, display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
               <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 12 }}>{detailLabel}</div>
               <div style={{ flex: 1, overflowY: 'auto', marginRight: -8, paddingRight: 8 }}>
                 {descriptionHtml ? (
@@ -1445,7 +1455,7 @@ export default function Player({ st }: PlayerProps) {
                   <div style={{ fontSize: 13, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{noDescText}</div>
                 )}
               </div>
-            </Glass>
+            </div>
 
           </div>
         </div>

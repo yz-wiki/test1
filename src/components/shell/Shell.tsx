@@ -16,6 +16,7 @@ import ActivityCenter from '../ActivityCenter';
 import OnyxWash from '../chrome/OnyxWash';
 import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
+import NowPlayingBar from './NowPlayingBar';
 import { ShellChromeContext } from './ShellContext';
 import { useI18n } from '../../i18n';
 import { libraryDisplayLabel } from '../../lib/libraryPresentation';
@@ -117,6 +118,11 @@ export default function Shell({ st, children }: ShellProps) {
           )}
           <main className="mac-content">
             <div className="mac-content__inner">{children}</div>
+            {/* Playback stays reachable from every screen. The Player screen
+                already owns the full transport, so the bar steps aside there. */}
+            {st.screen !== 'player' && (
+              <NowPlayingBar st={st} onExpand={() => st.setScreen('player')} />
+            )}
           </main>
         </div>
 
