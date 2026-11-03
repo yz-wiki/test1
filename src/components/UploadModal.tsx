@@ -5,6 +5,7 @@
 // scan the new item in (Skald's library-item-added socket listener then adds
 // it to the shelf without a manual refresh).
 import { useState, useRef, useEffect } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -68,6 +69,7 @@ export interface UploadModalProps {
 }
 
 export default function UploadModal({ st, onClose }: UploadModalProps) {
+  const { t } = useI18n();
   const lib = st.activeLibrary;
   const isPodcast = lib?.mediaType === 'podcast';
   // Folders with a server-assigned id are the only valid upload destinations.
@@ -240,7 +242,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
             </div>
           </div>
           <button
-            aria-label="Close upload"
+            aria-label={t('upload.close')}
             onClick={() => { if (!uploading) onClose(); }}
             disabled={uploading}
             style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}
@@ -253,10 +255,10 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {/* Pickers */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => void pickFiles()} disabled={uploading} style={{ ...pickerBtn, opacity: uploading ? 0.4 : 1, cursor: uploading ? 'default' : 'pointer' }}>
-              <Icon name="plus" size={12} /> Add files
+              <Icon name="plus" size={12} /> {t('upload.addFiles')}
             </button>
             <button onClick={() => void pickFolder()} disabled={uploading} style={{ ...pickerBtn, opacity: uploading ? 0.4 : 1, cursor: uploading ? 'default' : 'pointer' }}>
-              <Icon name="plus" size={12} /> Add folder
+              <Icon name="plus" size={12} /> {t('upload.addFolder')}
             </button>
           </div>
 
@@ -272,7 +274,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                     {!uploading && (
                       <button
                         onClick={() => setFiles(prev => prev.filter(x => x.path !== f.path))}
-                        title="Remove"
+                        title={t('upload.remove')}
                         style={{ flexShrink: 0, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'var(--onyx-text-mute)', fontSize: 11, cursor: 'pointer', padding: 0, lineHeight: 1 }}
                       >✕</button>
                     )}
@@ -300,20 +302,20 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {!isPodcast && (
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Author</label>
+                <label style={labelStyle}>{t('upload.author')}</label>
                 <input
                   type="text" value={author} onChange={e => setAuthor(e.target.value)} disabled={uploading}
-                  placeholder="Author…"
+                  placeholder={t('upload.authorPlaceholder')}
                   onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
                   style={fieldStyle}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Series</label>
+                <label style={labelStyle}>{t('upload.series')}</label>
                 <input
                   type="text" value={series} onChange={e => setSeries(e.target.value)} disabled={uploading}
-                  placeholder="Series…"
+                  placeholder={t('upload.seriesPlaceholder')}
                   onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
                   style={fieldStyle}
@@ -326,7 +328,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
               exactly one; radio-style rows when there is a real choice. */}
           {folders.length > 1 && (
             <div>
-              <label style={labelStyle}>Server folder</label>
+              <label style={labelStyle}>{t('upload.serverFolder')}</label>
               <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 8, overflow: 'hidden' }}>
                 {folders.map(f => {
                   const active = f.id === folderId;
@@ -354,7 +356,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           )}
           {folders.length === 0 && (
             <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>
-              This library has no folders to upload into.
+              {t('upload.noFolders')}
             </div>
           )}
 
@@ -384,7 +386,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                 <button
                   onClick={() => { if (uploadIdRef.current) void cancelUpload(uploadIdRef.current).catch(e => log.error('library', 'cancelUpload failed', { err: String(e) })); }}
                   style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 12px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
-                >Cancel</button>
+                >{t('upload.cancel')}</button>
               </div>
             </div>
           ) : (
@@ -392,7 +394,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
               <button
                 onClick={onClose}
                 style={{ flex: 1, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '9px 14px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
-              >Cancel</button>
+              >{t('upload.cancel')}</button>
               <button
                 onClick={() => void startUpload()}
                 disabled={!canStart}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../i18n';
 import type { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import type { LibraryItem, OnyxState } from '../state/onyx';
@@ -57,6 +58,7 @@ async function copy(text: string, st: OnyxState, label: string): Promise<void> {
  * Both surface a copyable public URL and a revoke/close action.
  */
 export default function ShareModal({ item, st, onClose }: ShareModalProps) {
+  const { t } = useI18n();
   const dialogRef = useModalFocus<HTMLDivElement>(onClose);
   const title = item.media?.metadata?.title ?? item.id;
   const canShare = item.mediaType === 'book'; // podcast-episode shares not yet supported
@@ -249,7 +251,7 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const UrlRow = ({ url, lbl }: { url: string; lbl: string }) => (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <input readOnly value={url} style={{ ...input, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)' }} onFocus={e => e.currentTarget.select()} />
-      <button onClick={() => void copy(url, st, lbl)} style={ghostBtn}>Copy</button>
+      <button onClick={() => void copy(url, st, lbl)} style={ghostBtn}>{t('share.copy')}</button>
     </div>
   );
 
@@ -265,14 +267,14 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
             <div id="share-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Share &amp; Publish</div>
             <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{title}</div>
           </div>
-          <button onClick={onClose} aria-label="Close sharing" style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1, transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
+          <button onClick={onClose} aria-label={t('share.close')} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1, transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
         </div>
         <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>
           {/* ── Public share link ── */}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>Public share link</div>
+            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.publicLink')}</div>
             {!canShare ? (
               <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', lineHeight: 1.5 }}>
                 Share links are available for book items only. Sharing an individual podcast episode is not yet supported.
@@ -285,25 +287,25 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
                     {share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleString()}` : 'Never expires'}
                     {share.isDownloadable ? ' · downloadable' : ''}
                   </div>
-                  <button onClick={doRevokeShare} disabled={shareBusy} style={dangerBtn}>Revoke</button>
+                  <button onClick={doRevokeShare} disabled={shareBusy} style={dangerBtn}>{t('share.revoke')}</button>
                 </div>
               </>
             ) : (
               <>
                 <div>
-                  <div style={label}>Slug</div>
+                  <div style={label}>{t('share.slug')}</div>
                   <input value={slug} onChange={e => { setSlug(e.target.value); setShareError(null); }} style={{ ...input, fontFamily: MONO }} placeholder="my-book" />
                 </div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 140 }}>
-                    <div style={label}>Expires</div>
+                    <div style={label}>{t('share.expires')}</div>
                     <select value={expiryIdx} onChange={e => setExpiryIdx(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                       {EXPIRY_OPTIONS.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
                     </select>
                   </div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', cursor: 'pointer', paddingBottom: 8 }}>
                     <input type="checkbox" checked={downloadable} onChange={e => setDownloadable(e.target.checked)} />
-                    Allow download
+                    {t('share.allowDownload')}
                   </label>
                 </div>
                 <button onClick={() => void doCreateShare()} disabled={shareBusy || !slug.trim() || !mediaId} style={{ ...primaryBtn, alignSelf: 'flex-start', opacity: shareBusy || !slug.trim() || !mediaId ? 0.6 : 1 }}>
@@ -328,18 +330,18 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
 
           {/* ── RSS feed ── */}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>RSS feed</div>
+            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.rss')}</div>
             {feedLoading ? (
               <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>Checking…</div>
             ) : feed ? (
               <>
                 <UrlRow url={absoluteFeedUrl(feed.serverAddress, feed.feedUrl, st.serverUrl)} lbl="Feed URL" />
-                <button onClick={doCloseFeed} disabled={feedBusy} style={{ ...dangerBtn, alignSelf: 'flex-start' }}>Close feed</button>
+                <button onClick={doCloseFeed} disabled={feedBusy} style={{ ...dangerBtn, alignSelf: 'flex-start' }}>{t('share.closeFeed')}</button>
               </>
             ) : (
               <>
                 <div>
-                  <div style={label}>Feed slug</div>
+                  <div style={label}>{t('share.feedSlug')}</div>
                   <input value={feedSlug} onChange={e => setFeedSlug(e.target.value)} style={{ ...input, fontFamily: MONO }} placeholder="my-feed" />
                 </div>
                 <button onClick={() => void doOpenFeed()} disabled={feedBusy || !feedSlug.trim()} style={{ ...primaryBtn, alignSelf: 'flex-start', opacity: feedBusy || !feedSlug.trim() ? 0.6 : 1 }}>

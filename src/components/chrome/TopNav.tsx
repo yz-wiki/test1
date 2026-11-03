@@ -196,7 +196,7 @@ export default function TopNav({ st }: TopNavProps) {
             <div
               id="onyx-library-listbox"
               role="listbox"
-              aria-label="Choose library"
+              aria-label={t('topNav.chooseLibrary')}
               onKeyDown={(event) => handleListboxKey(event, libOptionRefs.current, () => setLibMenuOpen(false), libTriggerRef.current)}
               style={{
               position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 100, minWidth: 220,
@@ -257,7 +257,7 @@ export default function TopNav({ st }: TopNavProps) {
         {!st.libraries.some(l => l.source === 'local') && (
           <button
             onClick={openLocalLibrarySetup}
-            title="Create a library from audiobooks on this PC"
+            title={t('topNav.createLocalLibrary')}
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'transparent', color: 'var(--onyx-text-dim)',
@@ -266,7 +266,7 @@ export default function TopNav({ st }: TopNavProps) {
             }}
           >
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}><Icon name="plus" size={14} /></span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Add local library</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.addLocalLibrary')}</span>
           </button>
         )}
         {/* Local book libraries share the same Files / Folder / Staging import
@@ -274,7 +274,7 @@ export default function TopNav({ st }: TopNavProps) {
         {st.activeLibrary?.source === 'local' && st.activeLibrary?.mediaType !== 'podcast' && (
           <button
             onClick={() => setLocalImportOpen(true)}
-            title="Add books to this library"
+            title={t('topNav.addBooksHint')}
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
@@ -285,7 +285,7 @@ export default function TopNav({ st }: TopNavProps) {
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
               <Icon name="plus" size={15} />
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Add books</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.addBooks')}</span>
           </button>
         )}
         {/* Upload — ABS libraries, users with the upload permission (admin/root
@@ -294,7 +294,7 @@ export default function TopNav({ st }: TopNavProps) {
         {st.activeLibrary && st.activeLibrary.source !== 'local' && st.activeLibrary.source !== 'all' && st.canUpload && (
           <button
             onClick={() => setUploadOpen(true)}
-            title="Upload audiobooks to the server"
+            title={t('topNav.uploadHint')}
             style={{
               display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
               background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
@@ -305,7 +305,7 @@ export default function TopNav({ st }: TopNavProps) {
             <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
               <Icon name="upload" size={15} />
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>Upload</span>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.upload')}</span>
           </button>
         )}
       </div>
@@ -355,8 +355,8 @@ export default function TopNav({ st }: TopNavProps) {
               aria-haspopup="listbox"
               aria-expanded={scopeOpen}
               aria-controls="onyx-search-scope-listbox"
-              aria-label="Search field scope"
-              title="Search field scope"
+              aria-label={t('topNav.searchScope')}
+              title={t('topNav.searchScope')}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 fontFamily: mono, fontSize: 10, letterSpacing: '0.04em',
@@ -376,7 +376,7 @@ export default function TopNav({ st }: TopNavProps) {
               <div
                 id="onyx-search-scope-listbox"
                 role="listbox"
-                aria-label="Search field scope"
+                aria-label={t('topNav.searchScope')}
                 onKeyDown={(event) => handleListboxKey(event, scopeOptionRefs.current, () => setScopeOpen(false), scopeTriggerRef.current)}
                 style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 100, minWidth: 130,

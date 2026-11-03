@@ -2,6 +2,7 @@
 // Left: editorial "manuscript" panel with wash background and display serif text.
 // Right: quiet underline-only form fields with entrance animation.
 import { useState, useRef, useEffect } from 'react';
+import { useI18n } from '../i18n';
 import type { OnyxState } from '../state/onyx';
 import { login, saveToken, loginWithApiKey } from '../api/abs';
 import Titlebar from '../components/chrome/Titlebar';
@@ -20,6 +21,7 @@ export interface LoginProps {
 }
 
 export default function Login({ st }: LoginProps) {
+  const { t } = useI18n();
   // ── Form state (local only — never touches global state until submit succeeds) ──
   const lastServer = (() => {
     try { return new URL(localStorage.getItem('skald.lastServerUrl') ?? ''); } catch { return null; }
@@ -179,7 +181,7 @@ export default function Login({ st }: LoginProps) {
               <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
               {/* Display heading — 33px/600 serif, "hall" in italic accent gold */}
               <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-                The teller<br />returns to<br />the{' '}
+                {t('loginUi.teller')}<br />returns to<br />the{' '}
                 <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>hall</span>.
               </div>
             </div>
@@ -233,10 +235,10 @@ export default function Login({ st }: LoginProps) {
           {/* Header: title + subtitle */}
           <div style={{ marginBottom: 30 }}>
             <div style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 600, letterSpacing: '-0.01em', color: '#ebe7df' }}>
-              Enter the hall
+              {t('loginUi.enterHall')}
             </div>
             <div style={{ fontSize: 13, fontFamily: SANS, color: 'rgba(235,231,223,0.62)', marginTop: 6 }}>
-              Connect to your library server to continue.
+              {t('loginUi.connectHint')}
             </div>
           </div>
 
@@ -281,7 +283,7 @@ export default function Login({ st }: LoginProps) {
             <label style={{ display: 'block' }}>
               {/* Italic serif label above the field */}
               <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                Where is your server?
+                {t('loginUi.serverQuestion')}
               </div>
               {/* Flex row: scheme dropdown on the left, host input on the right */}
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
@@ -384,14 +386,14 @@ export default function Login({ st }: LoginProps) {
                 {/* Field 2: Username */}
                 <label style={{ display: 'block' }}>
                   <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    By what name are you known?
+                    {t('loginUi.nameQuestion')}
                   </div>
                   <input
                     className="saga-input"
                     style={underline}
                     value={user}
                     onChange={e => setUser(e.target.value)}
-                    placeholder="Username"
+                    placeholder={t('loginUi.usernamePlaceholder')}
                     spellCheck={false}
                   />
                 </label>
@@ -399,7 +401,7 @@ export default function Login({ st }: LoginProps) {
                 {/* Field 3: Password */}
                 <label style={{ display: 'block' }}>
                   <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                    Password
+                    {t('loginUi.password')}
                   </div>
                   <input
                     className="saga-input"
@@ -415,7 +417,7 @@ export default function Login({ st }: LoginProps) {
               // ── API key field ───────────────────────────────────────────
               <label style={{ display: 'block' }}>
                 <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>
-                  Your API key
+                  {t('loginUi.apiKey')}
                 </div>
                 {/* Textarea for long JWT-format keys — resize disabled so it stays tidy */}
                 <textarea
@@ -432,7 +434,7 @@ export default function Login({ st }: LoginProps) {
                   }}
                   value={apiKey}
                   onChange={e => setApiKey(e.target.value)}
-                  placeholder="Paste your API key here"
+                  placeholder={t('loginUi.apiKeyPlaceholder')}
                   spellCheck={false}
                   autoComplete="off"
                 />
@@ -495,7 +497,7 @@ export default function Login({ st }: LoginProps) {
                 textUnderlineOffset: 3, textDecorationColor: 'rgba(235,231,223,0.25)',
               }}
             >
-              Use Skald locally, without a server
+              {t('loginUi.localMode')}
             </button>
 
           </div>
