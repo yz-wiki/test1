@@ -1,58 +1,42 @@
+// Unified titlebar — macOS "toolbar" geometry.
+//
+// The window is undecorated (see src-tauri/src/lib.rs), so everything the OS
+// would normally draw lives here: traffic lights, the drag region, and the eight
+// invisible resize handles. Three consumers share it — the main shell, the login
+// screen and onboarding — which is why `minimal` exists (chrome-only, no status
+// pills, no toolbar actions).
 import type { CSSProperties, ReactNode } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import TrafficLights from '../shell/TrafficLights';
+import Icon from '../Icon';
+import { useI18n } from '../../i18n';
 import lyreIcon from '../../assets/lyre.png';
 
 export interface TitlebarProps {
   subtitle?: string;
-  isDark: boolean;
-  // When true, only "SKALD" is shown — no theme name or subtitle.
+  /** Retained for API compatibility; the label now comes from i18n. */
+  isDark?: boolean;
+  /** When true, render window chrome only — no status pills, no actions. */
   minimal?: boolean;
-  // Optional controls rendered in the left cluster, just right of the app-name
-  // and status pills (e.g. the Recent-activity bell). Interactive children must
-  // opt out of the drag region themselves (WebkitAppRegion: 'no-drag').
+  /** Right-aligned slot in the main cluster (e.g. the activity bell). */
   trailing?: ReactNode;
-  // True when the library was loaded from the disk cache (server unreachable).
-  // Displays a persistent amber OFFLINE pill so the user always knows they are
-  // browsing cached data rather than a live server connection.
   isOffline?: boolean;
   lastRefresh?: number | null;
-  // True when the configured ABS server URL is plain http: (review L6). LAN
-  // HTTP is a legitimate self-hosted setup, so this only surfaces the missing
-  // transport encryption — it never blocks the connection.
   isUnencrypted?: boolean;
+  /** Primary label; defaults to the product name. */
+  title?: string;
+  /** Sidebar toggle. Omit to hide the control (login / onboarding). */
+  onToggleSidebar?: () => void;
+  sidebarVisible?: boolean;
+  /** Command-palette affordance. Omit to hide. */
+  onOpenPalette?: () => void;
+  paletteShortcut?: string;
 }
 
 type DragStyle = CSSProperties & { WebkitAppRegion?: string };
 type ResizeDirection = Parameters<ReturnType<typeof getCurrentWindow>['startResizeDragging']>[0];
 
-const BUTTONS = [
-  { label: 'Minimize', kind: 'min' },
-  { label: 'Maximize', kind: 'max' },
-  { label: 'Close', kind: 'close' },
-] as const;
-
-function WindowControlIcon({ kind }: { kind: (typeof BUTTONS)[number]['kind'] }) {
-  // Stroke icons keep the native-looking visual weight without relying on
-  // Segoe MDL2 Assets, which is absent on Linux.
-  if (kind === 'min') {
-    return <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><path d="M2 8.5h8" /></svg>;
-  }
-  if (kind === 'max') {
-    return <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><rect x="2.25" y="2.25" width="7.5" height="7.5" /></svg>;
-  }
-  return <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><path d="m2.5 2.5 7 7m0-7-7 7" /></svg>;
-}
-
-const HANDLERS: Record<string, () => void> = {
-  min:   () => { void getCurrentWindow().minimize(); },
-  max:   () => { void getCurrentWindow().toggleMaximize(); },
-  close: () => { void getCurrentWindow().close(); },
-};
-
-const RESIZE_EDGES: Array<{
-  direction: ResizeDirection;
-  style: CSSProperties;
-}> = [
+const RESIZE_EDGES: Array<{ direction: ResizeDirection; style: CSSProperties }> = [
   { direction: 'North', style: { top: 0, left: 8, right: 8, height: 5, cursor: 'ns-resize' } },
   { direction: 'South', style: { bottom: 0, left: 8, right: 8, height: 5, cursor: 'ns-resize' } },
   { direction: 'West', style: { top: 8, bottom: 8, left: 0, width: 5, cursor: 'ew-resize' } },
@@ -63,41 +47,51 @@ const RESIZE_EDGES: Array<{
   { direction: 'SouthEast', style: { bottom: 0, right: 0, width: 10, height: 10, cursor: 'nwse-resize' } },
 ];
 
-export default function Titlebar({ subtitle, isDark, minimal, isOffline, lastRefresh, isUnencrypted, trailing }: TitlebarProps) {
-  const themeName = isDark ? 'Onyx' : 'Folio';
-  const mono = "'JetBrains Mono', ui-monospace, monospace";
+const NO_DRAG_SELECTOR = 'button, input, textarea, select, a, [data-tauri-drag-region="false"]';
 
-  const bar: DragStyle = {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 44,
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '0 18px', zIndex: 50,
-    WebkitAppRegion: 'drag',
+export default function Titlebar({
+  subtitle,
+  minimal,
+  trailing,
+  isOffline,
+  lastRefresh,
+  isUnencrypted,
+  title,
+  onToggleSidebar,
+  sidebarVisible,
+  onOpenPalette,
+  paletteShortcut,
+}: TitlebarProps) {
+  const { t, formatDateTime } = useI18n();
+  const drag: DragStyle = { WebkitAppRegion: 'drag' };
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if (event.button !== 0) return;
+    const target = event.target as Element;
+    if (target.closest(NO_DRAG_SELECTOR)) return;
+    // WebKitGTK does not reliably honour CSS/data drag regions for undecorated
+    // windows, so start the compositor move explicitly on every platform.
+    void getCurrentWindow().startDragging().catch(() => {});
   };
 
-  const noDrag: DragStyle = {
-    display: 'flex', gap: 0,
-    WebkitAppRegion: 'no-drag',
-    marginRight: -18, height: 44,
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    const target = event.target as Element;
+    if (target.closest(NO_DRAG_SELECTOR)) return;
+    void getCurrentWindow().toggleMaximize().catch(() => {});
   };
+
+  const primary = title ?? 'Skald';
+  const secondary = minimal
+    ? undefined
+    : subtitle ?? (isOffline ? t('common.offline') : undefined);
 
   return (
-    <div
-      style={bar}
+    <header
+      className="mac-titlebar mac-titlebar__drag"
+      style={drag}
       data-tauri-drag-region
-      onMouseDown={(event) => {
-        if (event.button !== 0) return;
-        const target = event.target as Element;
-        if (target.closest('button, input, textarea, select, a, [data-tauri-drag-region="false"]')) return;
-        // WebKitGTK does not consistently honor CSS/data drag regions for
-        // undecorated windows, so initiate the compositor move explicitly.
-        void getCurrentWindow().startDragging();
-      }}
-      onDoubleClick={(event) => {
-        const target = event.target as Element;
-        if (!target.closest('button, input, textarea, select, a, [data-tauri-drag-region="false"]')) {
-          void getCurrentWindow().toggleMaximize();
-        }
-      }}
+      onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
     >
       {RESIZE_EDGES.map(({ direction, style }) => (
         <div
@@ -108,97 +102,74 @@ export default function Titlebar({ subtitle, isDark, minimal, isOffline, lastRef
             if (event.button !== 0) return;
             event.preventDefault();
             event.stopPropagation();
-            void getCurrentWindow().startResizeDragging(direction);
+            void getCurrentWindow().startResizeDragging(direction).catch(() => {});
           }}
-          style={{
-            position: 'fixed',
-            zIndex: 1000,
-            ...style,
-          }}
+          style={{ position: 'fixed', zIndex: 1000, ...style }}
         />
       ))}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Lyre logo mark — transparent PNG sits cleanly against the dark titlebar */}
+
+      <TrafficLights />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, marginLeft: 6 }}>
         <img
           src={lyreIcon}
-          alt="Skald"
-          style={{
-            width: 20,
-            height: 20,
-            objectFit: 'contain',
-            // Slight brightness boost so the gold reads clearly at small size
-            filter: 'brightness(1.1)',
-          }}
+          alt=""
+          aria-hidden="true"
+          style={{ width: 18, height: 18, objectFit: 'contain', filter: 'brightness(1.08)', flex: '0 0 auto' }}
         />
-        {/* App name + optional theme/subtitle */}
-        <div style={{ fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          {minimal ? 'Skald' : `Skald · ${themeName}${subtitle ? ` · ${subtitle}` : ''}`}
+        <div className="mac-titlebar__title">
+          <span className="mac-titlebar__title-main">{primary}</span>
+          {secondary && <span className="mac-titlebar__title-sub">{secondary}</span>}
         </div>
-        {/* Offline indicator — shown when the library loaded from disk cache.
-            Amber pill gives the user a persistent signal that they are in offline mode. */}
-        {isOffline && (
-          <div style={{
-            fontFamily: mono,
-            fontSize: 9,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase' as const,
-            color: '#d4834a',                       // amber warning tone
-            border: '1px solid rgba(212,131,74,0.4)',
-            borderRadius: 4,
-            padding: '2px 6px',
-            background: 'rgba(212,131,74,0.08)',
-            lineHeight: 1,
-          }}>
-            offline{lastRefresh ? ` · refreshed ${new Date(lastRefresh).toLocaleString()}` : ''}
-          </div>
-        )}
-        {/* Transport-encryption indicator (review L6) — same amber family as
-            OFFLINE. Plain-HTTP ABS servers are fine on a trusted LAN, but the
-            traffic (including media tokens in URLs) is readable on the network;
-            the pill keeps that visible without forbidding the setup. */}
-        {isUnencrypted && (
-          <div
-            title="Connected over plain HTTP — traffic to your server (including media tokens) is not encrypted. Fine on a trusted home network; use an https:// address to encrypt."
-            style={{
-              fontFamily: mono,
-              fontSize: 9,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase' as const,
-              color: '#d4834a',
-              border: '1px solid rgba(212,131,74,0.4)',
-              borderRadius: 4,
-              padding: '2px 6px',
-              background: 'rgba(212,131,74,0.08)',
-              lineHeight: 1,
-            }}>
-            not encrypted
-          </div>
-        )}
-        {/* Optional trailing controls (e.g. Recent activity) sit just right of the
-            status pills. Rendered inside the left cluster so they follow the app
-            name rather than crowding the window buttons. */}
-        {trailing}
       </div>
-      <div style={noDrag}>
-        {BUTTONS.map((b) => (
+
+      {!minimal && isOffline && (
+        <span className="mac-badge mac-badge--warn" title={lastRefresh ? formatDateTime(lastRefresh) : undefined}>
+          {t('window.offlinePill')}
+          {lastRefresh ? ` · ${t('window.refreshedAt', { when: formatDateTime(lastRefresh) })}` : ''}
+        </span>
+      )}
+
+      {!minimal && isUnencrypted && (
+        <span className="mac-badge mac-badge--warn" title={t('window.unencryptedHint')}>
+          {t('window.unencryptedPill')}
+        </span>
+      )}
+
+      {/* Centre stays empty: a toolbar that balances left/right clusters reads as
+          native, whereas a centred title fights the traffic lights for attention. */}
+      <div className="mac-titlebar__center" data-tauri-drag-region />
+
+      <div className="mac-titlebar__right">
+        {!minimal && trailing}
+        {!minimal && onOpenPalette && (
           <button
-            key={b.kind}
-            className={`onyx-winbtn onyx-winbtn-${b.kind}`}
-            title={b.label}
-            onClick={HANDLERS[b.kind]}
+            type="button"
+            className="mac-iconbtn"
+            onClick={onOpenPalette}
+            title={t('palette.action.commandPalette')}
+            aria-label={t('palette.action.commandPalette')}
             data-tauri-drag-region="false"
-            style={{
-              width: 46, height: 44, borderRadius: 0,
-              background: 'transparent', border: 'none',
-              color: 'var(--onyx-text-dim)',
-              cursor: 'pointer', padding: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            style={{ width: 'auto', padding: '0 8px', gap: 6, display: 'inline-flex' }}
           >
-            <WindowControlIcon kind={b.kind} />
+            <Icon name="search" size={13} />
+            {paletteShortcut && <span className="mac-kbd">{paletteShortcut}</span>}
           </button>
-        ))}
+        )}
+        {!minimal && onToggleSidebar && (
+          <button
+            type="button"
+            className="mac-iconbtn"
+            onClick={onToggleSidebar}
+            title={sidebarVisible ? t('nav.collapseSidebar') : t('nav.expandSidebar')}
+            aria-label={sidebarVisible ? t('nav.collapseSidebar') : t('nav.expandSidebar')}
+            aria-pressed={sidebarVisible}
+            data-tauri-drag-region="false"
+          >
+            <Icon name="list" size={14} />
+          </button>
+        )}
       </div>
-    </div>
+    </header>
   );
 }

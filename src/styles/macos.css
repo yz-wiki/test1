@@ -1,0 +1,1115 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Skald · macOS-inspired design layer
+
+   Why a separate stylesheet instead of editing every inline style in the app:
+   the screens are built from inline style objects (deliberate — they were tuned
+   against WebView2 repaint quirks). Rewriting 12k lines of inline styles would
+   be a regression farm. Instead this file introduces a *surface* system that the
+   new shell and every new/updated component opts into:
+
+     · one geometry scale       — radius / hairline / spacing tokens
+     · one elevation scale      — three shadows, no ad-hoc values
+     · one vibrancy treatment   — titlebar + sidebar + floating panels
+     · one control vocabulary   — button, switch, segmented, sheet, kbd, palette
+
+   Everything derives from the `--onyx-*` palette that theme.ts writes at
+   runtime, plus a `data-appearance` attribute, so light/dark continue to work
+   exactly as before without duplicating colours here.
+   ────────────────────────────────────────────────────────────────────────────*/
+
+/* ─── Geometry, motion & type ──────────────────────────────────────────────── */
+
+:root {
+  /* Radii — macOS Ventura/Sonoma geometry. Window 12, panel 14, control 8. */
+  --mac-radius-window: 12px;
+  --mac-radius-panel: 14px;
+  --mac-radius-card: 12px;
+  --mac-radius-control: 8px;
+  --mac-radius-field: 8px;
+  --mac-radius-pill: 999px;
+
+  /* Hairlines. macOS separators are 1px at 1x, and never pure black/white. */
+  --mac-hairline-w: 1px;
+
+  /* Motion — one spring-ish curve for almost everything, per Apple HIG. */
+  --mac-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --mac-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --mac-dur-fast: 120ms;
+  --mac-dur: 200ms;
+  --mac-dur-slow: 320ms;
+
+  /* Chrome metrics */
+  --mac-titlebar-h: 52px;
+  --mac-sidebar-w: 252px;
+  --mac-sidebar-w-compact: 76px;
+  --mac-content-pad: 24px;
+
+  /* Spacing scale (4pt grid) */
+  --mac-space-1: 4px;
+  --mac-space-2: 8px;
+  --mac-space-3: 12px;
+  --mac-space-4: 16px;
+  --mac-space-5: 20px;
+  --mac-space-6: 24px;
+  --mac-space-8: 32px;
+
+  /* Type — Inter for Latin, plus an explicit CJK pair so zh-CN does not fall
+     back to a serif or a synthetic weight on Windows. */
+  --mac-font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text',
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Noto Sans SC', system-ui, sans-serif;
+  --mac-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+  --mac-font-serif: 'Source Serif 4', 'Iowan Old Style', Georgia, 'Songti SC', serif;
+
+  --mac-text-title: 22px;
+  --mac-text-headline: 15px;
+  --mac-text-body: 13px;
+  --mac-text-caption: 11px;
+  --mac-text-micro: 10px;
+}
+
+/* ─── Appearance-dependent surfaces ────────────────────────────────────────── */
+
+[data-appearance='dark'] {
+  --mac-titlebar-bg: rgba(26, 26, 29, 0.82);
+  --mac-sidebar-bg: rgba(30, 30, 33, 0.86);
+  --mac-sidebar-bg-solid: #1a1a1d;
+  --mac-panel-bg: rgba(40, 40, 44, 0.72);
+  --mac-panel-bg-strong: rgba(44, 44, 48, 0.94);
+  --mac-hairline: rgba(255, 255, 255, 0.075);
+  --mac-hairline-strong: rgba(255, 255, 255, 0.12);
+  --mac-hover: rgba(255, 255, 255, 0.055);
+  --mac-active: rgba(255, 255, 255, 0.10);
+  --mac-control-bg: rgba(255, 255, 255, 0.06);
+  --mac-control-bg-hover: rgba(255, 255, 255, 0.10);
+  --mac-field-bg: rgba(0, 0, 0, 0.28);
+  --mac-glyph: rgba(255, 255, 255, 0.9);
+  --mac-glyph-dim: rgba(255, 255, 255, 0.45);
+  --mac-elev-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --mac-elev-2: 0 8px 24px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  --mac-elev-3: 0 28px 64px rgba(0, 0, 0, 0.58), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --mac-scrim: rgba(0, 0, 0, 0.48);
+  --mac-selection: rgba(255, 255, 255, 0.14);
+}
+
+[data-appearance='light'] {
+  --mac-titlebar-bg: rgba(246, 246, 248, 0.80);
+  --mac-sidebar-bg: rgba(240, 240, 243, 0.84);
+  --mac-sidebar-bg-solid: #f0f0f3;
+  --mac-panel-bg: rgba(255, 255, 255, 0.78);
+  --mac-panel-bg-strong: rgba(255, 255, 255, 0.96);
+  --mac-hairline: rgba(0, 0, 0, 0.08);
+  --mac-hairline-strong: rgba(0, 0, 0, 0.14);
+  --mac-hover: rgba(0, 0, 0, 0.045);
+  --mac-active: rgba(0, 0, 0, 0.075);
+  --mac-control-bg: rgba(0, 0, 0, 0.05);
+  --mac-control-bg-hover: rgba(0, 0, 0, 0.08);
+  --mac-field-bg: rgba(0, 0, 0, 0.04);
+  --mac-glyph: rgba(0, 0, 0, 0.82);
+  --mac-glyph-dim: rgba(0, 0, 0, 0.42);
+  --mac-elev-1: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --mac-elev-2: 0 10px 28px rgba(0, 0, 0, 0.10), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  --mac-elev-3: 0 28px 70px rgba(0, 0, 0, 0.20), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --mac-scrim: rgba(0, 0, 0, 0.22);
+  --mac-selection: rgba(0, 0, 0, 0.09);
+}
+
+/* Fallback when no appearance attribute has been written yet (first paint
+   before React applies the theme): inherit the dark Onyx defaults. */
+:root:not([data-appearance]) {
+  --mac-titlebar-bg: rgba(26, 26, 29, 0.82);
+  --mac-sidebar-bg: rgba(30, 30, 33, 0.86);
+  --mac-sidebar-bg-solid: #1a1a1d;
+  --mac-panel-bg: rgba(40, 40, 44, 0.72);
+  --mac-panel-bg-strong: rgba(44, 44, 48, 0.94);
+  --mac-hairline: rgba(255, 255, 255, 0.075);
+  --mac-hairline-strong: rgba(255, 255, 255, 0.12);
+  --mac-hover: rgba(255, 255, 255, 0.055);
+  --mac-active: rgba(255, 255, 255, 0.10);
+  --mac-control-bg: rgba(255, 255, 255, 0.06);
+  --mac-control-bg-hover: rgba(255, 255, 255, 0.10);
+  --mac-field-bg: rgba(0, 0, 0, 0.28);
+  --mac-glyph: rgba(255, 255, 255, 0.9);
+  --mac-glyph-dim: rgba(255, 255, 255, 0.45);
+  --mac-elev-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --mac-elev-2: 0 8px 24px rgba(0, 0, 0, 0.42);
+  --mac-elev-3: 0 28px 64px rgba(0, 0, 0, 0.58);
+  --mac-scrim: rgba(0, 0, 0, 0.48);
+  --mac-selection: rgba(255, 255, 255, 0.14);
+}
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+
+html,
+body {
+  font-family: var(--mac-font-ui);
+  /* Inter on Windows looks noticeably heavier without this. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-size: var(--mac-text-body);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+}
+
+/* CJK needs slightly looser tracking and a taller line box than Latin. */
+html[data-locale='zh-CN'] body {
+  letter-spacing: 0;
+  line-height: 1.6;
+}
+
+/* ─── Window frame ─────────────────────────────────────────────────────────── */
+
+.mac-window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--onyx-bg);
+}
+
+/* ─── Titlebar (unified toolbar) ───────────────────────────────────────────── */
+
+.mac-titlebar {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: var(--mac-space-3);
+  flex: 0 0 var(--mac-titlebar-h);
+  height: var(--mac-titlebar-h);
+  padding: 0 var(--mac-space-4, 16px) 0 var(--mac-space-5);
+  background: var(--mac-titlebar-bg);
+  border-bottom: var(--mac-hairline-w) solid var(--mac-hairline);
+  /* Static frost. Kept to two cheap layers — the window is opaque
+     (transparent(false) in lib.rs), so backdrop sampling has no alpha path to
+     band on, unlike the in-content glass panels documented in Glass.tsx. */
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  user-select: none;
+}
+
+.mac-titlebar__drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.mac-titlebar__title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.mac-titlebar__title-main {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--onyx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mac-titlebar__title-sub {
+  font-family: var(--mac-font-mono);
+  font-size: var(--mac-text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mac-titlebar__center {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.mac-titlebar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--mac-space-2);
+  flex: 0 0 auto;
+}
+
+/* ─── Traffic lights ──────────────────────────────────────────────────────── */
+
+.mac-traffic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  /* The group is the drag target's neighbour; each button opts out itself. */
+}
+
+.mac-traffic__btn {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: default;
+  display: grid;
+  place-items: center;
+  transition: filter var(--mac-dur-fast) var(--mac-ease);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.16);
+}
+
+.mac-traffic__btn:active {
+  filter: brightness(0.82);
+}
+
+.mac-traffic__btn--close { background: #ff5f57; }
+.mac-traffic__btn--min { background: #febc2e; }
+.mac-traffic__btn--max { background: #28c840; }
+
+/* Glyphs appear only when the group is hovered — exactly how macOS behaves, and
+   it keeps the bar visually quiet at rest. */
+.mac-traffic__btn svg {
+  opacity: 0;
+  transition: opacity var(--mac-dur-fast) var(--mac-ease);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.mac-traffic:hover .mac-traffic__btn svg,
+.mac-traffic__btn:focus-visible svg {
+  opacity: 1;
+}
+
+.mac-traffic__btn:focus-visible {
+  outline: 2px solid var(--onyx-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.mac-sidebar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 var(--mac-sidebar-w);
+  width: var(--mac-sidebar-w);
+  min-height: 0;
+  padding: var(--mac-space-3) var(--mac-space-2) var(--mac-space-2);
+  background: var(--mac-sidebar-bg);
+  border-right: var(--mac-hairline-w) solid var(--mac-hairline);
+  backdrop-filter: saturate(160%) blur(20px);
+  -webkit-backdrop-filter: saturate(160%) blur(20px);
+  overflow: hidden;
+  transition: flex-basis var(--mac-dur) var(--mac-ease),
+    width var(--mac-dur) var(--mac-ease);
+  user-select: none;
+}
+
+.mac-sidebar--compact {
+  flex-basis: var(--mac-sidebar-w-compact);
+  width: var(--mac-sidebar-w-compact);
+}
+
+.mac-sidebar__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 2px;
+}
+
+.mac-sidebar__section {
+  margin-top: var(--mac-space-4);
+}
+
+.mac-sidebar__section:first-child {
+  margin-top: var(--mac-space-1);
+}
+
+.mac-sidebar__label {
+  padding: 0 var(--mac-space-2) var(--mac-space-1);
+  font-family: var(--mac-font-mono);
+  font-size: var(--mac-text-micro);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Nav item ────────────────────────────────────────────────────────────── */
+
+.mac-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 1px;
+  border: none;
+  border-radius: var(--mac-radius-control);
+  background: transparent;
+  color: var(--onyx-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 450;
+  text-align: left;
+  cursor: default;
+  transition: background var(--mac-dur-fast) var(--mac-ease),
+    color var(--mac-dur-fast) var(--mac-ease);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mac-nav-item:hover {
+  background: var(--mac-hover);
+}
+
+.mac-nav-item:active {
+  background: var(--mac-active);
+}
+
+.mac-nav-item--active {
+  background: var(--mac-active);
+  color: var(--onyx-text);
+  font-weight: 600;
+}
+
+/* The selected row gets the macOS accent "pill" on its leading glyph rather
+   than a full accent fill — closer to Finder/Music than to a web sidebar. */
+.mac-nav-item--active .mac-nav-item__icon {
+  color: var(--onyx-accent);
+}
+
+.mac-nav-item__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--mac-glyph-dim);
+  transition: color var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-nav-item:hover .mac-nav-item__icon {
+  color: var(--mac-glyph);
+}
+
+.mac-nav-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mac-nav-item__badge {
+  flex: 0 0 auto;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: var(--mac-radius-pill);
+  background: var(--mac-control-bg);
+  font-family: var(--mac-font-mono);
+  font-size: var(--mac-text-micro);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--onyx-text-dim);
+}
+
+.mac-nav-item--active .mac-nav-item__badge {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+/* Compact rail: labels and badges collapse, icons centre. */
+.mac-sidebar--compact .mac-nav-item__label,
+.mac-sidebar--compact .mac-nav-item__badge,
+.mac-sidebar--compact .mac-sidebar__label,
+.mac-sidebar--compact .mac-sidebar__footer-meta {
+  display: none;
+}
+
+.mac-sidebar--compact .mac-nav-item {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+/* ─── Sidebar footer (account) ────────────────────────────────────────────── */
+
+.mac-sidebar__footer {
+  flex: 0 0 auto;
+  margin-top: var(--mac-space-2);
+  padding-top: var(--mac-space-2);
+  border-top: var(--mac-hairline-w) solid var(--mac-hairline);
+}
+
+.mac-account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--mac-radius-control);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+  transition: background var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-account:hover {
+  background: var(--mac-hover);
+}
+
+.mac-avatar {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--onyx-accent);
+  color: var(--onyx-bg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mac-sidebar__footer-meta {
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.mac-sidebar__footer-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--onyx-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mac-sidebar__footer-role {
+  font-family: var(--mac-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+}
+
+/* ─── Content region ──────────────────────────────────────────────────────── */
+
+.mac-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mac-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mac-content__inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Surfaces ────────────────────────────────────────────────────────────── */
+
+.mac-panel {
+  background: var(--mac-panel-bg);
+  border: var(--mac-hairline-w) solid var(--mac-hairline);
+  border-radius: var(--mac-radius-panel);
+  box-shadow: var(--mac-elev-2);
+}
+
+.mac-panel--solid {
+  background: var(--mac-panel-bg-strong);
+}
+
+.mac-card {
+  background: var(--mac-control-bg);
+  border: var(--mac-hairline-w) solid var(--mac-hairline);
+  border-radius: var(--mac-radius-card);
+}
+
+.mac-hairline {
+  height: var(--mac-hairline-w);
+  background: var(--mac-hairline);
+  border: none;
+  margin: 0;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+.mac-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--mac-radius-control);
+  border: var(--mac-hairline-w) solid var(--mac-hairline-strong);
+  background: var(--mac-control-bg);
+  color: var(--onyx-text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  cursor: default;
+  white-space: nowrap;
+  transition: background var(--mac-dur-fast) var(--mac-ease),
+    transform var(--mac-dur-fast) var(--mac-ease),
+    box-shadow var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-btn:hover {
+  background: var(--mac-control-bg-hover);
+}
+
+.mac-btn:active {
+  transform: scale(0.975);
+}
+
+.mac-btn--primary {
+  background: var(--onyx-accent);
+  border-color: transparent;
+  color: #14100a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.mac-btn--primary:hover {
+  background: var(--onyx-accent-bright);
+}
+
+.mac-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--onyx-text-dim);
+}
+
+.mac-btn--ghost:hover {
+  background: var(--mac-hover);
+  color: var(--onyx-text);
+}
+
+.mac-btn--danger {
+  background: rgba(224, 82, 76, 0.14);
+  border-color: rgba(224, 82, 76, 0.35);
+  color: #e0524c;
+}
+
+.mac-btn--danger:hover {
+  background: rgba(224, 82, 76, 0.22);
+}
+
+.mac-btn--sm {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  border-radius: 7px;
+}
+
+.mac-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Square icon button used by toolbars */
+.mac-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--mac-glyph-dim);
+  cursor: default;
+  transition: background var(--mac-dur-fast) var(--mac-ease),
+    color var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-iconbtn:hover {
+  background: var(--mac-hover);
+  color: var(--onyx-text);
+}
+
+.mac-iconbtn:active {
+  background: var(--mac-active);
+}
+
+.mac-iconbtn--active {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+/* ─── Switch (iOS/macOS style) ────────────────────────────────────────────── */
+
+.mac-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--mac-radius-pill);
+  background: var(--mac-control-bg-hover);
+  cursor: default;
+  transition: background var(--mac-dur) var(--mac-ease);
+}
+
+.mac-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--mac-dur) var(--mac-ease);
+}
+
+.mac-switch[aria-checked='true'] {
+  background: var(--onyx-accent);
+}
+
+.mac-switch[aria-checked='true']::after {
+  transform: translateX(16px);
+}
+
+.mac-switch:focus-visible {
+  outline: 2px solid var(--onyx-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Segmented control ───────────────────────────────────────────────────── */
+
+.mac-segmented {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 9px;
+  background: var(--mac-control-bg);
+  border: var(--mac-hairline-w) solid var(--mac-hairline);
+}
+
+.mac-segmented__item {
+  height: 24px;
+  padding: 0 11px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--onyx-text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: default;
+  transition: background var(--mac-dur-fast) var(--mac-ease),
+    color var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-segmented__item:hover {
+  color: var(--onyx-text);
+}
+
+.mac-segmented__item--active {
+  background: var(--mac-panel-bg-strong);
+  color: var(--onyx-text);
+  font-weight: 600;
+  box-shadow: var(--mac-elev-1);
+}
+
+/* ─── Field ───────────────────────────────────────────────────────────────── */
+
+.mac-field {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--mac-radius-field);
+  border: var(--mac-hairline-w) solid var(--mac-hairline-strong);
+  background: var(--mac-field-bg);
+  color: var(--onyx-text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--mac-dur-fast) var(--mac-ease),
+    box-shadow var(--mac-dur-fast) var(--mac-ease);
+}
+
+.mac-field::placeholder {
+  color: var(--onyx-text-mute);
+}
+
+.mac-field:focus {
+  border-color: var(--onyx-accent-edge);
+  box-shadow: 0 0 0 3px var(--onyx-accent-dim);
+}
+
+/* ─── Sheet / modal ───────────────────────────────────────────────────────── */
+
+.mac-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  background: var(--mac-scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: mac-scrim-in var(--mac-dur) var(--mac-ease) both;
+}
+
+.mac-sheet {
+  width: min(560px, calc(100vw - 64px));
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+  padding: var(--mac-space-6);
+  border-radius: var(--mac-radius-panel);
+  background: var(--mac-panel-bg-strong);
+  border: var(--mac-hairline-w) solid var(--mac-hairline);
+  box-shadow: var(--mac-elev-3);
+  animation: mac-sheet-in var(--mac-dur-slow) var(--mac-ease-out) both;
+}
+
+.mac-sheet__title {
+  margin: 0 0 var(--mac-space-2);
+  font-size: var(--mac-text-headline);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.mac-sheet__body {
+  margin: 0 0 var(--mac-space-5);
+  font-size: var(--mac-text-body);
+  color: var(--onyx-text-dim);
+  line-height: 1.55;
+}
+
+.mac-sheet__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mac-space-2);
+}
+
+/* ─── Command palette ─────────────────────────────────────────────────────── */
+
+.mac-palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14vh;
+  background: var(--mac-scrim);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: mac-scrim-in var(--mac-dur) var(--mac-ease) both;
+}
+
+.mac-palette {
+  width: min(620px, calc(100vw - 64px));
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--mac-radius-panel);
+  background: var(--mac-panel-bg-strong);
+  border: var(--mac-hairline-w) solid var(--mac-hairline-strong);
+  box-shadow: var(--mac-elev-3);
+  animation: mac-sheet-in var(--mac-dur) var(--mac-ease-out) both;
+}
+
+.mac-palette__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--mac-space-4);
+  height: 50px;
+  border-bottom: var(--mac-hairline-w) solid var(--mac-hairline);
+  flex: 0 0 auto;
+}
+
+.mac-palette__input {
+  flex: 1 1 auto;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--onyx-text);
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.mac-palette__input::placeholder {
+  color: var(--onyx-text-mute);
+}
+
+.mac-palette__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--mac-space-2);
+}
+
+.mac-palette__group {
+  padding: var(--mac-space-2) var(--mac-space-2) var(--mac-space-1);
+  font-family: var(--mac-font-mono);
+  font-size: var(--mac-text-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--onyx-text-mute);
+}
+
+.mac-palette__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--mac-radius-control);
+  background: transparent;
+  color: var(--onyx-text);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+}
+
+.mac-palette__row--active {
+  background: var(--onyx-accent);
+  color: #14100a;
+}
+
+.mac-palette__row--active .mac-palette__row-hint,
+.mac-palette__row--active .mac-palette__row-icon {
+  color: rgba(20, 16, 10, 0.65);
+}
+
+.mac-palette__row-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--mac-glyph-dim);
+}
+
+.mac-palette__row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mac-palette__row-hint {
+  flex: 0 0 auto;
+  font-family: var(--mac-font-mono);
+  font-size: 10px;
+  color: var(--onyx-text-mute);
+}
+
+.mac-palette__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--mac-space-4);
+  flex: 0 0 auto;
+  padding: 7px var(--mac-space-4);
+  border-top: var(--mac-hairline-w) solid var(--mac-hairline);
+  font-size: 10.5px;
+  color: var(--onyx-text-mute);
+}
+
+.mac-palette__empty {
+  padding: var(--mac-space-8) var(--mac-space-4);
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--onyx-text-mute);
+}
+
+/* ─── Keyboard hint ───────────────────────────────────────────────────────── */
+
+.mac-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: var(--mac-hairline-w) solid var(--mac-hairline-strong);
+  background: var(--mac-control-bg);
+  font-family: var(--mac-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--onyx-text-dim);
+  line-height: 1;
+}
+
+/* ─── Badge ───────────────────────────────────────────────────────────────── */
+
+.mac-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--mac-radius-pill);
+  font-family: var(--mac-font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mac-badge--accent {
+  background: var(--onyx-accent-dim);
+  color: var(--onyx-accent);
+}
+
+.mac-badge--warn {
+  background: rgba(212, 131, 74, 0.14);
+  color: #d4834a;
+  border: var(--mac-hairline-w) solid rgba(212, 131, 74, 0.32);
+}
+
+.mac-badge--muted {
+  background: var(--mac-control-bg);
+  color: var(--onyx-text-dim);
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.mac-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mac-space-2);
+  padding: var(--mac-space-8);
+  text-align: center;
+  color: var(--onyx-text-mute);
+}
+
+.mac-empty__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--onyx-text-dim);
+}
+
+.mac-empty__hint {
+  font-size: 12px;
+  max-width: 34ch;
+  line-height: 1.6;
+}
+
+/* ─── Scroll areas ────────────────────────────────────────────────────────── */
+
+.mac-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mac-hairline-strong) transparent;
+}
+
+.mac-scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.mac-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* macOS scrollbars are overlays: the thumb only reads as a rounded capsule. */
+.mac-scroll::-webkit-scrollbar-thumb {
+  background: var(--mac-hairline-strong);
+  border-radius: var(--mac-radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.mac-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--onyx-text-mute);
+  background-clip: content-box;
+}
+
+/* ─── Loading ─────────────────────────────────────────────────────────────── */
+
+/* macOS spinner: an arc that rotates, not a full ring that pulses. */
+.mac-loading-ring {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--mac-hairline-strong);
+  border-top-color: var(--onyx-accent);
+  animation: mac-spin 0.72s linear infinite;
+  display: inline-block;
+}
+
+@keyframes mac-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes mac-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mac-sheet-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes mac-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mac-enter {
+  animation: mac-fade-up var(--mac-dur-slow) var(--mac-ease-out) both;
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .mac-enter,
+  .mac-sheet,
+  .mac-scrim,
+  .mac-palette,
+  .mac-palette-scrim {
+    animation: none !important;
+  }
+
+  .mac-btn:active {
+    transform: none;
+  }
+}

@@ -5,6 +5,8 @@ import Glass from '../components/chrome/Glass';
 import Icon from '../components/Icon';
 import type { IconName } from '../components/Icon';
 import { matchesSettingsSearch } from '../lib/settingsSearch';
+import { useI18n, type TranslationKey } from '../i18n';
+import { useShellChrome } from '../components/shell/ShellContext';
 import {
   AccountSection,
   ServerSection,
@@ -14,6 +16,7 @@ import {
   DownloadsSection,
   AppearanceSection,
   KeyboardSection,
+  LanguageSection,
   AboutSection,
   NotificationsSection,
   BackupSection,
@@ -28,40 +31,41 @@ export interface SettingsProps { st: OnyxState; onLogout: () => void; }
 
 type SectionId =
   | 'account' | 'server' | 'notifications' | 'backups' | 'scheduled-tasks' | 'logs' | 'sharing' | 'playback' | 'audio'
-  | 'library' | 'downloads' | 'appearance' | 'keyboard' | 'about';
+  | 'library' | 'downloads' | 'appearance' | 'language' | 'keyboard' | 'about';
 
 // `requiresAbs` marks panes that only make sense with an Audiobookshelf server
 // connection — they're hidden in local-only mode. `adminOnly` panes are hidden
 // from non-admin users. Both are filtered at render time but keep their slot.
-interface NavSection { id: SectionId; label: string; icon: IconName; keywords: string[]; requiresAbs?: boolean; adminOnly?: boolean; }
+interface NavSection { id: SectionId; labelKey: TranslationKey; icon: IconName; keywords: string[]; requiresAbs?: boolean; adminOnly?: boolean; }
 
-interface NavGroup { label: string; sections: NavSection[]; }
+interface NavGroup { labelKey: TranslationKey; sections: NavSection[]; }
 
 // Group by the intent that brought the user to Settings. A whole group vanishes
 // when all of its sections are permission/source gated, keeping local-only mode
 // concise without maintaining a second navigation model.
 const NAV_GROUPS: NavGroup[] = [
-  { label: 'This device', sections: [
-    { id: 'account', label: 'Account', icon: 'home', keywords: ['profile', 'password', 'user', 'sign out'] },
-    { id: 'appearance', label: 'Appearance', icon: 'sliders', keywords: ['theme', 'accent', 'scale', 'cover size', 'layout', 'display', 'shelf'] },
-    { id: 'audio', label: 'Audio', icon: 'headphones', keywords: ['device', 'output', 'equalizer', 'eq', 'volume'] },
-    { id: 'downloads', label: 'Downloads', icon: 'download', keywords: ['offline', 'folder', 'storage', 'cache', 'retry'] },
-    { id: 'keyboard', label: 'Keyboard', icon: 'kbd', keywords: ['shortcut', 'hotkey', 'keys'] },
+  { labelKey: 'settings.group.device', sections: [
+    { id: 'account', labelKey: 'settings.account', icon: 'home', keywords: ['profile', 'password', 'user', 'sign out', '账户', '密码', '退出'] },
+    { id: 'appearance', labelKey: 'settings.appearance', icon: 'sliders', keywords: ['theme', 'accent', 'scale', 'cover size', 'layout', 'display', 'shelf', '主题', '外观', '强调色'] },
+    { id: 'language', labelKey: 'settings.language', icon: 'info', keywords: ['language', 'locale', 'translation', 'date', 'time', '语言', '翻译', '日期'] },
+    { id: 'audio', labelKey: 'settings.audio', icon: 'headphones', keywords: ['device', 'output', 'equalizer', 'eq', 'volume', '音频', '均衡器'] },
+    { id: 'downloads', labelKey: 'settings.downloads', icon: 'download', keywords: ['offline', 'folder', 'storage', 'cache', 'retry', '下载', '离线'] },
+    { id: 'keyboard', labelKey: 'settings.keyboard', icon: 'kbd', keywords: ['shortcut', 'hotkey', 'keys', '快捷键'] },
   ]},
-  { label: 'Libraries', sections: [
-    { id: 'library', label: 'Libraries', icon: 'grid', keywords: ['local', 'staging', 'import', 'scan', 'provider', 'open library'] },
-    { id: 'playback', label: 'Playback', icon: 'play', keywords: ['sleep timer', 'skip', 'speed', 'session', 'progress', 'resume'] },
+  { labelKey: 'settings.group.libraries', sections: [
+    { id: 'library', labelKey: 'settings.library', icon: 'grid', keywords: ['local', 'staging', 'import', 'scan', 'provider', 'open library', '书库', '导入'] },
+    { id: 'playback', labelKey: 'settings.playback', icon: 'play', keywords: ['sleep timer', 'skip', 'speed', 'session', 'progress', 'resume', '播放', '倍速'] },
   ]},
-  { label: 'Audiobookshelf server', sections: [
-    { id: 'server', label: 'Server', icon: 'monitor', keywords: ['sync', 'socket', 'connection', 'address'], requiresAbs: true },
-    { id: 'logs', label: 'Logs', icon: 'list', keywords: ['diagnostic', 'errors', 'debug', 'report'], requiresAbs: true, adminOnly: true },
-    { id: 'backups', label: 'Backups', icon: 'file', keywords: ['restore', 'schedule', 'database'], requiresAbs: true, adminOnly: true },
-    { id: 'notifications', label: 'Notifications', icon: 'bell', keywords: ['apprise', 'alerts', 'events'], requiresAbs: true, adminOnly: true },
-    { id: 'scheduled-tasks', label: 'Scheduled Tasks', icon: 'clock', keywords: ['jobs', 'scanner', 'maintenance'], requiresAbs: true, adminOnly: true },
-    { id: 'sharing', label: 'Sharing & RSS', icon: 'share', keywords: ['feeds', 'public link', 'opds'], requiresAbs: true, adminOnly: true },
+  { labelKey: 'settings.group.server', sections: [
+    { id: 'server', labelKey: 'settings.server', icon: 'monitor', keywords: ['sync', 'socket', 'connection', 'address', '服务器', '同步'], requiresAbs: true },
+    { id: 'logs', labelKey: 'settings.logs', icon: 'list', keywords: ['diagnostic', 'errors', 'debug', 'report', '日志'], requiresAbs: true, adminOnly: true },
+    { id: 'backups', labelKey: 'settings.backups', icon: 'file', keywords: ['restore', 'schedule', 'database', '备份'], requiresAbs: true, adminOnly: true },
+    { id: 'notifications', labelKey: 'settings.notifications', icon: 'bell', keywords: ['apprise', 'alerts', 'events', '通知'], requiresAbs: true, adminOnly: true },
+    { id: 'scheduled-tasks', labelKey: 'settings.scheduledTasks', icon: 'clock', keywords: ['jobs', 'scanner', 'maintenance', '任务'], requiresAbs: true, adminOnly: true },
+    { id: 'sharing', labelKey: 'settings.sharing', icon: 'share', keywords: ['feeds', 'public link', 'opds', '分享'], requiresAbs: true, adminOnly: true },
   ]},
-  { label: 'About', sections: [
-    { id: 'about', label: 'About', icon: 'info', keywords: ['help', 'quick start', 'version', 'privacy', 'troubleshooting'] },
+  { labelKey: 'settings.group.about', sections: [
+    { id: 'about', labelKey: 'settings.about', icon: 'info', keywords: ['help', 'quick start', 'version', 'privacy', 'troubleshooting', '关于', '版本'] },
   ]},
 ];
 
@@ -72,6 +76,8 @@ function sectionVisible(section: NavSection, hasAbs: boolean, isAdmin: boolean):
 }
 
 export default function Settings({ st, onLogout }: SettingsProps) {
+  const { t } = useI18n();
+  const chrome = useShellChrome();
   const requestedSection = NAV.some(item => item.id === st.settingsSection)
     ? st.settingsSection as SectionId
     : 'account';
@@ -83,7 +89,7 @@ export default function Settings({ st, onLogout }: SettingsProps) {
   // the server being temporarily offline (the keyring token persists).
   const hasAbs = !!st.authToken && !!st.serverUrl;
   const visibleGroups = NAV_GROUPS
-    .map(group => ({ ...group, sections: group.sections.filter(item => sectionVisible(item, hasAbs, st.isAdmin) && matchesSettingsSearch(item.label, item.id, item.keywords, navQuery)) }))
+    .map(group => ({ ...group, sections: group.sections.filter(item => sectionVisible(item, hasAbs, st.isAdmin) && matchesSettingsSearch(t(item.labelKey), item.id, item.keywords, navQuery)) }))
     .filter(group => group.sections.length > 0);
 
   // Shell CTAs can target a pane while Settings is already mounted. Keep this
@@ -123,16 +129,21 @@ export default function Settings({ st, onLogout }: SettingsProps) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 32px 24px', minHeight: 0 }}>
       {/* Breadcrumb */}
+      {/* Breadcrumb — only needed when there is no sidebar to orient the user
+          (the macOS-native pattern is a source list, which already shows where
+          you are). */}
+      {!chrome.hasSidebar && (
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18, fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
         <button
           onClick={() => st.setScreen('library')}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' as const }}
         >
-          <Icon name="chevron-left" size={12} /> Library
+          <Icon name="chevron-left" size={12} /> {t('settings.backToLibrary')}
         </button>
         <span>·</span>
-        <span style={{ color: 'var(--onyx-text)' }}>Settings</span>
+        <span style={{ color: 'var(--onyx-text)' }}>{t('settings.title')}</span>
       </div>
+      )}
 
       <div style={{ flex: 1, display: 'flex', gap: 24, minHeight: 0 }}>
         {/* Sidebar — scrolls vertically when the nav list is taller than the pane
@@ -141,19 +152,19 @@ export default function Settings({ st, onLogout }: SettingsProps) {
           <input
             value={navQuery}
             onChange={e => setNavQuery(e.target.value)}
-            placeholder="Find a setting…"
-            aria-label="Find a setting"
+            placeholder={t('settings.findPlaceholder')}
+            aria-label={t('settings.findPlaceholder')}
             style={{ margin: '0 8px 14px', padding: '8px 10px', borderRadius: 7, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 12 }}
           />
           {visibleGroups.map((group, groupIndex) => (
-            <div key={group.label} style={{ marginTop: groupIndex === 0 ? 0 : 14 }}>
+            <div key={group.labelKey} style={{ marginTop: groupIndex === 0 ? 0 : 14 }}>
               <div style={{ padding: '0 12px 6px', fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
-                {group.label}
+                {t(group.labelKey)}
               </div>
               {group.sections.map(s => {
                 // Downloads keeps its at-a-glance stored-book count.
                 const downloadCount = s.id === 'downloads' ? st.downloads.length : 0;
-                const label = downloadCount > 0 ? `${s.label} (${downloadCount})` : s.label;
+                const label = downloadCount > 0 ? `${t(s.labelKey)} (${downloadCount})` : t(s.labelKey);
                 return (
                   <button
                     key={s.id}
@@ -195,6 +206,7 @@ export default function Settings({ st, onLogout }: SettingsProps) {
           {section === 'library'    && <LibraryManagementSection st={st} />}
           {section === 'downloads'  && <DownloadsSection st={st} />}
           {section === 'appearance' && <AppearanceSection st={st} />}
+          {section === 'language'   && <LanguageSection />}
           {section === 'keyboard'      && <KeyboardSection />}
           {section === 'about'         && <AboutSection st={st} />}
         </Glass>

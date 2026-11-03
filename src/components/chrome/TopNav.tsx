@@ -8,21 +8,29 @@ import UploadModal from '../UploadModal';
 import { log } from '../../lib/log';
 import { libraryDisplayLabel, librarySourceBadge } from '../../lib/libraryPresentation';
 import { allLibrariesShelf } from '../../lib/allLibraries';
+import { useShellChrome } from '../shell/ShellContext';
+import { useI18n } from '../../i18n';
 
 export interface TopNavProps {
   st: OnyxState;
 }
 
-// Search field-scope options (book libraries).
-const SCOPES: { value: SearchScope; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'title', label: 'Title' },
-  { value: 'author', label: 'Author' },
-  { value: 'series', label: 'Series' },
+// Search field-scope options (book libraries). Labels are resolved at render
+// time through t() so they follow the active language.
+const SCOPES: { value: SearchScope; labelKey: 'search.scope.all' | 'search.scope.title' | 'search.scope.author' | 'search.scope.series' }[] = [
+  { value: 'all', labelKey: 'search.scope.all' },
+  { value: 'title', labelKey: 'search.scope.title' },
+  { value: 'author', labelKey: 'search.scope.author' },
+  { value: 'series', labelKey: 'search.scope.series' },
 ];
 
 export default function TopNav({ st }: TopNavProps) {
   const mono = "'JetBrains Mono', ui-monospace, monospace";
+  const { t } = useI18n();
+  // When the shell renders a sidebar, library switching and the account entry
+  // point already live there — rendering them again here would give the user two
+  // competing controls for the same job.
+  const chrome = useShellChrome();
   // Podcast search is title-only, so the field-scope selector (Title/Author/
   // Series) is hidden for podcast libraries.
   const isPodcast = st.activeLibrary?.mediaType === 'podcast';
@@ -120,8 +128,9 @@ export default function TopNav({ st }: TopNavProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       {/* Current library — the prominent "you are here" indicator, and (when more
           than one library exists) the switcher. Styled as an accent chip so it
-          reads as the primary anchor of the bar now that the Library tab is gone. */}
-      {(() => {
+          reads as the primary anchor of the bar now that the Library tab is gone.
+          Suppressed entirely when the shell sidebar owns navigation. */}
+      {!chrome.hasSidebar && (() => {
         const combined = allLibrariesShelf(st.libraries);
         const libraryChoices = combined ? [combined, ...st.libraries] : st.libraries;
         const activeLib = st.activeLibrary;
@@ -307,7 +316,9 @@ export default function TopNav({ st }: TopNavProps) {
         <input
           id="onyx-search"
           type="text"
-          placeholder={`Search ${st.library.length} titles…`}
+          placeholder={isPodcast
+            ? t('search.placeholderPodcasts', { count: st.library.length })
+            : t('search.placeholder', { count: st.library.length })}
           value={st.search}
           onChange={(e) => st.setSearch(e.target.value)}
           style={{
@@ -353,7 +364,10 @@ export default function TopNav({ st }: TopNavProps) {
                 border: '1px solid var(--onyx-glass-edge)', borderRadius: 4, padding: '3px 6px', cursor: 'pointer',
               }}
             >
-              {SCOPES.find(s => s.value === st.searchScope)?.label ?? 'All'}
+              {(() => {
+                const current = SCOPES.find(s => s.value === st.searchScope);
+                return current ? t(current.labelKey) : t('search.scope.all');
+              })()}
               <span style={{ display: 'inline-flex', transform: scopeOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
                 <Icon name="chevron-down" size={10} />
               </span>
@@ -402,7 +416,7 @@ export default function TopNav({ st }: TopNavProps) {
                         fontWeight: active ? 600 : 500,
                       }}
                     >
-                      {s.label}
+                      {t(s.labelKey)}
                       {active && <Icon name="check" size={12} />}
                     </button>
                   );
@@ -412,10 +426,12 @@ export default function TopNav({ st }: TopNavProps) {
           </div>
         )}
       </div>
-      {/* User avatar — initial derived from logged-in username, not hardcoded */}
+      {/* User avatar — the account entry point. Hidden when the sidebar's footer
+          already offers it, so the toolbar does not carry a redundant circle. */}
+      {!chrome.hasSidebar && (
       <button
         onClick={() => { st.setSettingsSection('account'); st.setScreen('settings'); }}
-        title="Account & settings"
+        title={t('nav.account')}
         style={{
           width: 28, height: 28, borderRadius: '50%',
           background: 'var(--onyx-accent)', color: 'var(--onyx-bg)',
@@ -424,6 +440,7 @@ export default function TopNav({ st }: TopNavProps) {
           fontSize: 11, fontWeight: 700, flexShrink: 0,
         }}
       >{((st.user?.username || st.localDisplayName)?.[0] ?? '?').toUpperCase()}</button>
+      )}
     </Glass>
 
     {localImportOpen && st.activeLibrary?.source === 'local' && (

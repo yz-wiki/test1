@@ -10,6 +10,7 @@ export { default as DownloadsSection } from './DownloadsSection';
 export { default as AppearanceSection } from './AppearanceSection';
 export type { AppearanceSectionProps } from './AppearanceSection';
 export { default as KeyboardSection } from './KeyboardSection';
+export { default as LanguageSection } from './LanguageSection';
 export { default as AboutSection } from './AboutSection';
 export { default as SyncSection } from './SyncSection';
 export type { SyncSectionProps } from './SyncSection';

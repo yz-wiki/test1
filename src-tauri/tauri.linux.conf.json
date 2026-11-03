@@ -4,9 +4,32 @@
     "beforeBuildCommand": "pnpm build:linux"
   },
   "bundle": {
-    "targets": ["appimage"],
+    "targets": ["appimage", "deb", "rpm"],
+    "category": "AudioVideo",
+    "shortDescription": "Native audiobook player for Audiobookshelf",
+    "longDescription": "Skald is a native Linux desktop client for Audiobookshelf and a standalone audiobook and podcast player. It supports local folders without a server, RSS/OPML podcast subscriptions, offline downloads and live progress sync.",
     "resources": {
       "linux-runtime/plugins/": "plugins/"
+    },
+    "linux": {
+      "deb": {
+        "section": "sound",
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "libvlc5",
+          "libvlccore9",
+          "libsecret-1-0"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "webkit2gtk4.1",
+          "gtk3",
+          "vlc-libs",
+          "libsecret"
+        ]
+      }
     }
   }
 }

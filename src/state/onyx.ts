@@ -1517,7 +1517,10 @@ export function useOnyxState(): OnyxState {
         setPosition(np);
         seekAudio(np).catch(e => log.error('playback', 'transport command failed', { err: String(e) }));
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // Ctrl/Cmd+F focuses the shelf search field (the platform-standard
+      // "find" gesture, and it also suppresses the WebView's own find bar).
+      // Ctrl/Cmd+K is reserved for the command palette, which the shell binds.
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         (document.getElementById('onyx-search') as HTMLInputElement | null)?.focus();
       }

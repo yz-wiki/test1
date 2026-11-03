@@ -14,6 +14,27 @@ Built with **Tauri 2 + React 19 + TypeScript + Rust**, with audio handled native
 
 A summary of every release since 1.0. For the full commit-level changelog, see [`CHANGELOG.md`](CHANGELOG.md).
 
+### Version 1.3.0
+
+A shell and localisation release: the navigation, the window chrome and the
+packaging pipeline were rebuilt; the library and player logic is untouched.
+
+- **macOS-inspired shell:** a persistent translucent sidebar with grouped
+  source-list navigation, traffic-light window controls, a unified titlebar that
+  names the destination and the current library, and automatic collapse to an
+  icon rail on narrow windows.
+- **Command palette** on `Ctrl+K` / `⌘K`: every screen, every library, every
+  settings pane, plus play/pause, chapter navigation, appearance and language
+  toggles.
+- **English and Simplified Chinese**, switchable from **Settings → Language &
+  Region**, with follow-system detection, date-format and 24-hour-clock
+  preferences. Changes apply instantly.
+- **Retuned palette:** neutral macOS grey scale for both appearances, eight accent
+  presets, and a CJK-aware font stack with Chinese-specific tracking.
+- **Selectable packaging:** `pnpm package` builds any combination of portable
+  green zip, NSIS `.exe`, MSI, AppImage, deb and rpm. See [`docs/BUILD.md`](docs/BUILD.md).
+- **i18n developer guide:** [`docs/I18N.md`](docs/I18N.md).
+
 ### Version 1.2.0
 
 The biggest release since 1.0, with work spread across multiple libraries, accessibility, and reliability.
@@ -92,9 +113,16 @@ from `PATH`; the Windows runtime directories are not required.
 ```bash
 pnpm install            # Install Node dependencies
 pnpm tauri dev          # Run a development build with HMR
-pnpm tauri build        # Create NSIS on Windows or AppImage on Linux
+pnpm package            # Interactive: choose which packages to build
+pnpm package:win        # portable zip + NSIS installer + MSI
+pnpm package:linux      # AppImage + deb + rpm
 pnpm exec tsc --noEmit  # Run a frontend type-check (safe while the app is running)
+pnpm verify             # Full gate: typecheck, tests, command/console checks, clippy
 ```
+
+Packaging details, prerequisites per platform and troubleshooting live in
+[`docs/BUILD.md`](docs/BUILD.md). Internationalisation conventions live in
+[`docs/I18N.md`](docs/I18N.md).
 
 > **Note:** The `build.rs` script copies the VLC DLLs at build time and will fail with an OS "file in use" error if Skald is already running. Make sure to close the app before running `cargo` or `tauri build`.
 

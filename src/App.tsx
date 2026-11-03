@@ -9,13 +9,11 @@ import { cleanupOwnedPlaybackSessions, closeActiveSession, connectSocket, discon
 import { autoRewindCfg } from './lib/playbackPrefs';
 import { log } from './lib/log';
 import Toast from './components/ui/Toast';
-import ActivityCenter from './components/ActivityCenter';
 import ConfirmDialog from './components/ui/ConfirmDialog';
 import DownloadProgressToast from './components/downloads/DownloadProgressToast';
 import UnidentifiedNotice from './components/UnidentifiedNotice';
 import UpNextPanel from './components/player/UpNextPanel';
-import OnyxWash from './components/chrome/OnyxWash';
-import Titlebar from './components/chrome/Titlebar';
+import Shell from './components/shell/Shell';
 import Login from './screens/Login';
 import Onboarding from './screens/Onboarding';
 import Library from './screens/Library';
@@ -23,6 +21,7 @@ import Player from './screens/Player';
 import Settings from './screens/Settings';
 import PodcastDetail from './screens/PodcastDetail';
 import { OFFLINE_PROGRESS_FLUSH_MS } from './lib/syncCadence';
+import { t } from './i18n';
 
 // Guard against React StrictMode double-mounting which would open two
 // simultaneous socket connections, causing one to fail with EngineIO error.
@@ -31,7 +30,6 @@ let socketInitialised = false;
 export default function App() {
   // Single shared state object — all screens read from and write to this
   const st = useOnyxState();
-  const isDark = st.theme !== 'light';
   // UI scale factor applied via CSS transform on the root div
   const z = st.scale / 100;
   const formatConflictTime = (seconds: number) => {
@@ -111,8 +109,8 @@ export default function App() {
     listen('socket-disconnected', () => {
       log.warn('sync', 'socket disconnected');
       if (localStorage.getItem('onyx.sync.live') === 'true') {
-        st.setToast({ message: 'Live sync disconnected — reconnecting…', type: 'info' });
-        st.recordActivity({ category: 'sync', outcome: 'error', message: 'Live sync disconnected — reconnecting' });
+        st.setToast({ message: t('toast.syncDisconnected'), type: 'info' });
+        st.recordActivity({ category: 'sync', outcome: 'error', message: t('toast.syncDisconnected') });
       }
     }).then(fn => { unlistenDisconnected = fn; });
 
@@ -120,8 +118,8 @@ export default function App() {
     listen('socket-reconnected', async () => {
       log.info('sync', 'socket reconnected');
       if (localStorage.getItem('onyx.sync.live') === 'true') {
-        st.setToast({ message: 'Live sync restored', type: 'success' });
-        st.recordActivity({ category: 'sync', outcome: 'success', message: 'Live sync restored' });
+        st.setToast({ message: t('toast.syncRestored'), type: 'success' });
+        st.recordActivity({ category: 'sync', outcome: 'success', message: t('toast.syncRestored') });
       }
       // When live sync reconnects after an offline period, flush any progress
       // updates that were queued locally during the disconnection window.
@@ -130,11 +128,8 @@ export default function App() {
         if (count > 0) {
           log.info('downloads', 'flushed offline progress on reconnect', { count });
           // Override the "live sync restored" toast with a more informative one.
-          st.setToast({
-            message: `Synced ${count} offline progress update${count > 1 ? 's' : ''} to server`,
-            type: 'success',
-          });
-          st.recordActivity({ category: 'sync', outcome: 'success', message: `Synced ${count} offline progress update${count > 1 ? 's' : ''} to server` });
+          st.setToast({ message: t('toast.syncFlushed', { count }), type: 'success' });
+          st.recordActivity({ category: 'sync', outcome: 'success', message: t('toast.syncFlushed', { count }) });
           // Refresh mediaProgress so cover overlays and Pick it up reflect the synced values.
           // applyServerProgress preserves local-library progress (server payload omits it).
           const me = await getMe(st.serverUrl);
@@ -229,9 +224,9 @@ export default function App() {
           }
           if (filed || quarantined) {
             await st.refreshLibrary();
-            const parts = [`${filed} added`];
-            if (quarantined) parts.push(`${quarantined} need attention`);
-            st.setToast({ message: `Imported from staging — ${parts.join(', ')}`, type: 'success' });
+            const parts: string[] = [t('toast.stagingAdded', { count: filed })];
+            if (quarantined) parts.push(t('toast.stagingAttention', { count: quarantined }));
+            st.setToast({ message: t('toast.importedFromStaging', { summary: parts.join(', ') }), type: 'success' });
             log.info('library', 'auto-ingest staging', { filed, quarantined });
           }
         } catch (e) {
@@ -309,29 +304,16 @@ export default function App() {
       transform: z === 1 ? undefined : `scale(${z})`,
       transformOrigin: 'top left',
     }}>
-      {/* Ambient wash gradient and titlebar chrome */}
-      <OnyxWash isDark={isDark} />
-      {/* isOffline is true when the library loaded from disk cache (server unreachable);
-          isUnencrypted flags a plain-http ABS connection (review L6 — visible, never blocked) */}
-      <Titlebar isDark={isDark} isOffline={st.isOffline} lastRefresh={st.lastLibraryRefresh} isUnencrypted={!!st.authToken && st.serverUrl.startsWith('http://')} trailing={<ActivityCenter st={st} />} />
-
-      {/* Screen content area — sits below the 44px titlebar */}
-      <div style={{
-        position: 'absolute',
-        top: 44,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        minHeight: 0,
-        width: '100%',
-        maxWidth: '100%',
-        overflow: 'hidden',
-      }}>
+      {/* The shell owns the window frame: ambient wash, macOS titlebar with
+          traffic lights, the navigation sidebar and the command palette. Screens
+          render into its content region, so this component no longer positions
+          anything itself. */}
+      <Shell st={st}>
         {/* Show a loading indicator while the library fetch is in flight */}
         {st.libraryLoading ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontSize: 14, fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: '0.08em' }}>
-            Loading library…
+          <div className="mac-empty" style={{ flex: 1 }}>
+            <span className="mac-loading-ring" aria-hidden="true" />
+            <span className="mac-empty__title">{t('common.loading')}</span>
           </div>
         ) : (
           <>
@@ -342,16 +324,16 @@ export default function App() {
             {st.screen === 'settings' && <Settings st={st} onLogout={() => st.setAuthToken('')} />}
           </>
         )}
-      </div>
+      </Shell>
 
       {/* Per-download progress bars — appears during active transfers, clears on completion.
           onCancel/onFailed are wired here alongside onComplete so all download outcome
           toasts originate from the same place and use the same st.setToast mechanism. */}
       <DownloadProgressToast
         serverUrl={st.serverUrl}
-        onComplete={(title) => { st.setToast({ message: `Downloaded "${title}"`, type: 'success' }); st.recordActivity({ category: 'downloads', outcome: 'success', message: `Downloaded "${title}"` }); }}
-        onCancel={(title) => st.setToast({ message: `Download cancelled — "${title}"`, type: 'info' })}
-        onFailed={(title, _error) => { st.setToast({ message: `Download failed — "${title}"`, type: 'error' }); st.recordActivity({ category: 'downloads', outcome: 'error', message: `Download failed — "${title}"` }); }}
+        onComplete={(title) => { st.setToast({ message: t('toast.downloaded', { title }), type: 'success' }); st.recordActivity({ category: 'downloads', outcome: 'success', message: t('toast.downloaded', { title }) }); }}
+        onCancel={(title) => st.setToast({ message: t('toast.downloadCancelled', { title }), type: 'info' })}
+        onFailed={(title, _error) => { st.setToast({ message: t('toast.downloadFailed', { title }), type: 'error' }); st.recordActivity({ category: 'downloads', outcome: 'error', message: t('toast.downloadFailed', { title }) }); }}
       />
 
       {/* Quarantine notice — local-library books awaiting a metadata match. */}
@@ -392,10 +374,13 @@ export default function App() {
 
       {st.syncConflict && !st.confirmDialog && (
         <ConfirmDialog
-          title="Playback changed on another device"
-          message={`Playback continued on ${st.syncConflict.deviceDescription} at ${formatConflictTime(st.syncConflict.currentTime)}. Use that server position, or continue from Skald's current position?`}
-          confirmLabel="Use server position"
-          cancelLabel="Continue here"
+          title={t('sync.conflictTitle')}
+          message={t('sync.conflictMessage', {
+            device: st.syncConflict.deviceDescription,
+            time: formatConflictTime(st.syncConflict.currentTime),
+          })}
+          confirmLabel={t('sync.conflictUseServer')}
+          cancelLabel={t('sync.conflictContinueHere')}
           danger={false}
           onConfirm={() => {
             const conflict = st.syncConflict;

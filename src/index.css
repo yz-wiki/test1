@@ -47,30 +47,39 @@
   --onyx-accent-dim:    rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b), 0.18);
   --onyx-accent-edge:   rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b), 0.35);
 
-  /* Backgrounds */
-  --onyx-bg:      #0b0b0e;
-  --onyx-bg-deep: #08080b;
+  /* Backgrounds (macOS dark window) */
+  --onyx-bg:      #1c1c1e;
+  --onyx-bg-deep: #141416;
 
   /* Panels */
-  --onyx-panel:  #131316;
-  --onyx-panel2: #161619;
+  --onyx-panel:  #232326;
+  --onyx-panel2: #2c2c2e;
 
   /* Lines / dividers */
-  --onyx-line: rgba(255, 255, 255, 0.06);
+  --onyx-line: rgba(255, 255, 255, 0.09);
 
   /* Text */
-  --onyx-text:      #ebe7df;
-  --onyx-text-dim:  rgba(235, 231, 223, 0.62);
-  --onyx-text-mute: rgba(235, 231, 223, 0.38);
+  --onyx-text:      #f2f2f5;
+  --onyx-text-dim:  rgba(242, 242, 245, 0.62);
+  --onyx-text-mute: rgba(242, 242, 245, 0.38);
 
   /* Glass surfaces */
-  --onyx-glass:       rgba(255, 255, 255, 0.04);
-  --onyx-glass-strong: rgba(255, 255, 255, 0.07);
-  --onyx-glass-edge:  rgba(255, 255, 255, 0.09);
+  --onyx-glass:       rgba(255, 255, 255, 0.05);
+  --onyx-glass-strong: rgba(255, 255, 255, 0.09);
+  --onyx-glass-edge:  rgba(255, 255, 255, 0.10);
   --onyx-glass-hover: rgba(255, 255, 255, 0.10);
 
   /* Shadows */
   --onyx-shadow-deep: rgba(0, 0, 0, 0.50);
+
+  /* ── Shared geometry scale ──────────────────────────────────────────────
+     Consumed by the macOS surface layer and any component that wants to match
+     it without hardcoding a radius. */
+  --onyx-radius-sm: 6px;
+  --onyx-radius:    10px;
+  --onyx-radius-lg: 14px;
+  --onyx-radius-xl: 20px;
+  --onyx-radius-pill: 999px;
 }
 
 /* ─── Global base ────────────────────────────────────────────────────────── */
@@ -80,9 +89,13 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0d0d0f;
+  /* Matches ONYX_DARK_BASE.bg in state/theme.ts. applyTheme() overwrites this at
+     runtime; the literal here only covers the first paint before React mounts. */
+  background-color: #1c1c1e;
   color: var(--onyx-text);
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  /* The full stack (incl. CJK fallbacks) lives in --mac-font-ui — see
+     src/styles/macos.css. Falling back to it keeps one source of truth. */
+  font-family: var(--mac-font-ui, 'Inter', -apple-system, system-ui, sans-serif);
   overflow: hidden;
 }
 

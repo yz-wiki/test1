@@ -2,6 +2,55 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 1.3.0 (2026-11-03)
+
+A shell and localisation release. The library/player logic is unchanged; what
+moved is everything around it.
+
+### New window shell (macOS-inspired)
+- Persistent translucent **sidebar** replaces the "everything in a top bar"
+  layout: grouped source-list navigation, count badges, and the account pinned to
+  the bottom.
+- **Traffic-light window controls** (close / minimise / zoom) at the top-left,
+  with hover-revealed glyphs, replacing the right-aligned Windows-style buttons.
+  Login and onboarding share the same chrome.
+- **Unified titlebar**: the destination is the primary label, the current library
+  or book count the subtitle, with offline and unencrypted-connection badges
+  inline.
+- **Command palette** (`Ctrl+K` / `⌘K`) reaching every screen, every library,
+  every settings pane, plus transport actions (play/pause, chapter skip),
+  appearance toggle, sidebar toggle and language switch.
+- Sidebar collapses to an icon rail automatically on narrow windows, and can be
+  hidden entirely from the titlebar; the compact layout falls back to the
+  original top-bar chrome.
+- New macOS surface system: 12/14 px radii, three-step elevation, hairline
+  separators, capsule scrollbars, spring easing, `prefers-reduced-motion`
+  respected throughout.
+
+### Internationalisation
+- Full **English and Simplified Chinese** interface, with a new
+  **Settings → Language & Region** pane: language picker, follow-system toggle,
+  date-format preference (auto / ISO / medium / long), and a 24-hour clock switch.
+- Changes apply instantly, with no restart; the choice persists per device.
+- `Ctrl+F` now focuses the shelf search field (previously `Ctrl+K`, which now
+  belongs to the command palette).
+
+### Appearance
+- Dark and light palettes retuned to a neutral macOS grey scale instead of the
+  previous warm-neutral tones; text is never pure white to avoid halation.
+- Eight accent presets (Skald Gold plus the macOS system colours).
+- CJK-aware typography: a PingFang / YaHei / Noto Sans stack plus looser tracking
+  and line-height for Chinese.
+
+### Packaging
+- `pnpm package` builds an arbitrary selection of targets:
+  **portable green zip**, **NSIS `.exe`**, **MSI**, **AppImage**, **deb**, **rpm**.
+- Non-interactive mode (`--ci`) for release pipelines; unsupported targets fail
+  loudly instead of being skipped.
+- Linux packages now declare their WebKitGTK / GTK / LibVLC / libsecret
+  dependencies.
+- See `docs/BUILD.md` and `docs/I18N.md`.
+
 ## 1.2.0 (2026-07-11)
 
 The first build since 1.1.0 (the Server Upload release). This one focuses on
