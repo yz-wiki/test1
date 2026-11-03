@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n';
 import type { OnyxState } from '../../state/onyx';
 import {
   getBackups,
@@ -115,6 +116,7 @@ export default function BackupSection({ st }: BackupSectionProps) {
 }
 
 function BackupSectionInner({ st }: BackupSectionProps) {
+  const { t } = useI18n();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [location, setLocation] = useState('');
   const [pathEnvSet, setPathEnvSet] = useState(false);
@@ -211,7 +213,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   if (loading) {
     return (
       <div>
-        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <SectionHead title={t('backup.title')} subtitle="Database and metadata snapshots. Audio files are not included in backups." />
         <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
           Loading backups…
         </div>
@@ -222,14 +224,14 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   if (error) {
     return (
       <div>
-        <SectionHead title="Backups" subtitle="Database and metadata snapshots. Audio files are not included in backups." />
+        <SectionHead title={t('backup.title')} subtitle="Database and metadata snapshots. Audio files are not included in backups." />
         <div style={{
           fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
           padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
           border: '1px solid var(--onyx-glass-edge)',
         }}>
           Couldn't load backups: {error}.
-          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>Retry</Btn></div>
+          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>{t('backup.retry')}</Btn></div>
         </div>
       </div>
     );
@@ -238,7 +240,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
   return (
     <div>
       <SectionHead
-        title="Backups"
+        title={t('backup.title')}
         subtitle="Database and metadata snapshots. Audio files are not included in backups."
       />
 
@@ -253,8 +255,8 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
       {/* ── Snapshots ────────────────────────────────────────────────────── */}
       <Panel
-        label="Snapshots"
-        action={<Btn variant="accent" onClick={() => void doCreate()} disabled={busy}>Create backup now</Btn>}
+        label={t('backup.snapshots')}
+        action={<Btn variant="accent" onClick={() => void doCreate()} disabled={busy}>{t('backup.createNow')}</Btn>}
       >
         {/* Count + on-disk location */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--onyx-line)' }}>
@@ -270,7 +272,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
 
         {backups.length === 0 && (
           <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0', letterSpacing: '0.04em' }}>
-            No snapshots yet.
+            {t('backup.empty')}
           </div>
         )}
 
@@ -285,7 +287,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)' }}>{b.datePretty || b.id}</span>
-                {b.id === latestId && <Tag>Latest</Tag>}
+                {b.id === latestId && <Tag>{t('backup.latest')}</Tag>}
               </div>
               <div style={{ display: 'flex', gap: 14, marginTop: 4, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em' }}>
                 <span>{formatBytes(b.fileSize)}</span>
@@ -294,16 +296,16 @@ function BackupSectionInner({ st }: BackupSectionProps) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <Btn variant="ghost" onClick={() => setConfirm({ kind: 'restore', backup: b })} disabled={busy}>Restore</Btn>
-              <Btn variant="danger" onClick={() => setConfirm({ kind: 'delete', backup: b })} disabled={busy}>Delete</Btn>
+              <Btn variant="ghost" onClick={() => setConfirm({ kind: 'restore', backup: b })} disabled={busy}>{t('backup.restore')}</Btn>
+              <Btn variant="danger" onClick={() => setConfirm({ kind: 'delete', backup: b })} disabled={busy}>{t('backup.delete')}</Btn>
             </div>
           </div>
         ))}
       </Panel>
 
       {/* ── Schedule & retention ─────────────────────────────────────────── */}
-      <Panel label="Schedule & retention">
-        <Row label="Automatic backups" hint="Run a backup on a recurring schedule.">
+      <Panel label={t('backup.scheduleRetention')}>
+        <Row label={t('backup.automatic')} hint={t('backup.automaticHint')}>
           <Toggle
             on={scheduleEnabled}
             onChange={v => {
@@ -314,7 +316,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
         </Row>
 
         {scheduleEnabled && (
-          <Row label="Schedule" hint="When automatic backups run." align="top">
+          <Row label={t('backup.schedule')} hint={t('backup.scheduleHint')} align="top">
             <CronEditor
               value={cronValue}
               onChange={v => void patchSettings({ backupSchedule: v })}
@@ -322,7 +324,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
           </Row>
         )}
 
-        <Row label="Snapshots to keep" hint="Older snapshots beyond this count are pruned automatically.">
+        <Row label={t('backup.keepCount')} hint={t('backup.keepCountHint')}>
           <NumField
             value={st.serverSettings?.backupsToKeep ?? 2}
             min={1} max={100}
@@ -330,7 +332,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
           />
         </Row>
 
-        <Row label="Max backup size" hint="Safety limit — a backup larger than this is aborted. Set 0 to disable.">
+        <Row label={t('backup.maxSize')} hint={t('backup.maxSizeHint')}>
           <NumField
             value={st.serverSettings?.maxBackupSize ?? 1}
             min={0} max={1024} step={0.5} suffix="GB"
@@ -342,7 +344,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
       {/* ── Confirm dialogs ──────────────────────────────────────────────── */}
       {confirm?.kind === 'delete' && (
         <ConfirmDialog
-          title="Delete backup?"
+          title={t('backup.deleteConfirm')}
           message={`Permanently delete the backup from ${confirm.backup.datePretty || confirm.backup.id}? This cannot be undone.`}
           confirmLabel="Delete"
           danger
@@ -352,7 +354,7 @@ function BackupSectionInner({ st }: BackupSectionProps) {
       )}
       {confirm?.kind === 'restore' && (
         <ConfirmDialog
-          title="Restore this backup?"
+          title={t('backup.restoreConfirm')}
           message={`Restoring the backup from ${confirm.backup.datePretty || confirm.backup.id} overwrites the server's current database and metadata, then restarts Audiobookshelf. You will be disconnected. This cannot be undone.`}
           confirmLabel="Restore & restart"
           danger

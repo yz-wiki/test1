@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n';
 import { getAudioDevices, setAudioDevice as setAudioDeviceCmd } from '../../api/abs';
 import type { AudioDevice } from '../../api/abs';
 import {
@@ -103,6 +104,7 @@ function loadSavedPresets(): SavedEqPreset[] {
 }
 
 export default function AudioSection() {
+  const { t } = useI18n();
   const [devices, setDevices] = useState<AudioDevice[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [eqSettings, setEqSettings] = useState<EqSettings | null>(null);
@@ -213,12 +215,12 @@ export default function AudioSection() {
 
   return (
     <div>
-      <SectionHead title="Audio" subtitle="Output device and signal-chain preferences." />
+      <SectionHead title={t('audio.title')} subtitle="Output device and signal-chain preferences." />
 
       {/* Output device — kept as a standalone line item above the signal chain. */}
       <Row
-        label="Output device"
-        hint="Active right now. Pick a different device any time from the toolbar."
+        label={t('audio.outputDevice')}
+        hint={t('audio.outputDeviceHint')}
         align="top"
       >
         {devices.length === 0 ? (
@@ -242,35 +244,35 @@ export default function AudioSection() {
       </Row>
 
       {/* ── Signal chain panel ── */}
-      <Panel label="Signal chain" bodyStyle={{ padding: '2px 20px 18px' }}>
+      <Panel label={t('audio.signalChain')} bodyStyle={{ padding: '2px 20px 18px' }}>
           {/* Equalizer master toggle */}
-          <Row label="Equalizer" hint="9-band DSP equalizer powered by LibVLC. Changes apply live.">
+          <Row label={t('audio.equalizer')} hint={t('audio.equalizerHint')}>
             {eqSettings !== null && <Toggle on={eqEnabled} onChange={handleToggleEq} />}
           </Row>
 
           {/* EQ controls — greyed and non-interactive while disabled */}
           <div style={{ opacity: eqEnabled ? 1 : 0.35, pointerEvents: eqEnabled ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
             {/* Preset pills (replaces the dropdown) */}
-            <Row label="Preset">
+            <Row label={t('audio.preset')}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {presets.map(p => (
                   <Seg key={p.index} active={presetSelectValue === String(p.index)} onClick={() => handlePresetChange(p.index)}>{p.name}</Seg>
                 ))}
                 {/* Custom is an indicator (active when bands were hand-tuned), not directly applicable. */}
-                <Seg active={presetSelectValue === '__custom__'} onClick={() => {}}>Custom</Seg>
+                <Seg active={presetSelectValue === '__custom__'} onClick={() => {}}>{t('audio.custom')}</Seg>
               </div>
             </Row>
 
-            <Row label="Saved profiles" hint="Custom profiles apply to the current output device and are stored on this PC.">
+            <Row label={t('audio.savedProfiles')} hint={t('audio.savedProfilesHint')}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
                 {savedPresets.map(p => <Seg key={p.name} active={false} onClick={() => applySavedPreset(p)}>{p.name}</Seg>)}
-                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder="Profile name" aria-label="Saved EQ profile name" style={{ width: 105, padding: '5px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 10 }} />
-                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: '5px 8px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>SAVE</button>
+                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder={t('audio.profileName')} aria-label={t('audio.profileNameAria')} style={{ width: 105, padding: '5px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 10 }} />
+                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: '5px 8px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>{t('audio.save')}</button>
               </div>
             </Row>
 
             {/* Preamp */}
-            <Row label="Preamp">
+            <Row label={t('audio.preamp')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <input
                   type="range"
@@ -301,7 +303,7 @@ export default function AudioSection() {
                       fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
                     }}
                   >
-                    Reset to flat
+                    {t('audio.resetFlat')}
                   </button>
                 </div>
 
