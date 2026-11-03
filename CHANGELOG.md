@@ -2,6 +2,35 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 1.3.2 (2026-11-03)
+
+A localisation-completeness release. No layout or logic changes.
+
+### Whole-app Chinese (Simplified) coverage
+The dictionary went from 150 to **1044 keys**, with English and Chinese kept in
+lockstep by the parity test (identical key sets, no empty values, no drifted
+placeholders). Coverage now includes:
+
+- **All thirteen Settings panes** — playback, account, downloads, notifications,
+  server, backups, audio/EQ, sync, sharing & RSS, scheduled tasks, keyboard,
+  appearance, logs — plus every option hint and every confirmation.
+- **Onboarding**, all seven steps: eyebrows, headers, bodies, buttons, and the
+  decorative quote panel.
+- **Library surfaces**: shelf tab titles and their count subtitles, filter
+  popover, playlist/collection detail and list views, files modal, item context
+  menu, cover picker, metadata editor, match dialog, file & track inspector.
+- **Podcasts**: browse, detail, subscribe, download and per-show settings.
+- **1xx toast messages** — including the ones raised from the state layer, so
+  "session expired", "server unreachable" and sync-restored notices are localised
+  too, not just the ones fired from components.
+- **Error dialogs**: `presentError` resolves all eleven branches through the
+  dictionary. Fault *classification* still depends on the raw transport text;
+  only the copy shown to the user is translated.
+
+Left in English deliberately: product names (Open Library, Audiobookshelf),
+field acronyms (ISBN, ASIN), and example values (`my-book`, `email@example.com`,
+`host:port`) — translating those makes the forms harder to read, not easier.
+
 ## 1.3.0 (2026-11-03)
 
 A shell and localisation release. The library/player logic is unchanged; what
