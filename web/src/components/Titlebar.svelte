@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { session, ui } from '../lib/state.svelte';
+  import { player } from '../lib/player.svelte';
 
   let { title = 'Skald', subtitle = '' }: { title?: string; subtitle?: string } = $props();
 
@@ -40,6 +41,7 @@
     data-no-drag
     title={session.user?.username ?? ''}
     onclick={() => {
+      player.collapse();
       ui.settingsSection = 'account';
       ui.route = 'settings';
     }}
