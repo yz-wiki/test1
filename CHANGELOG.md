@@ -2,10 +2,52 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.8.0 (2026-11-04) — preview
+## 2.9.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
+
+### Shell and navigation
+
+- **The sidebar folds** to a 58px icon rail (button at its top, remembered
+  between launches), so the library gets the width on small screens.
+- **The account moved to the title bar** — it is window-level, not
+  library-level, and it stopped being a mystery row at the bottom of the rail.
+- Downloads sits between Server and Settings, where a tool that produces files
+  belongs.
+
+### Library
+
+- **Views are now Home / Books / Series / Authors / Narrators**, under the
+  Continue listening shelf rather than buried in the toolbar.
+- **Continue listening shows the chapter you are on**, not the total runtime.
+  A duration tells you nothing about where you are.
+
+### Book screen
+
+- The secondary actions are a two-up grid instead of a column of full-width
+  buttons, so they read as options rather than as four competing primaries.
+- **Chapters are paged** — 100 at a time with a range picker and a
+  "jump to where I am" button. A 1083-chapter serial used to mount 1083 rows.
+- **Any chapter can be saved on its own**: the button downloads that chapter's
+  audio file to the downloads folder. Whole-book download is unchanged.
+
+### Player
+
+- The chapter list pages and follows the playhead: open a book at chapter 507
+  and the list is already there.
+
+### Server
+
+- **Upload a whole audiobook as a folder**: pick the folder, Skald expands it
+  into audio files, fills the title from the folder name, and reports how many
+  files it found. Loose files still work.
+
+### Settings
+
+- Each pane now opens with its own title and a line saying what it is for, and
+  Appearance is grouped (theme / interface). The account pane shows the role and
+  the live connection state instead of two lonely rows.
 
 ### Fixed
 
@@ -176,6 +218,48 @@ Reported from the 1.5.0 build.
 - **Previous / next episode buttons** in the transport and the now-playing bar.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
+
+### Shell and navigation
+
+- **The sidebar folds** to a 58px icon rail (button at its top, remembered
+  between launches), so the library gets the width on small screens.
+- **The account moved to the title bar** — it is window-level, not
+  library-level, and it stopped being a mystery row at the bottom of the rail.
+- Downloads sits between Server and Settings, where a tool that produces files
+  belongs.
+
+### Library
+
+- **Views are now Home / Books / Series / Authors / Narrators**, under the
+  Continue listening shelf rather than buried in the toolbar.
+- **Continue listening shows the chapter you are on**, not the total runtime.
+  A duration tells you nothing about where you are.
+
+### Book screen
+
+- The secondary actions are a two-up grid instead of a column of full-width
+  buttons, so they read as options rather than as four competing primaries.
+- **Chapters are paged** — 100 at a time with a range picker and a
+  "jump to where I am" button. A 1083-chapter serial used to mount 1083 rows.
+- **Any chapter can be saved on its own**: the button downloads that chapter's
+  audio file to the downloads folder. Whole-book download is unchanged.
+
+### Player
+
+- The chapter list pages and follows the playhead: open a book at chapter 507
+  and the list is already there.
+
+### Server
+
+- **Upload a whole audiobook as a folder**: pick the folder, Skald expands it
+  into audio files, fills the title from the folder name, and reports how many
+  files it found. Loose files still work.
+
+### Settings
+
+- Each pane now opens with its own title and a line saying what it is for, and
+  Appearance is grouped (theme / interface). The account pane shows the role and
+  the live connection state instead of two lonely rows.
 
 ### Fixed
 

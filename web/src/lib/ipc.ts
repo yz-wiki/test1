@@ -415,6 +415,24 @@ export interface DownloadRecord {
 
 export const getDownloads = () => call<DownloadRecord[]>('get_downloads');
 
+export interface UploadFileEntry {
+  path: string;
+  name: string;
+  size: number;
+}
+
+/** Expands folders into the files inside them (audio types only). */
+export const resolveUploadFiles = (paths: string[]) =>
+  call<UploadFileEntry[]>('resolve_upload_files', { paths });
+
+/** One audio file of an item, saved wherever the caller says. */
+export const downloadLibraryFile = (
+  serverUrl: string,
+  itemId: string,
+  fileId: string,
+  destination: string,
+) => call<number>('download_library_file', { serverUrl, itemId, fileId, destination });
+
 export const downloadItem = (
   serverUrl: string,
   itemId: string,

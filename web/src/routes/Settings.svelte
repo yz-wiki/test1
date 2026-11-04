@@ -40,16 +40,18 @@
 
   type NavIcon = 'settings' | 'library' | 'headphones' | 'download' | 'clock' | 'book' | 'server';
 
-  const SECTIONS: { id: Section; key: TranslationKey; icon: NavIcon }[] = [
-    { id: 'appearance', key: 'settings.section.appearance', icon: 'settings' },
-    { id: 'language', key: 'settings.section.language', icon: 'library' },
-    { id: 'playback', key: 'settings.section.playback', icon: 'headphones' },
-    { id: 'storage', key: 'settings.section.storage', icon: 'download' },
-    { id: 'keyboard', key: 'settings.section.keyboard', icon: 'clock' },
-    { id: 'account', key: 'settings.section.account', icon: 'book' },
-    { id: 'server', key: 'settings.section.server', icon: 'server' },
-    { id: 'about', key: 'settings.section.about', icon: 'settings' },
+  const SECTIONS: { id: Section; key: TranslationKey; desc: TranslationKey; icon: NavIcon }[] = [
+    { id: 'appearance', key: 'settings.section.appearance', desc: 'settings.desc.appearance', icon: 'settings' },
+    { id: 'language', key: 'settings.section.language', desc: 'settings.desc.language', icon: 'library' },
+    { id: 'playback', key: 'settings.section.playback', desc: 'settings.desc.playback', icon: 'headphones' },
+    { id: 'storage', key: 'settings.section.storage', desc: 'settings.desc.storage', icon: 'download' },
+    { id: 'keyboard', key: 'settings.section.keyboard', desc: 'settings.desc.keyboard', icon: 'clock' },
+    { id: 'account', key: 'settings.section.account', desc: 'settings.desc.account', icon: 'book' },
+    { id: 'server', key: 'settings.section.server', desc: 'settings.desc.server', icon: 'server' },
+    { id: 'about', key: 'settings.section.about', desc: 'settings.desc.about', icon: 'settings' },
   ];
+
+  const current = $derived(SECTIONS.find(entry => entry.id === section) ?? SECTIONS[0]);
 
   const THEME_KEYS: Record<ThemeId, TranslationKey> = {
     graphite: 'theme.graphite',
@@ -181,6 +183,11 @@
   </nav>
 
   <div class="settings__body scroll-y">
+    <header class="pane__head">
+      <h2 class="t-heading">{t(current.key)}</h2>
+      <p class="t-small t-secondary">{t(current.desc)}</p>
+    </header>
+
     {#if error}
       <p class="t-small form-error" role="alert">{error}</p>
     {/if}
@@ -209,6 +216,9 @@
           </div>
         </div>
 
+        <div class="card__head">
+          <span class="t-label">{t('settings.group.interface')}</span>
+        </div>
         <div class="card__body">
           <div class="setting">
             <div class="setting__main">
@@ -398,6 +408,32 @@
           </div>
           <div class="setting">
             <div class="setting__main">
+              <span class="setting__label">{t('settings.role')}</span>
+              <span class="setting__hint">{session.user?.type ?? t('common.unknown')}</span>
+            </div>
+          </div>
+
+          <div class="setting">
+            <div class="setting__main">
+              <span class="setting__label">{t('sync.socket')}</span>
+              <span class="setting__hint">
+                <span class="dot" class:on={sync.socket === 'connected'} class:pending={sync.socket === 'connecting'}></span>
+                {sync.socket === 'connected'
+                  ? t('sync.connected')
+                  : sync.socket === 'connecting'
+                    ? t('sync.connecting')
+                    : t('sync.offline')}
+              </span>
+            </div>
+            <div class="setting__control">
+              <button class="btn btn--quiet btn--sm" onclick={() => (section = 'server')}>
+                {t('settings.open')}
+              </button>
+            </div>
+          </div>
+
+          <div class="setting">
+            <div class="setting__main">
               <span class="setting__label">{t('settings.signOut')}</span>
               <span class="setting__hint">{t('settings.signOutHint')}</span>
             </div>
@@ -539,6 +575,13 @@
 
   .settings__title {
     padding: 0 var(--gap-inline) var(--gap-row);
+  }
+
+  .pane__head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--gap-inline);
   }
 
   .settings__body {

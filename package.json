@@ -2,7 +2,7 @@
   "name": "skald",
   "description": "A native audiobook client for Audiobookshelf",
   "private": true,
-  "version": "2.8.0",
+  "version": "2.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

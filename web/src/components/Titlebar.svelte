@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { ui } from '../lib/state.svelte';
+  import { session, ui } from '../lib/state.svelte';
 
   let { title = 'Skald', subtitle = '' }: { title?: string; subtitle?: string } = $props();
 
@@ -33,6 +33,23 @@
 
   <div class="titlebar__spacer"></div>
 
+  <!-- The account lives here rather than at the bottom of the rail: it is
+       window-level, not library-level, and it stays put when the rail folds. -->
+  <button
+    class="titlebar__account"
+    data-no-drag
+    title={session.user?.username ?? ''}
+    onclick={() => {
+      ui.settingsSection = 'account';
+      ui.route = 'settings';
+    }}
+  >
+    <span class="titlebar__avatar">{(session.user?.username ?? '?').slice(0, 1).toUpperCase()}</span>
+    {#if session.user?.username}
+      <span class="titlebar__username truncate">{session.user.username}</span>
+    {/if}
+  </button>
+
   <div class="titlebar__controls" data-no-drag>
     <button
       class="winbtn"
@@ -62,6 +79,38 @@
 </header>
 
 <style>
+  .titlebar__account {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    max-width: 180px;
+    padding: 3px 8px 3px 3px;
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+  }
+
+  .titlebar__account:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .titlebar__avatar {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-bold);
+  }
+
+  .titlebar__username {
+    font-size: var(--text-xs);
+  }
+
   .titlebar {
     display: flex;
     align-items: center;

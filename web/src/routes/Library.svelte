@@ -1,13 +1,13 @@
 <script lang="ts">
   import { library, session, ui } from '../lib/state.svelte';
   import { progress } from '../lib/state.svelte';
-  import { player } from '../lib/player.svelte';
+  import { chapterSpans, player } from '../lib/player.svelte';
   import { matchesQuery, preloadPinyin } from '../lib/search';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
   import { downloads } from '../lib/downloads.svelte';
   import { updateProgress } from '../lib/ipc';
-  import { t, formatLength } from '../lib/i18n.svelte';
+  import { t, formatLength, type TranslationKey } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
 
@@ -20,25 +20,32 @@
   // Set once the pinyin dictionary has arrived, so the filter re-runs against it.
   let pinyinReady = $state(false);
 
-  type View = 'all' | 'series' | 'author';
-  let view = $state<View>('all');
-  /** Set when a series or author has been opened; null means the group list. */
+  type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
+
+  let view = $state<View>('home');
+  /** Set when a series, author or narrator has been opened. */
   let group = $state<string | null>(null);
 
-  const VIEWS: { id: View; key: 'library.all' | 'library.series' | 'library.authors' }[] = [
-    { id: 'all', key: 'library.all' },
+  const VIEWS: { id: View; key: TranslationKey }[] = [
+    { id: 'home', key: 'library.home' },
+    { id: 'books', key: 'library.books' },
     { id: 'series', key: 'library.series' },
-    { id: 'author', key: 'library.authors' },
+    { id: 'authors', key: 'library.authors' },
+    { id: 'narrators', key: 'library.narrators' },
   ];
 
+  const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
+
   function keyOf(item: (typeof library.items)[number], by: View): string {
-    if (by === 'series') return item.media?.metadata?.seriesName?.trim() ?? '';
-    if (by === 'author') return item.media?.metadata?.authorName?.trim() ?? '';
+    const meta = item.media?.metadata;
+    if (by === 'series') return meta?.seriesName?.trim() ?? '';
+    if (by === 'authors') return meta?.authorName?.trim() ?? '';
+    if (by === 'narrators') return meta?.narratorName?.trim() ?? '';
     return '';
   }
 
   const groups = $derived.by(() => {
-    if (view === 'all') return [];
+    if (!GROUPED) return [];
     const map = new Map<string, typeof library.items>();
     for (const item of library.items) {
       const key = keyOf(item, view);
@@ -56,10 +63,13 @@
   const visible = $derived.by(() => {
     void pinyinReady;
     const q = query.trim();
-    const base = group && view !== 'all'
+    const base = group && GROUPED
       ? library.items.filter(item => keyOf(item, view) === group)
       : library.items;
-    if (!q) return base;
+    if (!q) {
+      // The home view is a taste of the library, not the whole thing.
+      return view === 'home' && !group ? base.slice(0, 60) : base;
+    }
     return base.filter(item => matchesQuery(item, q));
   });
 
@@ -248,6 +258,22 @@
     menu.show(event, items);
   }
 
+  /** What is playing *now*: a chapter name for a book, an episode for a show.
+   *  A duration tells you nothing about where you are. */
+  function currentChapter(item: (typeof library.items)[number]): string {
+    const row = progress.for(item.id);
+    if (!row) return '';
+    if (item.mediaType === 'podcast') {
+      const episode = item.media?.episodes?.find(entry => entry.id === row.episodeId);
+      return episode?.title ?? '';
+    }
+    const spans = chapterSpans(item);
+    for (let index = spans.length - 1; index >= 0; index -= 1) {
+      if (row.currentTime >= spans[index].start) return spans[index].title;
+    }
+    return '';
+  }
+
   function author(item: (typeof library.items)[number]): string {
     return item.media?.metadata?.authorName?.trim() || '';
   }
@@ -264,19 +290,6 @@
       spellcheck="false"
       onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
     />
-  </div>
-
-  <div class="segmented">
-    {#each VIEWS as entry (entry.id)}
-      <button
-        class="segmented__item"
-        aria-pressed={view === entry.id}
-        onclick={() => {
-          view = entry.id;
-          group = null;
-        }}
-      >{t(entry.key)}</button>
-    {/each}
   </div>
 
   <span class="t-small t-num">{t('library.count', { count: visible.length })}</span>
@@ -308,77 +321,90 @@
         <div class="skeleton" aria-hidden="true"></div>
       {/each}
     </div>
-  {:else if visible.length === 0}
-    <div class="empty">
-      <Icon name="book" size={26} />
-      <span class="empty__title">{t('library.empty')}</span>
-      <span class="empty__body">{t('library.emptyHint')}</span>
+  {:else}
+    {#if recent.length > 0 && !GROUPED && !group}
+      <section class="section">
+        <h2 class="t-label">{t('library.continue')}</h2>
+        <div class="shelf">
+          {#each recent as item (item.id)}
+            {@const fraction = progress.fraction(item.id)}
+            {@const chapter = currentChapter(item)}
+            <button
+              class="shelf__card"
+              onclick={() => resume(item)}
+              oncontextmenu={event => openMenu(event, item)}
+            >
+              <div class="shelf__cover">
+                <Cover itemId={item.id} size={168} title={title(item)} />
+              </div>
+              <div class="shelf__text">
+                <span class="truncate shelf__title">{title(item)}</span>
+                <span class="t-small t-tertiary truncate">{chapter || author(item)}</span>
+                {#if fraction > 0}
+                  <span class="mini-bar" aria-hidden="true">
+                    <span style:width="{fraction * 100}%"></span>
+                  </span>
+                {/if}
+              </div>
+            </button>
+          {/each}
+        </div>
+      </section>
+    {/if}
+
+    <div class="views">
+      <div class="segmented">
+        {#each VIEWS as entry (entry.id)}
+          <button
+            class="segmented__item"
+            aria-pressed={view === entry.id}
+            onclick={() => {
+              view = entry.id;
+              group = null;
+            }}
+          >{t(entry.key)}</button>
+        {/each}
+      </div>
+      <span class="t-small t-num t-tertiary">
+        {t('library.count', { count: visible.length })}
+      </span>
     </div>
-  {:else if view !== 'all' && group === null}
-    {#if groups.length === 0}
+
+    {#if GROUPED && group === null}
+      {#if groups.length === 0}
+        <div class="empty">
+          <Icon name="book" size={26} />
+          <span class="empty__title">{t('library.noGroups')}</span>
+        </div>
+      {:else}
+        <div class="groups">
+          {#each groups as entry (entry.name)}
+            <button class="group" onclick={() => (group = entry.name)}>
+              <span class="group__cover">
+                <Cover itemId={entry.items[0].id} size={120} title={entry.name} />
+              </span>
+              <span class="group__text">
+                <span class="truncate group__name">{entry.name}</span>
+                <span class="t-small t-tertiary t-num">{entry.items.length}</span>
+              </span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+    {:else if visible.length === 0}
       <div class="empty">
         <Icon name="book" size={26} />
-        <span class="empty__title">{t('library.noGroups')}</span>
+        <span class="empty__title">{t('library.empty')}</span>
+        <span class="empty__body">{t('library.emptyHint')}</span>
       </div>
     {:else}
-      <div class="groups">
-        {#each groups as entry (entry.name)}
-          <button class="group" onclick={() => (group = entry.name)}>
-            <span class="group__cover">
-              <Cover itemId={entry.items[0].id} size={120} title={entry.name} />
-            </span>
-            <span class="group__text">
-              <span class="truncate group__name">{entry.name}</span>
-              <span class="t-small t-tertiary t-num">{entry.items.length}</span>
-            </span>
-          </button>
-        {/each}
-      </div>
-    {/if}
-  {:else}
-    {#if group}
-      <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
-        <Icon name="chevron-left" size={14} />
-        {group}
-      </button>
-    {/if}
+      {#if group}
+        <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
+          <Icon name="chevron-left" size={14} />
+          {group}
+        </button>
+      {/if}
 
-    {#if recent.length > 0}
-    <section class="section">
-      <h2 class="t-label">{t('library.continue')}</h2>
-      <div class="shelf">
-        {#each recent as item (item.id)}
-          {@const fraction = progress.fraction(item.id)}
-          <button
-            class="shelf__card"
-            onclick={() => resume(item)}
-            oncontextmenu={event => openMenu(event, item)}
-          >
-            <div class="shelf__cover">
-              <Cover itemId={item.id} size={168} title={title(item)} />
-            </div>
-            <div class="shelf__text">
-              <span class="truncate" style="font-weight: var(--weight-medium)">{title(item)}</span>
-              <span class="t-small truncate">{author(item)}</span>
-              <span class="t-tertiary t-num" style="font-size: var(--text-xs)">
-                {item.mediaType === 'podcast'
-                  ? t('podcast.episodes', { count: item.media?.episodes?.length ?? 0 })
-                  : formatLength(item.media?.duration ?? 0)}
-              </span>
-              {#if fraction > 0}
-                <span class="mini-bar" aria-hidden="true">
-                  <span style:width="{fraction * 100}%"></span>
-                </span>
-              {/if}
-            </div>
-          </button>
-        {/each}
-      </div>
-    </section>
-    {/if}
-
-    <section class="section">
-      <h2 class="t-label">{t('library.all')}</h2>
       <div class="grid" bind:this={gridEl} style:height={windowed ? `${totalH}px` : undefined}>
         <div
           class="grid__slice"
@@ -401,7 +427,7 @@
           {/each}
         </div>
       </div>
-    </section>
+    {/if}
   {/if}
 </div>
 
@@ -413,8 +439,8 @@
     padding: var(--gap-block);
   }
 
-  .section + .section {
-    margin-top: var(--gap-section);
+  .section {
+    margin-bottom: var(--gap-section);
   }
 
   .section > .t-label {
@@ -458,6 +484,18 @@
     gap: 2px;
     justify-content: center;
     min-width: 0;
+  }
+
+  .shelf__title {
+    font-weight: var(--weight-medium);
+  }
+
+  .views {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-row);
+    margin-bottom: var(--gap-row);
   }
 
   .mini-bar {

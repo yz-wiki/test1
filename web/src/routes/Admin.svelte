@@ -3,6 +3,7 @@
   import { listen, type UnlistenFn } from '@tauri-apps/api/event';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import {
+    resolveUploadFiles,
     uploadMedia,
     type UploadProgress,
   } from '../lib/ipc';
@@ -90,6 +91,25 @@
       unlisten = [];
     };
   });
+
+  /** A whole audiobook is usually a folder of tracks, so the picker offers one. */
+  async function pickFolder(): Promise<void> {
+    const chosen = await openDialog({
+      directory: true,
+      multiple: false,
+      title: t('upload.chooseFolder'),
+    });
+    if (typeof chosen !== 'string') return;
+    try {
+      const files = await resolveUploadFiles([chosen]);
+      upFiles = files.map(file => file.path);
+      if (upTitle.trim() === '') {
+        upTitle = chosen.split(/[\\/]/).filter(Boolean).pop() ?? '';
+      }
+    } catch (reason) {
+      error = (reason as Error).message;
+    }
+  }
 
   async function pickFiles(): Promise<void> {
     const chosen = await openDialog({
@@ -302,6 +322,9 @@
           </div>
 
           <div class="upload__files">
+            <button class="btn btn--quiet btn--sm" onclick={() => void pickFolder()}>
+              {t('upload.chooseFolder')}
+            </button>
             <button class="btn btn--quiet btn--sm" onclick={() => void pickFiles()}>
               {t('upload.chooseFiles')}
             </button>

@@ -17,19 +17,33 @@
   const isBrowsing = $derived(
     ui.route === 'library' || ui.route === 'book' || ui.route === 'podcast',
   );
+
+  const compact = $derived(ui.sidebarCompact);
+
+  function go(route: 'library' | 'downloads' | 'settings' | 'admin'): void {
+    player.collapse();
+    ui.route = route;
+  }
 </script>
 
 <Titlebar title={t('app.name')} subtitle={subtitle} />
 
 <div class="shell">
-  <nav class="rail" aria-label={t('nav.section.browse')}>
+  <nav class="rail" class:compact aria-label={t('nav.section.browse')}>
+    <button
+      class="rail__toggle"
+      aria-label={compact ? t('nav.expand') : t('nav.collapse')}
+      title={compact ? t('nav.expand') : t('nav.collapse')}
+      onclick={() => ui.toggleSidebar()}
+    >
+      <Icon name={compact ? 'chevron-right' : 'chevron-left'} size={14} />
+    </button>
+
     <button
       class="nav-item"
       aria-current={isBrowsing && !player.expanded ? 'page' : undefined}
-      onclick={() => {
-        player.collapse();
-        ui.route = 'library';
-      }}
+      title={t('nav.library')}
+      onclick={() => go('library')}
     >
       <span class="nav-item__icon"><Icon name="library" /></span>
       <span class="nav-item__label">{t('nav.library')}</span>
@@ -39,6 +53,7 @@
       <button
         class="nav-item"
         aria-current={player.expanded ? 'page' : undefined}
+        title={t('nav.nowPlaying')}
         onclick={() => player.expand()}
       >
         <span class="nav-item__icon"><Icon name="headphones" /></span>
@@ -46,24 +61,13 @@
       </button>
     {/if}
 
-    <button
-      class="nav-item"
-      aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
-      onclick={() => {
-        player.collapse();
-        ui.route = 'downloads';
-      }}
-    >
-      <span class="nav-item__icon"><Icon name="download" /></span>
-      <span class="nav-item__label">{t('nav.downloads')}</span>
-    </button>
-
     <div class="rail__divider"></div>
 
     {#each session.libraries as lib (lib.id)}
       <button
         class="nav-item"
         aria-current={lib.id === session.activeLibraryId && isBrowsing && !player.expanded ? 'page' : undefined}
+        title={lib.name}
         onclick={() => {
           player.collapse();
           session.selectLibrary(lib.id);
@@ -83,10 +87,8 @@
       <button
         class="nav-item"
         aria-current={ui.route === 'admin' && !player.expanded ? 'page' : undefined}
-        onclick={() => {
-          player.collapse();
-          ui.route = 'admin';
-        }}
+        title={t('nav.admin')}
+        onclick={() => go('admin')}
       >
         <span class="nav-item__icon"><Icon name="server" /></span>
         <span class="nav-item__label">{t('nav.admin')}</span>
@@ -95,27 +97,22 @@
 
     <button
       class="nav-item"
-      aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
-      onclick={() => {
-        player.collapse();
-        ui.route = 'settings';
-      }}
+      aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
+      title={t('nav.downloads')}
+      onclick={() => go('downloads')}
     >
-      <span class="nav-item__icon"><Icon name="settings" /></span>
-      <span class="nav-item__label">{t('nav.settings')}</span>
+      <span class="nav-item__icon"><Icon name="download" /></span>
+      <span class="nav-item__label">{t('nav.downloads')}</span>
     </button>
 
     <button
-      class="rail__account"
-      onclick={() => {
-        player.collapse();
-        ui.settingsSection = 'account';
-        ui.route = 'settings';
-      }}
-      title={session.user?.username ?? t('common.unknown')}
+      class="nav-item"
+      aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
+      title={t('nav.settings')}
+      onclick={() => go('settings')}
     >
-      <span class="rail__avatar">{(session.user?.username ?? '?').slice(0, 1).toUpperCase()}</span>
-      <span class="truncate t-small">{session.user?.username ?? t('common.unknown')}</span>
+      <span class="nav-item__icon"><Icon name="settings" /></span>
+      <span class="nav-item__label">{t('nav.settings')}</span>
     </button>
   </nav>
 
@@ -139,28 +136,50 @@
     min-height: 0;
   }
 
-  .main-col {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 0;
-  }
-
   .rail {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--gap-hair);
-    width: 224px;
-    flex: 0 0 224px;
+    width: 232px;
+    flex: 0 0 232px;
     padding: var(--gap-row) var(--gap-inline) var(--gap-inline);
     border-right: 1px solid var(--hairline);
     background: var(--canvas);
     overflow-y: auto;
+    transition: width var(--dur-2) var(--ease), flex-basis var(--dur-2) var(--ease);
+  }
+
+  .rail.compact {
+    width: 58px;
+    flex-basis: 58px;
+    align-items: center;
+    padding-inline: var(--gap-tight);
+  }
+
+  .rail__toggle {
+    display: grid;
+    place-items: center;
+    align-self: flex-end;
+    width: 22px;
+    height: 22px;
+    margin-bottom: var(--gap-inline);
+    border-radius: var(--radius-xs);
+    color: var(--text-tertiary);
+  }
+
+  .rail__toggle:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .rail.compact .rail__toggle {
+    align-self: center;
   }
 
   .rail__divider {
     height: 1px;
+    width: 100%;
     margin: var(--gap-inline) var(--gap-inline);
     background: var(--hairline);
   }
@@ -170,29 +189,27 @@
     min-height: var(--gap-block);
   }
 
-  .rail__account {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-inline);
-    text-align: left;
-    color: var(--text-secondary);
-    padding: var(--gap-inline) var(--gap-inline) var(--gap-tight);
-    margin-top: var(--gap-inline);
-    border-top: 1px solid var(--hairline);
-    min-width: 0;
+  /* Compact rail: icon only, label revealed as a tooltip via `title`. */
+  .rail.compact :global(.nav-item) {
+    justify-content: center;
+    padding-inline: 0;
+    width: 40px;
   }
 
-  .rail__avatar {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 auto;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--on-accent);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
+  .rail.compact :global(.nav-item__label) {
+    display: none;
+  }
+
+  .rail.compact :global(.nav-item__icon) {
+    margin: 0;
+  }
+
+  .main-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
   }
 
   .content {

@@ -57,6 +57,29 @@
   const isEpisode = $derived(player.kind === 'episode');
   const shownTab = $derived(isEpisode ? 'details' : tab);
 
+  /** Thousands of chapters cannot all be mounted; show one range at a time. */
+  const CHUNK = 100;
+  let chapterPage = $state(0);
+  const chapterRanges = $derived(Math.max(1, Math.ceil(chapters.length / CHUNK)));
+  const shownChapters = $derived(
+    chapters.slice(chapterPage * CHUNK, (chapterPage + 1) * CHUNK),
+  );
+
+  // Follow the playhead: when a new title opens or the chapter changes, put it
+  // in view instead of leaving the list at chapter 1.
+  let listEl = $state<HTMLDivElement | null>(null);
+  $effect(() => {
+    const index = player.chapterIndex;
+    if (!listEl || index < 0 || chapters.length <= CHUNK) return;
+    const page = Math.floor(index / CHUNK);
+    if (page !== chapterPage) {
+      chapterPage = page;
+      return;
+    }
+    const row = listEl.querySelector<HTMLElement>(`[data-chapter="${index}"]`);
+    row?.scrollIntoView({ block: 'center' });
+  });
+
   const chapterMarks = $derived(
     player.duration > 0
       ? chapters
@@ -328,13 +351,38 @@
         {/if}
 
         {#if shownTab === 'chapters'}
-          <div class="chapter-list scroll-y">
+          {#if chapters.length > CHUNK}
+            <div class="chapter-range">
+              <span class="t-small t-tertiary t-num">
+                {t('book.chapterRange', {
+                  from: chapterPage * CHUNK + 1,
+                  to: Math.min((chapterPage + 1) * CHUNK, chapters.length),
+                  total: chapters.length,
+                })}
+              </span>
+              <select
+                class="select"
+                value={chapterPage}
+                onchange={event => (chapterPage = Number(event.currentTarget.value))}
+              >
+                {#each Array(chapterRanges) as _, index (index)}
+                  <option value={index}>
+                    {index * CHUNK + 1}–{Math.min((index + 1) * CHUNK, chapters.length)}
+                  </option>
+                {/each}
+              </select>
+            </div>
+          {/if}
+
+          <div class="chapter-list scroll-y" bind:this={listEl}>
             {#if chapters.length === 0}
               <p class="t-small t-tertiary" style="padding: var(--gap-row)">{t('player.noChapters')}</p>
             {:else}
-              {#each chapters as chapter, index (index)}
+              {#each shownChapters as chapter, offset (chapter.start)}
+                {@const index = chapterPage * CHUNK + offset}
                 <button
                   class="chapter"
+                  data-chapter={index}
                   aria-current={index === player.chapterIndex ? 'true' : undefined}
                   onclick={() => void player.seek(chapter.start)}
                 >
@@ -620,6 +668,20 @@
 
   .side__tabs .segmented__item {
     flex: 1 1 0;
+  }
+
+  .chapter-range {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-inline);
+    padding-bottom: var(--gap-inline);
+  }
+
+  .chapter-range .select {
+    width: 120px;
+    height: var(--control-sm);
+    font-size: var(--text-xs);
   }
 
   .chapter-list {

@@ -41,6 +41,16 @@
   const isFinished = $derived(saved?.isFinished ?? false);
   const download = $derived(ui.itemId ? downloads.forItem(ui.itemId) : undefined);
   const transfer = $derived(ui.itemId ? downloads.transfers[ui.itemId] : undefined);
+  /** Chapters run into the thousands; the list shows one range at a time. */
+  const PAGE = 100;
+  let chapterPage = $state(0);
+  const chapterRanges = $derived(Math.max(1, Math.ceil(chapters.length / PAGE)));
+  const shownChapters = $derived(
+    chapters.slice(chapterPage * PAGE, (chapterPage + 1) * PAGE),
+  );
+  const rangeLabel = (index: number) =>
+    `${index * PAGE + 1}–${Math.min((index + 1) * PAGE, chapters.length)}`;
+
   const transferPct = $derived(
     transfer && transfer.totalBytes > 0
       ? Math.round((transfer.bytesDownloaded / transfer.totalBytes) * 100)
@@ -54,6 +64,7 @@
     loading = true;
     error = null;
     detail = null;
+    chapterPage = 0;
     fetchItem(session.serverUrl, itemId)
       .then(result => {
         if (!cancelled) detail = result;
@@ -179,6 +190,34 @@
     }
   }
 
+  /** The audio file that contains a chapter — the unit a single download is. */
+  function fileFor(chapter: { start: number; end: number }) {
+    const files = item?.media?.audioFiles ?? [];
+    return files.find(
+      file =>
+        chapter.start >= (file.startOffset ?? 0) - 0.5 &&
+        chapter.start < (file.startOffset ?? 0) + (file.duration || 0) - 0.5,
+    );
+  }
+
+  async function downloadChapter(chapter: { start: number; end: number }): Promise<void> {
+    const file = fileFor(chapter);
+    if (!item || !session.serverUrl || !file?.ino) {
+      error = t('downloads.noFile');
+      return;
+    }
+    try {
+      await downloads.saveChapter(
+        session.serverUrl,
+        item.id,
+        file.ino,
+        file.metadata?.filename ?? `${file.ino}.mp3`,
+      );
+    } catch (reason) {
+      error = (reason as Error).message;
+    }
+  }
+
   function size(bytes: number | undefined): string {
     if (!bytes) return '';
     const mb = bytes / 1048576;
@@ -226,28 +265,27 @@
 
         <div class="side__actions">
           {#if fraction > 0}
-            <button class="btn btn--quiet btn--block" onclick={() => play(0)}>{t('book.restart')}</button>
+            <button class="btn btn--quiet btn--sm" onclick={() => play(0)}>{t('book.restart')}</button>
           {/if}
-          <button
-            class="btn btn--quiet btn--block"
-            onclick={() => (editing ? (editing = false) : openEditor())}
-          >{t('book.edit')}</button>
-          <button class="btn btn--quiet btn--block" onclick={() => void toggleFinished()}>
+          <button class="btn btn--quiet btn--sm" onclick={() => (editing ? (editing = false) : openEditor())}>
+            {t('book.edit')}
+          </button>
+          <button class="btn btn--quiet btn--sm" onclick={() => void toggleFinished()}>
             {isFinished ? t('book.markUnfinished') : t('book.markFinished')}
           </button>
 
           {#if transfer}
-            <button class="btn btn--quiet btn--block" disabled>
+            <button class="btn btn--quiet btn--sm" disabled>
               {t('downloads.downloading', { pct: transferPct })}
             </button>
           {:else if download}
-            <button class="btn btn--quiet btn--block" disabled>
-              <Icon name="check" size={14} />
+            <button class="btn btn--quiet btn--sm" disabled>
+              <Icon name="check" size={13} />
               {t('downloads.downloaded')}
             </button>
           {:else}
-            <button class="btn btn--quiet btn--block" onclick={() => void startDownload()}>
-              <Icon name="download" size={14} />
+            <button class="btn btn--quiet btn--sm" onclick={() => void startDownload()}>
+              <Icon name="download" size={13} />
               {t('downloads.download')}
             </button>
           {/if}
@@ -349,9 +387,46 @@
           {#if chapters.length === 0}
             <p class="t-small t-tertiary">{t('player.noChapters')}</p>
           {:else}
+            {#if chapters.length > PAGE}
+              <div class="range">
+                <span class="t-small t-tertiary t-num">
+                  {t('book.chapterRange', {
+                    from: chapterPage * PAGE + 1,
+                    to: Math.min((chapterPage + 1) * PAGE, chapters.length),
+                    total: chapters.length,
+                  })}
+                </span>
+                <div class="range__jump">
+                  <button
+                    class="btn btn--quiet btn--sm"
+                    onclick={() => {
+                      const index = chapters.findIndex(
+                        entry => entry.start > (saved?.currentTime ?? 0),
+                      );
+                      chapterPage = Math.max(
+                        0,
+                        Math.floor((index < 0 ? chapters.length - 1 : Math.max(index - 1, 0)) / PAGE),
+                      );
+                    }}
+                  >{t('book.jumpToCurrent')}</button>
+                  <select
+                    class="select"
+                    value={chapterPage}
+                    onchange={event => (chapterPage = Number(event.currentTarget.value))}
+                  >
+                    {#each Array(chapterRanges) as _, index (index)}
+                      <option value={index}>{rangeLabel(index)}</option>
+                    {/each}
+                  </select>
+                </div>
+              </div>
+            {/if}
+
             <ul class="rows">
-              {#each chapters as chapter, index (index)}
-                <li>
+              {#each shownChapters as chapter, offset (chapter.start)}
+                {@const index = chapterPage * PAGE + offset}
+                {@const file = fileFor(chapter)}
+                <li class="chapter-row">
                   <button class="row" onclick={() => play(chapter.start)}>
                     <span class="row__index t-num">{index + 1}</span>
                     <span class="row__body">
@@ -361,6 +436,20 @@
                       </span>
                     </span>
                   </button>
+                  {#if file?.ino}
+                    <button
+                      class="icon-btn icon-btn--sm chapter-row__save"
+                      title={t('downloads.downloadChapter')}
+                      aria-label={t('downloads.downloadChapter')}
+                      onclick={() => void downloadChapter(chapter)}
+                      disabled={item ? downloads.hasChapter(item.id, file.ino!) : false}
+                    >
+                      <Icon
+                        name={item && downloads.hasChapter(item.id, file.ino!) ? 'check' : 'download'}
+                        size={14}
+                      />
+                    </button>
+                  {/if}
                 </li>
               {/each}
             </ul>
@@ -441,10 +530,12 @@
     box-shadow: var(--shadow-2);
   }
 
+  /* Two-up grid of quiet buttons: a single column of full-width ones read as
+     a list of primary actions, which they are not. */
   .side__actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-inline);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
   }
 
   .resume {
@@ -531,6 +622,44 @@
     gap: 1px;
     list-style: none;
     margin-top: var(--gap-row);
+  }
+
+  .chapter-row {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    border-radius: var(--radius-sm);
+  }
+
+  .chapter-row:hover {
+    background: var(--surface-raised);
+  }
+
+  .chapter-row .row:hover {
+    background: transparent;
+  }
+
+  .chapter-row__save {
+    margin-right: var(--gap-inline);
+    color: var(--text-tertiary);
+  }
+
+  .range {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-row);
+    margin-top: var(--gap-row);
+    padding: var(--gap-inline) var(--gap-row);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+  }
+
+  .range__jump {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
   }
 
   .row {

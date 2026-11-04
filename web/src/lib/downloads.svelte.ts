@@ -8,7 +8,9 @@
 import { listen } from '@tauri-apps/api/event';
 import {
   downloadItem,
+  downloadLibraryFile,
   getDownloads,
+  getDownloadsDir,
   removeDownload,
   type DownloadRecord,
   type LibraryItem,
@@ -29,8 +31,22 @@ export interface Transfer {
   totalBytes: number;
 }
 
+const KEY_CHAPTERS = 'skald.chapterFiles';
+
+/** Single audio files saved one at a time, keyed `itemId|ino`. The Rust
+ *  registry only tracks whole-item downloads, so these are remembered here. */
+function loadChapterFiles(): string[] {
+  try {
+    const raw = localStorage.getItem(KEY_CHAPTERS);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 class DownloadsStore {
   records = $state<DownloadRecord[]>([]);
+  chapterFiles = $state<string[]>(loadChapterFiles());
   transfers = $state<Record<string, Transfer>>({});
   error = $state<string | null>(null);
   private unlisten: (() => void)[] = [];
@@ -108,6 +124,27 @@ class DownloadsStore {
       this.error = (reason as Error).message;
       this.dropTransfer(item.id);
       throw reason;
+    }
+  }
+
+  hasChapter(itemId: string, ino: string): boolean {
+    return this.chapterFiles.includes(`${itemId}|${ino}`);
+  }
+
+  /** Save one audio file (a chapter) next to the other downloads. */
+  async saveChapter(
+    serverUrl: string,
+    itemId: string,
+    ino: string,
+    fileName: string,
+  ): Promise<void> {
+    const dir = await getDownloadsDir();
+    const destination = `${dir}/${fileName}`.replace(/\\/g, '/');
+    await downloadLibraryFile(serverUrl, itemId, ino, destination);
+    const key = `${itemId}|${ino}`;
+    if (!this.chapterFiles.includes(key)) {
+      this.chapterFiles = [...this.chapterFiles, key];
+      localStorage.setItem(KEY_CHAPTERS, JSON.stringify(this.chapterFiles));
     }
   }
 
