@@ -1,22 +1,33 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { fileURLToPath } from "node:url";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
-// https://vite.dev/config/
-export default defineConfig(async () => ({
-  plugins: [react()],
+/**
+ * The rebuilt frontend lives in `web/`.
+ *
+ * `src/` is the previous React application. It stays in the tree while features
+ * are ported, but it is no longer compiled or bundled — so both can coexist
+ * until the port is done, and then `src/` is deleted.
+ */
+export default defineConfig({
+  root: fileURLToPath(new URL("./web", import.meta.url)),
+  plugins: [svelte()],
 
   // Treat font files as static binary assets — prevents Vite from processing
   // or re-encoding them, which corrupts woff2/ttf files.
-  assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf', '**/*.otf'],
+  assetsInclude: ["**/*.woff", "**/*.woff2", "**/*.ttf", "**/*.otf"],
 
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
+  build: {
+    outDir: fileURLToPath(new URL("./dist", import.meta.url)),
+    emptyOutDir: true,
+    target: "chrome110",
+  },
+
+  // Vite options tailored for Tauri development
   clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,
     strictPort: true,
@@ -29,11 +40,10 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      ignored: ["**/src-tauri/**", "**/src/**"],
     },
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
   },
-}));
+});

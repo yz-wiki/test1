@@ -1,0 +1,169 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Skald — design tokens
+   ───────────────────────────────────────────────────────────────────────────
+   A ground-up token set for the rebuilt interface. Nothing in a component may
+   declare a colour, size, spacing or radius outside these variables.
+
+   Three decisions worth knowing:
+
+   1. TWO text roles, not four. `--font` for everything readable, `--font-num`
+      for figures that change (timecodes, counts) so digits don't jitter. There
+      is no monospace role and no serif role — both were noise.
+   2. FIVE surface steps, ordered by elevation, each a flat fill. Depth comes
+      from one hairline + one shadow, never from stacked translucency.
+   3. OPTICAL spacing. The scale is 4px but the *gaps* are chosen per context
+      (dense rows 8, panels 16, sections 32) instead of one universal value.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --font: 'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+    system-ui, sans-serif;
+  --font-num: var(--font);
+
+  --text-2xs: 10.5px;
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-base: 13.5px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 21px;
+  --text-2xl: 27px;
+  --text-3xl: 34px;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 680;
+
+  /* ── Spacing (4px base; named by intent, not by index) ─────────────────── */
+  --gap-hair: 2px;
+  --gap-tight: 4px;
+  --gap-inline: 8px;
+  --gap-row: 12px;
+  --gap-panel: 16px;
+  --gap-block: 24px;
+  --gap-section: 32px;
+  --gap-page: 40px;
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ── Control sizes ────────────────────────────────────────────────────── */
+  --control-sm: 26px;
+  --control-md: 32px;
+  --control-lg: 38px;
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 90ms;
+  --dur-2: 150ms;
+  --dur-3: 240ms;
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.28);
+  --shadow-2: 0 6px 20px rgb(0 0 0 / 0.32);
+  --shadow-3: 0 22px 56px rgb(0 0 0 / 0.46);
+}
+
+/* ─── Theme: graphite (default dark) ──────────────────────────────────────── */
+
+[data-theme='graphite'] {
+  --canvas:            #131316;
+  --surface:           #191920;
+  --surface-raised:    #1f1f28;
+  --surface-overlay:   #23232d;
+  --surface-inset:     #0e0e12;
+
+  --hairline:          rgb(255 255 255 / 0.07);
+  --hairline-strong:   rgb(255 255 255 / 0.12);
+
+  --text:              #eceaf1;
+  --text-secondary:    rgb(236 234 241 / 0.66);
+  --text-tertiary:     rgb(236 234 241 / 0.42);
+
+  --accent:            #8b7bf7;
+  --accent-hover:      #9d8ffa;
+  --accent-soft:       rgb(139 123 247 / 0.16);
+  --accent-line:       rgb(139 123 247 / 0.40);
+  --on-accent:         #0f0d1a;
+
+  --positive:          #4bbf87;
+  --warning:           #d9a049;
+  --danger:            #e0665c;
+
+  --scrim:             rgb(8 8 11 / 0.62);
+  --cover-fallback:    #2a2a35;
+}
+
+/* ─── Theme: paper (light) ────────────────────────────────────────────────── */
+
+[data-theme='paper'] {
+  --canvas:            #f6f5f7;
+  --surface:           #ffffff;
+  --surface-raised:    #ffffff;
+  --surface-overlay:   #ffffff;
+  --surface-inset:     #eeecef;
+
+  --hairline:          rgb(20 18 26 / 0.09);
+  --hairline-strong:   rgb(20 18 26 / 0.16);
+
+  --text:              #1b1a20;
+  --text-secondary:    rgb(27 26 32 / 0.66);
+  --text-tertiary:     rgb(27 26 32 / 0.44);
+
+  --accent:            #6b57e8;
+  --accent-hover:      #5b46e0;
+  --accent-soft:       rgb(107 87 232 / 0.12);
+  --accent-line:       rgb(107 87 232 / 0.36);
+  --on-accent:         #ffffff;
+
+  --positive:          #1f9d63;
+  --warning:           #b4791b;
+  --danger:            #cf4038;
+
+  --scrim:             rgb(20 18 26 / 0.34);
+  --cover-fallback:    #e4e2e8;
+}
+
+/* ─── Theme: midnight (deep blue) ─────────────────────────────────────────── */
+
+[data-theme='midnight'] {
+  --canvas:            #0d1117;
+  --surface:           #131a23;
+  --surface-raised:    #18212c;
+  --surface-overlay:   #1d2734;
+  --surface-inset:     #090d12;
+
+  --hairline:          rgb(255 255 255 / 0.08);
+  --hairline-strong:   rgb(255 255 255 / 0.14);
+
+  --text:              #e6edf5;
+  --text-secondary:    rgb(230 237 245 / 0.66);
+  --text-tertiary:     rgb(230 237 245 / 0.40);
+
+  --accent:            #4c9aef;
+  --accent-hover:      #66a9f4;
+  --accent-soft:       rgb(76 154 239 / 0.16);
+  --accent-line:       rgb(76 154 239 / 0.40);
+  --on-accent:         #04121f;
+
+  --positive:          #3fb950;
+  --warning:           #d29922;
+  --danger:            #f85149;
+
+  --scrim:             rgb(2 6 12 / 0.64);
+  --cover-fallback:    #1d2734;
+}
