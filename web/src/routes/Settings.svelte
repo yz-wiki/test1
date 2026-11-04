@@ -178,6 +178,21 @@ import LogsPanel from '../components/LogsPanel.svelte';
       session.signOut();
     }
   }
+
+  /**
+   * Both actions end at the sign-in screen. Keeping the host prefilled is the
+   * difference between "another account on this server" and "another server".
+   */
+  async function switchAccount(keepServer: boolean): Promise<void> {
+    const current = session.serverUrl;
+    try {
+      await logout();
+    } finally {
+      session.signOut();
+      if (keepServer) localStorage.setItem('skald.serverUrl', current);
+      ui.route = 'library';
+    }
+  }
 </script>
 
 <div class="settings">
@@ -331,6 +346,33 @@ import LogsPanel from '../components/LogsPanel.svelte';
           </div>
         </div>
       </section>
+      <section class="card preview">
+        <div class="card__head"><span class="t-label">{t('settings.preview')}</span></div>
+        <div class="card__body">
+          <p class="t-small t-tertiary preview__hint">{t('settings.previewHint')}</p>
+          <div class="preview__frame">
+            <div class="preview__rail">
+              <span class="preview__line on"></span>
+              <span class="preview__line"></span>
+              <span class="preview__line"></span>
+              <span class="preview__line short"></span>
+            </div>
+            <div class="preview__main">
+              <span class="preview__title">{t('settings.previewSample')}</span>
+              <div class="preview__cards">
+                <span class="preview__card"></span>
+                <span class="preview__card"></span>
+                <span class="preview__card"></span>
+              </div>
+              <div class="preview__transport">
+                <span class="preview__play"></span>
+                <span class="preview__track"><span></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     {#if ui.theme === 'custom'}
       <section class="card custom">
         <div class="card__head"><span class="t-label">{t('theme.editor')}</span></div>
@@ -506,6 +548,30 @@ import LogsPanel from '../components/LogsPanel.svelte';
 
           <div class="setting">
             <div class="setting__main">
+              <span class="setting__label">{t('settings.switchUser')}</span>
+              <span class="setting__hint">{t('settings.switchUserHint')}</span>
+            </div>
+            <div class="setting__control">
+              <button class="btn btn--quiet btn--sm" onclick={() => void switchAccount(true)}>
+                {t('settings.switchUser')}
+              </button>
+            </div>
+          </div>
+
+          <div class="setting">
+            <div class="setting__main">
+              <span class="setting__label">{t('settings.switchServer')}</span>
+              <span class="setting__hint">{t('settings.switchServerHint')}</span>
+            </div>
+            <div class="setting__control">
+              <button class="btn btn--quiet btn--sm" onclick={() => void switchAccount(false)}>
+                {t('settings.switchServer')}
+              </button>
+            </div>
+          </div>
+
+          <div class="setting">
+            <div class="setting__main">
               <span class="setting__label">{t('settings.signOut')}</span>
               <span class="setting__hint">{t('settings.signOutHint')}</span>
             </div>
@@ -637,6 +703,109 @@ import LogsPanel from '../components/LogsPanel.svelte';
     padding: 0 var(--gap-inline) var(--gap-row);
   }
 
+  .preview__hint {
+    margin-bottom: var(--gap-row);
+  }
+
+  .preview__frame {
+    display: flex;
+    height: 132px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: var(--canvas);
+  }
+
+  .preview__rail {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 76px;
+    flex: 0 0 76px;
+    padding: 12px 9px;
+    border-right: 1px solid var(--hairline);
+  }
+
+  .preview__line {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--text-tertiary);
+    opacity: 0.35;
+  }
+
+  .preview__line.short {
+    width: 60%;
+  }
+
+  .preview__line.on {
+    background: var(--accent);
+    opacity: 1;
+  }
+
+  .preview__main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .preview__title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .preview__cards {
+    display: flex;
+    gap: 8px;
+  }
+
+  .preview__card {
+    width: 42px;
+    height: 54px;
+    border-radius: var(--radius-xs);
+    background: var(--surface-raised);
+    border: 1px solid var(--hairline);
+  }
+
+  .preview__card:first-child {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+
+  .preview__transport {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .preview__play {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .preview__track {
+    position: relative;
+    flex: 1 1 auto;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+  }
+
+  .preview__track > span {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 38%;
+    border-radius: inherit;
+    background: var(--accent);
+  }
+
   .custom__hint {
     margin-bottom: var(--gap-row);
   }
@@ -703,12 +872,14 @@ import LogsPanel from '../components/LogsPanel.svelte';
   }
 
   .settings__body {
+    width: 100%;
+    max-width: 860px;
+    margin-inline: auto;
     padding: var(--gap-block);
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
-    max-width: 760px;
   }
 
   /* Children of a scrolling column must not be squeezed — that is what made

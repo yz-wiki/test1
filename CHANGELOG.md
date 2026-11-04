@@ -2,12 +2,47 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.11.0 (2026-11-04) — preview
+## 2.12.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
-### Build
+### Fixed — clicking play did not open the player
+
+`player.open()` returns early when the clicked title is already the one in the
+bottom bar (`isCurrent → toggle()`), and the successful-start path that sets
+`expanded = true` was below that return. So clicking "Continue" on the book
+that was already playing only toggled it in the background. The early return
+now opens the player too, and every play affordance (book, shelf, continue
+page, podcast, context menu) goes through one `playItem()` helper.
+
+### Home is a dashboard, not a grid
+
+- A hero card for the book you are on: cover, chapter ordinal and name,
+  progress bar, listened/total, and resume / details / view-all actions.
+- The rest of the in-progress queue below it, then **browse-by category cards**
+  (books, series, authors, narrators) with live counts, then recently added.
+- The full grid belongs to the Books view now. The view switcher gained icons
+  and works from both the home header and every other view.
+
+### Library switcher and list
+
+- The library name is no longer a pointer-positioned context menu that drifted
+  over the shelf in a narrow window. It is an anchored popover, clamped to the
+  viewport, with an icon, media type and a check on the active library.
+- List rows now have zebra surfaces, hover borders and a status pill
+  (in progress / finished); the plain white rows were unreadable as a list.
+
+### Settings
+
+- The content column is centred and wider instead of hugging the left edge
+  with a large empty right side.
+- The Display pane has a **live theme preview** built from the current tokens,
+  so switching or customising a theme shows its effect immediately.
+- The Account pane gained **Switch user** (same server, prefilled) and
+  **Switch server** (blank host) alongside sign out.
+
+### Build (2.11.0)
 
 - The Windows build's ffprobe download now falls back to a GitHub-hosted
   FFmpeg build when gyan.dev answers 503 (it did for the first 2.11.0 run).
@@ -310,7 +345,42 @@ Reported from the 1.5.0 build.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
 
-### Build
+### Fixed — clicking play did not open the player
+
+`player.open()` returns early when the clicked title is already the one in the
+bottom bar (`isCurrent → toggle()`), and the successful-start path that sets
+`expanded = true` was below that return. So clicking "Continue" on the book
+that was already playing only toggled it in the background. The early return
+now opens the player too, and every play affordance (book, shelf, continue
+page, podcast, context menu) goes through one `playItem()` helper.
+
+### Home is a dashboard, not a grid
+
+- A hero card for the book you are on: cover, chapter ordinal and name,
+  progress bar, listened/total, and resume / details / view-all actions.
+- The rest of the in-progress queue below it, then **browse-by category cards**
+  (books, series, authors, narrators) with live counts, then recently added.
+- The full grid belongs to the Books view now. The view switcher gained icons
+  and works from both the home header and every other view.
+
+### Library switcher and list
+
+- The library name is no longer a pointer-positioned context menu that drifted
+  over the shelf in a narrow window. It is an anchored popover, clamped to the
+  viewport, with an icon, media type and a check on the active library.
+- List rows now have zebra surfaces, hover borders and a status pill
+  (in progress / finished); the plain white rows were unreadable as a list.
+
+### Settings
+
+- The content column is centred and wider instead of hugging the left edge
+  with a large empty right side.
+- The Display pane has a **live theme preview** built from the current tokens,
+  so switching or customising a theme shows its effect immediately.
+- The Account pane gained **Switch user** (same server, prefilled) and
+  **Switch server** (blank host) alongside sign out.
+
+### Build (2.11.0)
 
 - The Windows build's ffprobe download now falls back to a GitHub-hosted
   FFmpeg build when gyan.dev answers 503 (it did for the first 2.11.0 run).

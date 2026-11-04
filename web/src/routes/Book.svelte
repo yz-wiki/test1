@@ -3,6 +3,7 @@
   import { beginDownload } from '../lib/downloadFlow';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { chapterSpans, player } from '../lib/player.svelte';
+  import { playItem } from '../lib/playFlow';
   import { downloads } from '../lib/downloads.svelte';
   import { t, formatDuration, formatLength } from '../lib/i18n.svelte';
   import Cover from '../components/Cover.svelte';
@@ -120,7 +121,7 @@
 
   function play(from?: number): void {
     if (!item) return;
-    void player.open(item, null, undefined, from);
+    void playItem(item, { startAt: from });
   }
 
   async function toggleFinished(): Promise<void> {

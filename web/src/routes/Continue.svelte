@@ -9,7 +9,7 @@
    */
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { reading } from '../lib/reading.svelte';
-  import { player } from '../lib/player.svelte';
+  import { playItem } from '../lib/playFlow';
   import { t, formatDuration, formatLength } from '../lib/i18n.svelte';
   import type { LibraryItem, MediaProgress } from '../lib/ipc';
   import Cover from '../components/Cover.svelte';
@@ -61,7 +61,7 @@
   }
 
   function play(entry: Entry): void {
-    void player.open(entry.item).then(() => player.expand());
+    void playItem(entry.item);
   }
 
   function openDetails(entry: Entry): void {

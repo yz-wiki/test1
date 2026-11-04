@@ -1,6 +1,7 @@
 <script lang="ts">
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
+  import { playItem } from '../lib/playFlow';
   import { matchScore, preloadPinyin } from '../lib/search';
   import { reading } from '../lib/reading.svelte';
   import { menu, type MenuItem } from '../lib/menu.svelte';
@@ -10,6 +11,8 @@
   import { t, formatLength, type TranslationKey } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
+  import LibrarySwitcher from '../components/LibrarySwitcher.svelte';
+  import type { IconName } from '../components/Icon.svelte';
 
   // Reload whenever the active library or server changes.
   $effect(() => {
@@ -27,15 +30,32 @@
   const view = $derived(ui.libraryView as View);
   let group = $state<string | null>(null);
 
-  const VIEWS: { id: View; key: TranslationKey }[] = [
-    { id: 'home', key: 'library.home' },
-    { id: 'books', key: 'library.books' },
-    { id: 'series', key: 'library.series' },
-    { id: 'authors', key: 'library.authors' },
-    { id: 'narrators', key: 'library.narrators' },
+  const VIEWS: { id: View; key: TranslationKey; icon: IconName }[] = [
+    { id: 'home', key: 'library.home', icon: 'home' },
+    { id: 'books', key: 'library.books', icon: 'book' },
+    { id: 'series', key: 'library.series', icon: 'layers' },
+    { id: 'authors', key: 'library.authors', icon: 'user' },
+    { id: 'narrators', key: 'library.narrators', icon: 'mic' },
   ];
 
   const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
+  /** Home is a dashboard, not a 60-item grid with a shelf stapled on top. */
+  const isHome = $derived(view === 'home' && !group && !query.trim());
+
+  function categoryCount(by: View): number {
+    return new Set(library.items.map(item => keyOf(item, by)).filter(Boolean)).size;
+  }
+
+  const categories = $derived([
+    { id: 'books' as View, key: 'library.books' as TranslationKey, icon: 'book' as IconName,
+      count: library.items.length, label: t('library.itemCount', { count: library.items.length }) },
+    { id: 'series' as View, key: 'library.series' as TranslationKey, icon: 'layers' as IconName,
+      count: categoryCount('series'), label: t('library.groupCount', { count: categoryCount('series') }) },
+    { id: 'authors' as View, key: 'library.authors' as TranslationKey, icon: 'user' as IconName,
+      count: categoryCount('authors'), label: t('library.groupCount', { count: categoryCount('authors') }) },
+    { id: 'narrators' as View, key: 'library.narrators' as TranslationKey, icon: 'mic' as IconName,
+      count: categoryCount('narrators'), label: t('library.groupCount', { count: categoryCount('narrators') }) },
+  ]);
   const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
 
   function setView(next: View): void {
@@ -115,18 +135,6 @@
     void reading.ensure(session.serverUrl, recent.map(item => item.id));
   });
 
-  function openLibraryMenu(event: MouseEvent): void {
-    menu.show(
-      event,
-      session.libraries.map(lib => ({
-        id: lib.id,
-        label: lib.name,
-        hint: lib.id === session.activeLibraryId ? '✓' : '',
-        action: () => session.selectLibrary(lib.id),
-      })),
-    );
-  }
-
   function open(item: (typeof library.items)[number]): void {
     ui.itemId = item.id;
     ui.route = item.mediaType === 'podcast' ? 'podcast' : 'book';
@@ -138,7 +146,7 @@
       open(item);
       return;
     }
-    void player.open(item).then(() => player.expand());
+    void playItem(item);
   }
 
   // ─── Windowed grid ─────────────────────────────────────────────────────
@@ -302,16 +310,7 @@
 
 <div class="toolbar">
   <div class="toolbar__left">
-    <button
-      class="library-switch"
-      title={t('library.switch')}
-      aria-label={t('library.switch')}
-      onclick={openLibraryMenu}
-    >
-      <Icon name="library" size={14} />
-      <span class="truncate">{session.activeLibrary?.name ?? t('app.name')}</span>
-      <Icon name="chevron-down" size={11} />
-    </button>
+    <LibrarySwitcher />
     <span class="t-small t-tertiary t-num">{t('library.total', { count: library.items.length })}</span>
   </div>
 
@@ -404,47 +403,119 @@
       {/each}
     </div>
   {:else}
-    {#if recent.length > 0 && !GROUPED && !group}
-      <section class="section">
-        <div class="section__head">
-          <h2 class="t-label">{t('library.continue')}</h2>
-          <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'continue')}>
-            {t('continue.viewAll')}
-            <Icon name="chevron-right" size={12} />
-          </button>
+    {#if isHome}
+      <div class="home__head">
+        <div>
+          <h1 class="t-title">{t('library.home')}</h1>
+          <p class="t-small t-tertiary">{t('library.total', { count: library.items.length })}</p>
         </div>
-        <div class="shelf">
-          {#each recent as item (item.id)}
-            {@const fraction = progress.fraction(item.id)}
-            {@const chapter = currentChapter(item)}
+        <div class="segmented segmented--views">
+          {#each VIEWS as entry (entry.id)}
             <button
-              class="shelf__card"
-              onclick={() => resume(item)}
-              oncontextmenu={event => openMenu(event, item)}
-            >
-              <div class="shelf__cover">
-                <Cover itemId={item.id} size={168} title={title(item)} />
-              </div>
-              <div class="shelf__text">
-                <span class="truncate shelf__title">{title(item)}</span>
-                <span class="t-small t-tertiary truncate shelf__chapter">
-                  {chapter || author(item)}
-                </span>
-                <span class="shelf__foot">
-                  <span class="mini-bar" aria-hidden="true">
-                    <span style:width="{Math.max(fraction * 100, 2)}%"></span>
+              class="segmented__item"
+              aria-pressed={view === entry.id}
+              onclick={() => setView(entry.id)}
+            ><Icon name={entry.icon} size={13} /> {t(entry.key)}</button>
+          {/each}
+        </div>
+      </div>
+
+      {#if recent.length > 0}
+        {@const top = recent[0]}
+        {@const chapter = reading.chapterAt(top, progress.for(top.id)?.currentTime ?? 0)}
+        {@const pct = Math.round(progress.fraction(top.id) * 100)}
+        <section class="hero">
+          <button class="hero__cover" onclick={() => open(top)} title={title(top)}>
+            <Cover itemId={top.id} size={320} title={title(top)} />
+          </button>
+          <div class="hero__body">
+            <span class="t-label t-accent">{t('home.inProgress')}</span>
+            <h2 class="hero__title">{title(top)}</h2>
+            <p class="t-small t-tertiary">{author(top)}</p>
+            {#if chapter}
+              <p class="hero__chapter truncate">
+                <span class="t-num t-small t-tertiary">{t('continue.chapter', { index: chapter.index, total: chapter.total })}</span>
+                {chapter.title}
+              </p>
+            {/if}
+            <div class="hero__bar" aria-hidden="true"><span style:width="{pct}%"></span></div>
+            <div class="hero__foot t-num t-small t-tertiary">
+              <span>{formatLength((top.media?.duration ?? 0) * progress.fraction(top.id))} / {formatLength(top.media?.duration ?? 0)}</span>
+              <span>{pct}%</span>
+            </div>
+            <div class="hero__actions">
+              <button class="btn btn--primary" onclick={() => resume(top)}>
+                <Icon name="play" size={14} /> {t('home.resume')}
+              </button>
+              <button class="btn btn--quiet" onclick={() => open(top)}>{t('home.details')}</button>
+              <button class="btn btn--quiet" onclick={() => (ui.route = 'continue')}>{t('continue.viewAll')}</button>
+            </div>
+          </div>
+        </section>
+      {/if}
+
+      {#if recent.length > 1}
+        <section class="section">
+          <div class="section__head">
+            <h2 class="t-label">{t('library.continue')}</h2>
+            <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'continue')}>
+              {t('continue.viewAll')} <Icon name="chevron-right" size={12} />
+            </button>
+          </div>
+          <div class="shelf">
+            {#each recent.slice(1) as item (item.id)}
+              {@const fraction = progress.fraction(item.id)}
+              {@const chapter = currentChapter(item)}
+              <button class="shelf__card" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
+                <div class="shelf__cover"><Cover itemId={item.id} size={168} title={title(item)} /></div>
+                <div class="shelf__text">
+                  <span class="truncate shelf__title">{title(item)}</span>
+                  <span class="t-small t-tertiary truncate shelf__chapter">{chapter || author(item)}</span>
+                  <span class="shelf__foot">
+                    <span class="mini-bar" aria-hidden="true"><span style:width="{Math.max(fraction * 100, 2)}%"></span></span>
+                    <span class="t-num t-tertiary shelf__pct">{Math.round(fraction * 100)}%</span>
                   </span>
-                  <span class="t-num t-tertiary shelf__pct">{Math.round(fraction * 100)}%</span>
-                </span>
-              </div>
+                </div>
+              </button>
+            {/each}
+          </div>
+        </section>
+      {/if}
+
+      <section class="section">
+        <h2 class="t-label section__title">{t('home.categories')}</h2>
+        <div class="categories">
+          {#each categories as cat (cat.id)}
+            <button class="category" onclick={() => setView(cat.id)}>
+              <span class="category__icon"><Icon name={cat.icon} size={19} /></span>
+              <span class="category__text">
+                <span class="category__name">{t(cat.key)}</span>
+                <span class="t-small t-tertiary t-num">{cat.label}</span>
+              </span>
+              <Icon name="chevron-right" size={14} />
             </button>
           {/each}
         </div>
       </section>
-    {/if}
 
-    <!-- Centred, high-contrast view switch. Selecting one is a real page
-         change: the heading, the count and the content all follow. -->
+      <section class="section">
+        <div class="section__head">
+          <h2 class="t-label">{t('home.recentAdded')}</h2>
+          <button class="btn btn--quiet btn--sm" onclick={() => setView('books')}>
+            {t('home.viewAll')} <Icon name="chevron-right" size={12} />
+          </button>
+        </div>
+        <div class="home-grid">
+          {#each library.items.slice(0, 12) as item (item.id)}
+            <button class="tile" onclick={() => open(item)} oncontextmenu={event => openMenu(event, item)}>
+              <Cover itemId={item.id} size={200} title={title(item)} />
+              <span class="tile__title">{title(item)}</span>
+              <span class="tile__meta">{author(item) || formatLength(item.media?.duration ?? 0)}</span>
+            </button>
+          {/each}
+        </div>
+      </section>
+    {:else}
     <div class="viewbar">
       <div class="viewbar__head">
         <h1 class="viewbar__title">{group ?? viewName}</h1>
@@ -519,6 +590,13 @@
               <span class="truncate list__title">{title(item)}</span>
               <span class="t-small t-tertiary truncate">{chapter || author(item)}</span>
             </span>
+            <span class="list__tag" class:on={fraction > 0} class:done={progress.for(item.id)?.isFinished}>
+              {progress.for(item.id)?.isFinished
+                ? t('list.finished')
+                : fraction > 0
+                  ? t('list.inProgress')
+                  : ''}
+            </span>
             <span class="list__progress">
               <span class="mini-bar" aria-hidden="true"><span style:width="{fraction * 100}%"></span></span>
               <span class="t-small t-num t-tertiary">{Math.round(fraction * 100)}%</span>
@@ -554,6 +632,7 @@
       </div>
     {/if}
   {/if}
+    {/if}
 </div>
 
 <style>
@@ -574,29 +653,6 @@
     min-width: 0;
   }
 
-  .library-switch {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    max-width: 180px;
-    padding: 4px 7px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    color: var(--text);
-  }
-
-  .library-switch:hover {
-    background: var(--surface-raised);
-    border-color: var(--hairline);
-  }
-
-  .library-switch > :global(svg) {
-    flex: 0 0 auto;
-    color: var(--text-tertiary);
-  }
-
   .toolbar__sep {
     width: 1px;
     height: 20px;
@@ -607,6 +663,165 @@
   .sizer__value {
     min-width: 38px;
     text-align: center;
+  }
+
+  .section__title {
+    display: block;
+    margin-bottom: var(--gap-row);
+  }
+
+  .home__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--gap-row);
+    margin-bottom: var(--gap-panel);
+  }
+
+  .home__head > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .home__head :global(.segmented--views) {
+    padding: 3px;
+    background: var(--surface-inset);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-pill);
+  }
+
+  .home__head :global(.segmented__item) {
+    padding: 5px 12px;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+  }
+
+  .home__head :global(.segmented__item[aria-pressed='true']) {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .hero {
+    display: flex;
+    gap: var(--gap-panel);
+    padding: var(--gap-panel);
+    margin-bottom: var(--gap-section);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: linear-gradient(120deg, var(--accent-soft), var(--surface) 46%);
+  }
+
+  .hero__cover {
+    width: 132px;
+    flex: 0 0 132px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-2);
+  }
+
+  .hero__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .hero__title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+  }
+
+  .hero__chapter {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gap-inline);
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
+
+  .hero__bar {
+    height: 5px;
+    margin-top: auto;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .hero__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .hero__foot {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-inline);
+    margin-top: var(--gap-inline);
+  }
+
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--gap-row);
+  }
+
+  .category {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: var(--gap-row);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    text-align: left;
+    color: var(--text-tertiary);
+    transition: transform var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  }
+
+  .category:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+
+  .category__icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .category__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .category__name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: var(--gap-block) var(--gap-panel);
   }
 
   .section__head {
@@ -776,7 +991,10 @@
   }
 
   .views :global(.segmented__item) {
-    padding: 6px 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
     font-size: var(--text-sm);
     color: var(--text-secondary);
   }
@@ -836,17 +1054,41 @@
 
   .list__row {
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 140px 90px;
+    grid-template-columns: 44px minmax(0, 1fr) 84px 140px 82px;
     align-items: center;
     gap: var(--gap-row);
-    padding: 7px var(--gap-row);
+    padding: 8px var(--gap-row);
     border-radius: var(--radius-sm);
+    border: 1px solid transparent;
     text-align: left;
+  }
+
+  .list__row:nth-child(odd) {
+    background: var(--surface);
   }
 
   .list__row:hover,
   .list__row[aria-current='true'] {
     background: var(--surface-raised);
+    border-color: var(--accent-line);
+  }
+
+  .list__tag {
+    justify-self: start;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+  }
+
+  .list__tag.on {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .list__tag.done {
+    background: var(--surface-inset);
+    color: var(--text-secondary);
   }
 
   .list__cover {

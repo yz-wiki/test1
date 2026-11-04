@@ -1,6 +1,7 @@
 <script lang="ts">
   import { library, progress, ui } from '../lib/state.svelte';
   import { episodesNewestFirst, player } from '../lib/player.svelte';
+  import { playItem } from '../lib/playFlow';
   import { preloadPinyin, textMatches } from '../lib/search';
   import { t, formatDuration, type TranslationKey } from '../lib/i18n.svelte';
   import Cover from '../components/Cover.svelte';
@@ -56,7 +57,7 @@
     if (!item) return;
     const episode = episodes.find(entry => entry.id === episodeId);
     if (!episode) return;
-    void player.open(item, episode, episodes);
+    void playItem(item, { episode, queue: episodes });
   }
 
   function date(episode: { publishedAt?: number; pubDate?: string }): string {

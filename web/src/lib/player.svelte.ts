@@ -220,6 +220,9 @@ class PlayerStore {
   ): Promise<void> {
     if (!startAt && this.isCurrent(item, episode)) {
       await this.toggle();
+      // Clicking play on the title that is already in the bottom bar used to
+      // only toggle it in the background. A play action is also navigation.
+      this.expanded = true;
       return;
     }
 
