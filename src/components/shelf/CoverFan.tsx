@@ -13,7 +13,7 @@ export default function CoverFan({ books, serverUrl }: CoverFanProps) {
   const backW = 150;
   return (
     <div style={{
-      position: 'relative', height: 280, padding: '32px 16px 0',
+      position: 'relative', height: 280, padding: 'var(--s-8) var(--s-4) 0',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       background: 'linear-gradient(180deg, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), rgba(0,0,0,0.12))',
       borderBottom: '1px solid var(--onyx-line)', overflow: 'hidden',

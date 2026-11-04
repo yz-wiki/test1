@@ -53,7 +53,7 @@ export default function ChoosePathStep({ value, onChoose }: ChoosePathStepProps)
   const [hover, setHover] = useState<OnboardingPath | null>(null);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
       {CARDS.map(card => {
         const selected = value === card.id;
         const lifted = hover === card.id || selected;
@@ -65,8 +65,8 @@ export default function ChoosePathStep({ value, onChoose }: ChoosePathStepProps)
             onMouseLeave={() => setHover(null)}
             onClick={() => onChoose(card.id)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 18, textAlign: 'left', width: '100%',
-              padding: '18px 20px', borderRadius: 14, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 'var(--s-5)', textAlign: 'left', width: '100%',
+              padding: 'var(--s-5) var(--s-5)', borderRadius: 'var(--r-overlay)', cursor: 'pointer',
               background: selected
                 ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.10)'
                 : 'rgba(255,255,255,0.02)',
@@ -74,11 +74,11 @@ export default function ChoosePathStep({ value, onChoose }: ChoosePathStepProps)
               boxShadow: lifted ? '0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.10)' : 'none',
               transform: lifted ? 'translateY(-1px)' : 'none',
               transition: 'transform 0.14s, box-shadow 0.18s, border-color 0.18s, background 0.18s',
-              color: '#ebe7df',
+              color: 'var(--onyx-text)',
             }}
           >
             <div style={{
-              flexShrink: 0, width: 48, height: 48, borderRadius: 11,
+              flexShrink: 0, width: 48, height: 48, borderRadius: 'var(--r-card)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.10)',
               border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.22)',
@@ -87,11 +87,11 @@ export default function ChoosePathStep({ value, onChoose }: ChoosePathStepProps)
               <Glyph kind={card.id} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 600, color: '#ebe7df' }}>{card.title}</div>
-              <div style={{ fontSize: 12.5, color: 'rgba(235,231,223,0.6)', marginTop: 3, lineHeight: 1.45 }}>{card.blurb}</div>
+              <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 600, color: 'var(--onyx-text)' }}>{card.title}</div>
+              <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', marginTop: 'var(--s-1)', lineHeight: 1.45 }}>{card.blurb}</div>
             </div>
             {/* Selected check / hover chevron */}
-            <div style={{ flexShrink: 0, fontFamily: MONO, fontSize: 16, color: selected ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.3)' }}>
+            <div style={{ flexShrink: 0, fontFamily: MONO, fontSize: 'var(--fs-5)', color: selected ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
               {selected ? '✓' : '→'}
             </div>
           </button>

@@ -44,7 +44,7 @@ function Btn({
       onClick={onClick}
       disabled={disabled}
       style={{
-        fontFamily: MONO, fontSize: 11, padding: '5px 12px', borderRadius: 6,
+        fontFamily: MONO, fontSize: 'var(--fs-1)', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)',
         background: palette.bg, border: `1px solid ${palette.border}`,
         color: palette.color, cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.45 : 1,
@@ -69,10 +69,10 @@ function Field({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       style={{
-        fontFamily: mono ? MONO : 'inherit', fontSize: 12,
-        background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-        border: '1px solid var(--onyx-glass-edge)', borderRadius: 6,
-        padding: '6px 10px', width: '100%', outline: 'none',
+        fontFamily: mono ? MONO : 'inherit', fontSize: 'var(--fs-2)',
+        background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+        border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)',
+        padding: 'var(--s-2) var(--s-3)', width: '100%', outline: 'none',
       }}
     />
   );
@@ -97,16 +97,16 @@ function UrlEditor({
     setInput('');
   }
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6, alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 'var(--s-2)', alignItems: 'center' }}>
       {urls.map(u => (
         <button
           key={u}
           onClick={() => onChange(urls.filter(x => x !== u))}
           title={t('notify.clickToRemove')}
           style={{
-            fontFamily: MONO, fontSize: 11, background: 'var(--onyx-accent-dim)',
-            border: '1px solid var(--onyx-accent-edge)', borderRadius: 6,
-            padding: '4px 10px', color: 'var(--onyx-accent)', cursor: 'pointer',
+            fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--onyx-accent-dim)',
+            border: '1px solid var(--onyx-accent-edge)', borderRadius: 'var(--r-sm)',
+            padding: 'var(--s-1) var(--s-3)', color: 'var(--onyx-accent)', cursor: 'pointer',
             maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}
         >
@@ -120,9 +120,9 @@ function UrlEditor({
         onBlur={add}
         placeholder={t('notify.ntfyPlaceholder')}
         style={{
-          fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)',
+          fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--surface-overlay)',
           color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)',
-          borderRadius: 6, padding: '4px 10px', minWidth: 180, flex: 1,
+          borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)', minWidth: 180, flex: 1,
         }}
       />
     </div>
@@ -186,19 +186,19 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
     onSave(payload, initial?.id ?? undefined);
   }
 
-  const labelStyle = { fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'var(--onyx-text-mute)', marginBottom: 6 };
+  const labelStyle = { fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-2)' };
   const selectStyle = {
-    fontFamily: MONO, fontSize: 12, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-    border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 10px', cursor: 'pointer',
+    fontFamily: MONO, fontSize: 'var(--fs-2)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+    border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-2) var(--s-3)', cursor: 'pointer',
   };
 
   return (
     <div style={{
-      border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-      padding: 18, marginTop: 14, marginBottom: 8,
-      background: 'var(--onyx-glass)', display: 'flex', flexDirection: 'column', gap: 16,
+      border: '1px solid var(--onyx-accent-edge)', borderRadius: 'var(--r-card)',
+      padding: 'var(--s-5)', marginTop: 'var(--s-4)', marginBottom: 'var(--s-2)',
+      background: 'var(--onyx-glass)', display: 'flex', flexDirection: 'column', gap: 'var(--s-4)',
     }}>
-      <div style={{ fontFamily: SERIF, fontSize: 16 }}>{initial ? 'Edit notification' : 'New notification'}</div>
+      <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)' }}>{initial ? 'Edit notification' : 'New notification'}</div>
 
       {/* Event */}
       <div>
@@ -207,7 +207,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
           {events.map(ev => <option key={ev.name} value={ev.name}>{ev.name}</option>)}
         </select>
         {event?.description && (
-          <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', marginTop: 6 }}>{event.description}</div>
+          <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-2)' }}>{event.description}</div>
         )}
       </div>
 
@@ -226,7 +226,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
       <div>
         <div style={labelStyle}>{t('notify.appriseUrls')}</div>
         <UrlEditor urls={urls} onChange={setUrls} input={urlInput} setInput={setUrlInput} />
-        <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 6 }}>
+        <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-2)' }}>
           {t('notify.urlScheme')} <code style={{ fontFamily: MONO }}>ntfy://topic</code>,{' '}
           <code style={{ fontFamily: MONO }}>discord://id/token</code>,{' '}
           <code style={{ fontFamily: MONO }}>tgram://bottoken/chatid</code>.
@@ -245,23 +245,23 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Available variables for the chosen event */}
       {event && event.variables.length > 0 && (
-        <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', lineHeight: 1.6 }}>
           Variables:{' '}
           {event.variables.map(v => (
-            <code key={v} style={{ fontFamily: MONO, color: 'var(--onyx-text-dim)', marginRight: 8 }}>{`{{${v}}}`}</code>
+            <code key={v} style={{ fontFamily: MONO, color: 'var(--onyx-text-dim)', marginRight: 'var(--s-2)' }}>{`{{${v}}}`}</code>
           ))}
         </div>
       )}
 
       {/* Type + enabled */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-6)', alignItems: 'center' }}>
         <div>
           <div style={labelStyle}>{t('notify.type')}</div>
           <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
             {NOTIFICATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, cursor: 'pointer', marginTop: 18 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', cursor: 'pointer', marginTop: 'var(--s-5)' }}>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
           {t('notify.enabled')}
         </label>
@@ -269,7 +269,7 @@ function RuleEditor({ initial, events, libraries, onCancel, onSave }: EditorProp
 
       {/* Actions — Create is gated on having at least one URL (committed OR
           typed-but-not-yet-added) and, for library events, a chosen library. */}
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)', justifyContent: 'flex-end' }}>
         <Btn variant="ghost" onClick={onCancel}>{t('notify.cancel')}</Btn>
         <Btn
           variant="accent"
@@ -388,7 +388,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
     return (
       <div>
         <SectionHead title={t('notify.title')} subtitle="Event-driven notifications via Apprise. Admin only." />
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24 }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-6)' }}>
           Loading notification settings…
         </div>
       </div>
@@ -400,12 +400,12 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       <div>
         <SectionHead title={t('notify.title')} subtitle="Event-driven notifications via Apprise. Admin only." />
         <div style={{
-          fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 24,
-          padding: '12px 16px', background: 'var(--onyx-glass)', borderRadius: 8,
+          fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-6)',
+          padding: 'var(--s-3) var(--s-4)', background: 'var(--onyx-glass)', borderRadius: 'var(--r-md)',
           border: '1px solid var(--onyx-glass-edge)',
         }}>
           Couldn't load notification settings{error ? `: ${error}` : ''}.
-          <div style={{ marginTop: 10 }}><Btn variant="accent" onClick={() => void load()}>{t('notify.retry')}</Btn></div>
+          <div style={{ marginTop: 'var(--s-3)' }}><Btn variant="accent" onClick={() => void load()}>{t('notify.retry')}</Btn></div>
         </div>
       </div>
     );
@@ -427,9 +427,9 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       {/* Persistent explanatory note — the #1 source of confusion is that ABS
           does not bundle Apprise and needs an external Apprise API server. */}
       <div style={{
-        fontSize: 12, color: 'var(--onyx-text-dim)', lineHeight: 1.55,
+        fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', lineHeight: 1.55,
         background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 8, padding: '12px 14px', margin: '12px 0',
+        borderRadius: 'var(--r-md)', padding: 'var(--s-3) var(--s-4)', margin: 'var(--s-3) 0',
       }}>
         Audiobookshelf does not include Apprise itself — it forwards notifications to a
         separate <strong>{t('notify.appriseServer')}</strong> that you host (typically via Docker).
@@ -445,7 +445,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       </div>
 
       <Row label={t('notify.appriseUrl')} hint={t('notify.appriseUrlHint')} align="top">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)', alignItems: 'flex-end' }}>
           <input
             value={appriseDraft}
             onChange={e => setAppriseDraft(e.target.value)}
@@ -457,8 +457,8 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
             }}
             placeholder="http://localhost:8000/notify/apprise"
             style={{
-              fontFamily: MONO, fontSize: 12, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-              border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 10px',
+              fontFamily: MONO, fontSize: 'var(--fs-2)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+              border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-2) var(--s-3)',
               minWidth: 300, outline: 'none',
             }}
           />
@@ -474,7 +474,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       <Panel label={t('notify.title')}>
 
       {rules.length === 0 && editing !== 'new' && (
-        <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 0' }}>
+        <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) 0' }}>
           {t('notify.empty')}
         </div>
       )}
@@ -484,27 +484,27 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
           key={rule.id}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 16, padding: '14px 0', borderBottom: '1px solid var(--onyx-line)',
+            gap: 'var(--s-4)', padding: 'var(--s-4) 0', borderBottom: '1px solid var(--onyx-line)',
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
               <span style={{
-                width: 7, height: 7, borderRadius: 4, flexShrink: 0,
+                width: 7, height: 7, borderRadius: 'var(--r-xs)', flexShrink: 0,
                 background: rule.enabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
               }} />
-              <span style={{ fontSize: 13.5, fontWeight: 500 }}>{rule.eventName}</span>
+              <span style={{ fontSize: 'var(--fs-4)', fontWeight: 500 }}>{rule.eventName}</span>
               {rule.lastAttemptFailed && (
-                <span style={{ fontFamily: MONO, fontSize: 10, color: '#e08a8a' }}>last attempt failed</span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: '#e08a8a' }}>last attempt failed</span>
               )}
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', marginTop: 4, fontFamily: MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 420 }}>
+            <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', fontFamily: MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 420 }}>
               {rule.urls.length} url{rule.urls.length === 1 ? '' : 's'}
               {typeof rule.numTimesFired === 'number' ? ` · fired ${rule.numTimesFired}×` : ''}
               {' · '}{rule.type}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-2)', flexShrink: 0 }}>
             <Btn variant="ghost" onClick={() => rule.id && void testRule(rule.id)} disabled={!hasApprise}>{t('notify.test')}</Btn>
             <Btn variant="ghost" onClick={() => setEditing(rule)}>{t('notify.edit')}</Btn>
             <Btn variant="danger" onClick={() => rule.id && st.setConfirmDialog({
@@ -538,7 +538,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
       )}
 
       {!editing && (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 'var(--s-4)' }}>
           <Btn variant="accent" onClick={() => setEditing('new')}>+ Add notification</Btn>
         </div>
       )}
@@ -585,7 +585,7 @@ function NumField({
   const [local, setLocal] = useState(String(value));
   useEffect(() => setLocal(String(value)), [value]);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
       <input
         type="number"
         value={local}
@@ -597,12 +597,12 @@ function NumField({
           if (!isNaN(n) && n !== value) onCommit(n);
         }}
         style={{
-          fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-          border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '5px 10px',
+          fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+          border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)',
           width: 80, textAlign: 'right' as const,
         }}
       />
-      {suffix && <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>{suffix}</span>}
+      {suffix && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>{suffix}</span>}
     </div>
   );
 }

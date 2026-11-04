@@ -281,7 +281,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
   const subscribeBtn = (
     <button
       onClick={() => setShowSubscribe(true)}
-      style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid var(--onyx-glass-edge)', cursor: 'pointer', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600 }}
+      style={{ padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-md)', border: '1px solid var(--onyx-glass-edge)', cursor: 'pointer', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', fontWeight: 600 }}
     >+ Subscribe</button>
   );
 
@@ -296,14 +296,14 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
 
   if (st.library.length === 0) {
     return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>0 PODCASTS</div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', minHeight: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>0 PODCASTS</div>
           <div style={{ flex: 1 }} />{subscribeBtn}
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 13, letterSpacing: '0.06em', gap: 8 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-3)', letterSpacing: '0.06em', gap: 'var(--s-2)' }}>
           <div>{t('podBrowse.empty')}</div>
-          <div style={{ fontSize: 11, opacity: 0.7 }}>{t('podBrowse.emptyHint')}</div>
+          <div style={{ fontSize: 'var(--fs-1)', opacity: 0.7 }}>{t('podBrowse.emptyHint')}</div>
         </div>
         {modal}
       </div>
@@ -311,10 +311,10 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', minHeight: 0 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', flexShrink: 0 }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', letterSpacing: '0.06em' }}>
           {st.library.length} PODCAST{st.library.length === 1 ? '' : 'S'}
         </div>
         {/* All filter — small pill (replaces the old full-size carousel tile) so
@@ -323,11 +323,11 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
           onClick={() => setSelectedId(null)}
           title={t('podBrowse.showAll')}
           style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-            background: selectedId === null ? 'var(--onyx-accent-dim)' : 'rgba(0,0,0,0.3)',
+            display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
+            background: selectedId === null ? 'var(--onyx-accent-dim)' : 'var(--onyx-bg-deep)',
             color: selectedId === null ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
             border: `1px solid ${selectedId === null ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-            fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em',
+            fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.04em',
           }}
         >
           <Icon name="grid" size={12} /> All
@@ -338,17 +338,17 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
             <button
               onClick={() => setGenreOpen(o => !o)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                background: genre ? 'var(--onyx-accent-dim)' : 'rgba(0,0,0,0.3)',
+                display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                background: genre ? 'var(--onyx-accent-dim)' : 'var(--onyx-bg-deep)',
                 color: genre ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
                 border: `1px solid ${genre ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-                fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.04em',
               }}
             >
               {genre ?? 'All genres'} <Icon name="chevron-down" size={12} />
             </button>
             {genreOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50, minWidth: 160, maxHeight: 280, overflowY: 'auto', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', padding: 4 }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 'var(--s-1)', zIndex: 50, minWidth: 160, maxHeight: 280, overflowY: 'auto', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-md)', boxShadow: 'var(--shadow-popover)', padding: 'var(--s-1)' }}>
                 <button onClick={() => { setGenre(null); setGenreOpen(false); }} style={genreItemStyle(genre === null)}>{t('podBrowse.allGenres')}</button>
                 {genres.map(g => (
                   <button key={g} onClick={() => { setGenre(g); setGenreOpen(false); }} style={genreItemStyle(genre === g)}>{g}</button>
@@ -369,7 +369,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
         onDragStart={e => e.preventDefault()}
         onClickCapture={onCarouselClickCapture}
         className="pickitup-scroll"
-        style={{ flexShrink: 0, display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 6, cursor: isDragging ? 'grabbing' : 'grab', userSelect: isDragging ? 'none' : undefined, WebkitOverflowScrolling: 'touch' }}
+        style={{ flexShrink: 0, display: 'flex', gap: 'var(--s-3)', overflowX: 'auto', overflowY: 'hidden', paddingBottom: 'var(--s-2)', cursor: isDragging ? 'grabbing' : 'grab', userSelect: isDragging ? 'none' : undefined, WebkitOverflowScrolling: 'touch' }}
       >
         {visiblePodcasts.map(it => {
           const selected = it.id === selectedId;
@@ -382,7 +382,7 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
               title={`${asPodcastItem(it).media?.metadata?.title ?? ''} — click to filter, double-click to open, right-click for options`}
               className="onyx-poster"
               style={{
-                flexShrink: 0, width: coverPx, height: coverPx, borderRadius: 8, cursor: 'pointer', padding: 0, overflow: 'hidden',
+                flexShrink: 0, width: coverPx, height: coverPx, borderRadius: 'var(--r-md)', cursor: 'pointer', padding: '0', overflow: 'hidden',
                 border: `2px solid ${selected ? 'var(--onyx-accent)' : 'transparent'}`, background: 'none',
               }}
             >
@@ -393,27 +393,27 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
       </div>
 
       {/* Episode feed header — shows the active filter + a way into the detail */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 10 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           {selectedPodcast ? (asPodcastItem(selectedPodcast).media?.metadata?.title ?? 'Episodes') : 'Latest Episodes'}
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>{mergedEpisodes.length}</div>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{mergedEpisodes.length}</div>
         {selectedPodcast && (
-          <button onClick={() => openDetail(selectedPodcast.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.04em' }}>
+          <button onClick={() => openDetail(selectedPodcast.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.04em' }}>
             open podcast →
           </button>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--s-1)' }}>
           {(['newest', 'oldest', 'title'] as const).map(sort => (
-            <button key={sort} onClick={() => { setEpisodeSort(sort); localStorage.setItem('onyx.podcast.episodeSort', sort); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: episodeSort === sort ? 'var(--onyx-accent-dim)' : 'transparent', color: episodeSort === sort ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', cursor: 'pointer', fontFamily: MONO, fontSize: 9, textTransform: 'uppercase' }}>{sort}</button>
+            <button key={sort} onClick={() => { setEpisodeSort(sort); localStorage.setItem('onyx.podcast.episodeSort', sort); }} style={{ padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: episodeSort === sort ? 'var(--onyx-accent-dim)' : 'transparent', color: episodeSort === sort ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)', textTransform: 'uppercase' }}>{sort}</button>
           ))}
         </div>
       </div>
 
       {/* Episode feed */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 'var(--s-1)', paddingRight: 'var(--s-1)' }}>
         {mergedEpisodes.length === 0 && (
-          <div style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 12, padding: '16px 2px' }}>
+          <div style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-2)', padding: 'var(--s-4) var(--s-1)' }}>
             {t('podBrowse.noEpisodes')}
           </div>
         )}
@@ -437,10 +437,10 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
               className="onyx-row"
               onClick={onRow}
               onContextMenu={(e) => { e.preventDefault(); setEpMenu({ x: e.clientX, y: e.clientY, ep, downloaded }); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 8px', borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-2)', borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer' }}
             >
               {/* Podcast cover thumb */}
-              <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: 'rgba(0,0,0,0.25)' }}>
+              <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 'var(--r-sm)', overflow: 'hidden', background: 'rgba(0,0,0,0.25)' }}>
                 {podItem && <Cover item={podItem} fill serverUrl={st.serverUrl} fallbackImageUrl={coverForId(pid)} />}
               </div>
               {/* Play (downloaded) / Download (not yet downloaded) */}
@@ -458,28 +458,28 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
                 <Icon name={!downloaded ? 'plus' : (nowPlaying && st.playing ? 'pause' : 'play')} size={12} />
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: downloaded ? 'var(--onyx-text)' : 'var(--onyx-text-dim)', fontWeight: downloaded ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{ep.title}</div>
+                <div style={{ fontSize: 'var(--fs-3)', color: downloaded ? 'var(--onyx-text)' : 'var(--onyx-text-dim)', fontWeight: downloaded ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{ep.title}</div>
                 {transfer && (
-                  <div role="progressbar" aria-label={`Downloading ${ep.title}`} aria-valuemin={0} aria-valuemax={transfer.total || undefined} aria-valuenow={transfer.total ? transfer.downloaded : undefined} style={{ height: 3, marginTop: 5, borderRadius: 2, overflow: 'hidden', background: 'rgba(255,255,255,0.08)' }}>
+                  <div role="progressbar" aria-label={`Downloading ${ep.title}`} aria-valuemin={0} aria-valuemax={transfer.total || undefined} aria-valuenow={transfer.total ? transfer.downloaded : undefined} style={{ height: 3, marginTop: 'var(--s-1)', borderRadius: 'var(--r-xs)', overflow: 'hidden', background: 'rgba(255,255,255,0.08)' }}>
                     <div style={{ height: '100%', width: transfer.total ? `${Math.min(100, transfer.downloaded / transfer.total * 100)}%` : '35%', background: 'var(--onyx-accent)', transition: 'width 0.15s' }} />
                   </div>
                 )}
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 3, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-                  {!selectedId && podTitle && <><span style={{ color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{podTitle}</span><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /></>}
-                  {date && <>{date}<span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /></>}
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 'var(--s-1)', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+                  {!selectedId && podTitle && <><span style={{ color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{podTitle}</span><span style={{ margin: '0 var(--s-1)', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'var(--onyx-text-mute)', flexShrink: 0 }} /></>}
+                  {date && <>{date}<span style={{ margin: '0 var(--s-1)', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'var(--onyx-text-mute)', flexShrink: 0 }} /></>}
                   {dur > 0 && <span>{fmtRemaining(dur)}</span>}
-                  {!downloaded && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'rgba(235,231,223,0.5)' }}>not downloaded</span></>}
-                  {downloaded && finished && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span style={{ color: 'var(--onyx-accent)' }}>finished</span></>}
-                  {downloaded && pct > 0 && !finished && <><span style={{ margin: '0 5px', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'rgba(235,231,223,0.2)', flexShrink: 0 }} /><span>{fmtTime(mp?.currentTime ?? 0)} · {pct}%</span></>}
+                  {!downloaded && <><span style={{ margin: '0 var(--s-1)', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'var(--onyx-text-mute)', flexShrink: 0 }} /><span style={{ color: 'var(--onyx-text-dim)' }}>not downloaded</span></>}
+                  {downloaded && finished && <><span style={{ margin: '0 var(--s-1)', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'var(--onyx-text-mute)', flexShrink: 0 }} /><span style={{ color: 'var(--onyx-accent)' }}>finished</span></>}
+                  {downloaded && pct > 0 && !finished && <><span style={{ margin: '0 var(--s-1)', display: 'inline-flex', width: 2, height: 2, borderRadius: '50%', background: 'var(--onyx-text-mute)', flexShrink: 0 }} /><span>{fmtTime(mp?.currentTime ?? 0)} · {pct}%</span></>}
                 </div>
                 {pct > 0 && !finished && (
-                  <div style={{ height: 2, background: 'var(--onyx-line)', borderRadius: 1, marginTop: 5, overflow: 'hidden' }}>
+                  <div style={{ height: 2, background: 'var(--onyx-line)', borderRadius: 1, marginTop: 'var(--s-1)', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: 'var(--onyx-accent)' }} />
                   </div>
                 )}
               </div>
               {!downloaded && (
-                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: `1px solid var(--onyx-accent-edge)`, flexShrink: 0, whiteSpace: 'nowrap' }}>New</div>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: `1px solid var(--onyx-accent-edge)`, flexShrink: 0, whiteSpace: 'nowrap' }}>New</div>
               )}
             </div>
           );
@@ -554,9 +554,9 @@ export default function PodcastBrowse({ st }: PodcastBrowseProps) {
 
 function genreItemStyle(active: boolean): CSSProperties {
   return {
-    display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 6,
+    display: 'block', width: '100%', textAlign: 'left', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)',
     background: active ? 'var(--onyx-accent-dim)' : 'transparent',
     color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)',
-    border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em',
+    border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.03em',
   };
 }

@@ -35,18 +35,18 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
 
   return (
     <Panel label={t('prov.customProviders')}>
-      <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', margin: 'var(--s-3) var(--s-1)', lineHeight: 1.5 }}>
         Register a community or self-hosted provider; it then appears in the Provider dropdown above and in the Match dialog.
       </div>
 
       {providers.length === 0 && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '4px 0 10px' }}>{t('prov.noneRegistered')}</div>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-1) 0 var(--s-3)' }}>{t('prov.noneRegistered')}</div>
       )}
       {providers.map(p => (
-        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--onyx-line)' }}>
+        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) 0', borderBottom: '1px solid var(--onyx-line)' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 500 }}>{p.name}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 'var(--fs-3)', fontWeight: 500 }}>{p.name}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {p.mediaType} · {p.url}
             </div>
           </div>
@@ -55,24 +55,24 @@ export function CustomProvidersManager({ providers, onAdd, onDelete }: {
       ))}
 
       {/* Add form */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)', marginTop: 'var(--s-4)' }}>
+        <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
           <Field value={name} onChange={setName} placeholder={t('prov.providerName')} />
-          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-1)', flexShrink: 0 }}>
             {(['book', 'podcast'] as const).map(mt => (
               <button key={mt} onClick={() => setMediaType(mt)} style={{
-                padding: '5px 12px', borderRadius: 6,
+                padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)',
                 background: mediaType === mt ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: `1px solid ${mediaType === mt ? 'var(--onyx-accent-edge)' : 'rgba(255,255,255,0.08)'}`,
                 color: mediaType === mt ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-                fontFamily: MONO, fontSize: 10.5, cursor: 'pointer',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', cursor: 'pointer',
               }}>{mt}</button>
             ))}
           </div>
         </div>
         <Field value={url} onChange={setUrl} placeholder={t('prov.providerUrl')} mono />
         <Field value={auth} onChange={setAuth} placeholder={t('prov.providerAuth')} mono />
-        {err && <div style={{ fontFamily: MONO, fontSize: 11, color: '#e8716a' }}>{err}</div>}
+        {err && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: '#e8716a' }}>{err}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <SmallBtn onClick={add} disabled={busy}>{busy ? 'Adding…' : '+ Add Provider'}</SmallBtn>
         </div>
@@ -90,7 +90,7 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
   const [cacheCleared, setCacheCleared] = useState(false);
   return (
     <Panel label="Open Library">
-      <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', margin: '10px 2px 2px', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', margin: 'var(--s-3) var(--s-1) var(--s-1)', lineHeight: 1.5 }}>
         {t('prov.openLibraryBody')}
       </div>
 
@@ -99,9 +99,9 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
       </Row>
 
       <Row label={t('prov.reviewCache')} hint={t('prov.reviewCacheHint')}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
           {cacheCleared && (
-            <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
               {t('prov.cacheCleared')}
             </span>
           )}
@@ -112,9 +112,9 @@ export function OpenLibraryManager({ st }: { st: OnyxState }) {
               setTimeout(() => setCacheCleared(false), 2000);
             }}
             style={{
-              padding: '7px 14px', borderRadius: 6, cursor: 'pointer',
+              padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
               background: 'transparent', border: '1px solid var(--onyx-glass-edge)',
-              color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10,
+              color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-0)',
               letterSpacing: '0.06em', textTransform: 'uppercase' as const,
             }}
           >

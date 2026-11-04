@@ -25,10 +25,10 @@ const buttonStyle = (active = false): CSSProperties => ({
   border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
   background: active ? 'var(--onyx-accent-dim)' : 'transparent',
   color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
-  borderRadius: 7,
-  padding: '6px 10px',
+  borderRadius: 'var(--r-sm)',
+  padding: 'var(--s-2) var(--s-3)',
   fontFamily: MONO,
-  fontSize: 9.5,
+  fontSize: 'var(--fs-0)',
   letterSpacing: '0.07em',
   textTransform: 'uppercase',
   cursor: 'pointer',
@@ -116,7 +116,7 @@ function orderedAudioFiles(files: LibraryAudioFile[]): LibraryAudioFile[] {
 }
 
 function TypeBadge({ value }: { value: string }) {
-  return <span style={{ fontFamily: MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', borderRadius: 5, padding: '2px 6px' }}>{value || 'unknown'}</span>;
+  return <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)' }}>{value || 'unknown'}</span>;
 }
 
 interface ActionButtonsProps {
@@ -135,7 +135,7 @@ function ActionButtons({ audio, file, canDownload, canDelete, isAdmin, busy, onI
   const { t } = useI18n();
   if (!audio && !canDownload && !canDelete) return null;
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 5, whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--s-1)', whiteSpace: 'nowrap' }}>
       {audio && isAdmin && <button style={buttonStyle()} disabled={busy} onClick={() => onInfo(audio)}>{t('inspector.tabInfo')}</button>}
       {canDownload && <button style={buttonStyle()} disabled={busy} onClick={() => onDownload(file)}>{t('inspector.tabDownload')}</button>}
       {canDelete && <button style={{ ...buttonStyle(), color: '#e8716a', borderColor: 'rgba(232,113,106,0.35)' }} disabled={busy} onClick={() => onDelete(file)}>{t('inspector.tabDelete')}</button>}
@@ -159,9 +159,9 @@ function AudioInspector({ itemId, serverUrl, audio, onClose, onToast }: AudioIns
   const dialogRef = useModalFocus<HTMLDivElement>(onClose);
   const meta = audio.metadata;
   const infoRow = (label: string, value: ReactNode) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '130px minmax(0,1fr)', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--onyx-line)' }}>
-      <span style={{ fontFamily: MONO, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>{label}</span>
-      <span className="onyx-selectable" style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: 12, color: 'var(--onyx-text-dim)' }}>{value ?? '—'}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '130px minmax(0,1fr)', gap: 'var(--s-3)', padding: 'var(--s-2) 0', borderBottom: '1px solid var(--onyx-line)' }}>
+      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>{label}</span>
+      <span className="onyx-selectable" style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{value ?? '—'}</span>
     </div>
   );
   const runProbe = async () => {
@@ -180,27 +180,27 @@ function AudioInspector({ itemId, serverUrl, audio, onClose, onToast }: AudioIns
     } catch { onToast({ message: 'Could not copy probe JSON', type: 'error' }); }
   };
   return ReactDOM.createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="audio-file-info-title" style={{ width: 720, maxWidth: '92vw', maxHeight: '82vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 14, boxShadow: '0 28px 80px rgba(0,0,0,0.72)' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="ui-scrim"  style={{ zIndex: 2200 }} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="audio-file-info-title" style={{ width: 720, maxWidth: '92vw', maxHeight: '82vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-overlay)', boxShadow: 'var(--shadow-dialog)' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6)', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="audio-file-info-title" style={{ fontFamily: SERIF, fontSize: 18 }}>{t('inspector.audioDetails')}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.filename}</div>
+            <div id="audio-file-info-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)' }}>{t('inspector.audioDetails')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.filename}</div>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 7 }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--s-2)' }}>
             {probe ? <button style={buttonStyle()} onClick={() => setProbe(null)}>{t('inspector.storedData')}</button> : <button style={buttonStyle(true)} onClick={() => void runProbe()} disabled={probing}>{probing ? 'Probing…' : 'Probe audio file'}</button>}
             <button style={buttonStyle()} onClick={onClose}>{t('inspector.close')}</button>
           </div>
         </div>
-        <div style={{ overflow: 'auto', padding: '12px 22px 22px' }}>
-          {probeError && <div role="alert" style={{ color: '#e8716a', fontSize: 12, padding: '8px 0' }}>{probeError}</div>}
+        <div style={{ overflow: 'auto', padding: 'var(--s-3) var(--s-6) var(--s-6)' }}>
+          {probeError && <div role="alert" style={{ color: '#e8716a', fontSize: 'var(--fs-2)', padding: 'var(--s-2) 0' }}>{probeError}</div>}
           {probe ? (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('inspector.freshJson')}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-2)' }}>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('inspector.freshJson')}</span>
                 <button style={buttonStyle()} onClick={() => void copyProbe()}>{t('inspector.copyJson')}</button>
               </div>
-              <pre className="onyx-selectable" style={{ margin: 0, padding: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', background: 'rgba(0,0,0,0.22)', border: '1px solid var(--onyx-line)', borderRadius: 8, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.55, color: 'var(--onyx-text-dim)' }}>{JSON.stringify(probe, null, 2)}</pre>
+              <pre className="onyx-selectable" style={{ margin: '0', padding: 'var(--s-4)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', background: 'rgba(0,0,0,0.22)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-md)', fontFamily: MONO, fontSize: 'var(--fs-0)', lineHeight: 1.55, color: 'var(--onyx-text-dim)' }}>{JSON.stringify(probe, null, 2)}</pre>
             </div>
           ) : (
             <>
@@ -218,8 +218,8 @@ function AudioInspector({ itemId, serverUrl, audio, onClose, onToast }: AudioIns
               {infoRow('Track / disc', `${audio.trackNumFromMeta ?? audio.trackNumFromFilename ?? '—'} / ${audio.discNumFromMeta ?? audio.discNumFromFilename ?? '—'}`)}
               {infoRow('Verified', audio.manuallyVerified ? 'Manually verified' : 'Scanner order')}
               {audio.error && infoRow('Scan error', audio.error)}
-              <div style={{ marginTop: 18, marginBottom: 6, fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('inspector.embeddedTags')}</div>
-              {Object.keys(audio.metaTags ?? {}).length ? Object.entries(audio.metaTags ?? {}).map(([key, value]) => infoRow(key, typeof value === 'string' ? value : JSON.stringify(value))) : <div style={{ fontSize: 12, color: 'var(--onyx-text-mute)' }}>{t('inspector.noEmbeddedTags')}</div>}
+              <div style={{ marginTop: 'var(--s-5)', marginBottom: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('inspector.embeddedTags')}</div>
+              {Object.keys(audio.metaTags ?? {}).length ? Object.entries(audio.metaTags ?? {}).map(([key, value]) => infoRow(key, typeof value === 'string' ? value : JSON.stringify(value))) : <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)' }}>{t('inspector.noEmbeddedTags')}</div>}
             </>
           )}
         </div>
@@ -252,14 +252,14 @@ function TreeBranch({ node, depth, audioByIno, fullPath, st, busyId, onInfo, onD
   const hasFolder = !!node.name;
   return (
     <div role="treeitem" aria-expanded={hasFolder ? open : undefined}>
-      {hasFolder && <button onClick={() => setOpen(v => !v)} style={{ width: '100%', padding: `8px 18px 8px ${18 + depth * 18}px`, border: 0, borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.025)', color: 'var(--onyx-text-dim)', textAlign: 'left', cursor: 'pointer', fontFamily: MONO, fontSize: 10.5 }}><span aria-hidden="true" style={{ display: 'inline-block', width: 18 }}>{open ? '▾' : '▸'}</span>▰ {node.name}</button>}
+      {hasFolder && <button onClick={() => setOpen(v => !v)} style={{ width: '100%', padding: `8px 18px 8px ${18 + depth * 18}px`, border: 0, borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.025)', color: 'var(--onyx-text-dim)', textAlign: 'left', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)' }}><span aria-hidden="true" style={{ display: 'inline-block', width: 18 }}>{open ? '▾' : '▸'}</span>▰ {node.name}</button>}
       {(!hasFolder || open) && <div role="group">
         {node.children.map(child => <TreeBranch key={child.path} node={child} depth={depth + 1} audioByIno={audioByIno} fullPath={fullPath} st={st} busyId={busyId} onInfo={onInfo} onDownload={onDownload} onDelete={onDelete} />)}
         {node.files.map(file => {
           const audio = audioByIno.get(file.ino);
-          return <div key={file.ino} style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,1fr) 90px 90px minmax(180px,auto)', gap: 10, alignItems: 'center', padding: `9px 18px 9px ${38 + depth * 18}px`, borderBottom: '1px solid var(--onyx-line)' }}>
-            <span className="onyx-selectable" style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: 12, color: 'var(--onyx-text-dim)' }}>{displayPath(file, fullPath)}</span>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>{fmtSize(file.metadata.size)}</span>
+          return <div key={file.ino} style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,1fr) 90px 90px minmax(180px,auto)', gap: 'var(--s-3)', alignItems: 'center', padding: `9px 18px 9px ${38 + depth * 18}px`, borderBottom: '1px solid var(--onyx-line)' }}>
+            <span className="onyx-selectable" style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{displayPath(file, fullPath)}</span>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{fmtSize(file.metadata.size)}</span>
             <TypeBadge value={file.fileType} />
             <ActionButtons audio={audio} file={file} canDownload={st.canDownload} canDelete={st.canDelete} isAdmin={st.isAdmin} busy={busyId === file.ino} onInfo={onInfo} onDownload={onDownload} onDelete={onDelete} />
           </div>;
@@ -423,31 +423,31 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
   const renderFileRow = (file: LibraryFile, index: number) => {
     const audio = audioByIno.get(file.ino);
     return <tr key={file.ino} style={{ borderBottom: index < files.length - 1 ? '1px solid var(--onyx-line)' : 'none' }}>
-      <td className="onyx-selectable" style={{ padding: '10px 14px', minWidth: 260, overflowWrap: 'anywhere', color: 'var(--onyx-text-dim)', fontSize: 12 }}>{displayPath(file, fullPath)}</td>
-      <td style={{ padding: '10px 14px', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', whiteSpace: 'nowrap' }}>{fmtSize(file.metadata.size)}</td>
-      <td style={{ padding: '10px 14px' }}><TypeBadge value={file.fileType} /></td>
-      <td style={{ padding: '7px 14px' }}><ActionButtons audio={audio} file={file} canDownload={st.canDownload} canDelete={st.canDelete} isAdmin={st.isAdmin} busy={busyId === file.ino} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /></td>
+      <td className="onyx-selectable" style={{ padding: 'var(--s-3) var(--s-4)', minWidth: 260, overflowWrap: 'anywhere', color: 'var(--onyx-text-dim)', fontSize: 'var(--fs-2)' }}>{displayPath(file, fullPath)}</td>
+      <td style={{ padding: 'var(--s-3) var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', whiteSpace: 'nowrap' }}>{fmtSize(file.metadata.size)}</td>
+      <td style={{ padding: 'var(--s-3) var(--s-4)' }}><TypeBadge value={file.fileType} /></td>
+      <td style={{ padding: 'var(--s-2) var(--s-4)' }}><ActionButtons audio={audio} file={file} canDownload={st.canDownload} canDelete={st.canDelete} isAdmin={st.isAdmin} busy={busyId === file.ino} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /></td>
     </tr>;
   };
 
   const modal = (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.66)' }} onMouseDown={event => { if (event.target === event.currentTarget) requestClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="file-track-inspector-title" style={{ width: 1040, maxWidth: '94vw', height: 'min(760px,88vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 32px 90px rgba(0,0,0,0.75)' }}>
-        <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', gap: 12, alignItems: 'center' }}>
+    <div className="ui-scrim"  style={{ zIndex: 2000 }} onMouseDown={event => { if (event.target === event.currentTarget) requestClose(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="file-track-inspector-title" style={{ width: 1040, maxWidth: '94vw', height: 'min(760px,88vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-overlay)', boxShadow: '0 32px 90px rgba(0,0,0,0.75)' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', display: 'flex', gap: 'var(--s-3)', alignItems: 'center' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="file-track-inspector-title" style={{ fontFamily: SERIF, fontSize: 20, color: 'var(--onyx-text)' }}>Files &amp; Tracks</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detail?.media.metadata.title || item.media.metadata.title || item.id}</div>
+            <div id="file-track-inspector-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', color: 'var(--onyx-text)' }}>Files &amp; Tracks</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detail?.media.metadata.title || item.media.metadata.title || item.id}</div>
           </div>
-          {detail?.isMissing && <span role="status" style={{ color: '#e8716a', fontFamily: MONO, fontSize: 10 }}>{t('inspector.missingMedia')}</span>}
+          {detail?.isMissing && <span role="status" style={{ color: '#e8716a', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{t('inspector.missingMedia')}</span>}
           <button style={{ ...buttonStyle(), marginLeft: 'auto' }} onClick={requestClose}>{t('inspector.close')}</button>
         </div>
 
-        <div role="tablist" aria-label={t('inspector.ariaViews')} style={{ display: 'flex', gap: 8, padding: '12px 22px 0' }}>
+        <div role="tablist" aria-label={t('inspector.ariaViews')} style={{ display: 'flex', gap: 'var(--s-2)', padding: 'var(--s-3) var(--s-6) 0' }}>
           <button role="tab" aria-selected={tab === 'tracks'} style={buttonStyle(tab === 'tracks')} onClick={() => setTab('tracks')}>Audio Tracks · {audioFiles.length}</button>
           <button role="tab" aria-selected={tab === 'files'} style={buttonStyle(tab === 'files')} onClick={() => setTab('files')}>Library Files · {files.length}</button>
         </div>
 
-        <div style={{ minHeight: 48, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 7, padding: '10px 22px', borderBottom: '1px solid var(--onyx-line)' }}>
+        <div style={{ minHeight: 48, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-3) var(--s-6)', borderBottom: '1px solid var(--onyx-line)' }}>
           {st.isAdmin && <button style={buttonStyle(fullPath)} onClick={() => setFullPath(value => !value)}>{fullPath ? 'Relative path' : 'Full path'}</button>}
           {tab === 'files' && <><button style={buttonStyle(fileView === 'tree')} onClick={() => setFileView('tree')}>{t('inspector.viewTree')}</button><button style={buttonStyle(fileView === 'list')} onClick={() => setFileView('list')}>{t('inspector.viewList')}</button></>}
           {tab === 'tracks' && !editing && st.canUpdate && audioFiles.length > 1 && <button style={{ ...buttonStyle(true), marginLeft: 'auto' }} onClick={() => { setWorkingTracks(orderedAudioFiles(audioFiles)); setEditing(true); }}>{t('inspector.manageTracks')}</button>}
@@ -455,41 +455,41 @@ export default function FileTrackInspectorModal({ item, st, onClose }: FileTrack
             <button style={buttonStyle()} onClick={() => setWorkingTracks(current => [...current].sort((a, b) => (a.trackNumFromFilename ?? Number.MAX_SAFE_INTEGER) - (b.trackNumFromFilename ?? Number.MAX_SAFE_INTEGER)))}>Filename track #</button>
             <button style={buttonStyle()} onClick={() => setWorkingTracks(current => [...current].sort((a, b) => (a.trackNumFromMeta ?? Number.MAX_SAFE_INTEGER) - (b.trackNumFromMeta ?? Number.MAX_SAFE_INTEGER)))}>Metadata track #</button>
             <button style={buttonStyle()} onClick={() => setWorkingTracks(current => [...current].sort((a, b) => a.metadata.filename.localeCompare(b.metadata.filename, undefined, { numeric: true })))}>{t('inspector.filename')}</button>
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: 7 }}><button style={buttonStyle()} onClick={() => { setWorkingTracks(orderedAudioFiles(audioFiles)); setEditing(false); }}>{t('inspector.cancel')}</button><button style={buttonStyle(true)} disabled={busyId === 'tracks'} onClick={() => void saveTracks()}>{busyId === 'tracks' ? 'Saving…' : 'Save track order'}</button></span>
+            <span style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--s-2)' }}><button style={buttonStyle()} onClick={() => { setWorkingTracks(orderedAudioFiles(audioFiles)); setEditing(false); }}>{t('inspector.cancel')}</button><button style={buttonStyle(true)} disabled={busyId === 'tracks'} onClick={() => void saveTracks()}>{busyId === 'tracks' ? 'Saving…' : 'Save track order'}</button></span>
           </>}
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-          {!detail && !loadError && <div style={{ padding: 26, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>Loading item files…</div>}
-          {loadError && <div role="alert" style={{ padding: 26, color: '#e8716a', fontSize: 12 }}>{loadError}<div><button style={{ ...buttonStyle(), marginTop: 12 }} onClick={() => void load()}>{t('inspector.retry')}</button></div></div>}
+          {!detail && !loadError && <div style={{ padding: 'var(--s-6)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>Loading item files…</div>}
+          {loadError && <div role="alert" style={{ padding: 'var(--s-6)', color: '#e8716a', fontSize: 'var(--fs-2)' }}>{loadError}<div><button style={{ ...buttonStyle(), marginTop: 'var(--s-3)' }} onClick={() => void load()}>{t('inspector.retry')}</button></div></div>}
           {detail && tab === 'tracks' && (editing ? (
             <div style={{ minWidth: 900 }}>
-              {workingTracks.map((audio, index) => <div key={audio.ino} draggable onDragStart={() => setDraggedIno(audio.ino)} onDragOver={event => event.preventDefault()} onDrop={() => dropTrack(audio.ino)} style={{ display: 'grid', gridTemplateColumns: '42px 66px minmax(260px,1fr) 90px 90px 90px 120px', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--onyx-line)', opacity: audio.exclude ? 0.48 : 1, cursor: 'grab' }}>
+              {workingTracks.map((audio, index) => <div key={audio.ino} draggable onDragStart={() => setDraggedIno(audio.ino)} onDragOver={event => event.preventDefault()} onDrop={() => dropTrack(audio.ino)} style={{ display: 'grid', gridTemplateColumns: '42px 66px minmax(260px,1fr) 90px 90px 90px 120px', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-2) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', opacity: audio.exclude ? 0.48 : 1, cursor: 'grab' }}>
                 <span aria-hidden="true" style={{ fontFamily: MONO, color: 'var(--onyx-text-mute)' }}>⋮⋮</span>
-                <span style={{ fontFamily: MONO, fontSize: 10 }}>{audio.exclude ? '—' : workingTracks.slice(0, index).filter(file => !file.exclude).length + 1}</span>
-                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12 }}>{audio.metadata.filename}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10 }}>F {audio.trackNumFromFilename ?? '—'}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10 }}>M {audio.trackNumFromMeta ?? '—'}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10 }}>{fmtDuration(audio.duration)}</span>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 9.5 }}><input type="checkbox" checked={!audio.exclude} onChange={event => setWorkingTracks(current => current.map(file => file.ino === audio.ino ? { ...file, exclude: !event.target.checked } : file))} /> {t('inspector.include')}</label>
-                <span style={{ display: 'flex', gap: 3 }}><button aria-label={`Move ${audio.metadata.filename} up`} style={buttonStyle()} disabled={index === 0} onClick={() => moveTrack(audio.ino, -1)}>↑</button><button aria-label={`Move ${audio.metadata.filename} down`} style={buttonStyle()} disabled={index === workingTracks.length - 1} onClick={() => moveTrack(audio.ino, 1)}>↓</button></span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{audio.exclude ? '—' : workingTracks.slice(0, index).filter(file => !file.exclude).length + 1}</span>
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--fs-2)' }}>{audio.metadata.filename}</span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)' }}>F {audio.trackNumFromFilename ?? '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)' }}>M {audio.trackNumFromMeta ?? '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{fmtDuration(audio.duration)}</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}><input type="checkbox" checked={!audio.exclude} onChange={event => setWorkingTracks(current => current.map(file => file.ino === audio.ino ? { ...file, exclude: !event.target.checked } : file))} /> {t('inspector.include')}</label>
+                <span style={{ display: 'flex', gap: 'var(--s-1)' }}><button aria-label={`Move ${audio.metadata.filename} up`} style={buttonStyle()} disabled={index === 0} onClick={() => moveTrack(audio.ino, -1)}>↑</button><button aria-label={`Move ${audio.metadata.filename} down`} style={buttonStyle()} disabled={index === workingTracks.length - 1} onClick={() => moveTrack(audio.ino, 1)}>↓</button></span>
               </div>)}
             </div>
           ) : audioFiles.length ? (
-            <table style={{ width: '100%', minWidth: 840, borderCollapse: 'collapse' }}><thead><tr>{['#', 'Filename', 'Codec', 'Bitrate', 'Size', 'Duration', 'Status', 'Actions'].map(label => <th key={label} style={{ padding: '8px 12px', textAlign: 'left', fontFamily: MONO, fontSize: 8.5, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--onyx-text-mute)', borderBottom: '1px solid var(--onyx-line)' }}>{label}</th>)}</tr></thead><tbody>{orderedAudioFiles(audioFiles).map(audio => <tr key={audio.ino} style={{ borderBottom: '1px solid var(--onyx-line)', opacity: audio.exclude ? 0.5 : 1 }}>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 10 }}>{audio.exclude ? '—' : audio.index}</td>
-              <td className="onyx-selectable" style={{ padding: '10px 12px', minWidth: 250, overflowWrap: 'anywhere', fontSize: 12 }}>{displayPath(audio, fullPath)}</td>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 10 }}>{audio.codec || '—'}</td>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 10 }}>{fmtBitrate(audio.bitRate)}</td>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 10 }}>{fmtSize(audio.metadata.size)}</td>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 10 }}>{fmtDuration(audio.duration)}</td>
-              <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 9, color: audio.error ? '#e8716a' : 'var(--onyx-text-mute)' }}>{audio.error ? 'Error' : audio.exclude ? 'Excluded' : 'Included'}</td>
-              <td style={{ padding: '7px 12px' }}><ActionButtons audio={audio} file={audio} canDownload={st.canDownload} canDelete={st.canDelete} isAdmin={st.isAdmin} busy={busyId === audio.ino} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /></td>
+            <table style={{ width: '100%', minWidth: 840, borderCollapse: 'collapse' }}><thead><tr>{['#', 'Filename', 'Codec', 'Bitrate', 'Size', 'Duration', 'Status', 'Actions'].map(label => <th key={label} style={{ padding: 'var(--s-2) var(--s-3)', textAlign: 'left', fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--onyx-text-mute)', borderBottom: '1px solid var(--onyx-line)' }}>{label}</th>)}</tr></thead><tbody>{orderedAudioFiles(audioFiles).map(audio => <tr key={audio.ino} style={{ borderBottom: '1px solid var(--onyx-line)', opacity: audio.exclude ? 0.5 : 1 }}>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{audio.exclude ? '—' : audio.index}</td>
+              <td className="onyx-selectable" style={{ padding: 'var(--s-3) var(--s-3)', minWidth: 250, overflowWrap: 'anywhere', fontSize: 'var(--fs-2)' }}>{displayPath(audio, fullPath)}</td>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{audio.codec || '—'}</td>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{fmtBitrate(audio.bitRate)}</td>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{fmtSize(audio.metadata.size)}</td>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{fmtDuration(audio.duration)}</td>
+              <td style={{ padding: 'var(--s-3) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: audio.error ? '#e8716a' : 'var(--onyx-text-mute)' }}>{audio.error ? 'Error' : audio.exclude ? 'Excluded' : 'Included'}</td>
+              <td style={{ padding: 'var(--s-2) var(--s-3)' }}><ActionButtons audio={audio} file={audio} canDownload={st.canDownload} canDelete={st.canDelete} isAdmin={st.isAdmin} busy={busyId === audio.ino} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /></td>
             </tr>)}</tbody></table>
-          ) : <div style={{ padding: 26, color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 11 }}>{t('inspector.noAudioFiles')}</div>)}
-          {detail && tab === 'files' && (files.length ? (fileView === 'tree' ? <FileTree nodes={tree} audioByIno={audioByIno} fullPath={fullPath} st={st} busyId={busyId} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /> : <table style={{ width: '100%', minWidth: 760, borderCollapse: 'collapse' }}><thead><tr>{['Path', 'Size', 'Type', 'Actions'].map(label => <th key={label} style={{ padding: '8px 14px', textAlign: 'left', fontFamily: MONO, fontSize: 8.5, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--onyx-text-mute)', borderBottom: '1px solid var(--onyx-line)' }}>{label}</th>)}</tr></thead><tbody>{files.map(renderFileRow)}</tbody></table>) : <div style={{ padding: 26, color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 11 }}>{t('inspector.noLibraryFiles')}</div>)}
+          ) : <div style={{ padding: 'var(--s-6)', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-1)' }}>{t('inspector.noAudioFiles')}</div>)}
+          {detail && tab === 'files' && (files.length ? (fileView === 'tree' ? <FileTree nodes={tree} audioByIno={audioByIno} fullPath={fullPath} st={st} busyId={busyId} onInfo={setSelectedAudio} onDownload={onDownload} onDelete={onDelete} /> : <table style={{ width: '100%', minWidth: 760, borderCollapse: 'collapse' }}><thead><tr>{['Path', 'Size', 'Type', 'Actions'].map(label => <th key={label} style={{ padding: 'var(--s-2) var(--s-4)', textAlign: 'left', fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--onyx-text-mute)', borderBottom: '1px solid var(--onyx-line)' }}>{label}</th>)}</tr></thead><tbody>{files.map(renderFileRow)}</tbody></table>) : <div style={{ padding: 'var(--s-6)', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-1)' }}>{t('inspector.noLibraryFiles')}</div>)}
         </div>
-        {activeMutationBlocked && <div role="status" style={{ padding: '9px 22px', borderTop: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 9.5, color: '#d8a84e' }}>{t('inspector.stopPlaybackFirst')}</div>}
+        {activeMutationBlocked && <div role="status" style={{ padding: 'var(--s-3) var(--s-6)', borderTop: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: '#d8a84e' }}>{t('inspector.stopPlaybackFirst')}</div>}
       </div>
       {selectedAudio && <AudioInspector itemId={item.id} serverUrl={st.serverUrl} audio={selectedAudio} onClose={() => setSelectedAudio(null)} onToast={st.setToast} />}
     </div>

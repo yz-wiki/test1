@@ -27,8 +27,8 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
   return (
     // Outer style prop allows the parent to constrain width (e.g. maxWidth: 120 in compact slot).
     <div style={{
-      display: 'flex', alignItems: 'center', gap: compact ? 6 : 10, padding: '6px 12px',
-      border: '1px solid var(--onyx-glass-edge)', borderRadius: 8,
+      display: 'flex', alignItems: 'center', gap: compact ? 6 : 10, padding: 'var(--s-2) var(--s-3)',
+      border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-md)',
       background: 'var(--onyx-glass)',
       // No backdrop-filter (see Glass.tsx) — control sits on the static-tinted top bar.
       ...style,
@@ -36,7 +36,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
       <button
         onClick={() => st.muted ? unmuteAudio(st) : muteAudio(st)}
         aria-label={st.muted ? 'Unmute' : 'Mute'}
-        style={{ background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 2, display: 'flex' }}
+        style={{ background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 'var(--s-1)', display: 'flex' }}
         title={t('volume.mute')}
       >
         <Icon name={st.muted || st.volume < 0.01 ? 'volume-mute' : 'volume'} size={15} />
@@ -48,7 +48,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
         </div>
         <div style={{
           position: 'absolute', left: `calc(${v * 100}% - 5px)`,
-          width: 10, height: 10, borderRadius: 5,
+          width: 10, height: 10, borderRadius: 'var(--r-sm)',
           background: 'var(--onyx-text)',
           boxShadow: '0 0 0 1px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.4)',
           pointerEvents: 'none',
@@ -62,7 +62,7 @@ export default function VolumeControl({ st, compact, style }: VolumeControlProps
       </div>
       {/* Numeric label — hidden in compact mode to save horizontal space */}
       {!compact && (
-        <span style={{ fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', minWidth: 22, textAlign: 'right' }}>
+        <span style={{ fontFamily: mono, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', minWidth: 22, textAlign: 'right' }}>
           {Math.round(v * 100)}
         </span>
       )}

@@ -54,7 +54,7 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
       zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
-      gap: 12,
+      gap: 'var(--s-3)',
       minWidth: 260,
       maxWidth: 420,
       background: BG_COLOR[type]
@@ -64,18 +64,18 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
       WebkitBackdropFilter: 'blur(20px)',
       border: '1px solid var(--onyx-glass-edge)',
       borderLeft: `3px solid ${BORDER_COLOR[type]}`,
-      borderRadius: 8,
-      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-      padding: '11px 10px 11px 14px',
+      borderRadius: 'var(--r-md)',
+      boxShadow: 'var(--shadow-popover)',
+      padding: 'var(--s-3) var(--s-3) var(--s-3) var(--s-4)',
       pointerEvents: 'auto',
       }}
     >
       {ICON[type] && (
-        <span aria-hidden="true" style={{ fontSize: 14, color: BORDER_COLOR[type], flexShrink: 0, lineHeight: 1 }}>
+        <span aria-hidden="true" style={{ fontSize: 'var(--fs-4)', color: BORDER_COLOR[type], flexShrink: 0, lineHeight: 1 }}>
           {ICON[type]}
         </span>
       )}
-      <span style={{ flex: 1, fontSize: 13, color: 'var(--onyx-text)', lineHeight: 1.4 }}>
+      <span style={{ flex: 1, fontSize: 'var(--fs-3)', color: 'var(--onyx-text)', lineHeight: 1.4 }}>
         {message}
       </span>
       <button
@@ -87,9 +87,9 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
           color: 'var(--onyx-text-mute)',
           cursor: 'pointer',
           fontFamily: MONO,
-          fontSize: 13,
+          fontSize: 'var(--fs-3)',
           lineHeight: 1,
-          padding: '2px 4px',
+          padding: 'var(--s-1) var(--s-1)',
           flexShrink: 0,
         }}
         title={t('toastUi.dismiss')}

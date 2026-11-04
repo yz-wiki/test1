@@ -37,11 +37,11 @@ function Dropdown<T extends string | number>({
         if (opt) onChange(opt.value);
       }}
       style={{
-        fontFamily: MONO, fontSize: 11,
-        background: 'var(--onyx-panel2)',
+        fontFamily: MONO, fontSize: 'var(--fs-1)',
+        background: 'var(--surface-overlay)',
         color: 'var(--onyx-text)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 6, padding: '5px 10px', cursor: 'pointer',
+        borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)', cursor: 'pointer',
         minWidth: 160,
       }}
     >
@@ -64,7 +64,7 @@ function NumInput({
   useEffect(() => setLocal(String(value ?? '')), [value]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
       <input
         type="number"
         value={local}
@@ -76,15 +76,15 @@ function NumInput({
           if (!isNaN(n)) onChange(n);
         }}
         style={{
-          fontFamily: MONO, fontSize: 11,
-          background: 'var(--onyx-panel2)',
+          fontFamily: MONO, fontSize: 'var(--fs-1)',
+          background: 'var(--surface-overlay)',
           color: 'var(--onyx-text)',
           border: '1px solid var(--onyx-glass-edge)',
-          borderRadius: 6, padding: '5px 10px',
+          borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)',
           width: 64, textAlign: 'right' as const,
         }}
       />
-      {suffix && <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>{suffix}</span>}
+      {suffix && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>{suffix}</span>}
     </div>
   );
 }
@@ -112,17 +112,17 @@ function PrefixEditor({
   }
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6, alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 'var(--s-2)', alignItems: 'center' }}>
       {prefixes.map(p => (
         <button
           key={p}
           onClick={() => remove(p)}
           title={t('serverSettings.clickToRemove')}
           style={{
-            fontFamily: MONO, fontSize: 11,
+            fontFamily: MONO, fontSize: 'var(--fs-1)',
             background: 'var(--onyx-accent-dim)',
             border: '1px solid var(--onyx-accent-edge)',
-            borderRadius: 6, padding: '4px 10px',
+            borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)',
             color: 'var(--onyx-accent)',
             cursor: 'pointer',
           }}
@@ -136,11 +136,11 @@ function PrefixEditor({
         onKeyDown={e => { if (e.key === 'Enter') add(); }}
         placeholder={t('serverSettings.addPlaceholder')}
         style={{
-          fontFamily: MONO, fontSize: 11,
-          background: 'var(--onyx-panel2)',
+          fontFamily: MONO, fontSize: 'var(--fs-1)',
+          background: 'var(--surface-overlay)',
           color: 'var(--onyx-text)',
           border: '1px solid var(--onyx-glass-edge)',
-          borderRadius: 6, padding: '4px 10px',
+          borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)',
           width: 80,
         }}
       />
@@ -168,9 +168,9 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
   // Heading: a standalone SectionHead when used as its own panel, or a lighter
   // divider sub-heading when embedded under the Server panel.
   const head = embedded ? (
-    <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--onyx-line)', marginBottom: 8 }}>
-      <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{t('serverSettings.adminTitle')}</div>
-      <div style={{ marginTop: 4, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>
+    <div style={{ marginTop: 'var(--s-8)', paddingTop: 'var(--s-6)', borderTop: '1px solid var(--onyx-line)', marginBottom: 'var(--s-2)' }}>
+      <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }}>{t('serverSettings.adminTitle')}</div>
+      <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
         {t('serverSettings.adminSubtitle')}
       </div>
     </div>
@@ -215,12 +215,12 @@ function ServerSettingsSectionInner({ st, embedded = false }: ServerSettingsSect
       <div>
         {head}
         <div style={{
-          fontFamily: MONO, fontSize: 11,
+          fontFamily: MONO, fontSize: 'var(--fs-1)',
           color: 'var(--onyx-text-mute)',
-          marginTop: 24,
-          padding: '12px 16px',
+          marginTop: 'var(--s-6)',
+          padding: 'var(--s-3) var(--s-4)',
           background: 'var(--onyx-glass)',
-          borderRadius: 8,
+          borderRadius: 'var(--r-md)',
           border: '1px solid var(--onyx-glass-edge)',
         }}>
           Loading server settings… If this persists, check your server connection and try reopening this panel.

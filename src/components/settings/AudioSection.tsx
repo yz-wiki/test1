@@ -71,7 +71,7 @@ function EqGraph({ bands }: { bands: number[] }) {
       {/* dB axis labels in the left gutter */}
       <div style={{ position: 'absolute', left: 0, top: 0, height: H, width: 30, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: `${padY - 5}px 0`, alignItems: 'flex-end', pointerEvents: 'none' }}>
         {['+12', '0', '-12'].map(l => (
-          <span key={l} style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{l}</span>
+          <span key={l} style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{l}</span>
         ))}
       </div>
       <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
@@ -224,13 +224,13 @@ export default function AudioSection() {
         align="top"
       >
         {devices.length === 0 ? (
-          <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 12px', letterSpacing: '0.06em' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) var(--s-3)', letterSpacing: '0.06em' }}>
             Loading devices…
           </div>
         ) : (
           <Dropdown
             trigger={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
                 <Icon name="headphones" size={13} color="var(--onyx-text-dim)" />
                 <span>{currentDevice?.name ?? 'Select device'}</span>
               </span>
@@ -244,7 +244,7 @@ export default function AudioSection() {
       </Row>
 
       {/* ── Signal chain panel ── */}
-      <Panel label={t('audio.signalChain')} bodyStyle={{ padding: '2px 20px 18px' }}>
+      <Panel label={t('audio.signalChain')} bodyStyle={{ padding: 'var(--s-1) var(--s-5) var(--s-5)' }}>
           {/* Equalizer master toggle */}
           <Row label={t('audio.equalizer')} hint={t('audio.equalizerHint')}>
             {eqSettings !== null && <Toggle on={eqEnabled} onChange={handleToggleEq} />}
@@ -254,7 +254,7 @@ export default function AudioSection() {
           <div style={{ opacity: eqEnabled ? 1 : 0.35, pointerEvents: eqEnabled ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
             {/* Preset pills (replaces the dropdown) */}
             <Row label={t('audio.preset')}>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {presets.map(p => (
                   <Seg key={p.index} active={presetSelectValue === String(p.index)} onClick={() => handlePresetChange(p.index)}>{p.name}</Seg>
                 ))}
@@ -264,16 +264,16 @@ export default function AudioSection() {
             </Row>
 
             <Row label={t('audio.savedProfiles')} hint={t('audio.savedProfilesHint')}>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
                 {savedPresets.map(p => <Seg key={p.name} active={false} onClick={() => applySavedPreset(p)}>{p.name}</Seg>)}
-                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder={t('audio.profileName')} aria-label={t('audio.profileNameAria')} style={{ width: 105, padding: '5px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 10 }} />
-                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: '5px 8px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9 }}>{t('audio.save')}</button>
+                <input value={presetName} onChange={e => setPresetName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCustomPreset(); }} placeholder={t('audio.profileName')} aria-label={t('audio.profileNameAria')} style={{ width: 105, padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text)', fontFamily: MONO, fontSize: 'var(--fs-0)' }} />
+                <button onClick={saveCustomPreset} disabled={!presetName.trim()} style={{ padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{t('audio.save')}</button>
               </div>
             </Row>
 
             {/* Preamp */}
             <Row label={t('audio.preamp')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-4)' }}>
                 <input
                   type="range"
                   min={-20}
@@ -284,7 +284,7 @@ export default function AudioSection() {
                   onPointerUp={e => handlePreampCommit(Number((e.target as HTMLInputElement).value))}
                   style={{ width: 280, accentColor: 'var(--onyx-accent)', cursor: 'pointer' }}
                 />
-                <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', minWidth: 48, textAlign: 'right' }}>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', minWidth: 48, textAlign: 'right' }}>
                   {formatGain(localPreamp)} dB
                 </span>
               </div>
@@ -292,15 +292,15 @@ export default function AudioSection() {
 
             {/* 10-band EQ: sub-header + reset, response graph, then the band sliders */}
             {frequencies.length > 0 && (
-              <div style={{ paddingTop: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ paddingTop: 'var(--s-4)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--s-4)' }}>
                   <span style={eyebrowStyle}>9-Band EQ</span>
                   <button
                     onClick={handleResetFlat}
                     style={{
-                      padding: '5px 11px', borderRadius: 6, background: 'transparent',
+                      padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', background: 'transparent',
                       border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)',
-                      fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
+                      fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
                     }}
                   >
                     {t('audio.resetFlat')}
@@ -312,13 +312,13 @@ export default function AudioSection() {
                 <EqGraph bands={localBands.slice(HIDDEN_LOW_BANDS)} />
 
                 {/* Band sliders with a left dB scale aligned to the tracks */}
-                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                <div style={{ display: 'flex', gap: 'var(--s-3)', marginTop: 'var(--s-4)' }}>
                   {/* dB scale column */}
                   <div style={{ width: 24, flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ height: FREQ_H }} />
                     <div style={{ height: TRACK_H, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                       {['+12', '+6', '0', '-6', '-12'].map(l => (
-                        <span key={l} style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1 }}>{l}</span>
+                        <span key={l} style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1 }}>{l}</span>
                       ))}
                     </div>
                     <div style={{ height: VAL_H }} />
@@ -327,13 +327,13 @@ export default function AudioSection() {
                   {/* Sliders — the lowest HIDDEN_LOW_BANDS columns are omitted; the
                       real band index `i` is preserved so value binding/commit and
                       the backend band mapping stay correct. */}
-                  <div style={{ flex: 1, display: 'flex', gap: 4 }}>
+                  <div style={{ flex: 1, display: 'flex', gap: 'var(--s-1)' }}>
                     {frequencies.slice(HIDDEN_LOW_BANDS).map((hz, j) => {
                       const i = j + HIDDEN_LOW_BANDS;
                       const gain = localBands[i] ?? 0;
                       return (
                         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <span style={{ height: FREQ_H, lineHeight: `${FREQ_H}px`, fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+                          <span style={{ height: FREQ_H, lineHeight: `${FREQ_H}px`, fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
                             {formatHz(hz)}
                           </span>
                           <input
@@ -357,7 +357,7 @@ export default function AudioSection() {
                               accentColor: 'var(--onyx-accent)',
                             } as React.CSSProperties}
                           />
-                          <span style={{ height: VAL_H, lineHeight: `${VAL_H}px`, fontFamily: MONO, fontSize: 9, color: gain !== 0 ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+                          <span style={{ height: VAL_H, lineHeight: `${VAL_H}px`, fontFamily: MONO, fontSize: 'var(--fs-0)', color: gain !== 0 ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
                             {formatGain(gain)}
                           </span>
                         </div>

@@ -23,28 +23,28 @@ export interface AddBooksStepProps {
 function StagingScene() {
   const { t } = useI18n();
   const box: React.CSSProperties = {
-    position: 'absolute', top: '30%', width: 96, height: 62, borderRadius: 10,
+    position: 'absolute', top: '30%', width: 96, height: 62, borderRadius: 'var(--r-card)',
     border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.3)',
     background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.05)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-1)',
   };
-  const cap: React.CSSProperties = { fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.5)' };
+  const cap: React.CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' };
   return (
-    <div className="onb-scene" style={{ position: 'relative', height: 130, marginTop: 6, marginBottom: 4 }}>
+    <div className="onb-scene" style={{ position: 'relative', height: 130, marginTop: 'var(--s-2)', marginBottom: 'var(--s-1)' }}>
       {/* Dotted travel line */}
-      <div style={{ position: 'absolute', top: '50%', left: '20%', right: '20%', height: 0, borderTop: '1px dashed rgba(235,231,223,0.15)' }} />
+      <div style={{ position: 'absolute', top: '50%', left: '20%', right: '20%', height: 0, borderTop: '1px dashed var(--onyx-text-mute)' }} />
       {/* Staging box (left) */}
       <div style={{ ...box, left: '8%' }}>
-        <span style={{ fontSize: 18, lineHeight: 1 }}>📁</span>
+        <span style={{ fontSize: 'var(--fs-6)', lineHeight: 1 }}>📁</span>
         <span style={cap}>{t('onbBooks.staging')}</span>
       </div>
       {/* Filed box (right) */}
       <div className="onb-filed" style={{ ...box, right: '8%' }}>
-        <span style={{ fontSize: 18, lineHeight: 1 }}>🗂️</span>
+        <span style={{ fontSize: 'var(--fs-6)', lineHeight: 1 }}>🗂️</span>
         <span style={cap}>{t('onbBooks.authorSeries')}</span>
       </div>
       {/* Travelling file glyph */}
-      <div className="onb-file" style={{ position: 'absolute', width: 24, height: 28, borderRadius: 4, background: 'linear-gradient(180deg,#e9bb5e,#a37d2e)', boxShadow: '0 6px 16px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1306', fontFamily: MONO, fontSize: 9, fontWeight: 700 }}>
+      <div className="onb-file" style={{ position: 'absolute', width: 24, height: 28, borderRadius: 'var(--r-xs)', background: 'linear-gradient(180deg,#e9bb5e,#a37d2e)', boxShadow: 'var(--shadow-popover)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1306', fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 700 }}>
         ♪
       </div>
     </div>
@@ -53,12 +53,12 @@ function StagingScene() {
 
 function RouteCard({ badge, title, children }: { badge: string; title: string; children: React.ReactNode }) {
   return (
-    <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-        <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-accent)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.3)', borderRadius: 4, padding: '2px 6px' }}>{badge}</span>
-        <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 600, color: '#ebe7df' }}>{title}</span>
+    <div style={{ flex: 1, minWidth: 200, padding: 'var(--s-4) var(--s-4)', borderRadius: 'var(--r-card)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', marginBottom: 'var(--s-2)' }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-accent)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.3)', borderRadius: 'var(--r-xs)', padding: 'var(--s-1) var(--s-2)' }}>{badge}</span>
+        <span style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 600, color: 'var(--onyx-text)' }}>{title}</span>
       </div>
-      <div style={{ fontSize: 12.5, color: 'rgba(235,231,223,0.6)', lineHeight: 1.5 }}>{children}</div>
+      <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', lineHeight: 1.5 }}>{children}</div>
     </div>
   );
 }
@@ -68,29 +68,29 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
   const [importOpen, setImportOpen] = useState(false);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' }}>
       <StagingScene />
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)', flexWrap: 'wrap' }}>
         <RouteCard badge="Automatic" title={t('onbBooks.dropToStaging')}>
           Copy audiobooks — files <em>or whole book folders</em> — into the library's{' '}
-          <span style={{ color: 'rgba(235,231,223,0.85)' }}>{t('onbBooks.staging')}</span> folder. Skald reads each book's tags and
+          <span style={{ color: 'var(--onyx-text)' }}>{t('onbBooks.staging')}</span> folder. Skald reads each book's tags and
           chapters and files it under Author / Series / Title automatically.
         </RouteCard>
         <RouteCard badge="Manual" title={t('onbBooks.addBooksButton')}>
-          {t('onbBooks.manualLead')} <span style={{ color: 'rgba(235,231,223,0.85)' }}>{t('onbBooks.addBooks')}</span>{' '}
+          {t('onbBooks.manualLead')} <span style={{ color: 'var(--onyx-text)' }}>{t('onbBooks.addBooks')}</span>{' '}
           {t('onbBooks.manualTail')}
         </RouteCard>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-5)', marginTop: 'var(--s-1)' }}>
         <GoldButton onClick={onContinue}>{t('onbBooks.continue')}</GoldButton>
         {library ? (
           <button
             type="button"
             onClick={() => setImportOpen(true)}
             style={{
-              padding: '10px 18px', borderRadius: 999, fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+              padding: 'var(--s-3) var(--s-5)', borderRadius: 999, fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
               background: 'transparent', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.4)',
               color: 'var(--onyx-accent)', cursor: 'pointer',
             }}
@@ -98,7 +98,7 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
             Add books
           </button>
         ) : (
-          <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(235,231,223,0.4)' }}>
+          <span style={{ fontFamily: SANS, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
             {t('onbBooks.createLibraryFirst')}
           </span>
         )}

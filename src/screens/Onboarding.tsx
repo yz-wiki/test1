@@ -96,7 +96,7 @@ export default function Onboarding({ st }: OnboardingProps) {
           <button
             type="button"
             onClick={goBack}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.5)', padding: '6px 4px' }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)', padding: 'var(--s-2) var(--s-1)' }}
           >
             ← Back
           </button>

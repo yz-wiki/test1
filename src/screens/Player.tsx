@@ -58,17 +58,17 @@ const PANE_LABEL_KEY = {
 const MONO = UI_STACK;
 
 const transportBtn = (): CSSProperties => ({
-  width: 44, height: 44, borderRadius: 10,
+  width: 44, height: 44, borderRadius: 'var(--r-card)',
   background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: 'var(--onyx-text)', cursor: 'pointer', padding: 0,
+  color: 'var(--onyx-text)', cursor: 'pointer', padding: '0',
 });
 
 const transportBtnSmall = (): CSSProperties => ({
-  width: 40, height: 40, borderRadius: 10,
+  width: 40, height: 40, borderRadius: 'var(--r-card)',
   background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 0,
+  color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: '0',
 });
 
 export interface PlayerProps {
@@ -774,7 +774,7 @@ export default function Player({ st }: PlayerProps) {
       <div className='ui-rowline' style={{ gap: 'var(--s-3)', marginBottom: isCompact ? 'var(--s-2)' : 'var(--s-4)', color: 'var(--onyx-text-mute)' }}>
         {!chrome.hasSidebar && (
           <>
-            <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 4, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
+            <button onClick={() => st.setScreen('library')} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', background: 'none', border: 'none', color: 'var(--onyx-text-dim)', cursor: 'pointer', padding: 'var(--s-1)', fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}>
               <Icon name="chevron-left" size={12} /> {t('misc.library')}
             </button>
             <span>·</span>
@@ -783,7 +783,7 @@ export default function Player({ st }: PlayerProps) {
         <span>{bSeries}</span>
         {/* Volume and device controls — hidden in compact mode, they move to the transport bar */}
         {!isCompact && (
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, textTransform: 'none', letterSpacing: 'normal' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--s-3)', textTransform: 'none', letterSpacing: 'normal' }}>
             <VolumeControl st={st} />
             <DeviceSelector st={st} />
           </div>
@@ -797,16 +797,16 @@ export default function Player({ st }: PlayerProps) {
           <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: coverSize, aspectRatio: '1 / 1', overflow: 'hidden' }}>
             <Cover item={b} size={coverSize} fill serverUrl={st.serverUrl} fallbackImageUrl={podcastImageUrl ?? podcastFeedImg} style={{ transition: 'width 0.3s ease, height 0.3s ease' }} />
           </div>
-          <div style={{ marginTop: 32, textAlign: 'center', position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%' }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 8 }}>{isPodcast ? 'Podcast' : bSeries}</div>
+          <div style={{ marginTop: 'var(--s-8)', textAlign: 'center', position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 'var(--s-2)' }}>{isPodcast ? 'Podcast' : bSeries}</div>
             <div style={{ fontFamily: SERIF, fontSize: titleFontSize, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.02em', transition: 'font-size 0.2s ease' }}>{displayTitle}</div>
             {isPodcast ? (
               // For an episode, the "show" is the podcast title; author filtering
               // is book-only so this line is plain text.
-              <div style={{ marginTop: 10, fontSize: 16, color: 'var(--onyx-text-dim)' }}>{bookTitle(b)}</div>
+              <div style={{ marginTop: 'var(--s-3)', fontSize: 'var(--fs-5)', color: 'var(--onyx-text-dim)' }}>{bookTitle(b)}</div>
             ) : (
               <>
-                <div style={{ marginTop: 10, fontSize: 16, color: 'var(--onyx-text-dim)' }}>
+                <div style={{ marginTop: 'var(--s-3)', fontSize: 'var(--fs-5)', color: 'var(--onyx-text-dim)' }}>
                   by{' '}
                   <span
                     onClick={() => { st.setContextFilter({ kind: 'author', value: bookAuthor(b) }); st.setShelfTab('library'); st.setScreen('library'); }}
@@ -815,7 +815,7 @@ export default function Player({ st }: PlayerProps) {
                     style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.15s' }}
                   >{bookAuthor(b)}</span>
                 </div>
-                <div style={{ marginTop: 2, fontSize: 13, color: 'var(--onyx-text-mute)' }}>
+                <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-mute)' }}>
                   {bookNarrator(b) && <>
                     narrated by{' '}
                     <span
@@ -835,18 +835,18 @@ export default function Player({ st }: PlayerProps) {
                 On narrow windows it is height-capped and scrolls instead. */}
             {(
               <div style={{ marginTop: panesStacked ? 14 : 24, width: '100%', textAlign: 'left', flex: panesStacked ? '0 1 auto' : 1, maxHeight: panesStacked ? 170 : undefined, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 8 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-2)' }}>
                   {detailLabel}
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                   {descriptionHtml ? (
                     <div
                       className="onyx-selectable"
-                      style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--onyx-text-dim)' }}
+                      style={{ fontSize: 'var(--fs-3)', lineHeight: 1.6, color: 'var(--onyx-text-dim)' }}
                       dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                     />
                   ) : (
-                    <div style={{ fontSize: 13, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
+                    <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
                       {noDescText}
                     </div>
                   )}
@@ -858,7 +858,7 @@ export default function Player({ st }: PlayerProps) {
           <MiniPlayer st={st} />
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-5)', minWidth: 0 }}>
 
           <div className="ui-card" style={{
             padding: (isFocusedDifferent && !showTransport) ? '14px 26px' : 26,
@@ -876,27 +876,27 @@ export default function Player({ st }: PlayerProps) {
           }}>
             {/* Pending podcast episode — offer download, then auto-play. */}
             {episodePending && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, minHeight: 160, textAlign: 'center' }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-4)', minHeight: 160, textAlign: 'center' }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>
                   {t('playerUi.episodeNotDownloaded')}
                 </div>
                 <button
                   onClick={downloadAndPlay}
                   disabled={dlState === 'downloading'}
                   style={{
-                    minWidth: 220, padding: '11px 18px', borderRadius: 8, border: 'none',
+                    minWidth: 220, padding: 'var(--s-3) var(--s-5)', borderRadius: 'var(--r-md)', border: 'none',
                     cursor: dlState === 'downloading' ? 'default' : 'pointer',
                     background: dlState === 'downloading' ? 'var(--onyx-line)' : 'var(--onyx-accent)',
                     color: dlState === 'downloading' ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
-                    fontFamily: MONO, fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    fontFamily: MONO, fontSize: 'var(--fs-2)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-2)',
                   }}
                 >
                   <Icon name={dlState === 'downloading' ? 'dot' : 'play'} size={13} />
                   {dlState === 'downloading' ? 'Downloading…' : 'Download episode'}
                 </button>
                 {dlState === 'downloading' && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
                     Fetching from the feed — playback starts automatically.
                   </div>
                 )}
@@ -913,12 +913,12 @@ export default function Player({ st }: PlayerProps) {
                 <button
                   onClick={handlePlayFocused}
                   style={{
-                    width: 280, padding: '11px 0',
-                    background: 'var(--onyx-accent)', border: 'none', borderRadius: 8,
+                    width: 280, padding: 'var(--s-3) 0',
+                    background: 'var(--onyx-accent)', border: 'none', borderRadius: 'var(--r-md)',
                     color: 'var(--onyx-bg)', cursor: 'pointer',
-                    fontFamily: MONO, fontSize: 12, fontWeight: 600,
+                    fontFamily: MONO, fontSize: 'var(--fs-2)', fontWeight: 600,
                     letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-2)',
                   }}
                 >
                   <Icon name="play" size={13} /> {t('playerUi.playThisBook')}
@@ -931,18 +931,18 @@ export default function Player({ st }: PlayerProps) {
                 opacity: (isFocusedDifferent && showTransport) ? (contentVisible ? 1 : 0) : 1,
                 transition: 'opacity 250ms ease-in',
               }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--s-6)' }}>
                 <div style={{ minWidth: 0 }}>
                   {/* Eyebrow always visible — tells the user what will play when they press the button */}
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>Now playing · {bookTitle(st.currentBook ?? b)}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>Now playing · {bookTitle(st.currentBook ?? b)}</div>
                   {/* Only show chapter title once playback has started — before that,
                       nothing is technically playing so showing a chapter would be misleading. */}
                   {(st.playing || st.position > 0) && (
-                    <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500, marginTop: 4, letterSpacing: '-0.005em' }}>{curCh.t}</div>
+                    <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500, marginTop: 'var(--s-1)', letterSpacing: '-0.005em' }}>{curCh.t}</div>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>
-                  <span style={{ fontSize: 14, color: 'var(--onyx-text)', fontWeight: 500 }}>{fmtTime(dispLocal)}</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>
+                  <span style={{ fontSize: 'var(--fs-4)', color: 'var(--onyx-text)', fontWeight: 500 }}>{fmtTime(dispLocal)}</span>
                   <span style={{ color: 'var(--onyx-text-mute)' }}>/</span>
                   <span>{fmtTime(dispTotal)}</span>
                 </div>
@@ -971,11 +971,11 @@ export default function Player({ st }: PlayerProps) {
                 // Compact: volume slider replaces the speed pills to reclaim horizontal space.
                 <VolumeControl st={st} compact style={{ flex: '0 0 auto', minWidth: 0, maxWidth: 120 }} />
               ) : null}
-              <div style={{ flex: '0 0 auto', minWidth: isCompact ? 0 : 160, display: isCompact ? 'none' : 'flex', gap: 6 }}>
+              <div style={{ flex: '0 0 auto', minWidth: isCompact ? 0 : 160, display: isCompact ? 'none' : 'flex', gap: 'var(--s-2)' }}>
                 {transportWidth >= 620 && !isCompact ? (
                   SPEEDS.map(s => (
                     <button key={s} onClick={() => { changeSpeed(st, st.currentBookId, s).catch(logErr); }} style={{
-                      padding: '7px 12px', borderRadius: 6, fontFamily: MONO, fontSize: 11,
+                      padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', fontFamily: MONO, fontSize: 'var(--fs-1)',
                       background: s === st.speed ? 'var(--onyx-accent-dim)' : 'transparent',
                       color: s === st.speed ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
                       border: `1px solid ${s === st.speed ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
@@ -989,16 +989,16 @@ export default function Player({ st }: PlayerProps) {
                     onChange={e => { changeSpeed(st, st.currentBookId, e.target.value).catch(logErr); }}
                     style={{
                       height: 44,
-                      borderRadius: 10,
+                      borderRadius: 'var(--r-card)',
                       background: 'var(--onyx-glass)',
                       border: '1px solid var(--onyx-glass-edge)',
                       color: 'var(--onyx-text)',
                       fontFamily: 'inherit',
-                      fontSize: 12,
+                      fontSize: 'var(--fs-2)',
                       flexShrink: 1,
                       minWidth: 48,
-                      paddingLeft: 8,
-                      paddingRight: 8,
+                      paddingLeft: 'var(--s-2)',
+                      paddingRight: 'var(--s-2)',
                       cursor: 'pointer',
                       outline: 'none',
                     }}
@@ -1010,7 +1010,7 @@ export default function Player({ st }: PlayerProps) {
 
               {/* Center group — primary transport controls; flex: 1 with centered content
                   ensures play/pause/skip always sit at the geometric center of the row */}
-              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14 }}>
+              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--s-4)' }}>
                 <button onClick={() => seekAudio(Math.max(0, st.position - skipSeconds())).catch(logErr)} aria-label={`Back ${skipSeconds()} seconds`} title={`Back ${skipSeconds()}s`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
                   <Icon name="skip-back" size={isCompact ? 14 : 20} />
                 </button>
@@ -1018,7 +1018,7 @@ export default function Player({ st }: PlayerProps) {
                   onClick={handlePlayPause}
                   aria-label={st.playing ? 'Pause' : 'Play'}
                   title={st.playing ? 'Pause (space)' : 'Play (space)'}
-                  style={{ width: isCompact ? 36 : 64, height: isCompact ? 36 : 64, borderRadius: isCompact ? 18 : 32, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', boxShadow: '0 12px 32px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.4)' }}
+                  style={{ width: isCompact ? 36 : 64, height: isCompact ? 36 : 64, borderRadius: isCompact ? 18 : 32, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-popover)' }}
                 >
                   <span style={{ display: 'inline-flex', marginLeft: st.playing ? 0 : 3 }}>
                     <Icon name={st.playing ? 'pause' : 'play'} size={isCompact ? 15 : 26} />
@@ -1030,7 +1030,7 @@ export default function Player({ st }: PlayerProps) {
               </div>
 
               {/* Right group — device selector (compact only) + bookmark + sleep timer; visible in both compact and full modes */}
-              <div style={{ flex: '0 0 auto', minWidth: isCompact ? 0 : 160, display: 'flex' /* Visible in both compact and full modes */, justifyContent: 'flex-end', gap: 8 }}>
+              <div style={{ flex: '0 0 auto', minWidth: isCompact ? 0 : 160, display: 'flex' /* Visible in both compact and full modes */, justifyContent: 'flex-end', gap: 'var(--s-2)' }}>
                 {isCompact && (
                   /* In compact mode, device selector moves here to sit left of bookmark/sleep */
                   <DeviceSelector st={st} compact style={{ flex: '0 0 auto', minWidth: 0, maxWidth: 120 }} />
@@ -1053,22 +1053,22 @@ export default function Player({ st }: PlayerProps) {
                       width: sleepMode != null ? 'auto' : (isCompact ? 28 : 40),
                       height: isCompact ? 28 : 40,
                       padding: sleepMode != null ? '0 10px' : 0,
-                      gap: 6,
+                      gap: 'var(--s-2)',
                     }}
                   >
                     <Icon name="sleep" size={15} />
                     {sleepMode != null && (
-                      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>{sleepLabel}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', fontWeight: 600, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>{sleepLabel}</span>
                     )}
                   </button>
                   {sleepOpen && (
-                    <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 10, boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', padding: 6, zIndex: 300, minWidth: 170 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>{t('playerUi.sleepTimer')}</div>
+                    <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-popover)', padding: 'var(--s-2)', zIndex: 300, minWidth: 170 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: 'var(--s-2) var(--s-2) var(--s-1)', textTransform: 'uppercase' }}>{t('playerUi.sleepTimer')}</div>
                       {SLEEP_OPTIONS.map(opt => {
                         const active = sleepMode === opt.id;
                         return (
-                          <button key={String(opt.id)} onClick={() => { setSleepMode(opt.id); setSleepOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', borderRadius: 6, background: active ? 'var(--onyx-accent-dim)' : 'transparent', border: 'none', width: '100%', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
-                            <span style={{ flex: 1, fontSize: 12.5, color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)', fontWeight: active ? 600 : 400 }}>{opt.label}</span>
+                          <button key={String(opt.id)} onClick={() => { setSleepMode(opt.id); setSleepOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', background: active ? 'var(--onyx-accent-dim)' : 'transparent', border: 'none', width: '100%', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                            <span style={{ flex: 1, fontSize: 'var(--fs-2)', color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)', fontWeight: active ? 600 : 400 }}>{opt.label}</span>
                             {active && <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}><Icon name="check" size={11} /></span>}
                           </button>
                         );
@@ -1104,8 +1104,8 @@ export default function Player({ st }: PlayerProps) {
 
             {/* ── Details panel — hidden in compact mode unless selected ── */}
             <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 300px', minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'details' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.details')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginBottom: 'var(--s-4)' }}>
+                <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500 }}>{t('player.details')}</div>
                 {!isPodcast && !b.localPath && (
                   <button
                     onClick={() => setShowFileInspector(true)}
@@ -1113,13 +1113,13 @@ export default function Player({ st }: PlayerProps) {
                       marginLeft: 'auto',
                       background: 'var(--onyx-accent-dim)',
                       border: '1px solid var(--onyx-accent-edge)',
-                      borderRadius: 7,
+                      borderRadius: 'var(--r-sm)',
                       color: 'var(--onyx-accent)',
                       fontFamily: MONO,
-                      fontSize: 9,
+                      fontSize: 'var(--fs-0)',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      padding: '5px 9px',
+                      padding: 'var(--s-1) var(--s-3)',
                       cursor: 'pointer',
                     }}
                   >
@@ -1127,7 +1127,7 @@ export default function Player({ st }: PlayerProps) {
                   </button>
                 )}
               </div>
-              <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, marginRight: -8, paddingRight: 8 }}>
+              <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, marginRight: -8, paddingRight: 'var(--s-2)' }}>
                 {(() => {
                   const meta = b.media?.metadata;
                   // For a podcast, progress is keyed on (item, episode); for a
@@ -1137,16 +1137,16 @@ export default function Player({ st }: PlayerProps) {
                     (isPodcast ? p.episodeId === st.currentEpisodeId : true));
                   const dash = '—';
                   const detailRow = (label: string, value: React.ReactNode) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '7px 0', borderBottom: '1px solid var(--onyx-line)', gap: 12 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', flexShrink: 0, paddingTop: 1 }}>{label}</div>
-                      <div style={{ fontSize: 12.5, color: 'var(--onyx-text-dim)', textAlign: 'right', minWidth: 0 }}>{value ?? dash}</div>
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: 'var(--s-2) 0', borderBottom: '1px solid var(--onyx-line)', gap: 'var(--s-3)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', flexShrink: 0, paddingTop: '2px' }}>{label}</div>
+                      <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', textAlign: 'right', minWidth: 0 }}>{value ?? dash}</div>
                     </div>
                   );
                   const tags = b.media?.tags ?? [];
                   const genres = meta?.genres?.filter(Boolean) ?? [];
 
                   const sectionHead = (label: string, mt = 0) => (
-                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: mt, marginBottom: 4, paddingBottom: 4 }}>{label}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: mt, marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>{label}</div>
                   );
                   const listeningRows = prog ? (
                     <>
@@ -1160,7 +1160,7 @@ export default function Player({ st }: PlayerProps) {
                       {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                     </>
                   ) : (
-                    <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
+                    <div style={{ padding: 'var(--s-3) 0', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
                   );
 
                   // ── Podcast / episode details ──────────────────────────────
@@ -1193,22 +1193,22 @@ export default function Player({ st }: PlayerProps) {
                   return (
                     <>
                       {/* Book details */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 4, paddingBottom: 4 }}>{t('playerUi.typeBook')}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>{t('playerUi.typeBook')}</div>
                       {detailRow('Publisher',  meta?.publisher    || dash)}
                       {detailRow('Genre',      genres.join(', ')  || dash)}
                       {detailRow('Year',       meta?.publishedYear || dash)}
                       {detailRow('Language',   meta?.language      || dash)}
                       {detailRow('Duration',   bookDur(b))}
                       {tags.length > 0 && detailRow('Tags',
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s-1)', justifyContent: 'flex-end' }}>
                           {tags.map(t => (
-                            <span key={t} style={{ padding: '1px 7px', borderRadius: 999, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t}</span>
+                            <span key={t} style={{ padding: '2px var(--s-2)', borderRadius: 999, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t}</span>
                           ))}
                         </div>
                       )}
 
                       {/* Listening stats */}
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>{t('playerUi.listening')}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-4)', marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>{t('playerUi.listening')}</div>
                       {prog ? (
                         <>
                           {detailRow('Progress',
@@ -1221,29 +1221,29 @@ export default function Player({ st }: PlayerProps) {
                           {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                         </>
                       ) : (
-                        <div style={{ padding: '12px 0', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
+                        <div style={{ padding: 'var(--s-3) 0', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
                       )}
 
                       {/* Open Library */}
                       {st.enableOpenLibrary && (
                         <>
-                          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 16, marginBottom: 4, paddingBottom: 4 }}>Open Library</div>
+                          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-4)', marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>Open Library</div>
                           {olWorkKey === undefined ? (
-                            <div aria-live="polite" style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>Loading Open Library details…</div>
+                            <div aria-live="polite" style={{ padding: 'var(--s-2) 0', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>Loading Open Library details…</div>
                           ) : olWorkKey === null ? (
-                            <div style={{ padding: '8px 0', fontSize: 12, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{t('playerUi.noData')}</div>
+                            <div style={{ padding: 'var(--s-2) 0', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{t('playerUi.noData')}</div>
                           ) : (
                             <>
-                              <div style={{ padding: '8px 0', borderBottom: '1px solid var(--onyx-line)', fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>
+                              <div style={{ padding: 'var(--s-2) 0', borderBottom: '1px solid var(--onyx-line)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
                                 {olRatings?.average != null
                                   ? `${olRatings.average.toFixed(1)} / 5`
                                   : '—'}
                                 {olRatings?.count != null
-                                  ? <span style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>{' '}· {olRatings.count.toLocaleString()} ratings</span>
+                                  ? <span style={{ color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{' '}· {olRatings.count.toLocaleString()} ratings</span>
                                   : null}
                               </div>
                               {olShelves && (
-                                <div style={{ padding: '8px 0', borderBottom: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1.8 }}>
+                                <div style={{ padding: 'var(--s-2) 0', borderBottom: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1.8 }}>
                                   <div>Want to read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.wantToRead?.toLocaleString() ?? '—'}</span></div>
                                   <div>Reading: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.reading?.toLocaleString() ?? '—'}</span></div>
                                   <div>Read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.alreadyRead?.toLocaleString() ?? '—'}</span></div>
@@ -1253,7 +1253,7 @@ export default function Player({ st }: PlayerProps) {
                                 href={`https://openlibrary.org/works/${olWorkKey}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                style={{ display: 'inline-block', marginTop: 10, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none' }}
+                                style={{ display: 'inline-block', marginTop: 'var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none' }}
                               >
                                 View on Open Library ↗
                               </a>
@@ -1273,34 +1273,34 @@ export default function Player({ st }: PlayerProps) {
 
             {/* ── Chapters panel — hidden in compact mode unless selected ── */}
             <div className="ui-card" style={{ flex: 1, minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'chapters' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.chapters')}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', marginBottom: 'var(--s-3)' }}>
+                <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500 }}>{t('player.chapters')}</div>
                 {/* Use bookSecs (not bookDur(b)) so chapterless podcast episodes
                     show the episode duration instead of NaNm. */}
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>{displayChapters.length} · {fmtRemaining(st.bookSecs)} total</div>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>{displayChapters.length} · {fmtRemaining(st.bookSecs)} total</div>
               </div>
               {/* Podcast episodes carry no chapter markers in this model. */}
               {isPodcast && displayChapters.length === 0 && (
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 'var(--s-2)' }}>
                   {t('playerUi.noEpisodeChapters')}
                 </div>
               )}
               {/* Contextual hint above the list — message varies by lock reason */}
               {isFocusedDifferent && (
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 'var(--s-2)' }}>
                   {t('playerUi.enableChapters')}
                 </div>
               )}
               {/* Not yet started: same book but position is 0 and not playing */}
               {!isFocusedDifferent && !st.playing && st.position === 0 && (
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 8 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginBottom: 'var(--s-2)' }}>
                   {t('playerUi.pressPlay')}
                 </div>
               )}
               {chapterListDiverged && (
-                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 8, padding: '5px 9px', borderRadius: 6, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 9.5 }}>{t('playerUi.returnToChapter')}</button>
+                <button onClick={() => { chapterListManualRef.current = false; setChapterListDiverged(false); centerActiveChapter(); }} style={{ alignSelf: 'flex-start', marginBottom: 'var(--s-2)', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{t('playerUi.returnToChapter')}</button>
               )}
-              <div ref={chapterListRef} onWheel={markChapterListManual} onTouchMove={markChapterListManual} style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 8 }}>
+              <div ref={chapterListRef} onWheel={markChapterListManual} onTouchMove={markChapterListManual} style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 'var(--s-2)' }}>
                 {displayChapters.map((c, i) => {
                   // Use focusedChIdx for focused non-playing book, -1 (no highlight)
                   // when not yet started, or live chIdx during active playback.
@@ -1329,21 +1329,21 @@ export default function Player({ st }: PlayerProps) {
                         await playBook(st, st.focusedBookId!, pos);
                       }
                     }} style={{
-                      display: 'flex', alignItems: 'center', padding: '8px 12px', borderRadius: 8, gap: 12,
+                      display: 'flex', alignItems: 'center', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)', gap: 'var(--s-3)',
                       background: state === 'playing' ? 'var(--onyx-accent-dim)' : 'transparent',
                       border: `1px solid ${state === 'playing' ? 'var(--onyx-accent-edge)' : 'transparent'}`,
-                      marginBottom: 2, width: '100%', fontFamily: 'inherit', textAlign: 'left',
+                      marginBottom: 'var(--s-1)', width: '100%', fontFamily: 'inherit', textAlign: 'left',
                       // Dim and block interaction when chapters are locked (different book
                       // or playback not yet started) — navigation only works when playing.
                       cursor: chaptersLocked ? 'default' : 'pointer',
                       opacity: chaptersLocked ? 0.45 : 1,
                       pointerEvents: chaptersLocked ? 'none' : 'auto',
                     }}>
-                      <div style={{ fontFamily: MONO, fontSize: 11, color: state === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', width: 22 }}>{String(c.n).padStart(2, '0')}</div>
-                      <div style={{ flex: 1, fontSize: 13, fontWeight: state === 'playing' ? 600 : 400, color: state === 'done' ? 'var(--onyx-text-mute)' : 'var(--onyx-text)' }}>{c.t}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>{fmtTime(c.dur)}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: state === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', width: 22 }}>{String(c.n).padStart(2, '0')}</div>
+                      <div style={{ flex: 1, fontSize: 'var(--fs-3)', fontWeight: state === 'playing' ? 600 : 400, color: state === 'done' ? 'var(--onyx-text-mute)' : 'var(--onyx-text)' }}>{c.t}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{fmtTime(c.dur)}</div>
                       {state === 'done' && <span style={{ display: 'inline-flex', color: 'var(--onyx-text-mute)' }}><Icon name="check" size={11} /></span>}
-                      {state === 'playing' && <div style={{ width: 6, height: 6, borderRadius: 3, background: 'var(--onyx-accent)', boxShadow: '0 0 12px var(--onyx-accent)' }} />}
+                      {state === 'playing' && <div style={{ width: 6, height: 6, borderRadius: 'var(--r-xs)', background: 'var(--onyx-accent)', boxShadow: '0 0 12px var(--onyx-accent)' }} />}
                       {state === 'next' && <div style={{ width: 6, height: 6 }} />}
                     </button>
                   );
@@ -1355,11 +1355,11 @@ export default function Player({ st }: PlayerProps) {
             <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 280px', minWidth: 0, padding: 'var(--s-4)', display: !panesStacked || activePane === 'bookmarks' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
               {/* ── Panel header: title + tab switcher + add button ── */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500 }}>{t('player.bookmarks')}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginBottom: 'var(--s-3)' }}>
+                <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500 }}>{t('player.bookmarks')}</div>
 
                 {/* Tab switcher — pill toggles between server bookmarks and local stop points */}
-                <div style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--onyx-line)', overflow: 'hidden', marginLeft: 4 }}>
+                <div style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--onyx-line)', overflow: 'hidden', marginLeft: 'var(--s-1)' }}>
                   {(['bookmarks', 'local'] as const).map(tab => (
                     <button
                       key={tab}
@@ -1369,10 +1369,10 @@ export default function Player({ st }: PlayerProps) {
                         border: 'none',
                         color: bookmarkTab === tab ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
                         fontFamily: MONO,
-                        fontSize: 9,
+                        fontSize: 'var(--fs-0)',
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase' as const,
-                        padding: '3px 10px',
+                        padding: 'var(--s-1) var(--s-3)',
                         cursor: 'pointer',
                       }}
                     >
@@ -1382,26 +1382,26 @@ export default function Player({ st }: PlayerProps) {
                 </div>
 
                 {/* Count badge — shows relevant count for the active tab */}
-                <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
                   {bookmarkTab === 'bookmarks' ? playerBookmarks.length : stopPoints.length}
                 </div>
 
                 {/* Add-bookmark button — only shown on the Saved tab */}
                 {bookmarkTab === 'bookmarks' && (
-                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} title={t('playerUi.bookmarkCurrent')}>
+                  <button onClick={addBookmark} style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--s-1)' }} title={t('playerUi.bookmarkCurrent')}>
                     <Icon name="plus" size={11} /> {t('playerUi.addHere')}
                   </button>
                 )}
               </div>
 
               {/* ── Tab content ── */}
-              <div style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 8 }}>
+              <div style={{ flex: 1, overflow: 'auto', marginRight: -8, paddingRight: 'var(--s-2)' }}>
 
                 {bookmarkTab === 'bookmarks' ? (
                   // ── Saved bookmarks (server) — timeline rail; label = bookmark
                   //    title, meta = chapter. Gold dot when labelled, muted if not. ──
                   playerBookmarks.length === 0 ? (
-                    <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+                    <div style={{ padding: 'var(--s-6) 0', textAlign: 'center', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
                       {t('playerUi.noBookmarks')}
                     </div>
                   ) : playerBookmarks.map((bm, i) => {
@@ -1422,7 +1422,7 @@ export default function Player({ st }: PlayerProps) {
                   // ── Local Play — stop points; label = the chapter the stamp was
                   //    at, meta = when it was recorded. ──
                   stopPoints.length === 0 ? (
-                    <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+                    <div style={{ padding: 'var(--s-6) 0', textAlign: 'center', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
                       {t('playerUi.noLocalHistory')}
                     </div>
                   ) : stopPoints.map((point, i) => {
@@ -1449,16 +1449,16 @@ export default function Player({ st }: PlayerProps) {
             {/* ── Synopsis panel — compact-only tab; on large windows the synopsis
                 renders inline in the left column instead, so this stays hidden. ── */}
             <div className="ui-card" style={{ flex: panesStacked ? 1 : '0 0 320px', minWidth: 0, padding: 'var(--s-4)', display: panesStacked && activePane === 'synopsis' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-              <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, marginBottom: 12 }}>{detailLabel}</div>
-              <div style={{ flex: 1, overflowY: 'auto', marginRight: -8, paddingRight: 8 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, marginBottom: 'var(--s-3)' }}>{detailLabel}</div>
+              <div style={{ flex: 1, overflowY: 'auto', marginRight: -8, paddingRight: 'var(--s-2)' }}>
                 {descriptionHtml ? (
                   <div
                     className="onyx-selectable"
-                    style={{ fontSize: 13, lineHeight: 1.65, color: 'var(--onyx-text-dim)' }}
+                    style={{ fontSize: 'var(--fs-3)', lineHeight: 1.65, color: 'var(--onyx-text-dim)' }}
                     dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                   />
                 ) : (
-                  <div style={{ fontSize: 13, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{noDescText}</div>
+                  <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>{noDescText}</div>
                 )}
               </div>
             </div>

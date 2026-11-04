@@ -41,21 +41,21 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.45)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>
           {t('onbFolders.downloadsFolder')}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', flexWrap: 'wrap' }}>
           <input
             readOnly
             value={dir || 'Loading…'}
             title={dir}
             onFocus={e => e.currentTarget.select()}
             style={{
-              flex: 1, minWidth: 260, fontFamily: MONO, fontSize: 11.5, color: 'rgba(235,231,223,0.75)',
-              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-              padding: '9px 12px', outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              flex: 1, minWidth: 260, fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-text)',
+              background: 'var(--onyx-bg-deep)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--r-md)',
+              padding: 'var(--s-3) var(--s-3)', outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}
           />
           <button
@@ -63,24 +63,24 @@ export default function AbsFoldersStep({ st, onContinue }: AbsFoldersStepProps) 
             onClick={relocate}
             disabled={busy}
             style={{
-              padding: '9px 16px', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8,
-              color: 'rgba(235,231,223,0.7)', cursor: busy ? 'wait' : 'pointer',
+              padding: 'var(--s-3) var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--r-md)',
+              color: 'var(--onyx-text)', cursor: busy ? 'wait' : 'pointer',
             }}
           >
             {busy ? 'Moving…' : 'Change…'}
           </button>
         </div>
-        <div style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(235,231,223,0.45)', lineHeight: 1.5, maxWidth: 460 }}>
+        <div style={{ fontFamily: SANS, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', lineHeight: 1.5, maxWidth: 460 }}>
           Books you download for offline listening are kept here. You can leave it as the default — Skald
           manages it for you — or move it to a drive with more room. Changing it later (and relocating the
-          cover cache) lives in <span style={{ color: 'rgba(235,231,223,0.7)' }}>Settings → Downloads</span>.
+          cover cache) lives in <span style={{ color: 'var(--onyx-text)' }}>Settings → Downloads</span>.
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-5)' }}>
         <GoldButton onClick={onContinue}>{t('onbFolders.continue')}</GoldButton>
-        <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 12.5, color: 'rgba(235,231,223,0.4)' }}>
+        <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
           {t('onbFolders.defaultFine')}
         </span>
       </div>

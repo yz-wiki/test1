@@ -254,12 +254,12 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
       hint={t('sync.liveSyncHint')}
     >
       {/* Right-side slot: connection indicator (only when active) + toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
 
         {/* Live connection status — shown only when sync is connected/reconnecting.
             When off, the toggle alone conveys the state (no redundant "Off" label). */}
         {connectionStatus !== 'off' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-1)' }}>
             {/* 6 px filled circle — colour encodes state at a glance */}
             <div style={{
               width: 6,
@@ -272,7 +272,7 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
             {/* Mono 10 px label — compact, technical feel matching Onyx aesthetics */}
             <span style={{
               fontFamily: MONO,
-              fontSize: 10,
+              fontSize: 'var(--fs-0)',
               letterSpacing: '0.04em',
               color: labelColor,
             }}>
@@ -294,7 +294,7 @@ export default function SyncSection({ st, embedded = false }: SyncSectionProps) 
   };
   const healthValueStyle = {
     fontFamily: MONO,
-    fontSize: 11,
+    fontSize: 'var(--fs-1)',
     color: 'var(--onyx-text-dim)',
   } as const;
   const healthRows = (

@@ -113,13 +113,13 @@ function TH({
       onClick={onClick}
       style={{
         fontFamily: MONO,
-        fontSize: 9,
+        fontSize: 'var(--fs-0)',
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
         color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', // accent on active column
         fontWeight: active ? 600 : 400, // bold on active column
         textAlign: 'left',
-        padding: '0 12px 10px 0',
+        padding: '0 var(--s-3) var(--s-3) 0',
         whiteSpace: 'nowrap',
         width: w,
         cursor: onClick ? 'pointer' : undefined, // pointer cursor when sortable
@@ -129,7 +129,7 @@ function TH({
       {children}
       {/* Sort direction arrow — only shown on the active sort column */}
       {active && (
-        <span style={{ marginLeft: 4, fontSize: 8 }}>
+        <span style={{ marginLeft: 'var(--s-1)', fontSize: 'var(--fs-0)' }}>
           {dir === 'asc' ? '▲' : '▼'}
         </span>
       )}
@@ -147,9 +147,9 @@ function TD({
 }) {
   return (
     <td style={{
-      padding: '10px 12px 10px 0',
+      padding: 'var(--s-3) var(--s-3) var(--s-3) 0',
       borderTop: '1px solid var(--onyx-line)',
-      fontSize: 13,
+      fontSize: 'var(--fs-3)',
       color: muted ? 'var(--onyx-text-mute)' : 'var(--onyx-text)',
       verticalAlign: 'top',
       maxWidth: 0, // allows text-overflow inside a table cell
@@ -181,7 +181,7 @@ function SessionRow({
         </div>
         {session.author && (
           // Muted author line below title
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {session.author}
           </div>
         )}
@@ -190,7 +190,7 @@ function SessionRow({
       {/* USER — admin only */}
       {showUser && (
         <TD muted>
-          <span style={{ fontFamily: MONO, fontSize: 11 }}>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)' }}>
             {/* Prefer flat username (per-user endpoints), fall back to the nested user object
                 (GET /api/sessions), then the first 8 chars of userId as a last resort. */}
             {session.username ?? session.user?.username ?? session.userId.slice(0, 8)}
@@ -200,45 +200,45 @@ function SessionRow({
 
       {/* DEVICE INFO: client name + method */}
       <TD muted>
-        <div style={{ fontFamily: MONO, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {session.deviceInfo?.clientName ?? '—'}
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', marginTop: 2 }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>
           {fmtPlayMethod(session.playMethod)}
         </div>
       </TD>
 
       {/* TIME LISTENED */}
       <TD muted>
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-2)' }}>
           {fmtDuration(session.timeListening)}
         </span>
       </TD>
 
       {/* LAST TIME (playback position) */}
       <TD muted>
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-2)' }}>
           {fmtTimecode(session.currentTime)}
         </span>
       </TD>
 
       {/* LAST UPDATE */}
       <TD muted>
-        <span style={{ fontFamily: MONO, fontSize: 11 }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)' }}>
           {relativeTime(session.updatedAt)}
         </span>
       </TD>
 
       {/* DELETE — admin only */}
       {showDelete && (
-        <td style={{ padding: '10px 0', borderTop: '1px solid var(--onyx-line)', verticalAlign: 'top' }}>
+        <td style={{ padding: 'var(--s-3) 0', borderTop: '1px solid var(--onyx-line)', verticalAlign: 'top' }}>
           <button
             onClick={onDelete}
             title={t('sessions.delete')}
             style={{
               width: 28,
               height: 28,
-              borderRadius: 6,
+              borderRadius: 'var(--r-sm)',
               border: 'none',
               background: 'transparent',
               color: '#e8716a', // danger red — matches AccountSection
@@ -246,7 +246,7 @@ function SessionRow({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: 0,
+              padding: '0',
             }}
           >
             {TrashIcon}
@@ -418,7 +418,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
   // hooks), so this early return is safe here after all useState/useCallback/useEffect.
   if (!st?.user) {
     return (
-      <div style={{ color: 'var(--onyx-text-mute)', fontSize: 13, padding: 24 }}>
+      <div style={{ color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-3)', padding: 'var(--s-6)' }}>
         Loading…
       </div>
     );
@@ -449,18 +449,18 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
   const tableStyle: React.CSSProperties = {
     width: '100%',
     borderCollapse: 'collapse',
-    fontSize: 13,
+    fontSize: 'var(--fs-3)',
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-8)' }}>
 
       {/* ── Card 1: Historical listening sessions ─────────────────────────── */}
       <div>
         {/* Card header: title + admin user-filter dropdown */}
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 'var(--s-5)' }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
             {t('sessions.title')}
           </div>
@@ -478,13 +478,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 setFilterUserId(val === '' ? null : val);
               }}
               style={{
-                padding: '6px 10px',
-                background: 'rgba(0,0,0,0.3)',
+                padding: 'var(--s-2) var(--s-3)',
+                background: 'var(--onyx-bg-deep)',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 7,
+                borderRadius: 'var(--r-sm)',
                 color: 'var(--onyx-text)',
                 fontFamily: MONO,
-                fontSize: 11,
+                fontSize: 'var(--fs-1)',
                 cursor: 'pointer',
               }}
             >
@@ -502,7 +502,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
 
         {/* Error banner */}
         {error && (
-          <div style={{ fontFamily: MONO, fontSize: 11, color: '#e8716a', marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: '#e8716a', marginBottom: 'var(--s-3)' }}>
             {error}
           </div>
         )}
@@ -543,14 +543,14 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               {loading ? (
                 // Loading placeholder row
                 <tr>
-                  <td colSpan={isAdmin ? 7 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
+                  <td colSpan={isAdmin ? 7 : 5} style={{ padding: 'var(--s-5) 0', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
                     Loading…
                   </td>
                 </tr>
               ) : sessions.length === 0 ? (
                 // Empty state
                 <tr>
-                  <td colSpan={isAdmin ? 7 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
+                  <td colSpan={isAdmin ? 7 : 5} style={{ padding: 'var(--s-5) 0', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
                     {t('sessions.empty')}
                   </td>
                 </tr>
@@ -575,9 +575,9 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
         </div>
 
         {/* Pagination row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-4)', marginTop: 'var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
           {/* Rows-per-page selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
             <span>{t('sessions.rowsPerPage')}</span>
             <select
               value={itemsPerPage}
@@ -587,13 +587,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
                 setItemsPerPage(Number(e.target.value));
               }}
               style={{
-                padding: '4px 8px',
-                background: 'rgba(0,0,0,0.3)',
+                padding: 'var(--s-1) var(--s-2)',
+                background: 'var(--onyx-bg-deep)',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 5,
+                borderRadius: 'var(--r-sm)',
                 color: 'var(--onyx-text)',
                 fontFamily: MONO,
-                fontSize: 11,
+                fontSize: 'var(--fs-1)',
                 cursor: 'pointer',
               }}
             >
@@ -605,21 +605,21 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
 
           {/* Page indicator */}
           <span>Page {page + 1} of {numPages}</span>
-          <span style={{ color: 'var(--onyx-text-mute)', fontSize: 10 }}>({total} total)</span>
+          <span style={{ color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-0)' }}>({total} total)</span>
 
           {/* Prev / Next buttons */}
-          <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+          <div style={{ display: 'flex', gap: 'var(--s-1)', marginLeft: 'auto' }}>
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               style={{
-                padding: '5px 12px',
+                padding: 'var(--s-1) var(--s-3)',
                 background: 'transparent',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 6,
+                borderRadius: 'var(--r-sm)',
                 color: page === 0 ? 'var(--onyx-text-mute)' : 'var(--onyx-text)',
                 fontFamily: MONO,
-                fontSize: 10,
+                fontSize: 'var(--fs-0)',
                 cursor: page === 0 ? 'default' : 'pointer',
                 opacity: page === 0 ? 0.4 : 1,
               }}
@@ -630,13 +630,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               onClick={() => setPage(p => Math.min(numPages - 1, p + 1))}
               disabled={page >= numPages - 1}
               style={{
-                padding: '5px 12px',
+                padding: 'var(--s-1) var(--s-3)',
                 background: 'transparent',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 6,
+                borderRadius: 'var(--r-sm)',
                 color: page >= numPages - 1 ? 'var(--onyx-text-mute)' : 'var(--onyx-text)',
                 fontFamily: MONO,
-                fontSize: 10,
+                fontSize: 'var(--fs-0)',
                 cursor: page >= numPages - 1 ? 'default' : 'pointer',
                 opacity: page >= numPages - 1 ? 0.4 : 1,
               }}
@@ -648,13 +648,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
       </div>
 
       {/* ── Card 2: Open listening sessions ─────────────────────────────────── */}
-      <div style={{ paddingTop: 24, borderTop: '1px solid var(--onyx-line)' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18 }}>
+      <div style={{ paddingTop: 'var(--s-6)', borderTop: '1px solid var(--onyx-line)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', marginBottom: 'var(--s-5)' }}>
           <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500 }}>
             {t('sessions.open')}
           </div>
           {/* Auto-refresh indicator */}
-          <span style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
             refreshes every 30s
           </span>
         </div>
@@ -675,13 +675,13 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
             <tbody>
               {openLoading ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
+                  <td colSpan={isAdmin ? 6 : 5} style={{ padding: 'var(--s-5) 0', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
                     Loading…
                   </td>
                 </tr>
               ) : openSessions.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} style={{ padding: '18px 0', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>
+                  <td colSpan={isAdmin ? 6 : 5} style={{ padding: 'var(--s-5) 0', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
                     No open sessions detected in the last 5 minutes.
                   </td>
                 </tr>

@@ -218,20 +218,16 @@ export default function PlaylistDetail({
 
   const modal = (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 2100,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.65)',
-      }}
+      className="ui-scrim"  style={{ zIndex: 2100 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
       onDragOver={e => e.preventDefault()}
     >
       <div style={{
         width: 'min(660px, 90vw)',
-        background: 'var(--onyx-panel2)',
+        background: 'var(--surface-overlay)',
         border: '1px solid var(--onyx-line)',
-        borderRadius: 14,
-        boxShadow: '0 32px 80px rgba(0,0,0,0.75)',
+        borderRadius: 'var(--r-overlay)',
+        boxShadow: 'var(--shadow-dialog)',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '80vh',
@@ -239,8 +235,8 @@ export default function PlaylistDetail({
       }}>
 
         {/* ── Header ────────────────────────────────────────────────────── */}
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--onyx-line)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--s-3)' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               {/* Editable name */}
               {editingField === 'name' ? (
@@ -254,8 +250,8 @@ export default function PlaylistDetail({
                   style={{
                     width: '100%', background: 'transparent',
                     border: 'none', borderBottom: '1px solid var(--onyx-accent-edge)',
-                    outline: 'none', padding: '2px 0',
-                    fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: 'var(--onyx-text)',
+                    outline: 'none', padding: 'var(--s-1) 0',
+                    fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, color: 'var(--onyx-text)',
                   }}
                 />
               ) : (
@@ -263,7 +259,7 @@ export default function PlaylistDetail({
                   onClick={() => { setPendingName(playlist?.name ?? ''); setEditingField('name'); }}
                   title={t('playlist.rename')}
                   style={{
-                    fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: 'var(--onyx-text)',
+                    fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, color: 'var(--onyx-text)',
                     cursor: 'text', borderBottom: '1px solid transparent',
                     transition: 'border-color 0.15s',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -286,8 +282,8 @@ export default function PlaylistDetail({
                   style={{
                     width: '100%', background: 'transparent',
                     border: 'none', borderBottom: '1px solid var(--onyx-accent-edge)',
-                    outline: 'none', padding: '2px 0', marginTop: 6,
-                    fontFamily: 'inherit', fontSize: 12.5, color: 'var(--onyx-text-dim)',
+                    outline: 'none', padding: 'var(--s-1) 0', marginTop: 'var(--s-2)',
+                    fontFamily: 'inherit', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)',
                     fontStyle: 'italic',
                   }}
                 />
@@ -296,7 +292,7 @@ export default function PlaylistDetail({
                   onClick={() => { setPendingDescription(playlist?.description ?? ''); setEditingField('description'); }}
                   title={t('playlist.editDesc')}
                   style={{
-                    marginTop: 6, fontSize: 12.5, cursor: 'text',
+                    marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', cursor: 'text',
                     color: playlist?.description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)',
                     fontStyle: 'italic',
                   }}
@@ -310,9 +306,9 @@ export default function PlaylistDetail({
             <button
               onClick={onClose}
               style={{
-                flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
+                flexShrink: 0, padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
                 background: 'transparent', border: '1px solid var(--onyx-glass-edge)',
-                color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 14, lineHeight: 1,
+                color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-4)', lineHeight: 1,
               }}
             >
               ×
@@ -320,22 +316,22 @@ export default function PlaylistDetail({
           </div>
 
           {/* Toolbar row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginTop: 'var(--s-4)' }}>
             <button
               onClick={() => { void handlePlayAll(); }}
               disabled={!items.length}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 14px', borderRadius: 7, cursor: items.length ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', gap: 'var(--s-2)',
+                padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: items.length ? 'pointer' : 'default',
                 background: items.length ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: `1px solid ${items.length ? 'var(--onyx-accent-edge)' : 'var(--onyx-line)'}`,
                 color: items.length ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
               }}
             >
               ▶ Play All
             </button>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </div>
           </div>
@@ -343,19 +339,19 @@ export default function PlaylistDetail({
 
         {/* ── Item list ─────────────────────────────────────────────────── */}
         <div
-          style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}
+          style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-2) 0' }}
           onDragOver={e => e.preventDefault()}
         >
           {loading && (
-            <div style={{ padding: '24px 24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
+            <div style={{ padding: 'var(--s-6) var(--s-6)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
               Loading…
             </div>
           )}
           {error && (
-            <div style={{ padding: '12px 24px', fontSize: 12, color: '#e8716a' }}>{error}</div>
+            <div style={{ padding: 'var(--s-3) var(--s-6)', fontSize: 'var(--fs-2)', color: '#e8716a' }}>{error}</div>
           )}
           {!loading && !error && items.length === 0 && (
-            <div style={{ padding: '32px 24px', fontFamily: SERIF, fontSize: 14, color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
+            <div style={{ padding: 'var(--s-8) var(--s-6)', fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
               {t('playlist.empty')}
             </div>
           )}
@@ -389,8 +385,8 @@ export default function PlaylistDetail({
                   setOverIndex(null);
                 }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '8px 20px',
+                  display: 'flex', alignItems: 'center', gap: 'var(--s-3)',
+                  padding: 'var(--s-2) var(--s-5)',
                   borderTop: isOver ? '2px solid var(--onyx-accent)' : '2px solid transparent',
                   background: isDragging
                     ? 'var(--onyx-accent-dim)'
@@ -404,7 +400,7 @@ export default function PlaylistDetail({
                 <div
                   style={{
                     flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)',
-                    fontSize: 14, lineHeight: 1, userSelect: 'none', paddingRight: 2,
+                    fontSize: 'var(--fs-4)', lineHeight: 1, userSelect: 'none', paddingRight: 'var(--s-1)',
                   }}
                   title={t('playlist.dragReorder')}
                 >
@@ -412,7 +408,7 @@ export default function PlaylistDetail({
                 </div>
 
                 {/* Position number */}
-                <div style={{ flexShrink: 0, width: 20, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', textAlign: 'right' }}>
+                <div style={{ flexShrink: 0, width: 20, fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', textAlign: 'right' }}>
                   {i + 1}
                 </div>
 
@@ -420,16 +416,16 @@ export default function PlaylistDetail({
                 {book ? (
                   <Cover item={book} size={40} serverUrl={serverUrl} />
                 ) : (
-                  <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />
+                  <div style={{ width: 40, height: 40, borderRadius: 'var(--r-xs)', flexShrink: 0, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />
                 )}
 
                 {/* Title + author */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: SERIF, fontSize: 13.5, fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {book ? bookTitle(book) : pi.libraryItemId}
                   </div>
                   {book && (
-                    <div style={{ fontSize: 11.5, color: 'var(--onyx-text-dim)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {bookAuthor(book)}
                     </div>
                   )}
@@ -441,10 +437,10 @@ export default function PlaylistDetail({
                   disabled={removing === pi.libraryItemId}
                   title={t('playlist.removeItem')}
                   style={{
-                    flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
+                    flexShrink: 0, padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
                     background: 'transparent', border: '1px solid transparent',
                     color: removing === pi.libraryItemId ? 'var(--onyx-text-mute)' : 'var(--onyx-text-mute)',
-                    fontFamily: MONO, fontSize: 13, lineHeight: 1,
+                    fontFamily: MONO, fontSize: 'var(--fs-3)', lineHeight: 1,
                     transition: 'color 0.1s, border-color 0.1s',
                   }}
                   onMouseEnter={e => {

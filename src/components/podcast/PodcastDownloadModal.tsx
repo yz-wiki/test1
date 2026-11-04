@@ -76,46 +76,46 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
 
   const modal = (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}
+      className="ui-scrim"  style={{ zIndex: 2000 }}
       onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="podcast-download-title" style={{
-        width: 540, maxHeight: '80vh', background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)',
-        borderRadius: 12, boxShadow: '0 24px 60px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column',
+        width: 540, maxHeight: '80vh', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)',
+        borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-dialog)', display: 'flex', flexDirection: 'column',
       }}>
         {/* Header */}
-        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--onyx-line)' }}>
-          <div id="podcast-download-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>{t('podDl.title')}</div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 4, letterSpacing: '0.04em' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-5) var(--s-4)', borderBottom: '1px solid var(--onyx-line)' }}>
+          <div id="podcast-download-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, color: 'var(--onyx-text)' }}>{t('podDl.title')}</div>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', letterSpacing: '0.04em' }}>
             {visible.length} available · {selected.size} selected
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
-            <span style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>{t('podDl.since')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginTop: 'var(--s-3)' }}>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', letterSpacing: '0.04em' }}>{t('podDl.since')}</span>
             <input
               type="date" value={since} onChange={e => setSince(e.target.value)}
-              style={{ background: 'rgba(0,0,0,0.3)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-line)', borderRadius: 6, padding: '4px 8px', fontSize: 12, fontFamily: 'inherit' }}
+              style={{ background: 'var(--onyx-bg-deep)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)', fontSize: 'var(--fs-2)', fontFamily: 'inherit' }}
             />
-            {since && <button onClick={() => setSince('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10 }}>clear</button>}
+            {since && <button onClick={() => setSince('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>clear</button>}
             <div style={{ flex: 1 }} />
-            <button onClick={selectAll} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>ALL</button>
-            <button onClick={selectNone} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em' }}>{t('podDl.none')}</button>
+            <button onClick={selectAll} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.04em' }}>ALL</button>
+            <button onClick={selectNone} style={{ background: 'none', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-3)', cursor: 'pointer', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.04em' }}>{t('podDl.none')}</button>
           </div>
         </div>
 
         {/* List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', minHeight: 120 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-2) var(--s-3)', minHeight: 120 }}>
           {visible.length === 0 && (
-            <div style={{ padding: 16, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{t('podDl.nothing')}</div>
+            <div style={{ padding: 'var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{t('podDl.nothing')}</div>
           )}
           {visible.map(ep => {
             const key = episodeKey(ep);
             const d = epDate(ep);
             return (
-              <label key={key} className="onyx-row" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 8px', borderRadius: 6, cursor: 'pointer' }}>
+              <label key={key} className="onyx-row" style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={selected.has(key)} onChange={() => toggle(key)} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ep.title}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 2 }}>
+                  <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ep.title}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>
                     {d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
                   </div>
                 </div>
@@ -125,18 +125,18 @@ export default function PodcastDownloadModal({ st, itemId, episodes, onClose, on
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '12px 20px', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          {error && <div style={{ fontSize: 11.5, color: '#e8716a', flex: 1 }}>{error}</div>}
+        <div style={{ padding: 'var(--s-3) var(--s-5)', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
+          {error && <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', flex: 1 }}>{error}</div>}
           <div style={{ flex: error ? 0 : 1 }} />
-          <button onClick={onClose} disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'default' : 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>{t('podDl.cancel')}</button>
+          <button onClick={onClose} disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'default' : 'pointer', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', color: 'var(--onyx-text-dim)' }}>{t('podDl.cancel')}</button>
           <button
             onClick={queue}
             disabled={busy || selected.size === 0}
             style={{
-              padding: '9px 16px', borderRadius: 8, border: 'none', cursor: (busy || selected.size === 0) ? 'default' : 'pointer',
+              padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', border: 'none', cursor: (busy || selected.size === 0) ? 'default' : 'pointer',
               background: (busy || selected.size === 0) ? 'var(--onyx-line)' : 'var(--onyx-accent)',
               color: (busy || selected.size === 0) ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
-              fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
+              fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', fontWeight: 600,
             }}
           >{busy ? 'Queueing…' : `Download (${selected.size})`}</button>
         </div>

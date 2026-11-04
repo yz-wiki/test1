@@ -55,7 +55,7 @@ export default function PublishersView({ st, inline = false }: PublishersViewPro
   return (
     <BrowseView st={st} title={t('browse.publishers')} subtitle={t('browse.publishersSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
           {list.map(p => (
             <BrowseTile
               key={p.name}
@@ -82,9 +82,9 @@ export default function PublishersView({ st, inline = false }: PublishersViewPro
             leading: <Initial name={p.name} small />,
             sort: { name: p.name, titles: p.books.length, dur: p.books.reduce((acc, b) => acc + bookDurSecs(b), 0) },
             cells: {
-              name:   <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500 }}>{p.name}</div>,
-              titles: <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{p.books.length}</div>,
-              dur:    <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(p.books)}</div>,
+              name:   <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500 }}>{p.name}</div>,
+              titles: <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{p.books.length}</div>,
+              dur:    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(p.books)}</div>,
             },
           }))}
         />

@@ -146,13 +146,13 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
         aria-expanded={open}
         aria-controls="onyx-dropdown-options"
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '6px 12px',
+          display: 'flex', alignItems: 'center', gap: 'var(--s-2)',
+          padding: 'var(--s-2) var(--s-3)',
           background: open ? 'var(--onyx-accent-dim)' : 'var(--onyx-glass)',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-          borderRadius: 8,
+          borderRadius: 'var(--r-md)',
           color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)',
-          fontFamily: 'inherit', fontSize: 12,
+          fontFamily: 'inherit', fontSize: 'var(--fs-2)',
           cursor: 'pointer',
           transition: 'background 0.12s, border-color 0.12s',
         }}
@@ -182,11 +182,11 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
           style={{
             ...popoutStyle,
             // Visual chrome matching other Onyx panels.
-            background: 'var(--onyx-panel2)',
+            background: 'var(--surface-overlay)',
             border: '1px solid var(--onyx-line)',
-            borderRadius: 8,
-            boxShadow: '0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06)',
-            padding: 6,
+            borderRadius: 'var(--r-md)',
+            boxShadow: 'var(--shadow-popover)',
+            padding: 'var(--s-2)',
             // Cap height and scroll if there are many devices.
             maxHeight: 360,
             overflowY: 'auto',
@@ -194,9 +194,9 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
         >
           {/* Section label */}
           <div style={{
-            fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)',
+            fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
             letterSpacing: '0.12em', textTransform: 'uppercase',
-            padding: '6px 8px 4px',
+            padding: 'var(--s-2) var(--s-2) var(--s-1)',
           }}>
             {t('dropdown.outputDevice')}
           </div>
@@ -211,8 +211,8 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
                 aria-selected={active}
                 onClick={() => { onChange(item.id); closeAndRestoreFocus(); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: '8px 10px', borderRadius: 6,
+                  display: 'flex', alignItems: 'center', gap: 'var(--s-3)',
+                  width: '100%', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)',
                   background: active ? 'var(--onyx-accent-dim)' : 'transparent',
                   border: 'none', cursor: 'pointer',
                   fontFamily: 'inherit', textAlign: 'left',
@@ -229,7 +229,7 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {/* Device name */}
                   <div style={{
-                    fontSize: 12,
+                    fontSize: 'var(--fs-2)',
                     color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)',
                     fontWeight: active ? 500 : 400,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -239,8 +239,8 @@ export default function Dropdown({ trigger, items, selected, onChange, align = '
                   {/* Optional subtitle (e.g. connection type) */}
                   {item.sub && (
                     <div style={{
-                      fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)',
-                      letterSpacing: '0.04em', marginTop: 1,
+                      fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
+                      letterSpacing: '0.04em', marginTop: '2px',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {item.sub}

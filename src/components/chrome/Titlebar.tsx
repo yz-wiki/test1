@@ -152,7 +152,7 @@ export default function Titlebar({
         </button>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, marginLeft: onBack ? 2 : 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', minWidth: 0, marginLeft: onBack ? 2 : 6 }}>
         <img
           src={lyreIcon}
           alt=""
@@ -192,7 +192,7 @@ export default function Titlebar({
             title={t('palette.action.commandPalette')}
             aria-label={t('palette.action.commandPalette')}
             data-tauri-drag-region="false"
-            style={{ width: 'auto', padding: '0 8px', gap: 6, display: 'inline-flex' }}
+            style={{ width: 'auto', padding: '0 var(--s-2)', gap: 'var(--s-2)', display: 'inline-flex' }}
           >
             <Icon name="search" size={13} />
             {paletteShortcut && <span className="ui-kbd">{paletteShortcut}</span>}
@@ -215,7 +215,7 @@ export default function Titlebar({
         {/* Native-style window controls. The macOS traffic lights were the wrong
             idiom for a Windows/Linux app: keep them where users expect them, with
             the standard hover affordances (red close). */}
-        <div style={{ display: 'flex', marginLeft: 4, marginRight: -16, height: '100%' }}>
+        <div style={{ display: 'flex', marginLeft: 'var(--s-1)', marginRight: -16, height: '100%' }}>
           <WindowButton kind="min" label={t('window.minimize')} />
           <WindowButton kind="max" label={t('window.maximize')} />
           <WindowButton kind="close" label={t('window.close')} />

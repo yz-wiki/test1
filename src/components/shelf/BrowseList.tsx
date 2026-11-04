@@ -56,10 +56,10 @@ export default function BrowseList({ columns, rows }: BrowseListProps) {
   }, [rows, sortBy.col, sortBy.dir]);
 
   return (
-    <div style={{ background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-card)', overflow: 'hidden' }}>
       <div style={{
-        display: 'grid', gridTemplateColumns: grid, alignItems: 'center', gap: 16,
-        padding: '12px 16px', borderBottom: '1px solid var(--onyx-line)',
+        display: 'grid', gridTemplateColumns: grid, alignItems: 'center', gap: 'var(--s-4)',
+        padding: 'var(--s-3) var(--s-4)', borderBottom: '1px solid var(--onyx-line)',
         background: 'rgba(0,0,0,0.18)',
       }}>
         <div />
@@ -67,9 +67,9 @@ export default function BrowseList({ columns, rows }: BrowseListProps) {
           const active = sortBy.col === c.id;
           return (
             <button key={c.id} onClick={() => onHeader(c.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+              display: 'flex', alignItems: 'center', gap: 'var(--s-2)',
+              background: 'none', border: 'none', padding: '0', cursor: 'pointer',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase',
               color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
               textAlign: 'left',
             }}>
@@ -82,8 +82,8 @@ export default function BrowseList({ columns, rows }: BrowseListProps) {
       </div>
       {sorted.map((r, i) => (
         <button key={r.key} onClick={r.onClick} style={{
-          display: 'grid', gridTemplateColumns: grid, alignItems: 'center', gap: 16,
-          padding: '10px 16px', width: '100%', textAlign: 'left',
+          display: 'grid', gridTemplateColumns: grid, alignItems: 'center', gap: 'var(--s-4)',
+          padding: 'var(--s-3) var(--s-4)', width: '100%', textAlign: 'left',
           background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
           border: 'none', borderTop: i === 0 ? 'none' : '1px solid var(--onyx-line)',
           cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',

@@ -244,16 +244,16 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
     });
   }, [feed, st, title]);
 
-  const label: CSSProperties = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 5 };
-  const input: CSSProperties = { padding: '9px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: 8, color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 12.5, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' };
-  const primaryBtn: CSSProperties = { padding: '9px 18px', borderRadius: 8, cursor: 'pointer', background: 'var(--onyx-accent)', border: 'none', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' };
-  const ghostBtn: CSSProperties = { padding: '9px 14px', borderRadius: 8, cursor: 'pointer', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' };
-  const dangerBtn: CSSProperties = { padding: '9px 14px', borderRadius: 8, cursor: 'pointer', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', color: '#e08a8a', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' };
+  const label: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-1)' };
+  const input: CSSProperties = { padding: 'var(--s-3) var(--s-3)', background: 'var(--onyx-bg-deep)', borderRadius: 'var(--r-md)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 'var(--fs-2)', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' };
+  const primaryBtn: CSSProperties = { padding: 'var(--s-3) var(--s-5)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'var(--onyx-accent)', border: 'none', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' };
+  const ghostBtn: CSSProperties = { padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' };
+  const dangerBtn: CSSProperties = { padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', color: '#e08a8a', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' };
 
   // A read-only URL row with a Copy button.
   const UrlRow = ({ url, lbl }: { url: string; lbl: string }) => (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <input readOnly value={url} style={{ ...input, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)' }} onFocus={e => e.currentTarget.select()} />
+    <div style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center' }}>
+      <input readOnly value={url} style={{ ...input, fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-accent)' }} onFocus={e => e.currentTarget.select()} />
       <button onClick={() => void copy(url, st, lbl)} style={ghostBtn}>{t('share.copy')}</button>
     </div>
   );
@@ -261,32 +261,32 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
   const modal = (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-6)' }}
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" style={{ width: '100%', maxWidth: 560, maxHeight: '90vh', background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16, boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" style={{ width: '100%', maxWidth: 560, maxHeight: '90vh', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-overlay)', boxShadow: 'var(--shadow-dialog)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ flexShrink: 0, padding: 'var(--s-5) var(--s-5) 0 var(--s-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--s-4)' }}>
           <div style={{ minWidth: 0 }}>
             <div id="share-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>Share &amp; Publish</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{title}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 'var(--s-2)' }}>{title}</div>
           </div>
-          <button onClick={onClose} aria-label={t('share.close')} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1, transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
+          <button onClick={onClose} aria-label={t('share.close')} style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-4)', lineHeight: 1, flexShrink: 0, marginTop: '2px', transition: 'background 0.12s, border-color 0.12s, color 0.12s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-line)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>✕</button>
         </div>
-        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
+        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: 'var(--s-4) 0 0' }} />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-4) var(--s-6)', display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
           {/* ── Public share link ── */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.publicLink')}</div>
+          <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.publicLink')}</div>
             {!canShare ? (
-              <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', lineHeight: 1.5 }}>
+              <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', lineHeight: 1.5 }}>
                 Share links are available for book items only. Sharing an individual podcast episode is not yet supported.
               </div>
             ) : share ? (
               <>
                 <UrlRow url={shareUrl(st.serverUrl, share.slug)} lbl="Share link" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>
                     {share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleString()}` : 'Never expires'}
                     {share.isDownloadable ? ' · downloadable' : ''}
                   </div>
@@ -299,14 +299,14 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
                   <div style={label}>{t('share.slug')}</div>
                   <input value={slug} onChange={e => { setSlug(e.target.value); setShareError(null); }} style={{ ...input, fontFamily: MONO }} placeholder="my-book" />
                 </div>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 'var(--s-4)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 140 }}>
                     <div style={label}>{t('share.expires')}</div>
                     <select value={expiryIdx} onChange={e => setExpiryIdx(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                       {EXPIRY_OPTIONS.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
                     </select>
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', cursor: 'pointer', paddingBottom: 8 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', cursor: 'pointer', paddingBottom: 'var(--s-2)' }}>
                     <input type="checkbox" checked={downloadable} onChange={e => setDownloadable(e.target.checked)} />
                     {t('share.allowDownload')}
                   </label>
@@ -318,9 +318,9 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
                     isn't hidden behind the modal's blurred backdrop like a toast. */}
                 {shareError && (
                   <div style={{
-                    fontSize: 12, lineHeight: 1.5, color: '#e08a8a',
+                    fontSize: 'var(--fs-2)', lineHeight: 1.5, color: '#e08a8a',
                     background: 'rgba(220,80,80,0.1)', border: '1px solid rgba(220,80,80,0.3)',
-                    borderRadius: 8, padding: '10px 12px',
+                    borderRadius: 'var(--r-md)', padding: 'var(--s-3) var(--s-3)',
                   }}>
                     {shareError}
                   </div>
@@ -332,10 +332,10 @@ export default function ShareModal({ item, st, onClose }: ShareModalProps) {
           <div style={{ borderTop: '1px solid var(--onyx-line)' }} />
 
           {/* ── RSS feed ── */}
-          <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.rss')}</div>
+          <section style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{t('share.rss')}</div>
             {feedLoading ? (
-              <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>Checking…</div>
+              <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>Checking…</div>
             ) : feed ? (
               <>
                 <UrlRow url={absoluteFeedUrl(feed.serverAddress, feed.feedUrl, st.serverUrl)} lbl="Feed URL" />

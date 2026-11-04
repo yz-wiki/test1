@@ -84,11 +84,11 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
   // Label + content row reused throughout the form.
   const fRow = (label: string, content: ReactNode) => (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0',
+      display: 'flex', alignItems: 'center', gap: 'var(--s-4)', padding: 'var(--s-2) 0',
       borderBottom: '1px solid rgba(255,255,255,0.04)',
     }}>
       <div style={{
-        width: 140, flexShrink: 0, fontFamily: MONO, fontSize: 10,
+        width: 140, flexShrink: 0, fontFamily: MONO, fontSize: 'var(--fs-0)',
         color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase',
       }}>
         {label}
@@ -98,24 +98,24 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
   );
 
   return (
-    <div style={{ padding: '18px 20px', background: 'rgba(0,0,0,0.18)' }}>
+    <div style={{ padding: 'var(--s-5) var(--s-5)', background: 'rgba(0,0,0,0.18)' }}>
 
       {fRow('Name', (
         <Field value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder={t('libForm.namePlaceholder')} />
       ))}
 
       {!lockMediaType && fRow('Media type', (
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
           {(['book', 'podcast'] as const).map(mt => (
             <button
               key={mt}
               onClick={() => setMediaType(mt)}
               style={{
-                padding: '5px 14px', borderRadius: 6,
+                padding: 'var(--s-1) var(--s-4)', borderRadius: 'var(--r-sm)',
                 background: form.mediaType === mt ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: `1px solid ${form.mediaType === mt ? 'var(--onyx-accent-edge)' : 'rgba(255,255,255,0.08)'}`,
                 color: form.mediaType === mt ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-                fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em',
                 cursor: 'pointer', fontWeight: form.mediaType === mt ? 600 : 400,
               }}
             >{mt}</button>
@@ -132,10 +132,10 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
       ))}
 
       {/* Folder list */}
-      <div style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+      <div style={{ padding: 'var(--s-3) 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--s-2)' }}>
           <div style={{
-            flex: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)',
+            flex: 1, fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
             {t('libForm.folders')}
@@ -143,26 +143,26 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
           <button
             onClick={addFolder}
             style={{
-              fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)',
               background: 'transparent', border: 'none', cursor: 'pointer', letterSpacing: '0.06em',
             }}
           >
             + Add Folder
           </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
           {form.folders.map((fp, i) => (
-            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div key={i} style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center' }}>
               <Field value={fp} onChange={v => updateFolder(i, v)} placeholder={t('libForm.pathPlaceholder')} mono />
               <button
                 onClick={() => browseFolder(i)}
                 title={t('libForm.browse')}
                 style={{
-                  flexShrink: 0, padding: '7px 10px',
+                  flexShrink: 0, padding: 'var(--s-2) var(--s-3)',
                   background: 'rgba(255,255,255,0.05)',
                   border: '1px solid var(--onyx-glass-edge)',
-                  borderRadius: 6, color: 'var(--onyx-text-dim)',
-                  fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em',
+                  borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)',
+                  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em',
                   cursor: 'pointer', whiteSpace: 'nowrap',
                 }}
               >
@@ -175,7 +175,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
                   style={{
                     width: 28, height: 28, flexShrink: 0, background: 'transparent',
                     border: 'none', color: 'var(--onyx-text-mute)', cursor: 'pointer',
-                    fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 'var(--fs-4)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
                   ✕
@@ -188,7 +188,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
 
       {/* Settings sub-section */}
       <div style={{
-        marginTop: 14, marginBottom: 4, fontFamily: MONO, fontSize: 9,
+        marginTop: 'var(--s-4)', marginBottom: 'var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)',
         color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase',
       }}>
         {t('libForm.settings')}
@@ -216,37 +216,37 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
       ))}
 
       {fRow('Mark finished at', (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
           <input
             value={form.markFinishedPercent}
             onChange={e => setForm(f => ({ ...f, markFinishedPercent: e.target.value }))}
             style={{
-              width: 50, padding: '7px 8px', background: 'rgba(0,0,0,0.28)',
-              border: '1px solid var(--onyx-glass-edge)', borderRadius: 6,
-              color: 'var(--onyx-text)', fontSize: 12, fontFamily: MONO,
+              width: 50, padding: 'var(--s-2) var(--s-2)', background: 'rgba(0,0,0,0.28)',
+              border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)',
+              color: 'var(--onyx-text)', fontSize: 'var(--fs-2)', fontFamily: MONO,
               outline: 'none', textAlign: 'center',
             }}
           />
-          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>% complete  or</span>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>% complete  or</span>
           <input
             value={form.markFinishedRemaining}
             onChange={e => setForm(f => ({ ...f, markFinishedRemaining: e.target.value }))}
             style={{
-              width: 50, padding: '7px 8px', background: 'rgba(0,0,0,0.28)',
-              border: '1px solid var(--onyx-glass-edge)', borderRadius: 6,
-              color: 'var(--onyx-text)', fontSize: 12, fontFamily: MONO,
+              width: 50, padding: 'var(--s-2) var(--s-2)', background: 'rgba(0,0,0,0.28)',
+              border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)',
+              color: 'var(--onyx-text)', fontSize: 'var(--fs-2)', fontFamily: MONO,
               outline: 'none', textAlign: 'center',
             }}
           />
-          <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)' }}>s remaining</span>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>s remaining</span>
         </div>
       ))}
 
       {error && (
-        <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 11, color: '#e8716a' }}>{error}</div>
+        <div style={{ marginTop: 'var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: '#e8716a' }}>{error}</div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--s-2)', marginTop: 'var(--s-4)' }}>
         <SmallBtn muted onClick={onCancel}>{t('libForm.cancel')}</SmallBtn>
         <SmallBtn onClick={handleSubmit} disabled={saving}>
           {saving ? 'Saving…' : submitLabel}

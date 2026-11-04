@@ -146,11 +146,11 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
           <button
             onClick={() => setCreateOpen(o => !o)}
             style={{
-              padding: '7px 16px', borderRadius: 8, cursor: 'pointer',
+              padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer',
               background: createOpen ? 'transparent' : 'var(--onyx-accent-dim)',
               border: `1px solid ${createOpen ? 'var(--onyx-line)' : 'var(--onyx-accent-edge)'}`,
               color: createOpen ? 'var(--onyx-text-mute)' : 'var(--onyx-accent)',
-              fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
             }}
           >
             {createOpen ? 'Cancel' : '+ New Playlist'}
@@ -159,9 +159,9 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
 
         {createOpen && (
           <div style={{
-            marginBottom: 22, padding: '14px 18px', borderRadius: 12,
+            marginBottom: 'var(--s-6)', padding: 'var(--s-4) var(--s-5)', borderRadius: 'var(--r-card)',
             background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-            display: 'flex', alignItems: 'center', gap: 12,
+            display: 'flex', alignItems: 'center', gap: 'var(--s-3)',
           }}>
             <input
               autoFocus
@@ -174,18 +174,18 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
               placeholder={t('playlistsView.namePlaceholder')}
               style={{
                 flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                fontFamily: SERIF, fontSize: 16, color: 'var(--onyx-text)',
+                fontFamily: SERIF, fontSize: 'var(--fs-5)', color: 'var(--onyx-text)',
               }}
             />
             <button
               onClick={() => { void handleCreate(); }}
               disabled={!newName.trim() || creating}
               style={{
-                padding: '6px 14px', borderRadius: 7, cursor: newName.trim() ? 'pointer' : 'default',
+                padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: newName.trim() ? 'pointer' : 'default',
                 background: newName.trim() ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: `1px solid ${newName.trim() ? 'var(--onyx-accent-edge)' : 'var(--onyx-line)'}`,
                 color: newName.trim() ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
               }}
             >
               {creating ? 'Creating…' : 'Create'}
@@ -194,17 +194,17 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
         )}
 
         {loading ? (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+          <div style={{ padding: 'var(--s-10) 0', textAlign: 'center', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
             Loading playlists…
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: SERIF, fontSize: 15, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
+          <div style={{ padding: 'var(--s-10) 0', textAlign: 'center', fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
             {playlists.length === 0
               ? 'No playlists yet — click "+ New Playlist" to create one.'
               : 'No playlists match the current filter.'}
           </div>
         ) : st.libraryView === 'grid' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
             {filtered.map(p => {
               const books = booksFor(p);
               return (
@@ -224,7 +224,7 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                     <div
                       onClick={e => { e.stopPropagation(); setDetailPlaylistId(p.id); }}
                       title={t('playlistsView.manage')}
-                      style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                      style={{ padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                     >
                       {t('playlistsView.manageLabel')}
                     </div>
@@ -248,21 +248,21 @@ export default function PlaylistsView({ st, inline = false }: PlaylistsViewProps
                 onClick: () => openPlaylist(p),
                 leading: books[0]
                   ? <Cover item={books[0]} size={28} serverUrl={st.serverUrl} />
-                  : <div style={{ width: 28, height: 28, borderRadius: 4, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />,
+                  : <div style={{ width: 28, height: 28, borderRadius: 'var(--r-xs)', background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />,
                 sort: { name: p.name, description: p.description ?? '', titles: p.items.length, manage: '' },
                 cells: {
-                  name:        <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>,
-                  description: <div style={{ fontSize: 12.5, color: 'var(--onyx-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ?? ''}</div>,
-                  titles:      <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{p.items.length}</div>,
+                  name:        <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>,
+                  description: <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ?? ''}</div>,
+                  titles:      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{p.items.length}</div>,
                   manage: (
                     // div with stopPropagation so clicking Manage doesn't trigger the row's openPlaylist
                     <div
                       onClick={e => { e.stopPropagation(); setDetailPlaylistId(p.id); }}
                       style={{
                         display: 'inline-flex', alignItems: 'center',
-                        padding: '3px 9px', borderRadius: 5, cursor: 'pointer',
+                        padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
                         border: '1px solid var(--onyx-accent-edge)',
-                        color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9,
+                        color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)',
                         letterSpacing: '0.08em', textTransform: 'uppercase',
                         userSelect: 'none',
                       }}

@@ -30,7 +30,7 @@ export const DIM_GOLD = 'var(--onyx-text-mute)';
 
 /** @deprecated Use <GroupLabel> / .ui-group-label instead. */
 export const eyebrowStyle: CSSProperties = {
-  fontSize: 11,
+  fontSize: 'var(--fs-1)',
   fontWeight: 600,
   letterSpacing: '0.045em',
   textTransform: 'uppercase',

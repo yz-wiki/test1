@@ -54,8 +54,8 @@ const displayKey = (part: string): string => KEY_GLYPHS[part] ?? part;
 // Base keycap; modifiers render neutral, the final (main) key renders accent gold.
 const keycapBase: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  minWidth: 24, padding: '4px 9px', borderRadius: 5, lineHeight: 1,
-  fontFamily: MONO, fontSize: 11, userSelect: 'none',
+  minWidth: 24, padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', lineHeight: 1,
+  fontFamily: MONO, fontSize: 'var(--fs-1)', userSelect: 'none',
 };
 const modCap: React.CSSProperties = {
   ...keycapBase, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
@@ -70,19 +70,19 @@ function ShortcutChord({ shortcut, active }: { shortcut: string; active: boolean
   const { t } = useI18n();
   if (active) {
     return (
-      <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)', letterSpacing: '0.06em' }}>
+      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-accent)', letterSpacing: '0.06em' }}>
         {t('kbdMod.pressCombo')}
       </span>
     );
   }
   const parts = shortcut.split('+');
   return (
-    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+    <span style={{ display: 'inline-flex', gap: 'var(--s-2)', alignItems: 'center' }}>
       {parts.map((p, i) => {
         const isLast = i === parts.length - 1;
         return (
-          <span key={i} style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-            {i > 0 && <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>+</span>}
+          <span key={i} style={{ display: 'inline-flex', gap: 'var(--s-2)', alignItems: 'center' }}>
+            {i > 0 && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>+</span>}
             <kbd style={isLast ? mainCap : modCap}>{displayKey(p)}</kbd>
           </span>
         );
@@ -156,10 +156,10 @@ export default function KeyboardSection() {
       <Panel label={t('kbdMod.globalShortcuts')}>
         {conflicts.length > 0 && (
           <div style={{
-            display: 'flex', gap: 8, margin: '10px 0 2px', padding: '8px 10px',
-            borderRadius: 8, border: '1px solid rgba(212,131,74,0.4)',
+            display: 'flex', gap: 'var(--s-2)', margin: 'var(--s-3) 0 var(--s-1)', padding: 'var(--s-2) var(--s-3)',
+            borderRadius: 'var(--r-md)', border: '1px solid rgba(212,131,74,0.4)',
             background: 'rgba(212,131,74,0.08)', color: '#d4834a',
-            fontSize: 12, lineHeight: 1.5,
+            fontSize: 'var(--fs-2)', lineHeight: 1.5,
           }}>
             <span style={{ flexShrink: 0 }}>!</span>
             <span>
@@ -175,42 +175,42 @@ export default function KeyboardSection() {
               onClick={() => setListeningFor(isListening ? null : b.action)}
               title={isListening ? 'Press Escape to cancel' : 'Click to remap'}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-4)',
                 cursor: 'pointer', transition: 'background 0.1s',
                 borderBottom: '1px solid var(--onyx-line)',
                 // When listening, the accent highlight extends slightly into the panel
                 // padding (negative margin offsets the extra padding so content stays put).
                 ...(isListening
-                  ? { background: 'var(--onyx-accent-dim)', borderRadius: 8, borderBottomColor: 'transparent', padding: '14px 12px', margin: '0 -12px' }
-                  : { padding: '14px 2px' }),
+                  ? { background: 'var(--onyx-accent-dim)', borderRadius: 'var(--r-md)', borderBottomColor: 'transparent', padding: 'var(--s-4) var(--s-3)', margin: '0 -12px' }
+                  : { padding: 'var(--s-4) var(--s-1)' }),
               }}
             >
-              <span style={{ fontFamily: SERIF, fontSize: 15, color: 'var(--onyx-text)' }}>
+              <span style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text)' }}>
                 {ACTION_LABELS[b.action] ?? b.action}
               </span>
               <ShortcutChord shortcut={b.shortcut} active={isListening} />
-              {isListening && <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)' }}>Press a key · {secondsRemaining}s</span>}
+              {isListening && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)' }}>Press a key · {secondsRemaining}s</span>}
             </div>
           );
         })}
 
         {/* Footer: system-wide note + reset */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 2px 6px' }}>
-          <span style={{ fontSize: 12, color: 'var(--onyx-text-mute)', lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-4)', padding: 'var(--s-4) var(--s-1) var(--s-2)' }}>
+          <span style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', lineHeight: 1.4 }}>
             {t('kbdMod.globalShortcutsHint')}
           </span>
           <button
             onClick={resetDefaults}
             style={{
               flexShrink: 0,
-              padding: '7px 15px',
+              padding: 'var(--s-2) var(--s-4)',
               background: 'transparent',
               border: '1px solid var(--onyx-glass-edge)',
-              borderRadius: 7,
+              borderRadius: 'var(--r-sm)',
               color: 'var(--onyx-text-dim)',
               cursor: 'pointer',
               fontFamily: MONO,
-              fontSize: 10,
+              fontSize: 'var(--fs-0)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase' as const,
             }}

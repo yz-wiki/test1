@@ -21,13 +21,13 @@ const UI_STACK = 'var(--font-ui)';
 
 const SERIF = UI_STACK;
 const MONO  = 'var(--font-ui)';
-const SANS  = "'Inter', system-ui, -apple-system, sans-serif";
+const SANS  = 'var(--font-ui)';
 
 /* Local design tokens for the match review screen — see design-handoff/metadata_match/shared.jsx */
 const MATCH_ONYX = {
-  bg: '#0b0b0e', bgDeep: '#08080b', panel: '#131319', panel2: '#1a1a22',
+  bg: 'var(--surface-canvas)', bgDeep: '#08080b', panel: '#131319', panel2: 'var(--surface-overlay)',
   line: 'rgba(255,255,255,0.06)', lineStrong: 'rgba(255,255,255,0.12)',
-  text: '#ebe7df', textDim: 'rgba(235,231,223,0.62)', textMute: 'rgba(235,231,223,0.38)',
+  text: 'var(--onyx-text)', textDim: 'var(--onyx-text-dim)', textMute: 'var(--onyx-text-mute)',
   accent: 'var(--onyx-accent)', accentBright: '#e9bb5e', accentDeep: '#a37d2e',
   accentDim: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)', accentEdge: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
   glass: 'rgba(255,255,255,0.04)', glassStrong: 'rgba(255,255,255,0.07)', glassEdge: 'rgba(255,255,255,0.09)',
@@ -48,13 +48,13 @@ const FALLBACK_PROVIDERS = [
 
 /* Match modal local tokens — extends global Onyx theme */
 const MX = {
-  bg:          '#0b0b0e',
-  panel2:      '#1a1a22',
+  bg:          'var(--surface-canvas)',
+  panel2:      'var(--surface-overlay)',
   line:        'rgba(255,255,255,0.06)',
   lineStrong:  'rgba(255,255,255,0.12)',
-  text:        '#ebe7df',
-  textDim:     'rgba(235,231,223,0.62)',
-  textMute:    'rgba(235,231,223,0.38)',
+  text:        'var(--onyx-text)',
+  textDim:     'var(--onyx-text-dim)',
+  textMute:    'var(--onyx-text-mute)',
   accent:      'var(--onyx-accent)',
   accentDim:   'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)',
   accentEdge:  'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
@@ -168,8 +168,8 @@ function StatusTag({ status, style }: { status: string; style?: CSSProperties })
   const m = map[status] ?? map.same;
   return (
     <span style={{
-      fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.13em', color: m.c,
-      background: m.bg, border: `1px solid ${m.e}`, borderRadius: 3,
+      fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.13em', color: m.c,
+      background: m.bg, border: `1px solid ${m.e}`, borderRadius: 'var(--r-xs)',
       padding: '1.5px 5px', lineHeight: 1, whiteSpace: 'nowrap' as const, ...style,
     }}>{m.t}</span>
   );
@@ -181,7 +181,7 @@ function MatchCheck({ on, onClick, size = 17, accent = MX.accent }: {
 }) {
   return (
     <button onClick={onClick} aria-pressed={on} style={{
-      width: size, height: size, borderRadius: 4, flexShrink: 0, cursor: 'pointer', padding: 0,
+      width: size, height: size, borderRadius: 'var(--r-xs)', flexShrink: 0, cursor: 'pointer', padding: '0',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: on ? accent : 'transparent',
       border: `1.5px solid ${on ? accent : MX.lineStrong}`,
@@ -200,17 +200,17 @@ function ValueCell({ field, side, value, dim, strike, currentCoverUrl, incomingC
 }) {
   if (field.type === 'cover') {
     const url = side === 'current' ? currentCoverUrl : incomingCoverUrl;
-    if (url) return <img src={url} alt="" width={46} height={46} style={{ borderRadius: 4, objectFit: 'cover' as const, flexShrink: 0 }} />;
-    return <div style={{ width: 46, height: 46, borderRadius: 4, background: MATCH_ONYX.glassStrong, flexShrink: 0 }} />;
+    if (url) return <img src={url} alt="" width={46} height={46} style={{ borderRadius: 'var(--r-xs)', objectFit: 'cover' as const, flexShrink: 0 }} />;
+    return <div style={{ width: 46, height: 46, borderRadius: 'var(--r-xs)', background: MATCH_ONYX.glassStrong, flexShrink: 0 }} />;
   }
   const empty = Array.isArray(value) ? value.length === 0 : !value;
   if (field.type === 'chips') {
-    if (empty) return <span style={{ fontSize: 11, color: MATCH_ONYX.textMute, fontStyle: 'italic' }}>none</span>;
+    if (empty) return <span style={{ fontSize: 'var(--fs-1)', color: MATCH_ONYX.textMute, fontStyle: 'italic' }}>none</span>;
     return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s-1)' }}>
         {(value as string[]).map((t, i) => (
           <span key={i} style={{
-            fontSize: 10.5, padding: '2px 7px', borderRadius: 20,
+            fontSize: 'var(--fs-0)', padding: 'var(--s-1) var(--s-2)', borderRadius: 20,
             color: dim ? MATCH_ONYX.textMute : MATCH_ONYX.textDim, background: MATCH_ONYX.glass, border: `1px solid ${MATCH_ONYX.line}`,
           }}>{t}</span>
         ))}
@@ -218,7 +218,7 @@ function ValueCell({ field, side, value, dim, strike, currentCoverUrl, incomingC
     );
   }
   if (empty) {
-    return <span style={{ fontSize: 12, color: MATCH_ONYX.textMute, fontStyle: 'italic', fontFamily: MATCH_ONYX.sans }}>empty</span>;
+    return <span style={{ fontSize: 'var(--fs-2)', color: MATCH_ONYX.textMute, fontStyle: 'italic', fontFamily: MATCH_ONYX.sans }}>empty</span>;
   }
   const isLong = field.type === 'longtext';
   return (
@@ -227,7 +227,7 @@ function ValueCell({ field, side, value, dim, strike, currentCoverUrl, incomingC
       fontFamily: field.type === 'mono' ? MATCH_ONYX.mono : MATCH_ONYX.sans,
       color: dim ? MATCH_ONYX.textMute : MATCH_ONYX.textDim,
       textDecoration: strike ? 'line-through' : 'none',
-      textDecorationColor: 'rgba(235,231,223,0.25)',
+      textDecorationColor: 'var(--onyx-line)',
       display: '-webkit-box' as const, WebkitLineClamp: isLong ? 4 : 2,
       WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
     }}>{value as string}</span>
@@ -260,34 +260,34 @@ function EditField({ field, value, onSave, onCancel }: {
   };
   const inputStyle: CSSProperties = {
     width: '100%', boxSizing: 'border-box', background: MATCH_ONYX.panel2,
-    border: `1px solid ${MATCH_ONYX.accentEdge}`, borderRadius: 6, color: MATCH_ONYX.text,
+    border: `1px solid ${MATCH_ONYX.accentEdge}`, borderRadius: 'var(--r-sm)', color: MATCH_ONYX.text,
     fontFamily: field.type === 'mono' ? MATCH_ONYX.mono : MATCH_ONYX.sans,
     fontSize: field.type === 'longtext' ? 11.5 : 12.5, lineHeight: 1.4,
-    padding: '7px 9px', outline: 'none', resize: 'vertical' as const,
+    padding: 'var(--s-2) var(--s-3)', outline: 'none', resize: 'vertical' as const,
   };
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)', width: '100%' }}>
       {field.type === 'longtext' ? (
         <textarea ref={ref} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKey} rows={4} style={inputStyle} />
       ) : (
         <input ref={ref} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKey}
           style={inputStyle} placeholder={field.type === 'chips' ? 'comma, separated, tags' : ''} />
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
         <button onClick={commit} style={{
-          display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6,
+          display: 'flex', alignItems: 'center', gap: 'var(--s-1)', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)',
           border: 'none', cursor: 'pointer', background: MATCH_ONYX.accent, color: MATCH_ONYX.bg,
-          fontFamily: MATCH_ONYX.mono, fontSize: 9.5, letterSpacing: '0.05em', textTransform: 'uppercase' as const, fontWeight: 600,
+          fontFamily: MATCH_ONYX.mono, fontSize: 'var(--fs-0)', letterSpacing: '0.05em', textTransform: 'uppercase' as const, fontWeight: 600,
         }}>
           <Glyph name="check" size={11} color={MATCH_ONYX.bg} sw={2} />{t('match.save')}
         </button>
         <button onClick={onCancel} style={{
-          padding: '4px 10px', borderRadius: 6, border: `1px solid ${MATCH_ONYX.glassEdge}`,
+          padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', border: `1px solid ${MATCH_ONYX.glassEdge}`,
           cursor: 'pointer', background: 'transparent', color: MATCH_ONYX.textDim,
-          fontFamily: MATCH_ONYX.mono, fontSize: 9.5, letterSpacing: '0.05em', textTransform: 'uppercase' as const,
+          fontFamily: MATCH_ONYX.mono, fontSize: 'var(--fs-0)', letterSpacing: '0.05em', textTransform: 'uppercase' as const,
         }}>{t('match.cancel')}</button>
         <span style={{ flex: 1 }} />
-        <span style={{ fontFamily: MATCH_ONYX.mono, fontSize: 8.5, color: MATCH_ONYX.textMute, letterSpacing: '0.04em' }}>
+        <span style={{ fontFamily: MATCH_ONYX.mono, fontSize: 'var(--fs-0)', color: MATCH_ONYX.textMute, letterSpacing: '0.04em' }}>
           {field.type === 'longtext' ? '⌘↵ save · esc' : '↵ save · esc'}
         </span>
       </div>
@@ -321,9 +321,9 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
       borderBottom: `1px solid ${MATCH_ONYX.line}`, minHeight: 50,
     }}>
       {/* label + status tag */}
-      <div style={{ padding: '12px 10px 12px 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <div style={{ padding: 'var(--s-3) var(--s-3) var(--s-3) var(--s-4)', display: 'flex', flexDirection: 'column', gap: 'var(--s-1)' }}>
         <span style={{
-          fontFamily: MATCH_ONYX.mono, fontSize: 9, letterSpacing: '0.08em',
+          fontFamily: MATCH_ONYX.mono, fontSize: 'var(--fs-0)', letterSpacing: '0.08em',
           textTransform: 'uppercase' as const, lineHeight: 1.2,
           color: (changed || edited) ? MATCH_ONYX.textDim : MATCH_ONYX.textMute,
         }}>{field.label}</span>
@@ -332,7 +332,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
           : changed && <StatusTag status={field.status} style={{ alignSelf: 'flex-start' }} />}
       </div>
       {/* current value */}
-      <div style={{ padding: '12px 14px', minWidth: 0 }}>
+      <div style={{ padding: 'var(--s-3) var(--s-4)', minWidth: 0 }}>
         <ValueCell field={field} side="current" value={field.current}
           dim strike={applied} currentCoverUrl={currentCoverUrl} incomingCoverUrl={incomingCoverUrl} />
       </div>
@@ -340,7 +340,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: editing ? 12 : 0 }}>
         {edited ? (
           <button onClick={onRevert} title={t('match.revertToSource')} style={{
-            width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: 0,
+            width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: '0',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent', border: `1.5px solid ${MATCH_ONYX.lineStrong}`,
           }}>
@@ -350,7 +350,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
           <button onClick={onToggle}
             title={base === 'incoming' ? 'Using new value' : 'Keeping current'}
             style={{
-              width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: 0,
+              width: 26, height: 26, borderRadius: 13, cursor: 'pointer', padding: '0',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: base === 'incoming' ? accent : 'transparent',
               border: `1.5px solid ${base === 'incoming' ? accent : MATCH_ONYX.lineStrong}`,
@@ -366,7 +366,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
       {/* result cell — read or edit mode */}
       <div style={{
         padding: editing ? '10px 16px 12px 14px' : '12px 16px 12px 14px', minWidth: 0,
-        alignSelf: 'stretch', display: 'flex', alignItems: editing ? 'stretch' : 'center', gap: 8,
+        alignSelf: 'stretch', display: 'flex', alignItems: editing ? 'stretch' : 'center', gap: 'var(--s-2)',
         background: editing ? 'transparent' : tintBg,
         boxShadow: (!editing && applied) ? `inset 2px 0 0 ${tintBar}` : 'none',
       }}>
@@ -380,7 +380,7 @@ function CompareRow({ field, base, resolved, edited, applied, editing,
             </div>
             {canEdit && (
               <button onClick={onStartEdit} title={`Edit ${field.label}`} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 3, marginRight: -3,
+                background: 'none', border: 'none', cursor: 'pointer', padding: 'var(--s-1)', marginRight: -3,
                 display: 'flex', color: MATCH_ONYX.textMute, flexShrink: 0, alignSelf: 'flex-start',
               }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = MATCH_ONYX.accent; }}
@@ -402,7 +402,7 @@ function ConfBadge({ score }: { score?: number }) {
   if (score == null) return null;
   const color = score >= 90 ? 'var(--onyx-accent)' : score >= 70 ? '#e8b74a' : 'var(--onyx-text-mute)';
   return (
-    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color, border: `1px solid ${color}`, borderRadius: 4, padding: '1px 5px' }}>
+    <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', color, border: `1px solid ${color}`, borderRadius: 'var(--r-xs)', padding: '2px var(--s-1)' }}>
       {score}%
     </span>
   );
@@ -755,13 +755,13 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
 
   // ── Style constants ───────────────────────────────────────────────────────
   const inputStyle: CSSProperties = {
-    padding: '8px 12px', background: 'rgba(0,0,0,0.35)', borderRadius: 8,
+    padding: 'var(--s-2) var(--s-3)', background: 'rgba(0,0,0,0.35)', borderRadius: 'var(--r-md)',
     color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)',
-    outline: 'none', fontFamily: 'inherit', fontSize: 13,
+    outline: 'none', fontFamily: 'inherit', fontSize: 'var(--fs-3)',
   };
   const labelStyle: CSSProperties = {
-    fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em',
-    textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 5,
+    fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em',
+    textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 'var(--s-1)',
   };
 
   const providerLabel = providers.find(p => p.id === provider)?.name ?? provider;
@@ -774,13 +774,13 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
         background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-4)', padding: 'var(--s-6)',
       }}
     >
       {/* Batch progress dots (Add-books queue) — sit just above the modal card. */}
       {queue && queue.total > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
             {Array.from({ length: queue.total }).map((_, i) => (
               <span
                 key={i}
@@ -795,25 +795,25 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
               />
             ))}
           </div>
-          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: MX.textMute }}>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', color: MX.textMute }}>
             Book {queue.index + 1} of {queue.total}
           </span>
         </div>
       )}
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={screen === 'search' ? 'Match book' : 'Review match'} style={{
         width: '100%', maxWidth: 720, maxHeight: '90vh',
-        background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)',
-        borderRadius: 14, boxShadow: '0 32px 80px rgba(0,0,0,0.7)',
+        background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)',
+        borderRadius: 'var(--r-overlay)', boxShadow: 'var(--shadow-dialog)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
 
         {/* ── Search screen header (only when in search mode) ─────────── */}
         {screen === 'search' && (
-          <div style={{ padding: '18px 24px 16px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', gap: 'var(--s-3)', flexShrink: 0 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>{t('match.title')}</div>
+              <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }}>{t('match.title')}</div>
             </div>
-            <button onClick={onClose} title={t('match.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-dim)', lineHeight: 1, padding: 4, flexShrink: 0, display: 'flex' }}>
+            <button onClick={onClose} title={t('match.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--onyx-text-dim)', lineHeight: 1, padding: 'var(--s-1)', flexShrink: 0, display: 'flex' }}>
               <Glyph name="close" size={16} color="var(--onyx-text-dim)" />
             </button>
           </div>
@@ -822,7 +822,7 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
         {/* ── Search screen ──────────────────────────────────────────────── */}
         {screen === 'search' && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', flexShrink: 0 }}>
+            <div style={{ padding: 'var(--s-5) var(--s-6)', borderBottom: '1px solid var(--onyx-line)', display: 'flex', gap: 'var(--s-3)', flexWrap: 'wrap', alignItems: 'flex-end', flexShrink: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 140 }}>
                 <div style={labelStyle}>{t('match.provider')}</div>
                 <select value={provider} onChange={e => setProvider(e.target.value)} disabled={providersLoading}
@@ -840,40 +840,40 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                 <div style={labelStyle}>{t('match.colAuthor')}</div>
                 <input value={queryAuthor} onChange={e => setQueryAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder={t('match.authorPlaceholder')} style={{ ...inputStyle }} />
               </div>
-              <button onClick={handleSearch} disabled={searching} style={{ padding: '8px 20px', borderRadius: 8, cursor: searching ? 'default' : 'pointer', background: 'var(--onyx-accent)', border: 'none', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600, opacity: searching ? 0.6 : 1 }}>
+              <button onClick={handleSearch} disabled={searching} style={{ padding: 'var(--s-2) var(--s-5)', borderRadius: 'var(--r-md)', cursor: searching ? 'default' : 'pointer', background: 'var(--onyx-accent)', border: 'none', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600, opacity: searching ? 0.6 : 1 }}>
                 {searching ? 'Searching…' : 'Search'}
               </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column' }}>
-              {searchErr && <div style={{ padding: '24px', color: '#e87c7c', fontFamily: MONO, fontSize: 11 }}>{searchErr}</div>}
+            <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-2) 0', display: 'flex', flexDirection: 'column' }}>
+              {searchErr && <div style={{ padding: 'var(--s-6)', color: '#e87c7c', fontFamily: MONO, fontSize: 'var(--fs-1)' }}>{searchErr}</div>}
               {/* Empty state: shown only after a search has actually run and come back empty —
                   never on open, even though the title field is pre-populated. */}
               {hasSearched && !searching && !searchErr && results.length === 0 && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '48px 24px', color: 'var(--onyx-text-mute)' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-4)', padding: '48px var(--s-6)', color: 'var(--onyx-text-mute)' }}>
                   <Glyph name="search" size={32} color="var(--onyx-text-mute)" sw={1.4} />
-                  <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{t('match.noResults')}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>{t('match.noResults')}</div>
                 </div>
               )}
               {results.map((r, i) => (
                 <button key={i} onClick={() => handleSelect(r)}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: 14, width: '100%', padding: '12px 24px', background: 'none', border: 'none', borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit', transition: 'background 0.1s' }}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--s-4)', width: '100%', padding: 'var(--s-3) var(--s-6)', background: 'none', border: 'none', borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit', transition: 'background 0.1s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
                   {r.cover
-                    ? <img src={r.cover} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
-                    : <div style={{ width: 48, height: 48, borderRadius: 4, background: 'var(--onyx-glass)', flexShrink: 0 }} />
+                    ? <img src={r.cover} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 'var(--r-xs)', flexShrink: 0 }} />
+                    : <div style={{ width: 48, height: 48, borderRadius: 'var(--r-xs)', background: 'var(--onyx-glass)', flexShrink: 0 }} />
                   }
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, color: 'var(--onyx-text)' }}>{r.title}</span>
-                      {r.publishedYear && <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>{r.publishedYear}</span>}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)' }}>{r.title}</span>
+                      {r.publishedYear && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{r.publishedYear}</span>}
                       <ConfBadge score={r.confidence} />
                     </div>
-                    {r.author   && <div style={{ marginTop: 2, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>{r.author}</div>}
-                    {r.narrator && <div style={{ marginTop: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>Narr. {r.narrator}</div>}
-                    {r.series   && <div style={{ marginTop: 1, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{seriesStr(r.series)}</div>}
+                    {r.author   && <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{r.author}</div>}
+                    {r.narrator && <div style={{ marginTop: '2px', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>Narr. {r.narrator}</div>}
+                    {r.series   && <div style={{ marginTop: '2px', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{seriesStr(r.series)}</div>}
                   </div>
                 </button>
               ))}
@@ -886,30 +886,30 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: MATCH_ONYX.bg }}>
 
             {/* Header */}
-            <div style={{ position: 'relative', padding: '16px 18px 0', borderBottom: `1px solid ${MX.line}`, flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingBottom: 14 }}>
+            <div style={{ position: 'relative', padding: 'var(--s-4) var(--s-5) 0', borderBottom: `1px solid ${MX.line}`, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--s-3)', paddingBottom: 'var(--s-4)' }}>
                 {/* Back */}
                 <button onClick={() => setScreen('search')} title={t('match.backToSearch')}
-                  style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 4, marginLeft: -4, display: 'flex', flexShrink: 0 }}>
+                  style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 'var(--s-1)', marginLeft: -4, display: 'flex', flexShrink: 0 }}>
                   <Glyph name="back" size={17} />
                 </button>
                 {/* Title block */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: MATCH_ONYX.serif, fontSize: 19, fontWeight: 600, lineHeight: 1.1 }}>{t('match.review')}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: MX.textMute, marginTop: 5, letterSpacing: '0.04em' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: MX.textMute, marginTop: 'var(--s-1)', letterSpacing: '0.04em' }}>
                     {providerLabel}
                     {selected.confidence != null && ` · ${Math.round(selected.confidence * 100)}% match`}
                     {` · ${changedFields.length} differ · edit any field`}
                   </div>
                 </div>
                 {/* Segmented filter */}
-                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 3, border: `1px solid ${MX.line}`, flexShrink: 0 }}>
+                <div style={{ display: 'flex', background: 'var(--onyx-bg-deep)', borderRadius: 'var(--r-md)', padding: 'var(--s-1)', border: `1px solid ${MX.line}`, flexShrink: 0 }}>
                   {(['Changes', 'All fields'] as const).map((lbl, idx) => {
                     const v = idx === 0;
                     return (
                       <button key={lbl} onClick={() => setOnlyChanges(v)} style={{
-                        padding: '5px 11px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                        fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.05em', textTransform: 'uppercase' as const,
+                        padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer',
+                        fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.05em', textTransform: 'uppercase' as const,
                         background: onlyChanges === v ? MX.accentDim : 'transparent',
                         color: onlyChanges === v ? MX.accent : MX.textMute, transition: 'all .12s',
                       }}>{lbl}</button>
@@ -918,16 +918,16 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
                 </div>
                 {/* Close */}
                 <button onClick={onClose} title={t('match.close')}
-                  style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 4, marginRight: -4, display: 'flex', flexShrink: 0 }}>
+                  style={{ background: 'none', border: 'none', color: MX.textDim, cursor: 'pointer', padding: 'var(--s-1)', marginRight: -4, display: 'flex', flexShrink: 0 }}>
                   <Glyph name="close" size={16} />
                 </button>
               </div>
               {/* Column heads */}
               <div style={{ display: 'grid', gridTemplateColumns: '78px 1fr 38px 1fr', alignItems: 'center' }}>
                 <span />
-                <span style={{ padding: '8px 14px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: MX.textMute }}>{t('match.current')}</span>
+                <span style={{ padding: 'var(--s-2) var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', color: MX.textMute }}>{t('match.current')}</span>
                 <span />
-                <span style={{ padding: '8px 16px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: MX.accent, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ padding: 'var(--s-2) var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', color: MX.accent, display: 'flex', alignItems: 'center', gap: 'var(--s-1)' }}>
                   <Glyph name="sparkle" size={9} color={MX.accent} />{t('match.result')}
                   <span style={{ color: MX.textMute, letterSpacing: '0.04em' }}>· editable</span>
                 </span>
@@ -953,14 +953,14 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
               ))}
               {/* "N more match" footer strip — only in Changes mode */}
               {onlyChanges && sameFields.length > 0 && (
-                <div style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ padding: 'var(--s-3) var(--s-4)', display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
                   <Glyph name="check" size={12} color={MX.textMute} />
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: MX.textMute, letterSpacing: '0.05em' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: MX.textMute, letterSpacing: '0.05em' }}>
                     {sameFields.length} more field{sameFields.length === 1 ? '' : 's'} already match
                   </span>
                   <button onClick={() => setOnlyChanges(false)} style={{
                     background: 'none', border: 'none', color: MX.accent, cursor: 'pointer',
-                    fontFamily: MONO, fontSize: 10, letterSpacing: '0.05em', padding: 0,
+                    fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.05em', padding: '0',
                   }}>show all</button>
                 </div>
               )}
@@ -968,38 +968,38 @@ export default function MatchModal({ item, serverUrl, adapter: adapterProp, onCl
 
             {/* Footer */}
             <div style={{
-              padding: '12px 18px', borderTop: `1px solid ${MX.line}`,
-              display: 'flex', alignItems: 'center', gap: 12,
+              padding: 'var(--s-3) var(--s-5)', borderTop: `1px solid ${MX.line}`,
+              display: 'flex', alignItems: 'center', gap: 'var(--s-3)',
               background: 'rgba(8,8,11,0.6)', flexShrink: 0,
             }}>
               {/* Accept all */}
               <div onClick={acceptAll} style={{
-                display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer',
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' as const,
+                display: 'flex', alignItems: 'center', gap: 'var(--s-2)', cursor: 'pointer',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase' as const,
                 color: allOn ? MX.accent : MX.textDim,
               }}>
                 <MatchCheck on={allOn} onClick={() => {}} size={15} /> {t('match.acceptAll')}
               </div>
               <span style={{ flex: 1 }} />
               {/* Change count */}
-              <span style={{ fontSize: 11.5, color: MX.textMute }}>
+              <span style={{ fontSize: 'var(--fs-2)', color: MX.textMute }}>
                 <strong style={{ color: MX.text, fontWeight: 600 }}>{appliedCount}</strong> change{appliedCount === 1 ? '' : 's'}
                 {editedCount > 0 && <span style={{ color: MX.textMute }}> · {editedCount} edited</span>}
               </span>
               {/* Cancel */}
               <button onClick={onClose} style={{
-                padding: '9px 18px', borderRadius: 8, background: 'transparent',
+                padding: 'var(--s-3) var(--s-5)', borderRadius: 'var(--r-md)', background: 'transparent',
                 border: `1px solid ${MX.glassEdge}`, color: MX.textDim, cursor: 'pointer',
-                fontFamily: SANS, fontSize: 13,
+                fontFamily: SANS, fontSize: 'var(--fs-3)',
               }}>{t('match.cancel')}</button>
               {/* Apply */}
               <button onClick={handleSubmit} disabled={submitting || appliedCount === 0} style={{
-                padding: '9px 18px', borderRadius: 8, border: 'none',
+                padding: 'var(--s-3) var(--s-5)', borderRadius: 'var(--r-md)', border: 'none',
                 cursor: (submitting || appliedCount === 0) ? 'default' : 'pointer',
                 background: appliedCount > 0 ? MX.accent : MX.glassStrong,
                 color: appliedCount > 0 ? MX.bg : MX.textMute,
-                fontFamily: SANS, fontSize: 13, fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 7,
+                fontFamily: SANS, fontSize: 'var(--fs-3)', fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 'var(--s-2)',
               }}>
                 <Glyph name="check" size={14} color={appliedCount > 0 ? MX.bg : MX.textMute} sw={2} />
                 {submitting ? 'Applying…' : `Apply ${appliedCount}`}

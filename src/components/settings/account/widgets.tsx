@@ -10,11 +10,11 @@ export function TypeBadge({ type }: { type: string }) {
   return (
     <span style={{
       fontFamily: MONO,
-      fontSize: 9,
+      fontSize: 'var(--fs-0)',
       letterSpacing: '0.06em',
       textTransform: 'uppercase' as const,
-      padding: '2px 7px',
-      borderRadius: 4,
+      padding: 'var(--s-1) var(--s-2)',
+      borderRadius: 'var(--r-xs)',
       background: brass ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.14)' : 'rgba(255,255,255,0.06)',
       color: brass ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
       border: `1px solid ${brass ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.24)' : 'rgba(255,255,255,0.08)'}`,
@@ -44,7 +44,7 @@ export function RowButton({
       style={{
         width: 28,
         height: 28,
-        borderRadius: 6,
+        borderRadius: 'var(--r-sm)',
         border: '1px solid transparent',
         background: 'transparent',
         // Danger (delete) uses the app's standard red; edit uses dimmed text colour
@@ -54,7 +54,7 @@ export function RowButton({
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        padding: 0,
+        padding: '0',
       }}
     >
       {children}
@@ -90,9 +90,9 @@ export function UserAvatar({ color, initial, online, onClick }: {
       onClick={onClick}
       title={t('acctWidget.changeColour')}
       style={{
-        width: 34, height: 34, borderRadius: 9, flexShrink: 0, padding: 0, cursor: 'pointer',
+        width: 34, height: 34, borderRadius: 'var(--r-md)', flexShrink: 0, padding: '0', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: MONO, fontSize: 13, fontWeight: 700,
+        fontFamily: MONO, fontSize: 'var(--fs-3)', fontWeight: 700,
         // Lit (online): solid fill + dark glyph + glow. Dim (offline): tinted box + coloured glyph.
         background: online ? color : `${color}1f`,
         color: online ? 'var(--onyx-bg)' : color,
@@ -122,14 +122,14 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
       onClick={e => e.stopPropagation()}
       style={{
         position: 'fixed', top: pos.y, left, zIndex: 600,
-        background: 'var(--onyx-panel2)', backdropFilter: 'blur(40px) saturate(120%)',
+        background: 'var(--surface-overlay)', backdropFilter: 'blur(40px) saturate(120%)',
         WebkitBackdropFilter: 'blur(40px) saturate(120%)',
-        border: '1px solid var(--onyx-glass-edge)', borderRadius: 10,
-        boxShadow: '0 16px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
-        padding: 12, width: W,
+        border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--shadow-popover)',
+        padding: 'var(--s-3)', width: W,
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 7 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 'var(--s-2)' }}>
         {USER_PALETTE.map(c => {
           const active = c.toLowerCase() === value.toLowerCase();
           return (
@@ -138,7 +138,7 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
               onClick={() => onPick(c)}
               title={c}
               style={{
-                width: 20, height: 20, borderRadius: 6, cursor: 'pointer', padding: 0, background: c,
+                width: 20, height: 20, borderRadius: 'var(--r-sm)', cursor: 'pointer', padding: '0', background: c,
                 border: active ? '2px solid var(--onyx-text)' : '1px solid rgba(255,255,255,0.18)',
                 boxShadow: active ? `0 0 8px ${c}88` : 'none',
               }}
@@ -146,17 +146,17 @@ export function ColorPickerPopover({ value, onPick, popRef, pos }: {
           );
         })}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11, paddingTop: 11, borderTop: '1px solid var(--onyx-line)' }}>
-        <label style={{ position: 'relative', width: 22, height: 22, flexShrink: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.18)', display: 'block' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', marginTop: 'var(--s-3)', paddingTop: 'var(--s-3)', borderTop: '1px solid var(--onyx-line)' }}>
+        <label style={{ position: 'relative', width: 22, height: 22, flexShrink: 0, cursor: 'pointer', borderRadius: 'var(--r-sm)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.18)', display: 'block' }}>
           <input
             type="color"
             value={value}
             onChange={e => onPick(e.target.value)}
-            style={{ position: 'absolute', inset: -4, width: 'calc(100% + 8px)', height: 'calc(100% + 8px)', border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
+            style={{ position: 'absolute', inset: -4, width: 'calc(100% + 8px)', height: 'calc(100% + 8px)', border: 'none', padding: '0', background: 'none', cursor: 'pointer' }}
           />
         </label>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('acctWidget.custom')}</span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-dim)', marginLeft: 'auto', textTransform: 'uppercase' }}>{value}</span>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('acctWidget.custom')}</span>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', marginLeft: 'auto', textTransform: 'uppercase' }}>{value}</span>
       </div>
     </div>
   );

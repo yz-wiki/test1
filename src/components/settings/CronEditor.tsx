@@ -89,10 +89,10 @@ function buildCron(s: CronState): string {
 
 // Shared control styling.
 const controlStyle = {
-  fontFamily: MONO, fontSize: 12,
-  background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-  border: '1px solid var(--onyx-glass-edge)', borderRadius: 6,
-  padding: '5px 8px', cursor: 'pointer',
+  fontFamily: MONO, fontSize: 'var(--fs-2)',
+  background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+  border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)',
+  padding: 'var(--s-1) var(--s-2)', cursor: 'pointer',
 } as const;
 
 export default function CronEditor({ value, onChange }: CronEditorProps) {
@@ -112,7 +112,7 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+    <div style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {/* Frequency */}
         <select
           value={state.mode}
@@ -136,7 +136,7 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
 
         {/* Mode-specific controls */}
         {state.mode === 'hourly' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--onyx-text-dim)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
             at&nbsp;:
             <input
               type="number" min={0} max={59}
@@ -171,13 +171,13 @@ export default function CronEditor({ value, onChange }: CronEditorProps) {
                 {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
               </select>
             )}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--onyx-text-dim)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>
               at
               <input
                 type="time"
                 value={state.time}
                 onChange={e => commit({ ...state, time: e.target.value || '00:00' })}
-                style={{ ...controlStyle, padding: '4px 8px' }}
+                style={{ ...controlStyle, padding: 'var(--s-1) var(--s-2)' }}
               />
             </label>
           </>

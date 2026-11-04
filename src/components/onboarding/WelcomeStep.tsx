@@ -8,8 +8,8 @@ export interface WelcomeStepProps { onBegin: () => void; }
 export default function WelcomeStep({ onBegin }: WelcomeStepProps) {
   const { t } = useI18n();
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <div style={{ fontSize: 15, lineHeight: 1.6, color: 'rgba(235,231,223,0.8)', fontFamily: SERIF, maxWidth: 460 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-8)' }}>
+      <div style={{ fontSize: 'var(--fs-4)', lineHeight: 1.6, color: 'var(--onyx-text)', fontFamily: SERIF, maxWidth: 460 }}>
         Skald plays your audiobooks — streamed from an{' '}
         <span style={{ color: 'var(--onyx-accent)', fontStyle: 'italic' }}>Audiobookshelf</span> server,
         kept as <span style={{ color: 'var(--onyx-accent)', fontStyle: 'italic' }}>local libraries</span> on this
@@ -17,11 +17,11 @@ export default function WelcomeStep({ onBegin }: WelcomeStepProps) {
       </div>
 
       {/* Three at-a-glance capabilities — quiet mono labels, no chrome. */}
-      <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-6)', flexWrap: 'wrap' }}>
         {['Stream & sync', 'Listen offline', 'No server needed'].map(t => (
-          <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 5, height: 5, borderRadius: 3, background: 'var(--onyx-accent)' }} />
-            <span style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.55)' }}>{t}</span>
+          <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
+            <div style={{ width: 5, height: 5, borderRadius: 'var(--r-xs)', background: 'var(--onyx-accent)' }} />
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)' }}>{t}</span>
           </div>
         ))}
       </div>

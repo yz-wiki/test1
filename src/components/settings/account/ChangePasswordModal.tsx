@@ -10,24 +10,24 @@ import { log } from '../../../lib/log';
 
 // ── Shared modal field styles ────────────────────────────────────────────────
 const fieldLabelStyle: React.CSSProperties = {
-  fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
-  color: 'var(--onyx-text-mute)', marginBottom: 6,
+  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase',
+  color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-2)',
 };
 const fieldInputStyle: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 12px', background: 'rgba(0,0,0,0.25)',
-  border: '1px solid var(--onyx-glass-edge)', borderRadius: 7, color: 'var(--onyx-text)',
-  fontSize: 13, outline: 'none', fontFamily: 'inherit',
+  width: '100%', boxSizing: 'border-box', padding: 'var(--s-3) var(--s-3)', background: 'rgba(0,0,0,0.25)',
+  border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', color: 'var(--onyx-text)',
+  fontSize: 'var(--fs-3)', outline: 'none', fontFamily: 'inherit',
 };
 const ghostBtnStyle: React.CSSProperties = {
-  padding: '8px 18px', background: 'transparent', border: '1px solid var(--onyx-glass-edge)',
-  borderRadius: 7, color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 11,
+  padding: 'var(--s-2) var(--s-5)', background: 'transparent', border: '1px solid var(--onyx-glass-edge)',
+  borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-1)',
   letterSpacing: '0.07em', textTransform: 'uppercase', cursor: 'pointer',
 };
 const brassBtnStyle: React.CSSProperties = {
   // Theme accent (follows the selected accent), not a hardcoded gold gradient.
-  padding: '8px 18px', background: 'var(--onyx-accent)',
+  padding: 'var(--s-2) var(--s-5)', background: 'var(--onyx-accent)',
   border: '1px solid var(--onyx-accent-edge)',
-  borderRadius: 7, color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.07em',
+  borderRadius: 'var(--r-sm)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.07em',
   textTransform: 'uppercase', cursor: 'pointer', fontWeight: 600,
 };
 
@@ -61,7 +61,7 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.65)' }}
+      className="ui-scrim"  style={{ zIndex: 500 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <form
@@ -70,12 +70,12 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
         aria-modal="true"
         aria-labelledby="change-password-title"
         onSubmit={submit}
-        style={{ width: 400, maxWidth: '90vw', background: 'var(--onyx-panel2)', backdropFilter: 'blur(40px) saturate(120%)', WebkitBackdropFilter: 'blur(40px) saturate(120%)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 12, boxShadow: '0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)', padding: '26px 26px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}
+        style={{ width: 400, maxWidth: '90vw', background: 'var(--surface-overlay)', backdropFilter: 'blur(40px) saturate(120%)', WebkitBackdropFilter: 'blur(40px) saturate(120%)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-dialog)', padding: 'var(--s-6) var(--s-6) var(--s-6)', display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' }}
       >
-        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>{t('chpw.title')}</div>
+        <div id="change-password-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, color: 'var(--onyx-text)' }}>{t('chpw.title')}</div>
         {done ? (
           <>
-            <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', lineHeight: 1.5 }}>
               {t('chpw.success')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -96,8 +96,8 @@ export default function ChangePasswordModal({ serverUrl, onClose }: { serverUrl:
               <div style={fieldLabelStyle}>{t('chpw.confirm')}</div>
               <input style={fieldInputStyle} type="password" value={confirm} onChange={e => setConfirm(e.target.value)} />
             </div>
-            {error && <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>{error}</div>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+            {error && <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO }}>{error}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--s-2)', marginTop: 'var(--s-1)' }}>
               <button type="button" onClick={onClose} style={ghostBtnStyle}>{t('chpw.cancel')}</button>
               <button type="submit" disabled={pending} style={{ ...brassBtnStyle, cursor: pending ? 'wait' : 'pointer' }}>
                 {pending ? 'Saving…' : 'Change'}

@@ -2,6 +2,43 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 1.5.0 (2026-11-04)
+
+Completes the front-end reconstruction. 1.4.0 introduced the design system and
+rebuilt the chrome; this release removes every remaining pixel decision from
+component code.
+
+### Zero tolerance for ad-hoc values
+- **Type**: every `fontSize` in the app is now a `--fs-*` token. Before: 11
+  distinct sizes across 700+ declarations. After: 8 steps, 0 raw pixels.
+- **Spacing / radius**: every `gap`, `padding`, `margin` and `borderRadius` is a
+  token (`--s-*`, `--r-*`). The one exception is the 2px seam in the cover
+  mosaic, which is physical rather than rhythmic.
+- **Elevation**: six hand-written shadows collapsed into `--shadow-popover` and
+  `--shadow-dialog`.
+- **Colour**: 91 hard-coded literals from the old warm palette
+  (`#ebe7df`, `rgba(235,231,223,…)`, `#0b0b0e`) are gone. Those were the reason
+  some panels rendered light-on-light in the Folio/Nord/Sepia themes.
+- **Dialogs**: 16 hand-rolled scrims became `.ui-scrim`; every dialog panel now
+  shares the same surface, border, radius and shadow.
+- **`Glass` is deleted from the component tree** — the last two call sites
+  (shelf container, Pick-it-up cards) use `.ui-card`.
+
+### Rebuilt
+- Onboarding's left column was a copy of the old editorial poster (gradient
+  blobs, grain, serif display type). It is now a brand rail using the same
+  surface, hairline and type scale as the sidebar it hands over to.
+- Top bar: glass card → toolbar, native search field, shared buttons, shared
+  dropdown surface.
+
+### Documentation
+- `docs/DESIGN-SYSTEM.md` — the full system: tokens, primitives, migration
+  status, the few deliberate exceptions, accessibility contract, and the rules
+  for adding a new screen.
+
+Verified: `tsc` clean, 350 tests across 44 files, console gate clean, production
+build passes.
+
 ## 1.4.0 (2026-11-03)
 
 A ground-up front-end reconstruction. The old design mixed an editorial voice

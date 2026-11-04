@@ -291,19 +291,19 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 18,
-        padding: 18,
-        marginBottom: 28,
+        gap: 'var(--s-5)',
+        padding: 'var(--s-5)',
+        marginBottom: 'var(--s-8)',
         background: 'rgba(255,255,255,0.025)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 14,
+        borderRadius: 'var(--r-overlay)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
       }}>
         {/* Avatar — rounded square containing the user's initial (theme accent) */}
         <div style={{
           width: 64,
           height: 64,
-          borderRadius: 16,
+          borderRadius: 'var(--r-overlay)',
           background: 'var(--onyx-accent)',
           color: 'var(--onyx-bg)',
           display: 'flex',
@@ -311,20 +311,20 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           justifyContent: 'center',
           fontFamily: SERIF,
           fontWeight: 600,
-          fontSize: 26,
+          fontSize: 'var(--fs-7)',
           flexShrink: 0,
         }}>
           {initial}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>
+          <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }}>
             {displayName}
           </div>
           <div className="onyx-selectable" style={{
             fontFamily: MONO,
-            fontSize: 10,
+            fontSize: 'var(--fs-0)',
             color: 'var(--onyx-text-mute)',
-            marginTop: 6,
+            marginTop: 'var(--s-2)',
             letterSpacing: '0.06em',
           }}>
             {hasAbs ? (st.serverUrl || 'Not connected') : 'Local library'}
@@ -335,10 +335,10 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               <span
                 title="Traffic to this server (including media tokens) is not encrypted. Fine on a trusted home network; use an https:// address to encrypt."
                 style={{
-                  marginLeft: 8, padding: '1px 5px', borderRadius: 4,
+                  marginLeft: 'var(--s-2)', padding: '2px var(--s-1)', borderRadius: 'var(--r-xs)',
                   color: '#d4834a', border: '1px solid rgba(212,131,74,0.4)',
                   background: 'rgba(212,131,74,0.08)', textTransform: 'uppercase',
-                  letterSpacing: '0.08em', fontSize: 9,
+                  letterSpacing: '0.08em', fontSize: 'var(--fs-0)',
                 }}
               >not encrypted</span>
             )}
@@ -356,11 +356,11 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             placeholder={t('account.readerPlaceholder')}
             maxLength={40}
             style={{
-              padding: '8px 12px',
+              padding: 'var(--s-2) var(--s-3)',
               minWidth: 200,
-              fontSize: 13,
+              fontSize: 'var(--fs-3)',
               background: 'rgba(0,0,0,0.25)',
-              borderRadius: 8,
+              borderRadius: 'var(--r-md)',
               color: 'var(--onyx-text)',
               border: '1px solid var(--onyx-glass-edge)',
               outline: 'none',
@@ -376,13 +376,13 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           <Row label={t('account.password')} hint={t('account.passwordHint')}>
             <button
               onClick={() => setShowChangePw(true)}
-              style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', borderRadius: 7, color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
+              style={{ padding: 'var(--s-2) var(--s-4)', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.07em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
             >
               {t('account.changePassword')}
             </button>
           </Row>
           <Row label={t('account.sso')} hint={t('account.ssoHint')}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.08em', textTransform: 'uppercase', color: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: oidcEnabled ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', flexShrink: 0 }} />
               {oidcEnabled ? 'Enabled · OpenID' : 'Not configured'}
             </span>
@@ -402,11 +402,11 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               disabled
               title={t('accountMod.nameManagedTitle')}
               style={{
-                padding: '8px 12px',
+                padding: 'var(--s-2) var(--s-3)',
                 minWidth: 200,
-                fontSize: 13,
+                fontSize: 'var(--fs-3)',
                 background: 'rgba(0,0,0,0.15)',
-                borderRadius: 8,
+                borderRadius: 'var(--r-md)',
                 color: 'var(--onyx-text-dim)',
                 border: '1px solid var(--onyx-glass-edge)',
                 outline: 'none',
@@ -432,13 +432,13 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
               disabled={isGuest}
               title={isGuest ? 'Not available for guest accounts' : 'Change password'}
               style={{
-                padding: '8px 16px',
+                padding: 'var(--s-2) var(--s-4)',
                 background: 'transparent',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 7,
+                borderRadius: 'var(--r-sm)',
                 color: isGuest ? 'var(--onyx-text-mute)' : 'var(--onyx-text-dim)',
                 fontFamily: MONO,
-                fontSize: 11,
+                fontSize: 'var(--fs-1)',
                 letterSpacing: '0.07em',
                 textTransform: 'uppercase' as const,
                 cursor: isGuest ? 'default' : 'pointer',
@@ -453,16 +453,16 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
 
       {/* ── Admin view: full user-management section ── */}
       {isAdmin && (
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 'var(--s-8)' }}>
           {/* Sub-section header: "Users" heading + member count + Add User button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginBottom: 'var(--s-4)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }}>
                 {t('account.users')}
               </div>
               {/* Member count — plain mono text, shown once the list has loaded */}
               {!loading && !listError && (
-                <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
                   {users.length} {users.length === 1 ? 'member' : 'members'}
                 </span>
               )}
@@ -472,13 +472,13 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             <button
               onClick={() => setShowAdd(true)}
               style={{
-                padding: '7px 14px',
+                padding: 'var(--s-2) var(--s-4)',
                 background: 'transparent',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 7,
+                borderRadius: 'var(--r-sm)',
                 color: 'var(--onyx-text-dim)',
                 fontFamily: MONO,
-                fontSize: 10.5,
+                fontSize: 'var(--fs-0)',
                 letterSpacing: '0.07em',
                 textTransform: 'uppercase' as const,
                 cursor: 'pointer',
@@ -492,9 +492,9 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
           {/* Loading state */}
           {loading && (
             <div style={{
-              padding: '20px 0',
+              padding: 'var(--s-5) 0',
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 'var(--fs-1)',
               color: 'var(--onyx-text-mute)',
               letterSpacing: '0.06em',
             }}>
@@ -504,7 +504,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
 
           {/* Error state */}
           {!loading && listError && (
-            <div style={{ padding: '12px 0', fontSize: 12, color: '#e8716a', fontFamily: MONO }}>
+            <div style={{ padding: 'var(--s-3) 0', fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO }}>
               {listError}
             </div>
           )}
@@ -516,17 +516,17 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
             // local mode treats only the logged-in user as connected.
             const syncLive = localStorage.getItem('onyx.sync.live') === 'true';
             const headCell: React.CSSProperties = {
-              fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase',
               color: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.6)',
             };
             const metaCell: React.CSSProperties = {
-              fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             };
             return (
-              <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-card)', overflow: 'hidden' }}>
                 {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 14, padding: '9px 18px', borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.02)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 'var(--s-4)', padding: 'var(--s-3) var(--s-5)', borderBottom: '1px solid var(--onyx-line)', background: 'rgba(255,255,255,0.02)' }}>
                   <span style={headCell}>{t('account.colName')}</span>
                   <span style={headCell}>{t('account.colRole')}</span>
                   <span style={headCell}>{t('account.colLastSeen')}</span>
@@ -545,18 +545,18 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                       <div
                         key={u.id}
                         style={{
-                          display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 14,
-                          padding: '11px 18px',
+                          display: 'grid', gridTemplateColumns: GRID, alignItems: 'center', gap: 'var(--s-4)',
+                          padding: 'var(--s-3) var(--s-5)',
                           borderBottom: i < users.length - 1 ? '1px solid var(--onyx-line)' : 'none',
                           background: isSelf ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.04)' : 'transparent',
                         }}
                       >
                         {/* Name: colour avatar (click to recolour) + username */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', minWidth: 0 }}>
                           <UserAvatar color={color} initial={initialCh} online={isOnline} onClick={e => openPicker(e, u.id)} />
-                          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13.5, fontWeight: isSelf ? 600 : 400, color: 'var(--onyx-text)' }}>
+                          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--fs-4)', fontWeight: isSelf ? 600 : 400, color: 'var(--onyx-text)' }}>
                             {u.username}
-                            {isSelf && <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)', marginLeft: 8 }}>you</span>}
+                            {isSelf && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', color: 'var(--onyx-text-mute)', marginLeft: 'var(--s-2)' }}>you</span>}
                           </span>
                         </div>
 
@@ -570,7 +570,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                         <span style={metaCell}>{formatDate(u.createdAt)}</span>
 
                         {/* Actions — hidden on the logged-in user's own row. */}
-                        <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: 'var(--s-1)', justifyContent: 'flex-end' }}>
                           {!isSelf && (
                             <>
                               <RowButton onClick={() => openEdit(u)} title={`Edit ${u.username}`}>{PencilIcon}</RowButton>
@@ -590,8 +590,8 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
 
       {/* ── Sign out — shown for all users ── */}
       <div style={{
-        marginTop: 32,
-        paddingTop: 24,
+        marginTop: 'var(--s-8)',
+        paddingTop: 'var(--s-6)',
         borderTop: '1px solid var(--onyx-line)',
         display: 'flex',
         justifyContent: 'flex-end',
@@ -599,14 +599,14 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
         <button
           onClick={onSignOut}
           style={{
-            padding: '9px 20px',
+            padding: 'var(--s-3) var(--s-5)',
             background: 'transparent',
             border: '1px solid rgba(232,113,106,0.4)',
-            borderRadius: 8,
+            borderRadius: 'var(--r-md)',
             color: '#e8716a',
             cursor: 'pointer',
             fontFamily: MONO,
-            fontSize: 11.5,
+            fontSize: 'var(--fs-2)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase' as const,
           }}

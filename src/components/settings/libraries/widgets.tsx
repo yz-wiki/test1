@@ -30,13 +30,13 @@ export function SmallBtn({
       disabled={disabled}
       title={title}
       style={{
-        padding: '5px 12px',
+        padding: 'var(--s-1) var(--s-3)',
         background: 'transparent',
         border: `1px solid ${bdr}`,
-        borderRadius: 6,
+        borderRadius: 'var(--r-sm)',
         color: col,
         fontFamily: MONO,
-        fontSize: 10.5,
+        fontSize: 'var(--fs-0)',
         letterSpacing: '0.07em',
         textTransform: 'uppercase',
         cursor: disabled ? 'wait' : 'pointer',
@@ -70,12 +70,12 @@ export function Field({
         flex: 1,
         width: '100%',
         boxSizing: 'border-box',
-        padding: '7px 10px',
+        padding: 'var(--s-2) var(--s-3)',
         background: 'rgba(0,0,0,0.28)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 6,
+        borderRadius: 'var(--r-sm)',
         color: 'var(--onyx-text)',
-        fontSize: 12.5,
+        fontSize: 'var(--fs-2)',
         fontFamily: mono ? MONO : 'inherit',
         outline: 'none',
       }}
@@ -89,17 +89,17 @@ export function OnOff({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
       key={label}
       onClick={() => onChange(val)}
       style={{
-        padding: '4px 10px', borderRadius: 4,
+        padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-xs)',
         background: active ? 'var(--onyx-accent-dim)' : 'transparent',
         border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'rgba(255,255,255,0.08)'}`,
         color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-        fontFamily: MONO, fontSize: 10, letterSpacing: '0.07em',
+        fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.07em',
         cursor: 'pointer', fontWeight: active ? 600 : 400,
       }}
     >{label}</button>
   );
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
+    <div style={{ display: 'flex', gap: 'var(--s-1)' }}>
       {pill('On', on, true)}
       {pill('Off', !on, false)}
     </div>
@@ -120,12 +120,12 @@ export function SelectInput({
       value={value}
       onChange={e => onChange(e.target.value)}
       style={{
-        padding: '7px 10px',
+        padding: 'var(--s-2) var(--s-3)',
         background: 'rgba(0,0,0,0.28)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 6,
+        borderRadius: 'var(--r-sm)',
         color: 'var(--onyx-text)',
-        fontSize: 12.5,
+        fontSize: 'var(--fs-2)',
         fontFamily: 'inherit',
         outline: 'none',
         cursor: 'pointer',

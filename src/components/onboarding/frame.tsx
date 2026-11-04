@@ -14,7 +14,7 @@ const UI_STACK = 'var(--font-ui)';
 // Typography constants — identical tokens to Login.tsx so the two screens match.
 export const SERIF = UI_STACK;
 export const MONO  = 'var(--font-ui)';
-export const SANS  = "'Inter', system-ui, -apple-system, sans-serif";
+export const SANS  = 'var(--font-ui)';
 
 // Shared gold-pill CTA — the same gradient/shape as Login's "Enter" button.
 // Reused by every step's primary action so the flow has one consistent CTA.
@@ -34,15 +34,15 @@ export function GoldButton({
       disabled={disabled || busy}
       className="saga-cta"
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 12,
+        display: 'inline-flex', alignItems: 'center', gap: 'var(--s-3)',
         background: 'linear-gradient(180deg, #e9bb5e, #d4a64a 55%, #a37d2e)',
         border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
         borderRadius: 999,
-        color: '#1a1306', fontFamily: SERIF, fontWeight: 600, fontSize: 15,
-        padding: '11px 28px', letterSpacing: '0.01em',
+        color: '#1a1306', fontFamily: SERIF, fontWeight: 600, fontSize: 'var(--fs-4)',
+        padding: 'var(--s-3) var(--s-8)', letterSpacing: '0.01em',
         cursor: disabled ? 'not-allowed' : busy ? 'wait' : 'pointer',
         opacity: disabled ? 0.55 : 1,
-        boxShadow: '0 8px 24px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.22), inset 0 1px 0 rgba(255,255,255,0.2)',
+        boxShadow: 'var(--shadow-popover)',
         transition: 'transform 0.12s, box-shadow 0.18s, filter 0.12s',
       }}
     >
@@ -60,9 +60,9 @@ export function GhostButton({ children, onClick }: { children: ReactNode; onClic
       onClick={onClick}
       style={{
         background: 'transparent', border: 'none', cursor: 'pointer',
-        fontFamily: SERIF, fontStyle: 'italic', fontSize: 13,
-        color: 'rgba(235,231,223,0.62)', padding: '6px 4px', textDecoration: 'underline',
-        textUnderlineOffset: 3, textDecorationColor: 'rgba(235,231,223,0.25)',
+        fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)',
+        color: 'var(--onyx-text-dim)', padding: 'var(--s-2) var(--s-1)', textDecoration: 'underline',
+        textUnderlineOffset: 3, textDecorationColor: 'var(--onyx-line)',
       }}
     >
       {children}
@@ -88,53 +88,53 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
   return (
     <div style={{
       position: 'fixed', inset: 0, display: 'flex', overflow: 'hidden',
-      background: '#0b0b0e', color: '#ebe7df', fontFamily: SANS,
+      background: 'var(--surface-canvas)', color: 'var(--onyx-text)', fontFamily: SANS,
     }}>
       {/* Window chrome — spans the full width and provides the drag region + the
           minimize/close controls (the window has no native decorations). Without
           this the onboarding window can't be moved or closed. Mirrors Login.tsx. */}
       <Titlebar isDark minimal />
 
-      {/* ── LEFT PANEL — manuscript column (brand, fixed across all steps) ── */}
-      <div style={{
-        position: 'relative', width: 268, flexShrink: 0, overflow: 'hidden',
-        borderRight: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)',
-      }}>
-        {/* Wash background — same layered radial glow as Login's left panel. */}
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#0b0b0e', pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', left: '-15%', top: '-25%', width: '70%', height: '120%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.196), transparent 65%)', filter: 'blur(90px)' }} />
-          <div style={{ position: 'absolute', right: '-10%', top: '20%', width: '60%', height: '80%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.112), transparent 60%)', filter: 'blur(110px)' }} />
-          <div style={{ position: 'absolute', left: '20%', bottom: '-30%', width: '70%', height: '90%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(60,40,20,0.6), transparent 65%)', filter: 'blur(120px)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.55))' }} />
+      {/* Brand rail. Same surface, hairline and type scale as the sidebar it
+          will hand over to once setup finishes — onboarding should feel like the
+          first screen of the app, not a separate poster. */}
+      <div
+        style={{
+          position: 'relative',
+          width: 264,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: 'var(--s-6)',
+          padding: 'var(--s-10) var(--s-6) var(--s-6)',
+          borderRight: '1px solid var(--hairline)',
+          background: 'var(--surface-raised)',
+        }}
+      >
+        <div>
+          <div className="ui-rowline" style={{ gap: 'var(--s-2)' }}>
+            <img src={lyreIcon} alt="" aria-hidden="true" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+            <span style={{ fontSize: 'var(--fs-4)', fontWeight: 650, letterSpacing: '-0.01em' }}>Skald</span>
+          </div>
+          <h2 className="ui-h2" style={{ marginTop: 'var(--s-5)', fontSize: 'var(--fs-6)' }}>
+            {t('frame.lead')} {t('frame.mid')}{' '}
+            <span style={{ color: 'var(--onyx-accent)' }}>{t('frame.accent')}</span>{t('frame.tail')}
+          </h2>
         </div>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.5, mixBlendMode: 'soft-light', pointerEvents: 'none', background: 'radial-gradient(120% 80% at 0% 0%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35), transparent 55%)' }} />
 
-        <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '54px 30px 30px' }}>
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>
-              Skald
-            </div>
-            <div style={{ width: 26, height: 1, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.35)', margin: '16px 0 18px' }} />
-            <div style={{ fontFamily: SERIF, fontSize: 33, lineHeight: 1.14, fontWeight: 600, letterSpacing: '-0.015em', color: '#ebe7df' }}>
-              {t('frame.lead')}<br />{t('frame.mid')}{' '}
-              <span style={{ fontStyle: 'italic', color: 'var(--onyx-accent)' }}>{t('frame.accent')}</span>{t('frame.tail')}
-            </div>
-          </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={lyreIcon}
+            alt=""
+            aria-hidden="true"
+            style={{ width: 132, height: 132, objectFit: 'contain', opacity: 0.35 }}
+          />
+        </div>
 
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0' }}>
-            <img
-              src={lyreIcon}
-              alt="Skald"
-              style={{ width: 200, height: 200, objectFit: 'contain', opacity: 0.85, filter: 'drop-shadow(0 0 18px rgba(var(--onyx-accent-r), var(--onyx-accent-g), var(--onyx-accent-b), 0.35))' }}
-            />
-          </div>
-
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, lineHeight: 1.55, color: 'rgba(235,231,223,0.62)', maxWidth: 200 }}>
-            {t('frame.quote')}
-            <div style={{ fontStyle: 'normal', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.38)', marginTop: 14 }}>
-              {t('frame.attribution')}
-            </div>
-          </div>
+        <div>
+          <p className="ui-sub" style={{ margin: 0, fontStyle: 'italic' }}>{t('frame.quote')}</p>
+          <div className="ui-group-label" style={{ marginTop: 'var(--s-3)' }}>{t('frame.attribution')}</div>
         </div>
       </div>
 
@@ -144,18 +144,18 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
         <div
           key={stepKey}
           className="saga-in"
-          style={{ flex: 1, overflowY: 'auto', padding: '54px 44px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}
+          style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-10) var(--s-8) var(--s-6)', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}
         >
           <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
-            <div style={{ marginBottom: 26 }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 12 }}>
+            <div style={{ marginBottom: 'var(--s-6)' }}>
+              <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 'var(--s-3)' }}>
                 {eyebrow}
               </div>
-              <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, letterSpacing: '-0.01em', color: '#ebe7df', lineHeight: 1.15 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--onyx-text)', lineHeight: 1.15 }}>
                 {title}
               </div>
               {subtitle && (
-                <div style={{ fontSize: 13.5, fontFamily: SANS, color: 'rgba(235,231,223,0.62)', marginTop: 9, lineHeight: 1.5, maxWidth: 480 }}>
+                <div style={{ fontSize: 'var(--fs-4)', fontFamily: SANS, color: 'var(--onyx-text-dim)', marginTop: 'var(--s-3)', lineHeight: 1.5, maxWidth: 480 }}>
                   {subtitle}
                 </div>
               )}
@@ -166,8 +166,8 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
 
         {/* Fixed footer chrome — host fills with Back / dots / Skip. */}
         <div style={{
-          flexShrink: 0, padding: '16px 44px', borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+          flexShrink: 0, padding: 'var(--s-4) 44px', borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-4)',
         }}>
           {footer}
         </div>
@@ -180,12 +180,12 @@ export default function StepFrame({ eyebrow, title, subtitle, children, footer, 
 // step is a wider gold bar; completed/upcoming are small muted dots.
 export function ProgressDots({ count, index }: { count: number; index: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
           style={{
-            height: 4, borderRadius: 2,
+            height: 4, borderRadius: 'var(--r-xs)',
             width: i === index ? 20 : 4,
             background: i === index
               ? 'var(--onyx-accent)'

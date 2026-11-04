@@ -97,24 +97,24 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
 
   const underline: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none',
-    borderBottom: '1px solid rgba(255,255,255,0.12)', outline: 'none', color: '#ebe7df',
-    fontSize: 16, fontFamily: SERIF, padding: '0 0 9px', letterSpacing: '0.01em',
+    borderBottom: '1px solid rgba(255,255,255,0.12)', outline: 'none', color: 'var(--onyx-text)',
+    fontSize: 'var(--fs-5)', fontFamily: SERIF, padding: '0 0 var(--s-3)', letterSpacing: '0.01em',
   };
 
   // Already connected (e.g. user clicked Back then Continue) — show a confirmation
   // rather than forcing a re-login.
   if (st.authToken) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12,
+          display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-4) var(--s-4)', borderRadius: 'var(--r-card)',
           background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)',
           border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)',
         }}>
-          <span style={{ color: 'var(--onyx-accent)', fontSize: 18 }}>✓</span>
+          <span style={{ color: 'var(--onyx-accent)', fontSize: 'var(--fs-6)' }}>✓</span>
           <div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>{t('onbConnect.connected')}</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(235,231,223,0.5)', marginTop: 2 }}>{st.serverUrl}</div>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text)' }}>{t('onbConnect.connected')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-1)' }}>{st.serverUrl}</div>
           </div>
         </div>
         <div><GoldButton onClick={onConnected}>{t('onbConnect.continue')}</GoldButton></div>
@@ -125,38 +125,38 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Method toggle — API Key (primary) / Password */}
-      <div style={{ display: 'flex', marginBottom: 22 }}>
+      <div style={{ display: 'flex', marginBottom: 'var(--s-6)' }}>
         <div style={{ display: 'flex', borderRadius: 999, border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)', overflow: 'hidden' }}>
           {(['apikey', 'password'] as const).map(m => (
             <button
               key={m} type="button" onClick={() => { setMethod(m); setError(''); }}
               style={{
                 background: method === m ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.15)' : 'transparent',
-                border: 'none', color: method === m ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.38)',
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase',
-                padding: '5px 16px', cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
+                border: 'none', color: method === m ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.14em', textTransform: 'uppercase',
+                padding: 'var(--s-1) var(--s-4)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
               }}
             >{m === 'password' ? 'Password' : 'API Key'}</button>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
         {/* Server URL */}
         <label style={{ display: 'block' }}>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.serverQuestion')}</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginBottom: 'var(--s-2)' }}>{t('onbConnect.serverQuestion')}</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--s-3)' }}>
             <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
-              <button type="button" onClick={() => setSchemeOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', color: 'var(--onyx-accent)', fontFamily: SERIF, fontSize: 16, padding: '0 4px 9px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button type="button" onClick={() => setSchemeOpen(o => !o)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', color: 'var(--onyx-accent)', fontFamily: SERIF, fontSize: 'var(--fs-5)', padding: '0 var(--s-1) var(--s-3) 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
                 {scheme}://
-                <span style={{ fontSize: 10, color: 'rgba(235,231,223,0.38)', display: 'inline-block', transform: schemeOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+                <span style={{ fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', display: 'inline-block', transform: schemeOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
               </button>
               {schemeOpen && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: '#1a1a22', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, boxShadow: '0 16px 32px rgba(0,0,0,0.5)', padding: 5, zIndex: 30, minWidth: 132 }}>
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'var(--surface-overlay)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 'var(--r-md)', boxShadow: 'var(--shadow-popover)', padding: 'var(--s-1)', zIndex: 30, minWidth: 132 }}>
                   {(['https', 'http'] as const).map(s => (
-                    <button key={s} type="button" onClick={() => { setScheme(s); setSchemeOpen(false); }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: s === scheme ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)' : 'transparent', border: 'none', borderRadius: 5, padding: '8px 10px', cursor: 'pointer', fontFamily: SERIF, fontSize: 14, color: s === scheme ? 'var(--onyx-accent)' : '#ebe7df' }}>
+                    <button key={s} type="button" onClick={() => { setScheme(s); setSchemeOpen(false); }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--s-3)', width: '100%', textAlign: 'left', background: s === scheme ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)' : 'transparent', border: 'none', borderRadius: 'var(--r-sm)', padding: 'var(--s-2) var(--s-3)', cursor: 'pointer', fontFamily: SERIF, fontSize: 'var(--fs-4)', color: s === scheme ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
                       {s}://
-                      <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(235,231,223,0.38)', letterSpacing: '0.06em' }}>{s === 'http' ? 'PLAIN' : 'TLS'}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{s === 'http' ? 'PLAIN' : 'TLS'}</span>
                     </button>
                   ))}
                 </div>
@@ -169,28 +169,28 @@ export default function AbsConnectStep({ st, onConnected }: AbsConnectStepProps)
         {method === 'password' ? (
           <>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.username')}</div>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginBottom: 'var(--s-2)' }}>{t('onbConnect.username')}</div>
               <input className="saga-input" style={underline} value={user} onChange={e => setUser(e.target.value)} placeholder={t('onbConnect.username')} spellCheck={false} />
             </label>
             <label style={{ display: 'block' }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.password')}</div>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginBottom: 'var(--s-2)' }}>{t('onbConnect.password')}</div>
               <input className="saga-input" style={underline} type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder={t('onbConnect.passwordPlaceholder')} />
             </label>
           </>
         ) : (
           <label style={{ display: 'block' }}>
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbConnect.apiKey')}</div>
-            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 11, letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 4 }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={t('onbConnect.apiKeyPlaceholder')} spellCheck={false} autoComplete="off" />
-            <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(235,231,223,0.35)', marginTop: 8 }}>Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.</div>
+            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginBottom: 'var(--s-2)' }}>{t('onbConnect.apiKey')}</div>
+            <textarea className="saga-input" rows={3} style={{ ...underline, fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.03em', resize: 'none', lineHeight: 1.6, paddingTop: 'var(--s-1)' }} value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={t('onbConnect.apiKeyPlaceholder')} spellCheck={false} autoComplete="off" />
+            <div style={{ fontFamily: SANS, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-2)' }}>Generate a key in the Audiobookshelf WebUI under Settings → Users → API Keys.</div>
           </label>
         )}
       </div>
 
       {error && (
-        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: '#f1a89a', marginTop: 18 }}>{error}</div>
+        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: '#f1a89a', marginTop: 'var(--s-5)' }}>{error}</div>
       )}
 
-      <div style={{ marginTop: 28 }}>
+      <div style={{ marginTop: 'var(--s-8)' }}>
         <GoldButton type="submit" busy={pending}>{pending ? 'Connecting…' : 'Connect'}</GoldButton>
       </div>
     </form>

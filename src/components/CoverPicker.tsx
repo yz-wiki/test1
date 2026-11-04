@@ -24,7 +24,7 @@ const accentFocus = {
   },
   onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)';
-    e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
+    e.currentTarget.style.background = 'var(--onyx-bg-deep)';
   },
 };
 
@@ -118,41 +118,41 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
     }
   }
 
-  const label: CSSProperties = { fontFamily: MONO, fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.72, marginBottom: 6 };
-  const input: CSSProperties = { padding: '9px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: 8, color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 12.5, fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s' };
-  const btnMono: CSSProperties = { fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 500, padding: '8px 14px', borderRadius: 7, cursor: 'pointer', lineHeight: 1 };
+  const label: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.72, marginBottom: 'var(--s-2)' };
+  const input: CSSProperties = { padding: 'var(--s-3) var(--s-3)', background: 'var(--onyx-bg-deep)', borderRadius: 'var(--r-md)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 'var(--fs-2)', fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s' };
+  const btnMono: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 500, padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: 'pointer', lineHeight: 1 };
 
   const modal = (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-6)' }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="cover-picker-title" style={{
         width: '100%', maxWidth: 720, maxHeight: '90vh',
-        background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 16,
-        boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)',
+        background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)',
+        borderRadius: 'var(--r-overlay)',
+        boxShadow: 'var(--shadow-dialog)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, padding: '22px 22px 0 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ flexShrink: 0, padding: 'var(--s-6) var(--s-6) 0 var(--s-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--s-4)' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('cover.changeCover')}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.title ?? item.id}</div>
+            <div id="cover-picker-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('cover.changeCover')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 'var(--s-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.title ?? item.id}</div>
           </div>
-          <button onClick={onClose} aria-label={t('cover.close')} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
+          <button onClick={onClose} aria-label={t('cover.close')} style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-4)', lineHeight: 1, flexShrink: 0, marginTop: '2px' }}>✕</button>
         </div>
-        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
+        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: 'var(--s-4) 0 0' }} />
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-5) var(--s-6) var(--s-6)', display: 'flex', flexDirection: 'column', gap: 'var(--s-4)' }}>
           {/* Current cover + actions */}
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <div style={{ width: 96, height: 96, borderRadius: 6, background: 'var(--onyx-glass)', flexShrink: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', gap: 'var(--s-4)', alignItems: 'flex-start' }}>
+            <div style={{ width: 96, height: 96, borderRadius: 'var(--r-sm)', background: 'var(--onyx-glass)', flexShrink: 0, overflow: 'hidden' }}>
               {previewSrc && <img src={convertFileSrc(previewSrc)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
               <div style={label}>{t('cover.current')}</div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
                 <button onClick={() => void doUpload()} disabled={busy} style={{ ...btnMono, color: 'var(--onyx-accent)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>Upload…</button>
                 <button onClick={() => void doRemove()} disabled={busy} style={{ ...btnMono, color: '#e08a8a', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)' }}>{t('cover.remove')}</button>
               </div>
@@ -160,7 +160,7 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
           </div>
 
           {/* Search controls */}
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120 }}>
               <div style={label}>{t('cover.provider')}</div>
               <select value={provider} onChange={e => setProvider(e.target.value)} {...accentFocus} style={{ ...input, cursor: 'pointer' }}>
@@ -175,23 +175,23 @@ export default function CoverPicker({ item, st, onClose }: CoverPickerProps) {
               <div style={label}>{t('cover.author')}</div>
               <input value={author} onChange={e => setAuthor(e.target.value)} onKeyDown={e => e.key === 'Enter' && doSearch()} {...accentFocus} style={input} />
             </div>
-            <button onClick={() => void doSearch()} disabled={searching || !title.trim()} style={{ ...btnMono, padding: '8px 16px', background: 'var(--onyx-accent)', border: '1px solid transparent', color: 'var(--onyx-bg)', fontWeight: 600, opacity: searching || !title.trim() ? 0.6 : 1 }}>
+            <button onClick={() => void doSearch()} disabled={searching || !title.trim()} style={{ ...btnMono, padding: 'var(--s-2) var(--s-4)', background: 'var(--onyx-accent)', border: '1px solid transparent', color: 'var(--onyx-bg)', fontWeight: 600, opacity: searching || !title.trim() ? 0.6 : 1 }}>
               {searching ? 'Searching…' : 'Find covers'}
             </button>
           </div>
 
           {/* Results grid */}
           {results.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 'var(--s-3)' }}>
               {results.map((url, i) => (
-                <button key={i} onClick={() => void pick(url)} disabled={busy} title={t('cover.useThis')} style={{ padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
+                <button key={i} onClick={() => void pick(url)} disabled={busy} title={t('cover.useThis')} style={{ padding: '0', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', overflow: 'hidden', cursor: busy ? 'default' : 'pointer', background: 'var(--onyx-glass)', aspectRatio: '1 / 1' }}>
                   <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </button>
               ))}
             </div>
           )}
           {!searching && results.length === 0 && (
-            <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) 0' }}>
               {t('cover.hint')}
             </div>
           )}

@@ -53,12 +53,12 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
   // Already created — confirmation + Continue.
   if (created) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12, background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)' }}>
-          <span style={{ color: 'var(--onyx-accent)', fontSize: 18 }}>✓</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-4) var(--s-4)', borderRadius: 'var(--r-card)', background: 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.25)' }}>
+          <span style={{ color: 'var(--onyx-accent)', fontSize: 'var(--fs-6)' }}>✓</span>
           <div>
-            <div style={{ fontFamily: SERIF, fontSize: 15, color: '#ebe7df' }}>Created “{created.name}”</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(235,231,223,0.5)', marginTop: 2 }}>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text)' }}>Created “{created.name}”</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-1)' }}>
               {created.folders?.[0]?.fullPath ?? ''}
             </div>
           </div>
@@ -69,37 +69,37 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
   }
 
   const btn = (disabled = false): React.CSSProperties => ({
-    padding: '9px 15px', borderRadius: 8, fontFamily: MONO, fontSize: 10, letterSpacing: '0.07em',
+    padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.07em',
     textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1,
-    background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(235,231,223,0.7)',
+    background: 'transparent', border: '1px solid rgba(255,255,255,0.14)', color: 'var(--onyx-text)',
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' }}>
       {/* Name */}
       <label style={{ display: 'block' }}>
-        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 13, color: 'rgba(235,231,223,0.62)', marginBottom: 7 }}>{t('onbCreate.nameQuestion')}</div>
+        <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginBottom: 'var(--s-2)' }}>{t('onbCreate.nameQuestion')}</div>
         <input
           className="saga-input"
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder={mediaType === 'podcast' ? 'Podcasts' : 'Audiobooks'}
           spellCheck={false}
-          style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', outline: 'none', color: '#ebe7df', fontSize: 16, fontFamily: SERIF, padding: '0 0 9px' }}
+          style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', outline: 'none', color: 'var(--onyx-text)', fontSize: 'var(--fs-5)', fontFamily: SERIF, padding: '0 0 var(--s-3)' }}
         />
       </label>
 
       {/* Media type + location */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
           {(['book', 'podcast'] as const).map(t => (
             <button
               key={t} type="button" onClick={() => setMediaType(t)}
               style={{
-                padding: '8px 14px', fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+                padding: 'var(--s-2) var(--s-4)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase',
                 cursor: 'pointer', border: 'none',
                 background: mediaType === t ? 'rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.15)' : 'transparent',
-                color: mediaType === t ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.5)',
+                color: mediaType === t ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
               }}
             >{t === 'book' ? 'Audiobooks' : 'Podcasts'}</button>
           ))}
@@ -107,20 +107,20 @@ export default function CreateLocalStep({ st, created, onCreated, onSkip }: Crea
         <button type="button" onClick={chooseLocation} style={btn()}>{parent ? 'Change location' : 'Choose location…'}</button>
       </div>
 
-      <div style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(235,231,223,0.42)', lineHeight: 1.5 }}>
+      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', lineHeight: 1.5 }}>
         {parent
           ? `Will create  ${parent.replace(/[\\/]+$/, '')}\\${name.trim() || '<name>'}\\  with Staging, Audiobooks, Podcasts and Unidentified subfolders.`
           : 'Pick a location and Skald creates the library folder — with Staging, Audiobooks, Podcasts and Unidentified subfolders — for you.'}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-5)' }}>
         <GoldButton onClick={create} busy={busy} disabled={!name.trim() || !parent}>
           {busy ? 'Creating…' : 'Create library'}
         </GoldButton>
         <GhostButton onClick={onSkip}>{t('onbCreate.skipForNow')}</GhostButton>
       </div>
 
-      <div style={{ fontFamily: SANS, fontSize: 11.5, color: 'rgba(235,231,223,0.35)', maxWidth: 440, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: SANS, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', maxWidth: 440, lineHeight: 1.5 }}>
         You can add more local libraries, or remove this one, any time in Settings → Libraries → On this PC.
       </div>
     </div>

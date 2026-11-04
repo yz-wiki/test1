@@ -47,22 +47,22 @@ function fmtBytes(n: number): string {
 }
 
 const fieldStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 12px',
-  background: 'rgba(0,0,0,0.3)', border: '1px solid var(--onyx-glass-edge)',
-  borderRadius: 8, color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 13,
+  width: '100%', boxSizing: 'border-box', padding: 'var(--s-3) var(--s-3)',
+  background: 'var(--onyx-bg-deep)', border: '1px solid var(--onyx-glass-edge)',
+  borderRadius: 'var(--r-md)', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 'var(--fs-3)',
   outline: 'none', transition: 'border-color 0.15s',
 };
 
 const labelStyle: CSSProperties = {
-  fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
-  color: 'var(--onyx-text-mute)', marginBottom: 5, display: 'block',
+  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase',
+  color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-1)', display: 'block',
 };
 
 const pickerBtn: CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 7, padding: '8px 13px',
+  display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-2) var(--s-4)',
   background: 'transparent', border: '1px dashed var(--onyx-accent-edge)',
-  borderRadius: 8, color: 'var(--onyx-accent)', cursor: 'pointer',
-  fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+  borderRadius: 'var(--r-md)', color: 'var(--onyx-accent)', cursor: 'pointer',
+  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
 };
 
 export interface UploadModalProps {
@@ -217,29 +217,24 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
 
   const modal = (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 2000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-        padding: 24,
-      }}
+      className="ui-scrim"  style={{ zIndex: 2000 }}
       // Backdrop click closes only while idle — never abandon an active upload silently.
       onMouseDown={e => { if (e.target === e.currentTarget && !uploading) onClose(); }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title" style={{
         width: 460, maxHeight: '80vh',
-        background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 16,
-        boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)',
+        background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)',
+        borderRadius: 'var(--r-overlay)',
+        boxShadow: 'var(--shadow-dialog)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, padding: '20px 20px 0 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ flexShrink: 0, padding: 'var(--s-5) var(--s-5) 0 var(--s-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--s-4)' }}>
           <div style={{ minWidth: 0 }}>
             <div id="upload-dialog-title" style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>
               Upload to {lib.name}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 'var(--s-2)' }}>
               {isPodcast ? 'New podcast — files go to the server' : 'New book — files go to the server'}
             </div>
           </div>
@@ -247,15 +242,15 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
             aria-label={t('upload.close')}
             onClick={() => { if (!uploading) onClose(); }}
             disabled={uploading}
-            style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}
+            style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-4)', lineHeight: 1, flexShrink: 0, marginTop: '2px' }}
           >✕</button>
         </div>
-        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
+        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: 'var(--s-4) 0 0' }} />
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-4) var(--s-6)', display: 'flex', flexDirection: 'column', gap: 'var(--s-4)' }}>
           {/* Pickers */}
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
             <button onClick={() => void pickFiles()} disabled={uploading} style={{ ...pickerBtn, opacity: uploading ? 0.4 : 1, cursor: uploading ? 'default' : 'pointer' }}>
               <Icon name="plus" size={12} /> {t('upload.addFiles')}
             </button>
@@ -266,24 +261,24 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
 
           {/* File list */}
           {files.length > 0 && (
-            <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
               <div style={{ maxHeight: 168, overflowY: 'auto' }}>
                 {files.map(f => (
-                  <div key={f.path} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 11px', borderBottom: '1px solid var(--onyx-line)' }}>
+                  <div key={f.path} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-3)', borderBottom: '1px solid var(--onyx-line)' }}>
                     <Icon name="file" size={13} color="var(--onyx-text-mute)" />
-                    <span title={f.path} style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12.5 }}>{f.name}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{fmtBytes(f.size)}</span>
+                    <span title={f.path} style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--fs-2)' }}>{f.name}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{fmtBytes(f.size)}</span>
                     {!uploading && (
                       <button
                         onClick={() => setFiles(prev => prev.filter(x => x.path !== f.path))}
                         title={t('upload.remove')}
-                        style={{ flexShrink: 0, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'var(--onyx-text-mute)', fontSize: 11, cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                        style={{ flexShrink: 0, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-1)', cursor: 'pointer', padding: '0', lineHeight: 1 }}
                       >✕</button>
                     )}
                   </div>
                 ))}
               </div>
-              <div style={{ padding: '6px 11px', fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+              <div style={{ padding: 'var(--s-2) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
                 {files.length} file{files.length > 1 ? 's' : ''} · {fmtBytes(totalBytes)}
               </div>
             </div>
@@ -302,7 +297,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
             />
           </div>
           {!isPodcast && (
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 'var(--s-3)' }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{t('upload.author')}</label>
                 <input
@@ -331,7 +326,7 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
           {folders.length > 1 && (
             <div>
               <label style={labelStyle}>{t('upload.serverFolder')}</label>
-              <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-md)', overflow: 'hidden' }}>
                 {folders.map(f => {
                   const active = f.id === folderId;
                   return (
@@ -340,11 +335,11 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
                       onClick={() => { if (!uploading) setFolderId(f.id!); }}
                       disabled={uploading}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '8px 11px',
+                        display: 'flex', alignItems: 'center', gap: 'var(--s-3)', width: '100%', padding: 'var(--s-2) var(--s-3)',
                         background: active ? 'var(--onyx-accent-dim)' : 'transparent',
                         border: 'none', borderLeft: `2px solid ${active ? 'var(--onyx-accent)' : 'transparent'}`,
                         color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)',
-                        fontSize: 12.5, textAlign: 'left', fontFamily: MONO,
+                        fontSize: 'var(--fs-2)', textAlign: 'left', fontFamily: MONO,
                         cursor: uploading ? 'default' : 'pointer',
                       }}
                     >
@@ -357,52 +352,52 @@ export default function UploadModal({ st, onClose }: UploadModalProps) {
             </div>
           )}
           {folders.length === 0 && (
-            <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>
+            <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO }}>
               {t('upload.noFolders')}
             </div>
           )}
 
           {dupNames.length > 0 && (
-            <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO, wordBreak: 'break-word' }}>
+            <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO, wordBreak: 'break-word' }}>
               Duplicate file name{dupNames.length > 1 ? 's' : ''}: {dupNames.join(', ')} — the server puts all
               files in one folder, so one copy would be lost. Remove or rename the duplicates.
             </div>
           )}
 
           {error && (
-            <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO, wordBreak: 'break-word' }}>{error}</div>
+            <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO, wordBreak: 'break-word' }}>{error}</div>
           )}
         </div>
 
         {/* Footer — progress bar while uploading, action buttons while idle. */}
-        <div style={{ flexShrink: 0, padding: '12px 16px 16px', borderTop: '1px solid var(--onyx-line)' }}>
+        <div style={{ flexShrink: 0, padding: 'var(--s-3) var(--s-4) var(--s-4)', borderTop: '1px solid var(--onyx-line)' }}>
           {uploading ? (
             <div>
-              <div style={{ height: 4, borderRadius: 2, background: 'var(--onyx-glass-edge)', overflow: 'hidden', marginBottom: 8 }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: 'var(--onyx-accent)', borderRadius: 2, transition: 'width 0.2s ease' }} />
+              <div style={{ height: 4, borderRadius: 'var(--r-xs)', background: 'var(--onyx-glass-edge)', overflow: 'hidden', marginBottom: 'var(--s-2)' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: 'var(--onyx-accent)', borderRadius: 'var(--r-xs)', transition: 'width 0.2s ease' }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-3)' }}>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>
                   {fmtBytes(progress.bytesSent)} / {fmtBytes(progress.totalBytes)}
                 </span>
                 <button
                   onClick={() => { if (uploadIdRef.current) void cancelUpload(uploadIdRef.current).catch(e => log.error('library', 'cancelUpload failed', { err: String(e) })); }}
-                  style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '7px 12px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
+                  style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
                 >{t('upload.cancel')}</button>
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
               <button
                 onClick={onClose}
-                style={{ flex: 1, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '9px 14px', borderRadius: 8, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
+                style={{ flex: 1, fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}
               >{t('upload.cancel')}</button>
               <button
                 onClick={() => void startUpload()}
                 disabled={!canStart}
                 style={{
-                  flex: 2, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  padding: '9px 14px', borderRadius: 8, fontWeight: 600, border: '1px solid transparent',
+                  flex: 2, fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase',
+                  padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)', fontWeight: 600, border: '1px solid transparent',
                   background: canStart ? 'var(--onyx-accent)' : 'var(--onyx-accent-dim)',
                   color: canStart ? 'var(--onyx-bg)' : 'var(--onyx-text-mute)',
                   cursor: canStart ? 'pointer' : 'default',

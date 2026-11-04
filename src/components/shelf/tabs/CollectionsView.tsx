@@ -132,15 +132,15 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
       inline={inline}
     >
       {loading ? (
-        <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+        <div style={{ padding: 'var(--s-10) 0', textAlign: 'center', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
           Loading collections…
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: SERIF, fontSize: 15, color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
+        <div style={{ padding: 'var(--s-10) 0', textAlign: 'center', fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text-mute)', fontStyle: 'italic' }}>
           No collections yet — right-click any book to create one.
         </div>
       ) : st.libraryView === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
           {filtered.map(c => {
             const books = booksFor(c);
             return (
@@ -160,7 +160,7 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
                   <div
                     onClick={e => { e.stopPropagation(); setDetail(c); }}
                     title={t('collectionsView.manage')}
-                    style={{ padding: '3px 9px', borderRadius: 5, cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                    style={{ padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'rgba(8,8,11,0.7)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                   >
                     {t('collectionsView.manageLabel')}
                   </div>
@@ -184,15 +184,15 @@ export default function CollectionsView({ st, inline = false }: CollectionsViewP
               onClick: () => openCollection(c),
               leading: books[0]
                 ? <Cover item={books[0]} size={28} serverUrl={st.serverUrl} />
-                : <div style={{ width: 28, height: 28, borderRadius: 4, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />,
+                : <div style={{ width: 28, height: 28, borderRadius: 'var(--r-xs)', background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />,
               sort: { name: c.name, description: c.description ?? '', titles: books.length },
               cells: {
-                name:        <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>,
-                description: <div style={{ fontSize: 12.5, color: 'var(--onyx-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description ?? ''}</div>,
-                titles:      <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{books.length}</div>,
+                name:        <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>,
+                description: <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.description ?? ''}</div>,
+                titles:      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{books.length}</div>,
                 manage: (
                   <div onClick={e => { e.stopPropagation(); setDetail(c); }}
-                    style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: 5, cursor: 'pointer', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', userSelect: 'none' }}>
+                    style={{ display: 'inline-flex', alignItems: 'center', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', userSelect: 'none' }}>
                     {t('collectionsView.manageLabel')}
                   </div>
                 ),

@@ -39,17 +39,17 @@ const MENU_W = 248;
 const SUB_W = 210;
 
 const PANEL: React.CSSProperties = {
-  background: 'var(--onyx-panel2)',
+  background: 'var(--surface-overlay)',
   border: '1px solid var(--onyx-line)',
-  borderRadius: 12,
-  boxShadow: '0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.05)',
-  padding: 6,
+  borderRadius: 'var(--r-card)',
+  boxShadow: 'var(--shadow-popover)',
+  padding: 'var(--s-2)',
   fontFamily: 'inherit',
 };
 
 const HEADER: React.CSSProperties = {
-  fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase',
-  color: 'var(--onyx-text-mute)', padding: '8px 10px 5px',
+  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.14em', textTransform: 'uppercase',
+  color: 'var(--onyx-text-mute)', padding: 'var(--s-2) var(--s-3) var(--s-1)',
 };
 
 export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProps) {
@@ -182,10 +182,10 @@ export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProp
             onClose();
           }}
           style={{
-            display: 'flex', alignItems: 'center', gap: 11, width: '100%',
-            padding: '8px 10px', borderRadius: 7, border: 'none', background: bg,
+            display: 'flex', alignItems: 'center', gap: 'var(--s-3)', width: '100%',
+            padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', border: 'none', background: bg,
             color, cursor: disabled ? 'default' : 'pointer', textAlign: 'left',
-            fontFamily: 'inherit', fontSize: 13, fontWeight: item.primary ? 600 : 500,
+            fontFamily: 'inherit', fontSize: 'var(--fs-3)', fontWeight: item.primary ? 600 : 500,
             transition: 'background 0.1s, color 0.1s',
           }}
         >
@@ -216,10 +216,10 @@ export default function ContextMenu({ x, y, sections, onClose }: ContextMenuProp
         <div key={si}>
           {/* Divider above every group after the first; header replaces it when present. */}
           {si > 0 && !section.label && (
-            <div style={{ height: 1, background: 'var(--onyx-line)', margin: '6px 8px' }} />
+            <div style={{ height: 1, background: 'var(--onyx-line)', margin: 'var(--s-2) var(--s-2)' }} />
           )}
           {section.label && (
-            <div role="presentation" style={{ ...HEADER, ...(si > 0 ? { borderTop: '1px solid var(--onyx-line)', marginTop: 4, paddingTop: 10 } : {}) }}>
+            <div role="presentation" style={{ ...HEADER, ...(si > 0 ? { borderTop: '1px solid var(--onyx-line)', marginTop: 'var(--s-1)', paddingTop: 'var(--s-3)' } : {}) }}>
               {section.label}
             </div>
           )}

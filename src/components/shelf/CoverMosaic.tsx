@@ -16,7 +16,7 @@ export default function CoverMosaic({ books, serverUrl }: CoverMosaicProps) {
       display: 'grid',
       gridTemplateColumns: slots.length === 1 ? '1fr' : '1fr 1fr',
       gridTemplateRows: slots.length <= 2 ? '1fr' : '1fr 1fr',
-      gap: 1,
+      gap: '2px',
     }}>
       <div style={{ position: 'absolute', inset: '20% 30% 0', borderRadius: '50%', background: 'radial-gradient(50% 50% at 50% 50%, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.15), transparent 70%)', filter: 'blur(40px)', pointerEvents: 'none', zIndex: 0 }} />
       {slots.map(b => (

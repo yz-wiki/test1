@@ -46,18 +46,18 @@ function Choice({ icon, title, copy, disabled, onClick }: {
       onClick={onClick}
       disabled={disabled}
       style={{
-        display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
-        padding: '14px 15px', borderRadius: 10,
+        display: 'flex', alignItems: 'center', gap: 'var(--s-4)', width: '100%', textAlign: 'left',
+        padding: 'var(--s-4) var(--s-4)', borderRadius: 'var(--r-card)',
         background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
         color: 'var(--onyx-text)', cursor: disabled ? 'wait' : 'pointer', opacity: disabled ? 0.55 : 1,
       }}
     >
-      <span style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)' }}>
+      <span style={{ width: 34, height: 34, borderRadius: 'var(--r-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)' }}>
         <Icon name={icon} size={16} />
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600 }}>{title}</span>
-        <span style={{ display: 'block', marginTop: 3, fontSize: 11.5, lineHeight: 1.45, color: 'var(--onyx-text-mute)' }}>{copy}</span>
+        <span style={{ display: 'block', fontSize: 'var(--fs-4)', fontWeight: 600 }}>{title}</span>
+        <span style={{ display: 'block', marginTop: 'var(--s-1)', fontSize: 'var(--fs-2)', lineHeight: 1.45, color: 'var(--onyx-text-mute)' }}>{copy}</span>
       </span>
       <Icon name="chevron-right" size={13} color="var(--onyx-text-mute)" />
     </button>
@@ -182,36 +182,36 @@ export default function LocalImportDialog({ st, library, onClose, onImported }: 
 
   const modalStyle: CSSProperties = {
     width: 500, maxWidth: 'calc(100vw - 48px)',
-    background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 16,
-    boxShadow: '0 40px 100px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.04)',
+    background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-overlay)',
+    boxShadow: 'var(--shadow-dialog)',
     overflow: 'hidden',
   };
 
   return ReactDOM.createPortal(
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+      className="ui-scrim"  style={{ zIndex: 2000 }}
       onMouseDown={event => { if (event.target === event.currentTarget && !working) onClose(); }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="local-import-title" style={modalStyle}>
-        <div style={{ padding: '20px 20px 16px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderBottom: '1px solid var(--onyx-line)' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-5) var(--s-4) var(--s-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--s-4)', borderBottom: '1px solid var(--onyx-line)' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="local-import-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500 }}>Add books to “{library.name}”</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6 }}>{t('localImport.chooseMode')}</div>
+            <div id="local-import-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }}>Add books to “{library.name}”</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 'var(--s-2)' }}>{t('localImport.chooseMode')}</div>
           </div>
-          <button onClick={onClose} aria-label={t('localImport.close')} disabled={working} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 15 }}>×</button>
+          <button onClick={onClose} aria-label={t('localImport.close')} disabled={working} style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: 'none', color: 'var(--onyx-text-mute)', cursor: working ? 'wait' : 'pointer', opacity: working ? 0.4 : 1, fontSize: 'var(--fs-4)' }}>×</button>
         </div>
 
-        <div style={{ padding: '18px 22px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ padding: '10px 12px', borderRadius: 9, background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>{t('localImport.whatHappens')}</div>
-            <div style={{ marginTop: 6, fontSize: 11.5, lineHeight: 1.5, color: 'var(--onyx-text-dim)' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-5)', display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+          <div style={{ padding: 'var(--s-3) var(--s-3)', borderRadius: 'var(--r-md)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', color: 'var(--onyx-accent)', textTransform: 'uppercase' }}>{t('localImport.whatHappens')}</div>
+            <div style={{ marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', lineHeight: 1.5, color: 'var(--onyx-text-dim)' }}>
               {t('localImport.sourceFiles')}<span aria-hidden="true">→</span> <strong>{library.organizeMode === 'move' ? 'Move after verification' : 'Copy and keep originals'}</strong> <span aria-hidden="true">→</span> {t('localImport.managedLibrary')}<span aria-hidden="true">→</span> {t('localImport.needsAttentionHint')}
             </div>
           </div>
           <Choice icon="file" title={busy === 'files' ? 'Adding files…' : 'Add files'} copy="Choose one or more audiobook files from this PC." disabled={working} onClick={() => void pickFiles()} />
           <Choice icon="layers" title={busy === 'folder' ? 'Scanning folder…' : 'Add folder'} copy="Choose a book folder or a parent folder; Skald will scan and file every book it finds." disabled={working} onClick={() => void pickFolder()} />
           <Choice icon="upload" title={busy === 'staging' ? 'Opening Staging…' : 'Open Staging'} copy="Drop files or folders into the watched Staging folder for automatic import." disabled={working} onClick={() => void openStaging()} />
-          {error && <div style={{ marginTop: 2, padding: '9px 11px', borderRadius: 8, background: 'rgba(232,113,106,0.08)', color: '#e8716a', fontFamily: MONO, fontSize: 10.5, lineHeight: 1.45 }}>{error}</div>}
+          {error && <div style={{ marginTop: 'var(--s-1)', padding: 'var(--s-3) var(--s-3)', borderRadius: 'var(--r-md)', background: 'rgba(232,113,106,0.08)', color: '#e8716a', fontFamily: MONO, fontSize: 'var(--fs-0)', lineHeight: 1.45 }}>{error}</div>}
         </div>
       </div>
     </div>,

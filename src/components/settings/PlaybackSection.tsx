@@ -91,12 +91,12 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
       {/* Subtab pill toggle — Playback settings vs Listening Sessions */}
       <div style={{
         display: 'flex',
-        padding: 3,
-        gap: 3,
+        padding: 'var(--s-1)',
+        gap: 'var(--s-1)',
         background: 'var(--onyx-glass)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 10,
-        marginBottom: 28, // space before the active tab's content
+        borderRadius: 'var(--r-card)',
+        marginBottom: 'var(--s-8)', // space before the active tab's content
         width: 'fit-content', // shrink-wrap to just the two pills
       }}>
         {([ { id: 'playback', label: 'Playback' }, { id: 'sessions', label: 'Sessions' } ] as const).map(t => {
@@ -106,12 +106,12 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
               key={t.id}
               onClick={() => switchTab(t.id)}
               style={{
-                padding: '7px 18px',
-                borderRadius: 7,
+                padding: 'var(--s-2) var(--s-5)',
+                borderRadius: 'var(--r-sm)',
                 cursor: 'pointer',
                 border: 'none',
                 fontFamily: MONO,
-                fontSize: 11,
+                fontSize: 'var(--fs-1)',
                 fontWeight: active ? 600 : 400,
                 letterSpacing: '0.04em',
                 // Active pill: dimmed gold background with inset ring (matches GreetingPane toggle).
@@ -132,7 +132,7 @@ export default function PlaybackSection({ st }: PlaybackSectionProps) {
 
       {/* Playback tab — existing speed/skip/sleep/auto-play controls, wrapped in a Panel */}
       {tab === 'playback' && (
-        <Panel label={t('playback.title')} style={{ marginTop: 0 }}>
+        <Panel label={t('playback.title')} style={{ marginTop: '0' }}>
           <Row label={t('playback.defaultSpeed')} hint={t('playback.defaultSpeedHint')}>
             <SegGroup>
               {SPEEDS.map(s => (

@@ -19,16 +19,16 @@ const MONO  = 'var(--font-ui)';
 // Defined at module scope (not inside the component) so the inputs are not
 // remounted on every keystroke — that remount drops focus after one character.
 const labelStyle: CSSProperties = {
-  fontFamily: MONO, fontSize: 9, letterSpacing: '0.15em',
-  textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.72, marginBottom: 6,
+  fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em',
+  textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.72, marginBottom: 'var(--s-2)',
 };
 const inputStyle: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 12px',
-  background: 'rgba(0,0,0,0.3)', borderRadius: 8, color: 'var(--onyx-text)',
-  border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 13, fontFamily: 'inherit',
+  width: '100%', boxSizing: 'border-box', padding: 'var(--s-3) var(--s-3)',
+  background: 'var(--onyx-bg-deep)', borderRadius: 'var(--r-md)', color: 'var(--onyx-text)',
+  border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontSize: 'var(--fs-3)', fontFamily: 'inherit',
   transition: 'border-color 0.15s, background 0.15s',
 };
-const sectionRule: CSSProperties = { gridColumn: '1 / -1', height: 1, background: 'var(--onyx-line)', margin: '3px 0' };
+const sectionRule: CSSProperties = { gridColumn: '1 / -1', height: 1, background: 'var(--onyx-line)', margin: 'var(--s-1) 0' };
 
 // Accent focus ring applied to text fields (the template's focused-input look).
 // Theme-safe — uses the accent edge / glass edge vars.
@@ -39,7 +39,7 @@ const accentFocus = {
   },
   onBlur: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)';
-    e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
+    e.currentTarget.style.background = 'var(--onyx-bg-deep)';
   },
 };
 
@@ -73,9 +73,9 @@ function TimeInput({ value, onCommit }: { value: number; onCommit: (secs: number
         setLocal(fmtHMS(next));
       }}
       style={{
-        width: 86, flexShrink: 0, fontFamily: MONO, fontSize: 12, color: 'var(--onyx-accent)', textAlign: 'center',
+        width: 86, flexShrink: 0, fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-accent)', textAlign: 'center',
         background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.18)',
-        borderRadius: 6, padding: '6px 8px', outline: 'none', transition: 'border-color 0.15s, background 0.15s',
+        borderRadius: 'var(--r-sm)', padding: 'var(--s-2) var(--s-2)', outline: 'none', transition: 'border-color 0.15s, background 0.15s',
       }}
     />
   );
@@ -377,52 +377,52 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
         background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(10px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-6)',
       }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="metadata-editor-title" style={{
         width: '100%', maxWidth: 720, maxHeight: '90vh',
-        background: 'var(--onyx-panel)', border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 16,
-        boxShadow: '0 40px 100px rgba(0,0,0,0.72), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), inset 0 1px 0 rgba(255,255,255,0.04)',
+        background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)',
+        borderRadius: 'var(--r-overlay)',
+        boxShadow: 'var(--shadow-dialog)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, padding: '22px 22px 0 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ flexShrink: 0, padding: 'var(--s-6) var(--s-6) 0 var(--s-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--s-4)' }}>
           <div style={{ minWidth: 0 }}>
-            <div id="metadata-editor-title" style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('metaEditor.heading')}</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div id="metadata-editor-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.1 }}>{t('metaEditor.heading')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 'var(--s-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {item.media.metadata.title ?? item.id}
             </div>
           </div>
-          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>✕</button>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: '1px solid transparent', color: 'var(--onyx-text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-4)', lineHeight: 1, flexShrink: 0, marginTop: '2px' }}>✕</button>
         </div>
 
         {/* Tabs (pills) */}
-        <div style={{ flexShrink: 0, display: 'flex', gap: 5, padding: '16px 24px 0' }}>
+        <div style={{ flexShrink: 0, display: 'flex', gap: 'var(--s-1)', padding: 'var(--s-4) var(--s-6) 0' }}>
           {tabs.map(tabKey => {
             const active = tab === tabKey;
             return (
               <button key={tabKey} onClick={() => setTab(tabKey)} style={{
-                fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const,
-                padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontWeight: 500, lineHeight: 1.4,
+                fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+                padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', fontWeight: 500, lineHeight: 1.4,
                 background: active ? 'var(--onyx-accent-dim)' : 'transparent',
                 color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
                 border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'transparent'}`,
               }}>
-                {tabKey === 'chapters' ? <>{t('metaEditor.chapters')}<span style={{ opacity: 0.55, fontSize: 8.5 }}>{chapters.length}</span></> : t('metaEditor.detailsTab')}
+                {tabKey === 'chapters' ? <>{t('metaEditor.chapters')}<span style={{ opacity: 0.55, fontSize: 'var(--fs-0)' }}>{chapters.length}</span></> : t('metaEditor.detailsTab')}
               </button>
             );
           })}
         </div>
-        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: '14px 0 0' }} />
+        <div style={{ flexShrink: 0, height: 1, background: 'var(--onyx-line)', margin: 'var(--s-4) 0 0' }} />
 
         {/* Body — chapters render full-bleed (own row padding), details stay padded */}
         <div style={{ flex: 1, overflowY: 'auto', padding: tab === 'chapters' ? 0 : '20px 24px 24px' }}>
-          {loading && <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '20px 24px' }}>Loading…</div>}
+          {loading && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-5) var(--s-6)' }}>Loading…</div>}
 
           {!loading && tab === 'details' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--s-4)' }}>
               <Field label={t('metaEditor.title')} value={title} onChange={setTitle} full />
               <Field label={t('metaEditor.subtitle')} value={subtitle} onChange={setSubtitle} full />
               <Field label={t('metaEditor.authors')} value={authors} onChange={setAuthors} />
@@ -439,9 +439,9 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
               <Field label="ASIN" value={asin} onChange={setAsin} mono />
               <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column' }}>
                 <div style={labelStyle}>{t('metaEditor.description')}</div>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} {...accentFocus} style={{ ...inputStyle, resize: 'none', height: 110, lineHeight: 1.6, fontSize: 12.5 }} />
+                <textarea value={description} onChange={e => setDescription(e.target.value)} {...accentFocus} style={{ ...inputStyle, resize: 'none', height: 110, lineHeight: 1.6, fontSize: 'var(--fs-2)' }} />
               </div>
-              <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--onyx-text)', cursor: 'pointer' }}>
+              <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-3)', color: 'var(--onyx-text)', cursor: 'pointer' }}>
                 <input type="checkbox" checked={explicit} onChange={e => setExplicit(e.target.checked)} />
                 {t('metaEditor.explicit')}
               </label>
@@ -451,16 +451,16 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
           {!loading && tab === 'chapters' && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {chapters.length === 0 && (
-                <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '16px 24px' }}>{t('metaEditor.noChapters')}</div>
+                <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) var(--s-6)' }}>{t('metaEditor.noChapters')}</div>
               )}
               {chapters.map((c, i) => (
                 <div
                   key={i}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 24px 7px 20px', borderBottom: i < chapters.length - 1 ? '1px solid var(--onyx-line)' : 'none', transition: 'background 0.1s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-6) var(--s-2) var(--s-5)', borderBottom: i < chapters.length - 1 ? '1px solid var(--onyx-line)' : 'none', transition: 'background 0.1s' }}
                 >
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', minWidth: 22, textAlign: 'right', flexShrink: 0, letterSpacing: '0.02em' }}>{i + 1}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', minWidth: 22, textAlign: 'right', flexShrink: 0, letterSpacing: '0.02em' }}>{i + 1}</span>
                   <TimeInput
                     value={c.start}
                     onCommit={secs => setChapters(prev => prev.map((x, j) => j === i ? { ...x, start: secs } : x))}
@@ -471,31 +471,31 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
                     placeholder={t('metaEditor.chapterTitle')}
                     onFocus={e => { e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; e.currentTarget.style.background = 'rgba(0,0,0,0.32)'; }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; e.currentTarget.style.background = 'rgba(0,0,0,0.22)'; }}
-                    style={{ flex: 1, minWidth: 0, background: 'rgba(0,0,0,0.22)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '6px 10px', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 12.5, outline: 'none', transition: 'border-color 0.15s, background 0.15s' }}
+                    style={{ flex: 1, minWidth: 0, background: 'rgba(0,0,0,0.22)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-2) var(--s-3)', color: 'var(--onyx-text)', fontFamily: 'inherit', fontSize: 'var(--fs-2)', outline: 'none', transition: 'border-color 0.15s, background 0.15s' }}
                   />
                   <button
                     onClick={() => setChapters(prev => prev.filter((_, j) => j !== i))}
                     title={t('metaEditor.remove')}
                     onMouseEnter={e => { e.currentTarget.style.color = '#e8716a'; e.currentTarget.style.background = 'rgba(220,80,80,0.12)'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--onyx-text-mute)'; e.currentTarget.style.background = 'none'; }}
-                    style={{ width: 26, height: 26, borderRadius: 6, background: 'none', border: 'none', color: 'var(--onyx-text-mute)', opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, lineHeight: 1, transition: 'color 0.15s, background 0.15s' }}
+                    style={{ width: 26, height: 26, borderRadius: 'var(--r-sm)', background: 'none', border: 'none', color: 'var(--onyx-text-mute)', opacity: 0.6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-3)', flexShrink: 0, lineHeight: 1, transition: 'color 0.15s, background 0.15s' }}
                   >✕</button>
                 </div>
               ))}
               {/* Add + hint — padded so it doesn't sit flush against the full-bleed rows */}
-              <div style={{ padding: '14px 24px 6px' }}>
+              <div style={{ padding: 'var(--s-4) var(--s-6) var(--s-2)' }}>
                 <button
                   onClick={() => setChapters(prev => [...prev, { start: prev.length ? prev[prev.length - 1].start + 1 : 0, title: '' }])}
-                  style={{ fontFamily: MONO, fontSize: 11, padding: '6px 12px', borderRadius: 6, background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', cursor: 'pointer' }}
+                  style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', cursor: 'pointer' }}
                 >+ Add chapter</button>
-                <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 10, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-3)', lineHeight: 1.5 }}>
                   {t('metaEditor.timeHint')}
                 </div>
                 {/* Local single-file books: chapters always save to the library;
                     this also embeds them into the audio file so they survive a
                     re-scan. Best-effort — a locked file leaves the library edit. */}
                 {isLocal && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--onyx-text-dim)', cursor: 'pointer', marginTop: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', cursor: 'pointer', marginTop: 'var(--s-3)' }}>
                     <input type="checkbox" checked={writeToFile} onChange={e => setWriteToFile(e.target.checked)} />
                     {t('metaEditor.writeChapters')}
                   </label>
@@ -506,13 +506,13 @@ export default function MetadataEditor({ item, serverUrl, onClose, onComplete, o
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '13px 24px', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9, flexShrink: 0 }}>
-          {error && <span style={{ fontFamily: MONO, fontSize: 10.5, color: '#e08a8a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{error}</span>}
-          <button onClick={onClose} style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 500, padding: '8px 16px', borderRadius: 7, cursor: 'pointer', lineHeight: 1, background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}>{t('metaEditor.cancel')}</button>
+        <div style={{ padding: 'var(--s-4) var(--s-6)', borderTop: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--s-3)', flexShrink: 0 }}>
+          {error && <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: '#e08a8a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{error}</span>}
+          <button onClick={onClose} style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 500, padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: 'pointer', lineHeight: 1, background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-dim)' }}>{t('metaEditor.cancel')}</button>
           <button
             onClick={() => (tab === 'details' ? void saveDetails() : void saveChapterEdits())}
             disabled={saving || loading}
-            style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 600, padding: '8px 16px', borderRadius: 7, cursor: saving || loading ? 'default' : 'pointer', lineHeight: 1, border: '1px solid transparent', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', opacity: saving || loading ? 0.6 : 1 }}
+            style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, fontWeight: 600, padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: saving || loading ? 'default' : 'pointer', lineHeight: 1, border: '1px solid transparent', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', opacity: saving || loading ? 0.6 : 1 }}
           >
             {saving ? 'Saving…' : tab === 'details' ? 'Save details' : 'Save chapters'}
           </button>

@@ -257,35 +257,35 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
 
   const filterPills = FILTER_PILLS.map(f => (
     <button key={f.id} onClick={() => st.setFilter(f.id)} style={{
-      padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
+      padding: 'var(--s-1) var(--s-3)', borderRadius: 999, cursor: 'pointer',
       background: st.filter === f.id ? 'var(--onyx-accent-dim)' : 'transparent',
       border: `1px solid ${st.filter === f.id ? 'var(--onyx-accent-edge)' : 'transparent'}`,
       color: st.filter === f.id ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-      fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+      fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase',
     }}>{f.l}</button>
   ));
 
   return (
-    <div ref={containerRef} style={{ padding: '8px 4px 14px' }}>
+    <div ref={containerRef} style={{ padding: 'var(--s-2) var(--s-1) var(--s-4)' }}>
 
       {/* Main row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-4)' }}>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-1)', minWidth: 0, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-7)', fontWeight: 500, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {/* Always show "The shelf" — active filter is indicated by the pill row below */}
               The shelf
             </div>
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {subtitleText}
           </div>
           {/* Scope caption (review L1): Collections/Playlists are deliberately
               absent on the combined shelf — say so up front, so the reduced
               action set reads as a boundary rather than a missing feature. */}
           {isAllLibraries && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
               Search and play across sources · organize books from their source library
             </div>
           )}
@@ -293,14 +293,14 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
           {isLibrary && st.contextFilter && (
             <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 14 /* Extra bottom padding clears the TopNav tab underline indicator which protrudes below the nav bar */ }}>
               <button onClick={() => st.setContextFilter(null)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px 4px 10px',
+                display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-1) var(--s-2) var(--s-1) var(--s-3)',
                 background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', borderRadius: 999,
-                fontFamily: MONO, fontSize: 10, color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase',
+                fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-accent)', letterSpacing: '0.06em', textTransform: 'uppercase',
                 cursor: 'pointer',
               }}>
-                <span style={{ fontSize: 9, opacity: 0.7 }}>{st.contextFilter.kind.toUpperCase()}</span>
+                <span style={{ fontSize: 'var(--fs-0)', opacity: 0.7 }}>{st.contextFilter.kind.toUpperCase()}</span>
                 {st.contextFilter.value}
-                <span style={{ fontSize: 13, marginLeft: 2, lineHeight: 1 }}>×</span>
+                <span style={{ fontSize: 'var(--fs-3)', marginLeft: 'var(--s-1)', lineHeight: 1 }}>×</span>
               </button>
             </div>
           )}
@@ -328,9 +328,9 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
               el.scrollLeft += e.deltaY + e.deltaX;
             }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 4, padding: '4px',
+              display: 'flex', alignItems: 'center', gap: 'var(--s-1)', padding: 'var(--s-1)',
               background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-              borderRadius: 10, flexWrap: 'nowrap',
+              borderRadius: 'var(--r-card)', flexWrap: 'nowrap',
               minWidth: 0, overflowX: 'auto',
               scrollbarWidth: 'none',            // Firefox
               msOverflowStyle: 'none' as 'none', // legacy Edge; WebView2 uses ::-webkit-scrollbar in index.css
@@ -360,11 +360,11 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
                     if (t.id === 'recently-added') st.setContextFilter(null);
                     st.setShelfTab(t.id);
                   }} style={{
-                    padding: '7px 10px', borderRadius: 7, cursor: 'pointer', fontFamily: 'inherit',
+                    padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', fontFamily: 'inherit',
                     background: active ? 'var(--onyx-accent-dim)' : 'transparent',
                     border: `1px solid ${active ? 'var(--onyx-accent-edge)' : 'transparent'}`,
                     color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
-                    fontSize: 12, fontWeight: active ? 600 : 500,
+                    fontSize: 'var(--fs-2)', fontWeight: active ? 600 : 500,
                     // Keep each tab at its natural size so the strip scrolls rather
                     // than squeezing labels toward illegibility.
                     whiteSpace: 'nowrap', flexShrink: 0,
@@ -377,7 +377,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
         </div>
 
         {toggleInline && (
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center', flexShrink: 0 }}>
             <FocusRailToggle />
             <div style={{ marginRight: pillsInline ? 6 : 0 }}>
               <ViewModeToggle st={st} />
@@ -394,10 +394,10 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
           the notice until the next partial load. */}
       {isAllLibraries && st.allLibrariesPartial && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
-          padding: '6px 6px 6px 12px', borderRadius: 8, width: 'fit-content',
+          display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginTop: 'var(--s-3)',
+          padding: 'var(--s-2) var(--s-2) var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)', width: 'fit-content',
           border: '1px solid rgba(212,131,74,0.4)', background: 'rgba(212,131,74,0.08)',
-          fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+          fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase',
           color: '#d4834a',
         }}>
           <span>
@@ -407,18 +407,18 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
           <button
             onClick={() => { void st.setActiveLibrary(st.currentLibraryId); }}
             style={{
-              padding: '3px 10px', borderRadius: 999, cursor: 'pointer',
+              padding: 'var(--s-1) var(--s-3)', borderRadius: 999, cursor: 'pointer',
               background: 'rgba(212,131,74,0.14)', border: '1px solid rgba(212,131,74,0.4)',
-              color: '#d4834a', fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+              color: '#d4834a', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase',
             }}
           >{t('shelfHead.retry')}</button>
           <button
             onClick={() => st.dismissAllLibrariesPartial()}
             aria-label={t('shelfHead.dismiss')}
             style={{
-              padding: '3px 8px', borderRadius: 999, cursor: 'pointer',
+              padding: 'var(--s-1) var(--s-2)', borderRadius: 999, cursor: 'pointer',
               background: 'transparent', border: '1px solid transparent',
-              color: '#d4834a', fontSize: 13, lineHeight: 1,
+              color: '#d4834a', fontSize: 'var(--fs-3)', lineHeight: 1,
             }}
           >×</button>
         </div>
@@ -426,7 +426,7 @@ export default function ShelfHeader({ st }: ShelfHeaderProps) {
 
       {/* Second row — shown below 900px */}
       {!pillsInline && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 10 }}>
+        <div style={{ display: 'flex', gap: 'var(--s-2)', alignItems: 'center', marginTop: 'var(--s-3)' }}>
           <FocusRailToggle />
           {!toggleInline && <ViewModeToggle st={st} />}
           {filterPills}

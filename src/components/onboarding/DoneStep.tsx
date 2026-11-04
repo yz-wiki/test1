@@ -26,18 +26,18 @@ export default function DoneStep({ st, path, created, onFinish }: DoneStepProps)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-6)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
         {lines.map(l => (
-          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ color: 'var(--onyx-accent)', fontSize: 15 }}>✓</span>
-            <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(235,231,223,0.45)', width: 110, flexShrink: 0 }}>{l.label}</span>
-            <span style={{ fontFamily: SERIF, fontSize: 14.5, color: '#ebe7df', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.value}</span>
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-card)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ color: 'var(--onyx-accent)', fontSize: 'var(--fs-4)' }}>✓</span>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-dim)', width: 110, flexShrink: 0 }}>{l.label}</span>
+            <span style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.value}</span>
           </div>
         ))}
       </div>
 
-      <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 14, color: 'rgba(235,231,223,0.6)', maxWidth: 440, lineHeight: 1.55 }}>
+      <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-4)', color: 'var(--onyx-text)', maxWidth: 440, lineHeight: 1.55 }}>
         {path === 'abs'
           ? 'Your collection is ready. Press in and pick up where the telling left off.'
           : 'The hall is ready. Open it and begin.'}

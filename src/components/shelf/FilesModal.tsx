@@ -48,9 +48,9 @@ function TypeBadge({ fileType }: { fileType: string }) {
   const c = TYPE_COLORS[fileType?.toLowerCase()] ?? TYPE_NEUTRAL;
   return (
     <span style={{
-      display: 'inline-block', fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em',
+      display: 'inline-block', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em',
       textTransform: 'uppercase', color: c.fg, background: c.bg, border: `1px solid ${c.border}`,
-      borderRadius: 5, padding: '3px 8px', lineHeight: 1, whiteSpace: 'nowrap',
+      borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)', lineHeight: 1, whiteSpace: 'nowrap',
     }}>{fileType}</span>
   );
 }
@@ -59,8 +59,8 @@ function TypeBadge({ fileType }: { fileType: string }) {
 // "[ASIN].ext" (or bare extension) in dim mono — matching the reference. A
 // leading "[" splits title from code; otherwise the final extension is dimmed.
 function renderName(filename: string) {
-  const title: CSSProperties = { fontFamily: SANS, fontSize: 13.5, color: 'var(--onyx-text)' };
-  const code: CSSProperties = { fontFamily: MONO, fontSize: 12, color: 'var(--onyx-text-dim)' };
+  const title: CSSProperties = { fontFamily: SANS, fontSize: 'var(--fs-4)', color: 'var(--onyx-text)' };
+  const code: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' };
 
   const bracket = filename.match(/^(.*?)(\s*\[[^\]]*\].*)$/);
   if (bracket) {
@@ -88,47 +88,43 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
 
   const modal = (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 2000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.6)',
-      }}
+      className="ui-scrim"  style={{ zIndex: 2000 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="library-files-title" style={{
         width: 620,
         maxWidth: '90vw',
-        background: 'var(--onyx-panel2)',
+        background: 'var(--surface-overlay)',
         border: '1px solid var(--onyx-line)',
-        borderRadius: 16,
-        boxShadow: '0 32px 80px rgba(0,0,0,0.72)',
+        borderRadius: 'var(--r-overlay)',
+        boxShadow: 'var(--shadow-dialog)',
         display: 'flex',
         flexDirection: 'column',
         maxHeight: '70vh',
       }}>
         {/* Header */}
-        <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <div id="library-files-title" style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: 'var(--onyx-text)' }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)' }}>
+          <div id="library-files-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, color: 'var(--onyx-text)' }}>
             {t('filesModal.title')}
           </div>
           {files !== null && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
               {files.length} {files.length === 1 ? 'file' : 'files'}
             </div>
           )}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--s-2)', alignItems: 'center' }}>
             <button
               onClick={() => setFullPath(p => !p)}
               style={{
                 background: fullPath ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: `1px solid ${fullPath ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-                borderRadius: 8,
+                borderRadius: 'var(--r-md)',
                 color: fullPath ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
                 fontFamily: MONO,
-                fontSize: 10,
+                fontSize: 'var(--fs-0)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase' as const,
-                padding: '6px 14px',
+                padding: 'var(--s-2) var(--s-4)',
                 cursor: 'pointer',
               }}
             >
@@ -139,13 +135,13 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
               style={{
                 background: 'transparent',
                 border: '1px solid var(--onyx-glass-edge)',
-                borderRadius: 8,
+                borderRadius: 'var(--r-md)',
                 color: 'var(--onyx-text-dim)',
                 fontFamily: MONO,
-                fontSize: 10,
+                fontSize: 'var(--fs-0)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase' as const,
-                padding: '6px 14px',
+                padding: 'var(--s-2) var(--s-4)',
                 cursor: 'pointer',
               }}
             >
@@ -157,15 +153,15 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {files === null && !error && (
-            <div style={{ padding: '24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
+            <div style={{ padding: 'var(--s-6)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
               Loading…
             </div>
           )}
           {error && (
-            <div style={{ padding: '16px 24px', fontSize: 12, color: '#e8716a' }}>{error}</div>
+            <div style={{ padding: 'var(--s-4) var(--s-6)', fontSize: 'var(--fs-2)', color: '#e8716a' }}>{error}</div>
           )}
           {files !== null && files.length === 0 && (
-            <div style={{ padding: '24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+            <div style={{ padding: 'var(--s-6)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
               {t('filesModal.empty')}
             </div>
           )}
@@ -175,8 +171,8 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                 <tr style={{ borderBottom: '1px solid var(--onyx-line)' }}>
                   {(['PATH', 'SIZE', 'TYPE'] as const).map(h => (
                     <th key={h} style={{
-                      padding: '8px 24px',
-                      fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
+                      padding: 'var(--s-2) var(--s-6)',
+                      fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em',
                       textTransform: 'uppercase', color: HEAD_ACCENT,
                       fontWeight: 400, textAlign: 'left',
                     }}>{h}</th>
@@ -189,15 +185,15 @@ export default function FilesModal({ bookId, serverUrl, onClose }: FilesModalPro
                     key={f.ino}
                     style={{ borderBottom: i < files.length - 1 ? '1px solid var(--onyx-line)' : 'none' }}
                   >
-                    <td style={{ padding: '12px 24px', wordBreak: 'break-all' }}>
+                    <td style={{ padding: 'var(--s-3) var(--s-6)', wordBreak: 'break-all' }}>
                       {fullPath
-                        ? <span style={{ fontFamily: MONO, fontSize: 12, color: 'var(--onyx-text-dim)' }}>{f.metadata.path ?? f.metadata.filename}</span>
+                        ? <span style={{ fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{f.metadata.path ?? f.metadata.filename}</span>
                         : renderName(f.metadata.filename)}
                     </td>
-                    <td style={{ padding: '12px 24px', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-dim)', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: 'var(--s-3) var(--s-6)', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)', whiteSpace: 'nowrap' }}>
                       {fmtSize(f.metadata.size)}
                     </td>
-                    <td style={{ padding: '12px 24px', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: 'var(--s-3) var(--s-6)', whiteSpace: 'nowrap' }}>
                       <TypeBadge fileType={f.fileType} />
                     </td>
                   </tr>

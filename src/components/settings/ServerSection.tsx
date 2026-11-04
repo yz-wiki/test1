@@ -17,13 +17,13 @@ export default function ServerSection({ st }: ServerSectionProps) {
       <Panel label={t('srv.connection')}>
         {/* Connection status — dot + label */}
         <Row label={t('srv.status')}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--s-2)' }}>
             <span style={{
-              width: 8, height: 8, borderRadius: 4, flexShrink: 0, display: 'inline-block',
+              width: 8, height: 8, borderRadius: 'var(--r-xs)', flexShrink: 0, display: 'inline-block',
               background: connected ? '#5ac88a' : 'var(--onyx-text-mute)',
               boxShadow: connected ? '0 0 8px #5ac88a' : 'none',
             }} />
-            <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: connected ? '#5ac88a' : 'var(--onyx-text-mute)' }}>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', color: connected ? '#5ac88a' : 'var(--onyx-text-mute)' }}>
               {connected ? 'Connected' : 'Not connected'}
             </span>
           </span>
@@ -38,11 +38,11 @@ export default function ServerSection({ st }: ServerSectionProps) {
             disabled
             title={t('srv.changeHintTitle')}
             style={{
-              padding: '8px 12px',
+              padding: 'var(--s-2) var(--s-3)',
               minWidth: 280,
-              fontSize: 13,
-              background: 'rgba(0,0,0,0.3)',
-              borderRadius: 8,
+              fontSize: 'var(--fs-3)',
+              background: 'var(--onyx-bg-deep)',
+              borderRadius: 'var(--r-md)',
               color: 'var(--onyx-text-dim)',
               border: '1px solid var(--onyx-glass-edge)',
               outline: 'none',

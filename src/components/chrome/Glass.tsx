@@ -32,8 +32,8 @@ export default function Glass({ children, style, onClick, onContextMenu, translu
         ? 'linear-gradient(158deg, rgba(34, 35, 44, 0.46) 0%, rgba(18, 18, 23, 0.60) 100%)'
         : 'var(--onyx-panel)',
       border: '1px solid var(--onyx-glass-edge)',
-      borderRadius: 16,
-      boxShadow: '0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)',
+      borderRadius: 'var(--r-overlay)',
+      boxShadow: 'var(--shadow-dialog)',
       ...style,
     }}>{children}</div>
   );

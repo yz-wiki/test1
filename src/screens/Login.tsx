@@ -97,7 +97,10 @@ export default function Login({ st }: LoginProps) {
   };
 
   return (
-    <div className="ui-root" style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface-canvas)', color: 'var(--onyx-text)' }}>
+    <div
+      className="ui-root"
+      style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--surface-canvas)', color: 'var(--onyx-text)' }}
+    >
       <Titlebar minimal />
 
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', padding: 'var(--s-6)', overflowY: 'auto' }}>
@@ -114,7 +117,7 @@ export default function Login({ st }: LoginProps) {
               <span style={{ fontSize: 'var(--fs-4)', fontWeight: 650, letterSpacing: '-0.01em' }}>Skald</span>
             </div>
             <h1 className="ui-title" style={{ fontSize: 'var(--fs-6)' }}>{t('loginUi.enterHall')}</h1>
-            <p className="ui-sub" style={{ margin: 0 }}>{t('loginUi.connectHint')}</p>
+            <p className="ui-sub" style={{ margin: '0' }}>{t('loginUi.connectHint')}</p>
           </header>
 
           {/* Auth method */}

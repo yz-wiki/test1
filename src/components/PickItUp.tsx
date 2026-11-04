@@ -4,7 +4,6 @@ import {
   bookTitle, bookAuthor, bookSeries, bookDur,
   bookProgress,
 } from '../state/onyx';
-import Glass from './chrome/Glass';
 import Cover from './Cover';
 import Icon from './Icon';
 import ContextMenu from './ContextMenu';
@@ -125,13 +124,13 @@ export default function PickItUp({ st }: PickItUpProps) {
 
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '0 4px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', padding: '0 var(--s-1) var(--s-3)' }}>
         <button
           onClick={() => st.setPickItUpCollapsed(!st.pickItUpCollapsed)}
           title={st.pickItUpCollapsed ? t('pickUp.expand') : t('pickUp.collapse')}
-          style={{ display: 'flex', alignItems: 'baseline', gap: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', color: 'inherit' }}
+          style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', background: 'none', border: 'none', padding: '0', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit' }}
         >
-          <div style={{ fontFamily: SERIF, fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-7)', fontWeight: 500, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
             <span style={{
               display: 'inline-flex',
               color: 'var(--onyx-text-mute)',
@@ -142,7 +141,7 @@ export default function PickItUp({ st }: PickItUpProps) {
             </span>
             {t('pickUp.heading')}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {continueItems.length} in progress
           </div>
         </button>
@@ -155,14 +154,14 @@ export default function PickItUp({ st }: PickItUpProps) {
           onDragStart={e => e.preventDefault()}
           onClickCapture={onClickCapture}
           className="pickitup-scroll"
-          style={{ display: 'flex', flexDirection: 'row', width: '100%', minWidth: 0, gap: 14, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', paddingBottom: 8, cursor: isDragging ? 'grabbing' : 'grab', userSelect: isDragging ? 'none' : undefined }}
+          style={{ display: 'flex', flexDirection: 'row', width: '100%', minWidth: 0, gap: 'var(--s-4)', overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', paddingBottom: 'var(--s-2)', cursor: isDragging ? 'grabbing' : 'grab', userSelect: isDragging ? 'none' : undefined }}
         >
           {continueItems.map(b => {
             const prog = bookProgress(b, st.mediaProgress);
             // Cached once per card — used for badge presence and server-deleted variant.
             const dlRecord = st.downloads.find(d => d.itemId === b.id);
             return (
-              <Glass key={b.id} translucent={st.translucent} onClick={() => handlePickItUpClick(b)} onContextMenu={e => onContextMenu(e, b)} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 260, padding: 14, display: 'flex', gap: 14, minHeight: 110, cursor: 'pointer' }}>
+              <div key={b.id} className="ui-card" onClick={() => handlePickItUpClick(b)} onContextMenu={e => onContextMenu(e, b)} style={{ flexGrow: 0, flexShrink: 0, flexBasis: 260, padding: 'var(--s-4)', display: 'flex', gap: 'var(--s-4)', minHeight: 110, cursor: 'pointer' }}>
                 {/* Cover wrapped in relative container so the badge can be absolutely positioned */}
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <Cover item={b} size={80} serverUrl={st.serverUrl} />
@@ -173,12 +172,12 @@ export default function PickItUp({ st }: PickItUpProps) {
                       style={{
                         position: 'absolute', bottom: 2, right: 2,
                         zIndex: 3,
-                        background: 'rgba(0,0,0,0.72)', borderRadius: 3,
-                        padding: '1px 4px',
+                        background: 'rgba(0,0,0,0.72)', borderRadius: 'var(--r-xs)',
+                        padding: '2px var(--s-1)',
                         display: 'inline-flex', alignItems: 'center',
                         // Amber when server-deleted; brass when still on the server.
                         color: dlRecord.serverDeleted ? '#d4834a' : 'var(--onyx-accent)',
-                        fontSize: 9, fontFamily: MONO,
+                        fontSize: 'var(--fs-0)', fontFamily: MONO,
                         lineHeight: 1, userSelect: 'none',
                       }}>
                       {dlRecord.serverDeleted ? '!' : '↓'}
@@ -186,18 +185,18 @@ export default function PickItUp({ st }: PickItUpProps) {
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{bookSeries(b)}</div>
-                  <div style={{ marginTop: 4, fontFamily: SERIF, fontSize: 17, fontWeight: 500, lineHeight: 1.1 }}>{bookTitle(b)}</div>
-                  <div style={{ marginTop: 2, fontSize: 12, color: 'var(--onyx-text-dim)' }}>{bookAuthor(b)}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{bookSeries(b)}</div>
+                  <div style={{ marginTop: 'var(--s-1)', fontFamily: SERIF, fontSize: 'var(--fs-5)', fontWeight: 500, lineHeight: 1.1 }}>{bookTitle(b)}</div>
+                  <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{bookAuthor(b)}</div>
                   <div style={{ flex: 1 }} />
-                  <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 'var(--r-xs)', overflow: 'hidden' }}>
                     <div style={{ width: `${prog * 100}%`, height: '100%', background: 'var(--onyx-accent)' }} />
                   </div>
-                  <div style={{ marginTop: 4, fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ marginTop: 'var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', display: 'flex', justifyContent: 'space-between' }}>
                     <span>{Math.round(prog * 100)}%</span><span>{bookDur(b)}</span>
                   </div>
                 </div>
-              </Glass>
+              </div>
             );
           })}
         </div>

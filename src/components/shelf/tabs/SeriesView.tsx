@@ -122,7 +122,7 @@ export default function SeriesView({ st, inline = false }: SeriesViewProps) {
   return (
     <BrowseView st={st} title={t('browse.series')} subtitle={t('browse.seriesSubtitle', { count: seriesList.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
           {seriesList.map(s => (
             <BrowseTile
               key={s.name}
@@ -156,10 +156,10 @@ export default function SeriesView({ st, inline = false }: SeriesViewProps) {
               dur:    s.books.reduce((acc, b) => acc + bookDurSecs(b), 0),
             },
             cells: {
-              name:   <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>,
-              author: <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)' }}>{bookAuthor(s.books[0])}</div>,
-              vols:   <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{s.books.length}</div>,
-              dur:    <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(s.books)}</div>,
+              name:   <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>,
+              author: <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)' }}>{bookAuthor(s.books[0])}</div>,
+              vols:   <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{s.books.length}</div>,
+              dur:    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(s.books)}</div>,
             },
           }))}
         />

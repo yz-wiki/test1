@@ -96,19 +96,19 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
         {expanded ? (
           <div style={{
             display: 'flex', flexDirection: 'column',
-            background: 'var(--onyx-panel2)',
+            background: 'var(--surface-overlay)',
             backdropFilter: 'blur(40px) saturate(120%)',
             WebkitBackdropFilter: 'blur(40px) saturate(120%)',
             border: '1px solid var(--onyx-glass-edge)',
-            borderRadius: 12,
-            boxShadow: '0 16px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--shadow-popover)',
             overflow: 'hidden',
           }}>
             {/* Header — click to collapse */}
             <button
               onClick={() => setExpanded(false)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+                display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-4)',
                 background: 'none', border: 'none', borderBottom: '1px solid var(--onyx-line)',
                 cursor: 'pointer', textAlign: 'left', width: '100%',
               }}
@@ -117,10 +117,10 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
                 <Icon name="target" size={15} />
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)' }}>
+                <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)' }}>
                   {count} book{count === 1 ? '' : 's'} need matching
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: 1 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', marginTop: '2px' }}>
                   {t('unidentified.clickToIdentify')}
                 </div>
               </div>
@@ -130,26 +130,26 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
             </button>
 
             {/* Item list */}
-            <div style={{ maxHeight: 280, overflowY: 'auto', padding: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ maxHeight: 280, overflowY: 'auto', padding: 'var(--s-2)', display: 'flex', flexDirection: 'column', gap: 'var(--s-1)' }}>
               {entries.map(e => (
                 <button
                   key={e.scanned.sourcePath}
                   className="onyx-row"
                   onClick={() => setMatchTarget(e)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8,
+                    display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-3)', borderRadius: 'var(--r-md)',
                     background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {entryTitle(e)}
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', marginTop: 'var(--s-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {e.libName} · unidentified
                     </div>
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: 5, background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', flexShrink: 0 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', border: '1px solid var(--onyx-accent-edge)', flexShrink: 0 }}>
                     {t('unidentified.match')}
                   </span>
                 </button>
@@ -162,25 +162,25 @@ export default function UnidentifiedNotice({ st }: UnidentifiedNoticeProps) {
             onClick={() => setExpanded(true)}
             title={`${count} book${count === 1 ? '' : 's'} need matching — click to review`}
             style={{
-              display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderRadius: 999,
-              background: 'var(--onyx-panel2)',
+              display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-4)', borderRadius: 999,
+              background: 'var(--surface-overlay)',
               backdropFilter: 'blur(40px) saturate(120%)',
               WebkitBackdropFilter: 'blur(40px) saturate(120%)',
               border: '1px solid var(--onyx-accent-edge)',
-              boxShadow: '0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+              boxShadow: 'var(--shadow-popover)',
               cursor: 'pointer',
             }}
           >
             <span style={{ color: 'var(--onyx-accent)', display: 'inline-flex' }}>
               <Icon name="target" size={15} />
             </span>
-            <span style={{ fontSize: 12.5, color: 'var(--onyx-text)', fontWeight: 500 }}>
+            <span style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', fontWeight: 500 }}>
               {count} book{count === 1 ? '' : 's'} need matching
             </span>
             {/* Count badge */}
             <span style={{
-              minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 10, fontWeight: 600,
+              minWidth: 18, height: 18, padding: '0 var(--s-1)', borderRadius: 'var(--r-md)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 600,
             }}>
               {count}
             </span>

@@ -43,7 +43,7 @@ export default function ConfirmDialog({
       >
         <div className="ui-sheet__body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
           <h2 id="confirm-dialog-title" className="ui-sheet__title">{title}</h2>
-          <p id="confirm-dialog-message" className="ui-sub" style={{ margin: 0 }}>{message}</p>
+          <p id="confirm-dialog-message" className="ui-sub" style={{ margin: '0' }}>{message}</p>
         </div>
         <footer className="ui-sheet__foot">
           <Button onClick={onCancel}>{cancelLabel}</Button>

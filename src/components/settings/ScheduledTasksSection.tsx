@@ -137,26 +137,26 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       <Panel label={t('tasks.activity')}>
 
       {!liveSyncOn && (
-        <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', padding: '10px 0 2px', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', padding: 'var(--s-3) 0 var(--s-1)', lineHeight: 1.5 }}>
           Live sync is off — tasks refresh every {POLL_MS / 1000}s while this panel is open.
           Enable live sync (Settings → Server) for real-time updates that persist across panels.
         </div>
       )}
 
       {loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) 0' }}>
           Loading tasks…
         </div>
       )}
 
       {error && !loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) 0' }}>
           Couldn't load tasks: {error}
         </div>
       )}
 
       {!loading && !error && sorted.length === 0 && (
-        <div style={{ fontSize: 12.5, color: 'var(--onyx-text-mute)', padding: '14px 0' }}>
+        <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) 0' }}>
           No active or recent tasks. Background operations (library scans, backups, metadata embeds) will appear here while they run.
         </div>
       )}
@@ -171,16 +171,16 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
             key={t.id}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: 16, padding: '12px 0', borderBottom: '1px solid var(--onyx-line)',
+              gap: 'var(--s-4)', padding: 'var(--s-3) 0', borderBottom: '1px solid var(--onyx-line)',
             }}
           >
-            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ width: 7, height: 7, borderRadius: 4, background: status.color, flexShrink: 0 }} />
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: 'var(--r-xs)', background: status.color, flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{title}</div>
+                <div style={{ fontSize: 'var(--fs-3)', fontWeight: 500 }}>{title}</div>
                 {(desc || t.error) && (
                   <div style={{
-                    fontSize: 11.5, color: t.error ? '#e08a8a' : 'var(--onyx-text-mute)', marginTop: 3,
+                    fontSize: 'var(--fs-2)', color: t.error ? '#e08a8a' : 'var(--onyx-text-mute)', marginTop: 'var(--s-1)',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 420,
                   }}>
                     {t.error || t.errorKey || desc}
@@ -189,7 +189,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
               </div>
             </div>
             <div style={{ flexShrink: 0, textAlign: 'right' as const }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: status.color }}>
+              <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: status.color }}>
                 {status.label}
                 {/* Percent from the task_progress socket event. Only encode and
                     embed jobs report it, and ABS sends it to admins only, so an
@@ -198,7 +198,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
               </div>
               {!t.isFinished && typeof t.progress === 'number' && (
                 <div style={{
-                  width: 72, height: 3, borderRadius: 2, marginTop: 4, marginLeft: 'auto',
+                  width: 72, height: 3, borderRadius: 'var(--r-xs)', marginTop: 'var(--s-1)', marginLeft: 'auto',
                   background: 'var(--onyx-line)', overflow: 'hidden',
                 }}>
                   <div style={{
@@ -207,7 +207,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
                   }} />
                 </div>
               )}
-              {when && <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 2 }}>{when}</div>}
+              {when && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>{when}</div>}
             </div>
           </div>
         );
@@ -219,13 +219,13 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
       <Panel label={t('tasks.schedules')}>
 
       <Row label={t('tasks.autoBackups')} hint={t('tasks.autoBackupsHint')}>
-        <span style={{ fontSize: 12.5, color: backupEnabled ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
+        <span style={{ fontSize: 'var(--fs-2)', color: backupEnabled ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
           {backupEnabled ? cap(describeCron(backupSchedule as string)) : 'Disabled'}
         </span>
       </Row>
 
       <Row label={t('tasks.episodeCheck')} hint={t('tasks.episodeCheckHint')}>
-        <span style={{ fontSize: 12.5, color: podcastSchedule ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
+        <span style={{ fontSize: 'var(--fs-2)', color: podcastSchedule ? 'var(--onyx-text)' : 'var(--onyx-text-mute)' }}>
           {podcastSchedule ? cap(describeCron(podcastSchedule)) : '—'}
         </span>
       </Row>
@@ -240,11 +240,11 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
         hint={t('tasks.buildScheduleHint')}
         align="top"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)', alignItems: 'flex-end' }}>
           <CronEditor value={cronInput} onChange={v => { setCronInput(v); setCronValid(null); }} />
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center' }}>
             {cronValid !== null && (
-              <span style={{ fontFamily: MONO, fontSize: 11, color: cronValid ? '#4caf50' : '#e08a8a' }}>
+              <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: cronValid ? '#4caf50' : '#e08a8a' }}>
                 {cronValid ? '✓ valid' : '✕ invalid expression'}
               </span>
             )}
@@ -252,7 +252,7 @@ function ScheduledTasksSectionInner({ st }: ScheduledTasksSectionProps) {
               onClick={() => void checkCron()}
               disabled={cronChecking || !cronInput.trim()}
               style={{
-                fontFamily: MONO, fontSize: 11, padding: '6px 12px', borderRadius: 6,
+                fontFamily: MONO, fontSize: 'var(--fs-1)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)',
                 background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)',
                 color: 'var(--onyx-accent)', cursor: cronChecking || !cronInput.trim() ? 'default' : 'pointer',
                 opacity: cronChecking || !cronInput.trim() ? 0.45 : 1,

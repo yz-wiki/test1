@@ -40,14 +40,14 @@ function PermToggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => v
       role="switch"
       aria-checked={on}
       style={{
-        width: 36, height: 20, borderRadius: 10, padding: 0, flexShrink: 0,
+        width: 36, height: 20, borderRadius: 'var(--r-card)', padding: '0', flexShrink: 0,
         background: on ? 'var(--onyx-accent)' : 'rgba(255,255,255,0.12)',
         border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.15s',
       }}
     >
       <div style={{
-        position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: 8,
-        background: on ? 'var(--onyx-bg)' : '#ebe7df', transition: 'left 0.15s',
+        position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: 'var(--r-md)',
+        background: on ? 'var(--onyx-bg)' : 'var(--onyx-text)', transition: 'left 0.15s',
       }} />
     </button>
   );
@@ -56,8 +56,8 @@ function PermToggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => v
 /** A labelled permission row: name on the left, toggle on the right. */
 function PermRow({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <span style={{ fontSize: 12.5, color: 'var(--onyx-text)' }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-3)' }}>
+      <span style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)' }}>{label}</span>
       <PermToggle on={on} onChange={onChange} />
     </div>
   );
@@ -146,49 +146,41 @@ export default function UserModal({
   // Shared label style above each field.
   const fieldLabel: React.CSSProperties = {
     fontFamily: MONO,
-    fontSize: 10,
+    fontSize: 'var(--fs-0)',
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     color: 'var(--onyx-text-mute)',
-    marginBottom: 6,
+    marginBottom: 'var(--s-2)',
   };
 
   // Shared text-input style for username and password fields.
   const fieldInput: React.CSSProperties = {
     width: '100%',
     boxSizing: 'border-box',
-    padding: '9px 12px',
+    padding: 'var(--s-3) var(--s-3)',
     background: 'rgba(0,0,0,0.25)',
     border: '1px solid var(--onyx-glass-edge)',
-    borderRadius: 7,
+    borderRadius: 'var(--r-sm)',
     color: 'var(--onyx-text)',
-    fontSize: 13,
+    fontSize: 'var(--fs-3)',
     outline: 'none',
     fontFamily: 'inherit',
   };
 
   // Two-column field/permission grid — the wider modal lets fields and the
   // permission toggles sit side by side, matching Skald's roomier settings panes.
-  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28, rowGap: 16 };
+  const twoCol: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 'var(--s-8)', rowGap: 'var(--s-4)' };
   // Indented detail box that holds the per-library / per-tag pickers.
   const pickerBox: React.CSSProperties = {
-    display: 'flex', flexDirection: 'column', gap: 8,
-    padding: '12px 14px', borderRadius: 8,
+    display: 'flex', flexDirection: 'column', gap: 'var(--s-2)',
+    padding: 'var(--s-3) var(--s-4)', borderRadius: 'var(--r-md)',
     background: 'rgba(0,0,0,0.18)', border: '1px solid var(--onyx-glass-edge)',
   };
 
   return (
     // Backdrop — clicking outside the panel cancels the modal.
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 500,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.65)',
-      }}
+      className="ui-scrim"  style={{ zIndex: 500 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onCancel(); }}
     >
       {/* Glass panel — same visual spec as ConfirmDialog */}
@@ -201,22 +193,22 @@ export default function UserModal({
         style={{
           width: 560,
           maxWidth: '92vw',
-          background: 'var(--onyx-panel2)',
+          background: 'var(--surface-overlay)',
           backdropFilter: 'blur(40px) saturate(120%)',
           WebkitBackdropFilter: 'blur(40px) saturate(120%)',
           border: '1px solid var(--onyx-glass-edge)',
-          borderRadius: 12,
-          boxShadow: '0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
-          padding: '26px 26px 22px',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--shadow-dialog)',
+          padding: 'var(--s-6) var(--s-6) var(--s-6)',
           display: 'flex',
           flexDirection: 'column',
-          gap: 18,
+          gap: 'var(--s-5)',
           maxHeight: '90vh',
           overflowY: 'auto',
         }}
       >
         {/* Modal title */}
-        <div id="user-modal-title" style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>
+        <div id="user-modal-title" style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, color: 'var(--onyx-text)' }}>
           {title}
         </div>
 
@@ -240,8 +232,8 @@ export default function UserModal({
               {/* Show the "optional" hint only in edit mode. */}
               {isEdit && (
                 <span style={{
-                  fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)',
-                  marginLeft: 8, letterSpacing: '0.04em', textTransform: 'none', fontWeight: 400,
+                  fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
+                  marginLeft: 'var(--s-2)', letterSpacing: '0.04em', textTransform: 'none', fontWeight: 400,
                 }}>
                   leave blank to keep existing
                 </span>
@@ -274,25 +266,25 @@ export default function UserModal({
         <div style={twoCol}>
           <div>
             <div style={fieldLabel}>{t('userModal.accountType')}</div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
               <Pill active={userType === 'user'} onClick={() => setUserType('user')}>{t('userModal.roleUser')}</Pill>
               <Pill active={userType === 'admin'} onClick={() => setUserType('admin')}>{t('userModal.roleAdmin')}</Pill>
             </div>
           </div>
           <div>
             <div style={fieldLabel}>{t('userModal.enabled')}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 30 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', height: 30 }}>
               <PermToggle on={enable} onChange={setEnable} />
-              <span style={{ fontSize: 12, color: 'var(--onyx-text-dim)' }}>{enable ? 'Account active' : 'Account disabled'}</span>
+              <span style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{enable ? 'Account active' : 'Account disabled'}</span>
             </div>
           </div>
         </div>
 
         {/* ── Permissions (shown for both add + edit) — two columns of toggles ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 8, borderTop: '1px solid var(--onyx-line)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-4)', paddingTop: 'var(--s-2)', borderTop: '1px solid var(--onyx-line)' }}>
           <div style={fieldLabel}>{t('userModal.permissions')}</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28, rowGap: 13 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 'var(--s-8)', rowGap: 'var(--s-4)' }}>
             <PermRow label={t('userModal.canDownload')}                on={canDownload}        onChange={setCanDownload} />
             <PermRow label={t('userModal.canUpdate')}                  on={canUpdate}          onChange={setCanUpdate} />
             <PermRow label={t('userModal.canDelete')}                  on={canDelete}          onChange={setCanDelete} />
@@ -308,9 +300,9 @@ export default function UserModal({
             <div style={pickerBox}>
               <div style={fieldLabel}>{t('userModal.accessibleLibraries')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px 20px', maxHeight: 150, overflowY: 'auto' }}>
-                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>{t('userModal.noLibraries')}</div>}
+                {libraries.length === 0 && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{t('userModal.noLibraries')}</div>}
                 {libraries.map(lib => (
-                  <label key={lib.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
+                  <label key={lib.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
                     <input type="checkbox" style={{ accentColor: 'var(--onyx-accent)' }} checked={librariesAccessible.includes(lib.id)} onChange={() => setLibrariesAccessible(prev => toggleInArray(prev, lib.id))} />
                     {lib.name}
                   </label>
@@ -324,17 +316,17 @@ export default function UserModal({
           {!accessAllTags && (
             <div style={pickerBox}>
               <div style={fieldLabel}>{t('userModal.accessibleTags')}</div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
                 <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>only selected</Pill>
                 <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>all except</Pill>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 150, overflowY: 'auto' }}>
-                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)' }}>{t('userModal.noTags')}</div>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s-2)', maxHeight: 150, overflowY: 'auto' }}>
+                {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{t('userModal.noTags')}</div>}
                 {availableTags.map(tag => {
                   const on = itemTagsSelected.includes(tag);
                   return (
                     <button key={tag} type="button" onClick={() => setItemTagsSelected(prev => toggleInArray(prev, tag))}
-                      style={{ padding: '4px 10px', borderRadius: 999, fontFamily: MONO, fontSize: 10.5, cursor: 'pointer',
+                      style={{ padding: 'var(--s-1) var(--s-3)', borderRadius: 999, fontFamily: MONO, fontSize: 'var(--fs-0)', cursor: 'pointer',
                         background: on ? 'var(--onyx-accent-dim)' : 'transparent',
                         border: `1px solid ${on ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
                         color: on ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
@@ -349,24 +341,24 @@ export default function UserModal({
 
         {/* Inline validation / server error */}
         {error && (
-          <div style={{ fontSize: 12, color: '#e8716a', fontFamily: MONO }}>
+          <div style={{ fontSize: 'var(--fs-2)', color: '#e8716a', fontFamily: MONO }}>
             {error}
           </div>
         )}
 
         {/* Action row: Cancel (ghost) + Create/Save (brass) */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--s-2)', marginTop: 'var(--s-1)' }}>
           <button
             type="button"
             onClick={onCancel}
             style={{
-              padding: '8px 18px',
+              padding: 'var(--s-2) var(--s-5)',
               background: 'transparent',
               border: '1px solid var(--onyx-glass-edge)',
-              borderRadius: 7,
+              borderRadius: 'var(--r-sm)',
               color: 'var(--onyx-text-dim)',
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 'var(--fs-1)',
               letterSpacing: '0.07em',
               textTransform: 'uppercase' as const,
               cursor: 'pointer',
@@ -378,14 +370,14 @@ export default function UserModal({
             type="submit"
             disabled={pending}
             style={{
-              padding: '8px 18px',
+              padding: 'var(--s-2) var(--s-5)',
               // Theme accent (follows the selected accent), not a hardcoded gold gradient.
               background: 'var(--onyx-accent)',
               border: '1px solid var(--onyx-accent-edge)',
-              borderRadius: 7,
+              borderRadius: 'var(--r-sm)',
               color: 'var(--onyx-bg)',
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 'var(--fs-1)',
               letterSpacing: '0.07em',
               textTransform: 'uppercase' as const,
               cursor: pending ? 'wait' : 'pointer',

@@ -26,8 +26,8 @@ const cardStyle: CSSProperties = {
 const rowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 16,
-  padding: '13px 16px',
+  gap: 'var(--s-4)',
+  padding: 'var(--s-4) var(--s-4)',
   borderTop: '1px solid var(--mac-hairline)',
 };
 
@@ -66,17 +66,17 @@ export default function LanguageSection() {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <header style={{ marginBottom: 22 }}>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650, letterSpacing: '-0.01em' }}>
+      <header style={{ marginBottom: 'var(--s-6)' }}>
+        <h2 style={{ margin: '0', fontSize: 'var(--fs-5)', fontWeight: 650, letterSpacing: '-0.01em' }}>
           {t('language.title')}
         </h2>
-        <p style={{ margin: '6px 0 0', fontSize: 12.5, color: 'var(--onyx-text-dim)', lineHeight: 1.55 }}>
+        <p style={{ margin: 'var(--s-2) 0 0', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', lineHeight: 1.55 }}>
           {t('language.description')}
         </p>
       </header>
 
       {/* ── Application language ─────────────────────────────────────────── */}
-      <section style={{ marginBottom: 22 }}>
+      <section style={{ marginBottom: 'var(--s-6)' }}>
         <div style={{ ...cardStyle }}>
           {LOCALES.map((candidate, index) => {
             const meta = LOCALE_META[candidate];
@@ -90,9 +90,9 @@ export default function LanguageSection() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 14,
+                  gap: 'var(--s-4)',
                   width: '100%',
-                  padding: '13px 16px',
+                  padding: 'var(--s-4) var(--s-4)',
                   border: 'none',
                   borderTop: index === 0 ? 'none' : '1px solid var(--mac-hairline)',
                   background: selected ? 'var(--onyx-accent-dim)' : 'transparent',
@@ -106,10 +106,10 @@ export default function LanguageSection() {
                   <Icon name="info" size={15} />
                 </span>
                 <span style={{ flex: '1 1 auto', minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
+                  <span style={{ display: 'block', fontSize: 'var(--fs-3)', fontWeight: 600 }}>
                     {meta.native}
                   </span>
-                  <span style={{ display: 'block', fontSize: 11.5, color: 'var(--onyx-text-mute)' }}>
+                  <span style={{ display: 'block', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)' }}>
                     {meta.label} · {meta.region}
                   </span>
                 </span>
@@ -121,18 +121,18 @@ export default function LanguageSection() {
       </section>
 
       {/* ── System language ──────────────────────────────────────────────── */}
-      <section style={{ marginBottom: 22 }}>
+      <section style={{ marginBottom: 'var(--s-6)' }}>
         <div style={cardStyle}>
           <div style={{ ...rowStyle, borderTop: 'none' }}>
             <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{t('language.followSystem')}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--fs-3)', fontWeight: 600 }}>{t('language.followSystem')}</div>
+              <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>
                 {t('language.followSystemHint')}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 4 }}>
+              <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>
                 {t('language.detected', { locale: LOCALE_META[systemLocale].native })}
                 {!isSystemLocaleSupported() && (
-                  <span className="mac-badge mac-badge--muted" style={{ marginLeft: 8 }}>
+                  <span className="mac-badge mac-badge--muted" style={{ marginLeft: 'var(--s-2)' }}>
                     fallback
                   </span>
                 )}
@@ -151,11 +151,11 @@ export default function LanguageSection() {
       </section>
 
       {/* ── Region formatting ────────────────────────────────────────────── */}
-      <section style={{ marginBottom: 22 }}>
+      <section style={{ marginBottom: 'var(--s-6)' }}>
         <div style={cardStyle}>
           <div style={{ ...rowStyle, borderTop: 'none' }}>
             <div style={{ flex: '1 1 auto' }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{t('language.dateFormat')}</div>
+              <div style={{ fontSize: 'var(--fs-3)', fontWeight: 600 }}>{t('language.dateFormat')}</div>
             </div>
             <select
               className="onyx-select"
@@ -172,8 +172,8 @@ export default function LanguageSection() {
 
           <div style={rowStyle}>
             <div style={{ flex: '1 1 auto' }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{t('language.timeFormat24h')}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--fs-3)', fontWeight: 600 }}>{t('language.timeFormat24h')}</div>
+              <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>
                 {t('language.timeFormat24hHint')}
               </div>
             </div>
@@ -191,17 +191,17 @@ export default function LanguageSection() {
 
       {/* ── Preview ──────────────────────────────────────────────────────── */}
       <section>
-        <div style={{ ...cardStyle, padding: '14px 18px' }}>
-          <div style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 8 }}>
+        <div style={{ ...cardStyle, padding: 'var(--s-4) var(--s-5)' }}>
+          <div style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-2)' }}>
             {t('language.preview')}
           </div>
-          <div style={{ fontFamily: 'var(--mac-font-serif)', fontSize: 17, letterSpacing: '-0.01em' }}>
+          <div style={{ fontFamily: 'var(--mac-font-serif)', fontSize: 'var(--fs-5)', letterSpacing: '-0.01em' }}>
             {sample}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--onyx-text-dim)', marginTop: 6 }}>
+          <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-2)' }}>
             {translateIn(locale, 'language.previewSample')}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 10 }}>
+          <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-3)' }}>
             {t('language.restartHint')}
           </div>
         </div>

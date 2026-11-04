@@ -179,64 +179,64 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       <button
         onClick={back}
         style={{
-          alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6,
+          alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 'var(--s-2)',
           background: 'none', border: 'none', cursor: 'pointer', fontFamily: mono,
-          fontSize: 11, letterSpacing: '0.06em', color: 'var(--onyx-text-dim)', padding: 0,
+          fontSize: 'var(--fs-1)', letterSpacing: '0.06em', color: 'var(--onyx-text-dim)', padding: '0',
         }}
       >
         <Icon name="chevron-left" size={14} /> {t('podDetail.library')}
       </button>
 
       {/* Header */}
-      <div style={{ display: 'flex', gap: 20, flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 'var(--s-5)', flexShrink: 0 }}>
         <div style={{ width: 160, height: 160, flexShrink: 0 }}>
           <Cover item={item} fill serverUrl={st.serverUrl} fallbackImageUrl={(meta?.imageUrl ?? (meta as unknown as { image?: string })?.image) || feedImg} />
         </div>
-        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--onyx-text)', lineHeight: 1.15 }}>
             {meta.title ?? item.id}
           </div>
-          {meta.author && <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)' }}>{meta.author}</div>}
-          <div style={{ fontFamily: mono, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+          {meta.author && <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)' }}>{meta.author}</div>}
+          <div style={{ fontFamily: mono, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
             {episodes.length} episode{episodes.length === 1 ? '' : 's'}
             {pendingCount > 0 ? ` · ${t('podDetail.pending', { count: pendingCount })}` : ''}
             {meta.explicit ? ' · explicit' : ''}
           </div>
           {meta.feedUrl && (
             <div className="onyx-selectable" style={{
-              fontFamily: mono, fontSize: 10.5, color: 'var(--onyx-text-mute)',
+              fontFamily: mono, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 460, opacity: 0.8,
             }} title={meta.feedUrl}>{meta.feedUrl}</div>
           )}
           {meta.description && (
             <div className="onyx-selectable" style={{
-              fontSize: 12, color: 'var(--onyx-text-dim)', lineHeight: 1.45, marginTop: 4, maxWidth: 560,
+              fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', lineHeight: 1.45, marginTop: 'var(--s-1)', maxWidth: 560,
               overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
             }}>{meta.description}</div>
           )}
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-3)', marginTop: 'var(--s-2)' }}>
             <button
               onClick={() => setShowDownload(true)}
               disabled={pendingCount === 0}
               title={pendingCount === 0 ? 'All episodes downloaded' : `Choose from ${pendingCount} episode${pendingCount === 1 ? '' : 's'} to download`}
               style={{
-                padding: '7px 14px', borderRadius: 8, border: 'none',
+                padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-md)', border: 'none',
                 cursor: pendingCount === 0 ? 'default' : 'pointer',
                 background: pendingCount === 0 ? 'var(--onyx-line)' : 'var(--onyx-accent)',
                 color: pendingCount === 0 ? 'var(--onyx-text-mute)' : 'var(--onyx-bg)',
-                fontFamily: mono, fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
+                fontFamily: mono, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', fontWeight: 600,
               }}
             >{pendingCount === 0 ? 'All downloaded' : `Download… (${pendingCount})`}</button>
             <button
               onClick={() => setShowSettings(true)}
               title={autoOn ? 'Auto-download is on — click to configure' : 'Configure auto-download'}
               style={{
-                padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer',
                 background: autoOn ? 'var(--onyx-accent)' : 'transparent',
                 color: autoOn ? 'var(--onyx-bg)' : 'var(--onyx-text-dim)',
                 border: autoOn ? 'none' : '1px solid var(--onyx-glass-edge)',
-                fontFamily: mono, fontSize: 11, letterSpacing: '0.06em', fontWeight: autoOn ? 600 : 400,
+                fontFamily: mono, fontSize: 'var(--fs-1)', letterSpacing: '0.06em', fontWeight: autoOn ? 600 : 400,
               }}
             >{autoOn ? 'Auto-download · enabled' : 'Auto-download'}</button>
             <button
@@ -247,10 +247,10 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
               }}
               title={t('podDetail.orderHint')}
               style={{
-                padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-md)', cursor: 'pointer',
                 background: 'transparent', color: 'var(--onyx-text-dim)',
                 border: '1px solid var(--onyx-glass-edge)',
-                fontFamily: mono, fontSize: 11, letterSpacing: '0.06em',
+                fontFamily: mono, fontSize: 'var(--fs-1)', letterSpacing: '0.06em',
               }}
             >{advanceDir === 'oldest' ? 'Up next · oldest first' : 'Up next · newest first'}</button>
           </div>
@@ -258,9 +258,9 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
       </div>
 
       {/* Episode list */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 2, paddingRight: 4 }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 'var(--s-1)', paddingRight: 'var(--s-1)' }}>
         {episodes.length === 0 && (
-          <div style={{ color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 12, padding: '16px 0' }}>
+          <div style={{ color: 'var(--onyx-text-mute)', fontFamily: mono, fontSize: 'var(--fs-2)', padding: 'var(--s-4) 0' }}>
             {t('podDetail.noEpisodes')}
           </div>
         )}
@@ -278,8 +278,8 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
               onClick={() => onRow(ep, downloaded)}
               onContextMenu={(e) => { e.preventDefault(); setEpMenu({ x: e.clientX, y: e.clientY, ep, downloaded }); }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 10px',
-                borderRadius: 8, borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-3)',
+                borderRadius: 'var(--r-md)', borderBottom: '1px solid var(--onyx-line)', cursor: 'pointer',
               }}
             >
               <button
@@ -298,10 +298,10 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 13, color: downloaded ? 'var(--onyx-text)' : 'var(--onyx-text-dim)', fontWeight: nowPlaying ? 600 : 400,
+                  fontSize: 'var(--fs-3)', color: downloaded ? 'var(--onyx-text)' : 'var(--onyx-text-dim)', fontWeight: nowPlaying ? 600 : 400,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{ep.title}</div>
-                <div style={{ fontFamily: mono, fontSize: 10.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 2, display: 'flex', gap: 10 }}>
+                <div style={{ fontFamily: mono, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.03em', marginTop: 'var(--s-1)', display: 'flex', gap: 'var(--s-3)' }}>
                   {date && <span>{date}</span>}
                   {dur > 0 && <span>{fmtRemaining(dur)}</span>}
                   {!downloaded ? <span style={{ color: 'var(--onyx-text-mute)' }}>{t('podDetail.notDownloaded')}</span>
@@ -309,7 +309,7 @@ export default function PodcastDetail({ st }: PodcastDetailProps) {
                     : pct > 0 ? <span>{fmtTime((mp?.currentTime ?? 0))} · {pct}%</span> : null}
                 </div>
                 {pct > 0 && !finished && (
-                  <div style={{ height: 2, background: 'var(--onyx-line)', borderRadius: 1, marginTop: 6, overflow: 'hidden' }}>
+                  <div style={{ height: 2, background: 'var(--onyx-line)', borderRadius: 1, marginTop: 'var(--s-2)', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: 'var(--onyx-accent)' }} />
                   </div>
                 )}

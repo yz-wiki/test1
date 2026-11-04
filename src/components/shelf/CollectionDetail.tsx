@@ -104,30 +104,30 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
 
   const editInput: React.CSSProperties = {
     width: '100%', background: 'transparent', border: 'none',
-    borderBottom: '1px solid var(--onyx-accent-edge)', outline: 'none', padding: '2px 0',
+    borderBottom: '1px solid var(--onyx-accent-edge)', outline: 'none', padding: 'var(--s-1) 0',
     color: 'var(--onyx-text)', fontFamily: 'inherit',
   };
 
   const modal = (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.65)' }}
+      className="ui-scrim"  style={{ zIndex: 2100 }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
       onDragOver={e => e.preventDefault()}
     >
-      <div style={{ width: 'min(660px, 90vw)', maxHeight: '80vh', background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 14, boxShadow: '0 32px 80px rgba(0,0,0,0.75)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ width: 'min(660px, 90vw)', maxHeight: '80vh', background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-overlay)', boxShadow: 'var(--shadow-dialog)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--onyx-line)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ padding: 'var(--s-5) var(--s-6) var(--s-4)', borderBottom: '1px solid var(--onyx-line)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--s-3)' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               {editing === 'name' ? (
                 <input autoFocus value={name} onChange={e => setName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') void saveField('name', name); if (e.key === 'Escape') setEditing(null); }}
                   onBlur={() => void saveField('name', name)}
-                  style={{ ...editInput, fontFamily: SERIF, fontSize: 20, fontWeight: 500 }} />
+                  style={{ ...editInput, fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500 }} />
               ) : (
                 <div onClick={() => setEditing('name')} title={t('collection.rename')}
-                  style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {name || '…'}
                 </div>
               )}
@@ -136,33 +136,33 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                   onKeyDown={e => { if (e.key === 'Enter') void saveField('description', description); if (e.key === 'Escape') setEditing(null); }}
                   onBlur={() => void saveField('description', description)}
                   placeholder={t('collection.descPlaceholder')}
-                  style={{ ...editInput, marginTop: 6, fontSize: 12.5, fontStyle: 'italic', color: 'var(--onyx-text-dim)' }} />
+                  style={{ ...editInput, marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', fontStyle: 'italic', color: 'var(--onyx-text-dim)' }} />
               ) : (
                 <div onClick={() => setEditing('description')} title={t('collection.editDesc')}
-                  style={{ marginTop: 6, fontSize: 12.5, cursor: 'text', fontStyle: 'italic', color: description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)' }}>
+                  style={{ marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', cursor: 'text', fontStyle: 'italic', color: description ? 'var(--onyx-text-dim)' : 'var(--onyx-text-mute)' }}>
                   {description || 'Add a description…'}
                 </div>
               )}
             </div>
-            <button onClick={onClose} style={{ flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 14, lineHeight: 1 }}>×</button>
+            <button onClick={onClose} style={{ flexShrink: 0, padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'transparent', border: '1px solid var(--onyx-glass-edge)', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-4)', lineHeight: 1 }}>×</button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', marginTop: 'var(--s-4)' }}>
             <button onClick={() => void handlePlayAll()} disabled={!ids.length}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 7, cursor: ids.length ? 'pointer' : 'default',
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-2) var(--s-4)', borderRadius: 'var(--r-sm)', cursor: ids.length ? 'pointer' : 'default',
                 background: ids.length ? 'var(--onyx-accent-dim)' : 'transparent', border: `1px solid ${ids.length ? 'var(--onyx-accent-edge)' : 'var(--onyx-line)'}`,
-                color: ids.length ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                color: ids.length ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               ▶ Play All
             </button>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {ids.length} {ids.length === 1 ? 'book' : 'books'} · drag to reorder
             </div>
           </div>
         </div>
 
         {/* Item list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }} onDragOver={e => e.preventDefault()}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--s-2) 0' }} onDragOver={e => e.preventDefault()}>
           {ids.length === 0 && (
-            <div style={{ padding: '32px 24px', fontFamily: SERIF, fontSize: 14, color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
+            <div style={{ padding: 'var(--s-8) var(--s-6)', fontFamily: SERIF, fontSize: 'var(--fs-4)', color: 'var(--onyx-text-mute)', fontStyle: 'italic', textAlign: 'center' }}>
               {t('collection.empty')}
             </div>
           )}
@@ -179,24 +179,24 @@ export default function CollectionDetail({ collection, serverUrl, st, onClose, o
                 onDrop={e => { e.stopPropagation(); e.preventDefault(); void handleDrop(i); }}
                 onDragEnd={() => { dragIndexRef.current = null; setDragActive(false); setOverIndex(null); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '8px 20px',
+                  display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-5)',
                   borderTop: isOver ? '2px solid var(--onyx-accent)' : '2px solid transparent',
                   background: isDragging ? 'var(--onyx-accent-dim)' : i % 2 !== 0 ? 'rgba(255,255,255,0.015)' : 'transparent',
                   opacity: isDragging ? 0.5 : 1, transition: 'background 0.1s',
                 }}
               >
-                <div style={{ flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)', fontSize: 14, lineHeight: 1, userSelect: 'none' }} title={t('collection.dragReorder')}>⠿</div>
-                <div style={{ flexShrink: 0, width: 20, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', textAlign: 'right' }}>{i + 1}</div>
+                <div style={{ flexShrink: 0, cursor: 'grab', color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-4)', lineHeight: 1, userSelect: 'none' }} title={t('collection.dragReorder')}>⠿</div>
+                <div style={{ flexShrink: 0, width: 20, fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', textAlign: 'right' }}>{i + 1}</div>
                 {book ? <Cover item={book} size={40} serverUrl={serverUrl} />
-                      : <div style={{ width: 40, height: 40, borderRadius: 4, flexShrink: 0, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />}
+                      : <div style={{ width: 40, height: 40, borderRadius: 'var(--r-xs)', flexShrink: 0, background: 'var(--onyx-glass)', border: '1px dashed var(--onyx-glass-edge)' }} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: SERIF, fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {book ? bookTitle(book) : id}
                   </div>
-                  {book && <div style={{ fontSize: 11.5, color: 'var(--onyx-text-dim)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookAuthor(book)}</div>}
+                  {book && <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookAuthor(book)}</div>}
                 </div>
                 <button onClick={() => handleRemove(id)} disabled={removing === id} title={t('collection.removeItem')}
-                  style={{ flexShrink: 0, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid transparent', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 13, lineHeight: 1 }}
+                  style={{ flexShrink: 0, padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'transparent', border: '1px solid transparent', color: 'var(--onyx-text-mute)', fontFamily: MONO, fontSize: 'var(--fs-3)', lineHeight: 1 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e8716a'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--onyx-text-mute)'; }}>
                   {removing === id ? '…' : '×'}

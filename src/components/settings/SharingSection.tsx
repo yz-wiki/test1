@@ -131,13 +131,13 @@ export default function SharingSection({ st }: SharingSectionProps) {
     });
   }, [st]);
 
-  const sub: CSSProperties = { fontFamily: MONO, fontSize: 10.5, color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 3 };
-  const ghostBtn: CSSProperties = { padding: '6px 12px', borderRadius: 7, cursor: 'pointer', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 10.5, flexShrink: 0 };
-  const dangerBtn: CSSProperties = { padding: '6px 12px', borderRadius: 7, cursor: 'pointer', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', color: '#e08a8a', fontFamily: MONO, fontSize: 10.5, flexShrink: 0 };
-  const empty: CSSProperties = { fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '14px 2px', lineHeight: 1.5 };
-  const input: CSSProperties = { padding: '8px 12px', minWidth: 320, fontSize: 13, background: 'rgba(0,0,0,0.3)', borderRadius: 8, color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontFamily: MONO };
+  const sub: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 'var(--s-1)' };
+  const ghostBtn: CSSProperties = { padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)', fontFamily: MONO, fontSize: 'var(--fs-0)', flexShrink: 0 };
+  const dangerBtn: CSSProperties = { padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer', background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.35)', color: '#e08a8a', fontFamily: MONO, fontSize: 'var(--fs-0)', flexShrink: 0 };
+  const empty: CSSProperties = { fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-4) var(--s-1)', lineHeight: 1.5 };
+  const input: CSSProperties = { padding: 'var(--s-2) var(--s-3)', minWidth: 320, fontSize: 'var(--fs-3)', background: 'var(--onyx-bg-deep)', borderRadius: 'var(--r-md)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', outline: 'none', fontFamily: MONO };
   // Flat row inside a panel; divider below unless it's the last entry.
-  const row = (last: boolean): CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: last ? 'none' : '1px solid var(--onyx-line)' });
+  const row = (last: boolean): CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-3) var(--s-1)', borderBottom: last ? 'none' : '1px solid var(--onyx-line)' });
 
   return (
     <div>
@@ -148,14 +148,14 @@ export default function SharingSection({ st }: SharingSectionProps) {
 
       {/* ── Public link address ── */}
       <Panel label={t('sharing.publicLinkAddress')}>
-        <div style={{ padding: '12px 2px 2px' }}>
+        <div style={{ padding: 'var(--s-3) var(--s-1) var(--s-1)' }}>
           <input
             value={pubUrl}
             onChange={e => { setPubUrl(e.target.value); setPublicBaseUrl(e.target.value); }}
             placeholder={st.serverUrl}
             style={input}
           />
-          <div style={{ ...empty, padding: '10px 0 2px' }}>
+          <div style={{ ...empty, padding: 'var(--s-3) 0 var(--s-1)' }}>
             Share and new RSS feed links are built from this address. Leave blank to use the server URL Skald connects to ({st.serverUrl}). Set it to a public domain (e.g. https://abs.example.com) so links work outside your LAN — your Audiobookshelf server must be reachable there.
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function SharingSection({ st }: SharingSectionProps) {
         ) : shares.map((s, i) => (
           <div key={s.id} style={row(i === shares.length - 1)}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{s.title}</div>
+              <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text)' }}>{s.title}</div>
               <div style={sub}>
                 <CopyLink url={publicShareUrl(st.serverUrl, s.slug)} label={t('sharing.shareLink')} st={st} />
                 {s.expiresAt ? ` · expires ${new Date(s.expiresAt).toLocaleDateString()}` : ' · never expires'}
@@ -192,7 +192,7 @@ export default function SharingSection({ st }: SharingSectionProps) {
         ) : feeds.map((f, i) => (
           <div key={f.id} style={row(i === feeds.length - 1)}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--onyx-text)' }}>{f.meta?.title || f.slug}</div>
+              <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text)' }}>{f.meta?.title || f.slug}</div>
               <div style={sub}>{f.entityType} · <CopyLink url={absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl)} label={t('sharing.feedUrl')} st={st} /></div>
             </div>
             <button onClick={() => void copy(absoluteFeedUrl(f.serverAddress, f.feedUrl, st.serverUrl), st, 'Feed URL')} style={ghostBtn}>{t('sharing.copy')}</button>

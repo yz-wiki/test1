@@ -57,7 +57,7 @@ export default function GenresView({ st, inline = false }: GenresViewProps) {
   return (
     <BrowseView st={st} title={t('browse.genres')} subtitle={t('browse.genresSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
           {list.map(g => (
             <BrowseTile
               key={g.name}
@@ -84,9 +84,9 @@ export default function GenresView({ st, inline = false }: GenresViewProps) {
             leading: <Initial name={g.name} small />,
             sort: { name: g.name, titles: g.books.length, dur: g.books.reduce((acc, b) => acc + bookDurSecs(b), 0) },
             cells: {
-              name:   <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500 }}>{g.name}</div>,
-              titles: <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{g.books.length}</div>,
-              dur:    <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(g.books)}</div>,
+              name:   <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500 }}>{g.name}</div>,
+              titles: <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{g.books.length}</div>,
+              dur:    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(g.books)}</div>,
             },
           }))}
         />

@@ -26,19 +26,19 @@ export default function BrowseView({
 }: BrowseViewProps) {
   if (inline) {
     return (
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 'var(--s-1)' }}>
         {children}
       </div>
     );
   }
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, padding: '8px 24px 24px', minWidth: 0, minHeight: 0 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--s-5)', padding: 'var(--s-2) var(--s-6) var(--s-6)', minWidth: 0, minHeight: 0 }}>
       <TopNav st={st} />
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', padding: '12px 4px 20px', gap: 16 }}>
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, paddingRight: 'var(--s-1)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', padding: 'var(--s-3) var(--s-1) var(--s-5)', gap: 'var(--s-4)' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {title && <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 500, letterSpacing: '-0.015em' }}>{title}</div>}
-            {subtitle && <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)', marginTop: 4 }}>{subtitle}</div>}
+            {title && <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-7)', fontWeight: 500, letterSpacing: '-0.015em' }}>{title}</div>}
+            {subtitle && <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-1)' }}>{subtitle}</div>}
           </div>
           {showModeToggle && <ViewModeToggle st={st} />}
         </div>
@@ -52,9 +52,9 @@ export default function BrowseView({
 
 export function posterTile(): CSSProperties {
   return {
-    display: 'flex', flexDirection: 'column', padding: 0,
+    display: 'flex', flexDirection: 'column', padding: '0',
     background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-    borderRadius: 14, cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
+    borderRadius: 'var(--r-overlay)', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
     textAlign: 'left', overflow: 'hidden',
     // Shadows are deliberately not interpolated: blur/shadow animation paints
     // every frame. The lift stays smooth while the visual shadow switches once.
@@ -64,9 +64,9 @@ export function posterTile(): CSSProperties {
 
 export function browseTile(): CSSProperties {
   return {
-    display: 'flex', gap: 14, padding: 14,
+    display: 'flex', gap: 'var(--s-4)', padding: 'var(--s-4)',
     background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-    borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
+    borderRadius: 'var(--r-card)', cursor: 'pointer', fontFamily: 'inherit', color: 'inherit',
     textAlign: 'left', alignItems: 'center',
   };
 }

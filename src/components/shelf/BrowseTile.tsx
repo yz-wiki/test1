@@ -31,18 +31,18 @@ export interface BrowseTileProps {
 
 const TAG_STYLE: CSSProperties = {
   position: 'absolute', top: 8, left: 8, zIndex: 3,
-  padding: '3px 8px', borderRadius: 5,
+  padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)',
   // No backdrop-filter (see Glass.tsx) — the tag sits on cover art inside a
   // scrolling panel; a slightly more opaque fill replaces the 4px blur for
   // legibility without a live backdrop sample.
   background: 'rgba(8,8,11,0.82)', border: '1px solid var(--onyx-glass-edge)',
-  color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9,
+  color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-0)',
   letterSpacing: '0.12em', textTransform: 'uppercase',
 };
 
 const EMPTY_ART: CSSProperties = {
   height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontStyle: 'italic', fontSize: 14,
+  color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontStyle: 'italic', fontSize: 'var(--fs-4)',
   background: 'linear-gradient(180deg, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.06), rgba(0,0,0,0.12))',
 };
 
@@ -64,12 +64,12 @@ export default function BrowseTile({ mode, tag, title, subtitle, stat, books, se
           {art}
           <div style={{
             position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2,
-            padding: '34px 14px 12px',
+            padding: '34px var(--s-4) var(--s-3)',
             background: 'linear-gradient(180deg, transparent, rgba(8,8,11,0.55) 32%, rgba(8,8,11,0.9))',
           }}>
-            <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.01em', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-            {subtitle && <div style={{ fontSize: 12.5, color: 'var(--onyx-text-dim)', marginTop: 3, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>}
-            <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 8 }}>{stat}</div>
+            <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.01em', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+            {subtitle && <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-1)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>}
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 'var(--s-2)' }}>{stat}</div>
           </div>
         </div>
       </button>
@@ -84,10 +84,10 @@ export default function BrowseTile({ mode, tag, title, subtitle, stat, books, se
         <div style={TAG_STYLE}>{tag}</div>
         {art}
       </div>
-      <div style={{ padding: '18px 16px 16px', textAlign: 'center' }}>
+      <div style={{ padding: 'var(--s-5) var(--s-4) var(--s-4)', textAlign: 'center' }}>
         <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500, lineHeight: 1.1, color: 'var(--onyx-text)', letterSpacing: '-0.01em' }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 13, color: 'var(--onyx-text-dim)', marginTop: 6, fontStyle: 'italic' }}>{subtitle}</div>}
-        <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--onyx-line)' }}>{stat}</div>
+        {subtitle && <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-2)', fontStyle: 'italic' }}>{subtitle}</div>}
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 'var(--s-3)', paddingTop: 'var(--s-3)', borderTop: '1px solid var(--onyx-line)' }}>{stat}</div>
       </div>
     </button>
   );

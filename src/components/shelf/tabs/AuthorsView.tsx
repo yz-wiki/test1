@@ -58,7 +58,7 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
   return (
     <BrowseView st={st} title={t('browse.authors')} subtitle={t('browse.authorsSubtitle', { count: list.length })} showModeToggle inline={inline}>
       {st.libraryView === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--s-6)' }}>
           {list.map(a => {
             const genres = [...new Set(a.books.map(b => bookGenre(b)).filter(Boolean))];
             return (
@@ -93,9 +93,9 @@ export default function AuthorsView({ st, inline = false }: AuthorsViewProps) {
               dur:    a.books.reduce((acc, b) => acc + bookDurSecs(b), 0),
             },
             cells: {
-              name:   <div style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 500 }}>{a.name}</div>,
-              titles: <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{a.books.length}</div>,
-              dur:    <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(a.books)}</div>,
+              name:   <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500 }}>{a.name}</div>,
+              titles: <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{a.books.length}</div>,
+              dur:    <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>{seriesTotalDur(a.books)}</div>,
             },
           }))}
         />

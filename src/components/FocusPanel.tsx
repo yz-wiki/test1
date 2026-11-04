@@ -36,11 +36,11 @@ function seriesNameOf(s: string | undefined): string {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ padding: '4px 10px 6px' }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+    <div style={{ padding: 'var(--s-1) var(--s-3) var(--s-2)' }}>
+      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
         {label}
       </div>
-      <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500 }}>{value}</div>
+      <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-5)', fontWeight: 500 }}>{value}</div>
     </div>
   );
 }
@@ -81,18 +81,18 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
-          borderRadius: 8, padding: '4px 10px 6px', cursor: 'pointer',
+          borderRadius: 'var(--r-md)', padding: 'var(--s-1) var(--s-3) var(--s-2)', cursor: 'pointer',
           textAlign: 'left', fontFamily: 'inherit', color: 'inherit',
-          display: 'flex', alignItems: 'baseline', gap: 6,
+          display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)',
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.chapters')}</div>
-          <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.chapters')}</div>
+          <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-5)', fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {chapterCount}
           </div>
         </div>
-        <span style={{ color: 'var(--onyx-text-mute)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', alignSelf: 'center', marginTop: 8, display: 'inline-flex' }}>
+        <span style={{ color: 'var(--onyx-text-mute)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', alignSelf: 'center', marginTop: 'var(--s-2)', display: 'inline-flex' }}>
           <Icon name="chevron-down" size={10} />
         </span>
       </button>
@@ -101,11 +101,11 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
         <div style={{
           position: 'absolute', bottom: 'calc(100% + 8px)', left: 0,
           width: 280, maxWidth: '100%', maxHeight: 320,
-          background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 10,
-          boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)',
-          padding: 6, zIndex: 100, display: 'flex', flexDirection: 'column',
+          background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--shadow-popover)',
+          padding: 'var(--s-2)', zIndex: 100, display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ padding: '6px 8px 4px', fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <div style={{ padding: 'var(--s-2) var(--s-2) var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             {t('focus.jumpToChapter')}
           </div>
           <div ref={listRef} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
@@ -117,16 +117,16 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
                   data-current={chState === 'playing' ? 'true' : 'false'}
                   onClick={() => jump(i)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', borderRadius: 6,
+                    display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)',
                     background: chState === 'playing' ? 'var(--onyx-accent-dim)' : 'transparent',
                     border: 'none', width: '100%', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                    marginBottom: 1,
+                    marginBottom: '2px',
                   }}
                 >
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: chState === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', width: 22, flexShrink: 0 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: chState === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', width: 22, flexShrink: 0 }}>
                     {String(c.n).padStart(2, '0')}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: chState === 'playing' ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: chState === 'done' ? 'var(--onyx-text-mute)' : chState === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-2)', fontWeight: chState === 'playing' ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: chState === 'done' ? 'var(--onyx-text-mute)' : chState === 'playing' ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
                     {c.t || `Chapter ${c.n}`}
                   </div>
                   {chState === 'done' && (
@@ -135,7 +135,7 @@ function ChaptersStat({ st, chIdx, chapterCount, chapters }: { st: OnyxState; ch
                     </span>
                   )}
                   {chState === 'playing' && (
-                    <div style={{ width: 5, height: 5, borderRadius: 3, background: 'var(--onyx-accent)', boxShadow: '0 0 10px var(--onyx-accent)', flexShrink: 0 }} />
+                    <div style={{ width: 5, height: 5, borderRadius: 'var(--r-xs)', background: 'var(--onyx-accent)', boxShadow: '0 0 10px var(--onyx-accent)', flexShrink: 0 }} />
                   )}
                   {chState === 'next' && <div style={{ width: 10, flexShrink: 0 }} />}
                 </button>
@@ -170,18 +170,18 @@ function SpeedStat({ st }: { st: OnyxState }) {
         style={{
           background: open ? 'var(--onyx-accent-dim)' : 'transparent',
           border: `1px solid ${open ? 'var(--onyx-accent-edge)' : 'transparent'}`,
-          borderRadius: 8, padding: '4px 10px 6px', cursor: 'pointer',
+          borderRadius: 'var(--r-md)', padding: 'var(--s-1) var(--s-3) var(--s-2)', cursor: 'pointer',
           textAlign: 'left', fontFamily: 'inherit', color: 'inherit',
-          display: 'flex', alignItems: 'baseline', gap: 6,
+          display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)',
         }}
       >
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.speed')}</div>
-          <div style={{ marginTop: 3, fontSize: 16, fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{t('focus.speed')}</div>
+          <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-5)', fontWeight: 500, color: open ? 'var(--onyx-accent)' : 'var(--onyx-text)' }}>
             {st.speed}×
           </div>
         </div>
-        <span style={{ color: 'var(--onyx-text-mute)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', alignSelf: 'center', marginTop: 8, display: 'inline-flex' }}>
+        <span style={{ color: 'var(--onyx-text-mute)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', alignSelf: 'center', marginTop: 'var(--s-2)', display: 'inline-flex' }}>
           <Icon name="chevron-down" size={10} />
         </span>
       </button>
@@ -189,11 +189,11 @@ function SpeedStat({ st }: { st: OnyxState }) {
       {open && (
         <div style={{
           position: 'absolute', bottom: 'calc(100% + 8px)', left: -4,
-          background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-line)', borderRadius: 10,
-          boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)',
-          padding: 6, zIndex: 100, minWidth: 130,
+          background: 'var(--surface-overlay)', border: '1px solid var(--onyx-line)', borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--shadow-popover)',
+          padding: 'var(--s-2)', zIndex: 100, minWidth: 130,
         }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: 'var(--s-2) var(--s-2) var(--s-1)', textTransform: 'uppercase' }}>
             {t('focus.speedHeading')}
           </div>
           {SPEEDS.map(s => (
@@ -207,12 +207,12 @@ function SpeedStat({ st }: { st: OnyxState }) {
                   log.error('playback', 'set speed failed', { speed: s, err: String(err) }));
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', borderRadius: 6,
+                display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)',
                 background: s === st.speed ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: 'none', width: '100%', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
               }}
             >
-              <span style={{ fontFamily: MONO, fontSize: 13, color: s === st.speed ? 'var(--onyx-accent)' : 'var(--onyx-text)', fontWeight: s === st.speed ? 600 : 400, flex: 1 }}>
+              <span style={{ fontFamily: MONO, fontSize: 'var(--fs-3)', color: s === st.speed ? 'var(--onyx-accent)' : 'var(--onyx-text)', fontWeight: s === st.speed ? 600 : 400, flex: 1 }}>
                 {s}×
               </span>
               {s === st.speed && (
@@ -236,14 +236,14 @@ function CollapseHandle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
       style={{
         position: 'absolute', top: 0, bottom: 0, right: -1, width: 22,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', zIndex: 5,
+        background: 'transparent', border: 'none', padding: '0', cursor: 'pointer', zIndex: 5,
       }}
     >
       {/* Just a small chevron knob — no full-height accent bar (that read as a
           stray "glow" along the panel edge). The knob still toggles collapse. */}
       <div style={{
-        width: 22, height: 44, borderRadius: 11,
-        background: 'var(--onyx-panel2)', border: '1px solid var(--onyx-glass-edge)',
+        width: 22, height: 44, borderRadius: 'var(--r-card)',
+        background: 'var(--surface-overlay)', border: '1px solid var(--onyx-glass-edge)',
         boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: 'var(--onyx-text-dim)',
@@ -335,14 +335,14 @@ export default function FocusPanel({ st }: FocusPanelProps) {
           // Direct setPlaying() does not invoke LibVLC; it only flips the icon
           // while audio keeps running, causing an immediate re-open on pause.
           onClick={() => handleContinue()}
-          style={{ width: 32, height: 32, borderRadius: 16, border: 'none', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 32, height: 32, borderRadius: 'var(--r-overlay)', border: 'none', background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <Icon name={st.playing && st.currentBookId === focus.id ? 'pause' : 'play'} size={12} />
         </button>
         <div style={{ width: 2, flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 1, overflow: 'hidden', position: 'relative' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${focusProgress * 100}%`, background: 'var(--onyx-accent)' }} />
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           {bookTitle(focus)}
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         <button
           onClick={() => toggleContext('series', seriesLabel)}
           title={ctxIs('series', seriesLabel) ? 'Clear series filter' : `Show all books in ${seriesLabel}`}
-          style={{ marginTop: 22, alignSelf: 'flex-start', fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ marginTop: 'var(--s-6)', alignSelf: 'flex-start', fontFamily: MONO, fontSize: 'var(--fs-1)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-accent)', background: 'none', border: 'none', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}
         >
           {focusSeries}
           <span style={{ opacity: 0.7, display: 'inline-flex' }}>
@@ -384,16 +384,16 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         {bookTitle(focus)}
       </div>
 
-      <div style={{ marginTop: 8, fontSize: 14, color: 'var(--onyx-text-dim)', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 4px' }}>
+      <div style={{ marginTop: 'var(--s-2)', fontSize: 'var(--fs-4)', color: 'var(--onyx-text-dim)', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 4px' }}>
         <span>{t('focus.by')}</span>
         <button
           onClick={() => toggleContext('author', focusAuthor)}
           title={ctxIs('author', focusAuthor) ? 'Clear author filter' : `Show all books by ${focusAuthor}`}
           style={{
-            background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+            background: 'none', border: 'none', padding: '0', cursor: 'pointer',
             fontFamily: 'inherit', fontSize: 'inherit',
             color: ctxIs('author', focusAuthor) ? 'var(--onyx-accent)' : 'var(--onyx-text)',
-            borderBottom: `1px dashed ${ctxIs('author', focusAuthor) ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.25)'}`,
+            borderBottom: `1px dashed ${ctxIs('author', focusAuthor) ? 'var(--onyx-accent)' : 'var(--onyx-line)'}`,
           }}
         >
           {focusAuthor}
@@ -405,10 +405,10 @@ export default function FocusPanel({ st }: FocusPanelProps) {
               onClick={() => toggleContext('narrator', focusNarrator)}
               title={ctxIs('narrator', focusNarrator) ? 'Clear narrator filter' : `Show all books narrated by ${focusNarrator}`}
               style={{
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                background: 'none', border: 'none', padding: '0', cursor: 'pointer',
                 fontFamily: 'inherit', fontSize: 'inherit',
                 color: ctxIs('narrator', focusNarrator) ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
-                borderBottom: `1px dashed ${ctxIs('narrator', focusNarrator) ? 'var(--onyx-accent)' : 'rgba(235,231,223,0.15)'}`,
+                borderBottom: `1px dashed ${ctxIs('narrator', focusNarrator) ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)'}`,
               }}
             >
               {focusNarrator}
@@ -417,10 +417,10 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         )}
       </div>
 
-      <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
+      <div style={{ marginTop: 'var(--s-5)', display: 'flex', gap: 'var(--s-3)' }}>
         <button
           onClick={() => handleContinue()}
-          style={{ flex: 1, height: 44, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', border: 'none', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{ flex: 1, height: 44, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', border: 'none', borderRadius: 'var(--r-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--s-2)', fontWeight: 600, fontSize: 'var(--fs-4)', cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <Icon name={st.playing && st.currentBookId === focus.id ? 'pause' : 'play'} size={14} />
           {st.playing && st.currentBookId === focus.id ? 'Pause' : 'Play'}
@@ -440,26 +440,26 @@ export default function FocusPanel({ st }: FocusPanelProps) {
               log.error('playback', 'create bookmark failed', { err: String(err) });
             }
           }}
-          style={{ width: 44, height: 44, background: 'var(--onyx-glass-strong)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}
+          style={{ width: 44, height: 44, background: 'var(--onyx-glass-strong)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}
         >
           <Icon name="bookmark" size={16} />
         </button>
       </div>
 
-      <div style={{ marginTop: 14, height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ marginTop: 'var(--s-4)', height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 'var(--r-xs)', overflow: 'hidden' }}>
         <div style={{ width: `${focusProgress * 100}%`, height: '100%', background: 'var(--onyx-accent)', transition: 'width 0.2s' }} />
       </div>
 
-      <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
+      <div style={{ marginTop: 'var(--s-2)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>
         {Math.round(focusProgress * 100)}% · Ch. {chIdx + 1} / {chapterCount}
       </div>
 
-      <div style={{ marginTop: 14, display: 'flex', gap: 4 }}>
+      <div style={{ marginTop: 'var(--s-4)', display: 'flex', gap: 'var(--s-1)' }}>
         <button
           onClick={() => setDrawerTab('synopsis')}
           style={{
-            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+            fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase',
+            padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
             background: drawerTab === 'synopsis' ? 'var(--onyx-accent-dim)' : 'transparent',
             border: `1px solid ${drawerTab === 'synopsis' ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
             color: drawerTab === 'synopsis' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
@@ -470,12 +470,12 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         <button
           onClick={() => setDrawerTab('bookmarks')}
           style={{
-            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+            fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase',
+            padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', cursor: 'pointer',
             background: drawerTab === 'bookmarks' ? 'var(--onyx-accent-dim)' : 'transparent',
             border: `1px solid ${drawerTab === 'bookmarks' ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
             color: drawerTab === 'bookmarks' ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
-            display: 'flex', alignItems: 'center', gap: 4,
+            display: 'flex', alignItems: 'center', gap: 'var(--s-1)',
           }}
         >
           <Icon name="bookmark" size={9} />
@@ -483,7 +483,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         </button>
       </div>
 
-      <div style={{ marginTop: 10, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div style={{ marginTop: 'var(--s-3)', flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {drawerTab === 'bookmarks' ? (
           focusBookmarks.length > 0 ? (
             <div>
@@ -491,11 +491,11 @@ export default function FocusPanel({ st }: FocusPanelProps) {
                 <button
                   key={i}
                   onClick={() => { st.setPosition(bm.time); st.setScreen('player'); }}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', background: 'none', border: 'none', borderTop: i > 0 ? '1px solid var(--onyx-line)' : 'none', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--s-3)', padding: 'var(--s-2) 0', background: 'none', border: 'none', borderTop: i > 0 ? '1px solid var(--onyx-line)' : 'none', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit' }}
                 >
-                  <div style={{ fontFamily: MONO, fontSize: 10.5, fontWeight: 600, color: 'var(--onyx-accent)', paddingTop: 1, flexShrink: 0 }}>{fmtTime(bm.time)}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', fontWeight: 600, color: 'var(--onyx-accent)', paddingTop: '2px', flexShrink: 0 }}>{fmtTime(bm.time)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--onyx-text)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as CSSProperties}>
+                    <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as CSSProperties}>
                       {bm.title}
                     </div>
                   </div>
@@ -503,22 +503,22 @@ export default function FocusPanel({ st }: FocusPanelProps) {
               ))}
             </div>
           ) : (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '12px 0' }}>{t('focus.noBookmarks')}</div>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', padding: 'var(--s-3) 0' }}>{t('focus.noBookmarks')}</div>
           )
         ) : focus.media.metadata.description ? (
           <div
-            style={{ fontFamily: SERIF, fontSize: 13.5, lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 4 }}
+            style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 'var(--s-1)' }}
             // Remote HTML (ABS metadata / RSS) — allowlist-sanitized before render.
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(focus.media.metadata.description) }}
           />
         ) : (
-          <div style={{ fontFamily: SERIF, fontSize: 13.5, lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 4 }}>
+          <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', lineHeight: 1.55, color: 'var(--onyx-text-dim)', paddingTop: 'var(--s-1)' }}>
             {t('focus.noSynopsis')}
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 0, paddingTop: 20, borderTop: '1px solid var(--onyx-line)', display: 'flex', gap: 24, overflow: 'visible' }}>
+      <div style={{ marginTop: '0', paddingTop: 'var(--s-5)', borderTop: '1px solid var(--onyx-line)', display: 'flex', gap: 'var(--s-6)', overflow: 'visible' }}>
         <Stat label={t('focus.duration')} value={bookDur(focus)} />
         <ChaptersStat st={st} chIdx={chIdx} chapterCount={chapterCount} chapters={chapters} />
         <SpeedStat st={st} />

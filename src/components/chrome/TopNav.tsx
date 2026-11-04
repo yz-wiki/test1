@@ -124,7 +124,7 @@ export default function TopNav({ st }: TopNavProps) {
     <>
     <div className="ui-toolbar" style={{ padding: '0 var(--s-3)', gap: 'var(--s-3)', overflow: 'visible', position: 'relative', zIndex: 40, borderBottom: '1px solid var(--hairline)' }}>
       {/* Current-library chip paired with the (local-only) Add-books button. */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
       {/* Current library — the prominent "you are here" indicator, and (when more
           than one library exists) the switcher. Styled as an accent chip so it
           reads as the primary anchor of the bar now that the Library tab is gone.
@@ -163,30 +163,30 @@ export default function TopNav({ st }: TopNavProps) {
               aria-controls={canSwitch ? 'onyx-library-listbox' : undefined}
               title={canSwitch ? 'Switch library' : 'Your library'}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
+                display: 'flex', alignItems: 'center', gap: 'var(--s-3)',
                 background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
-                border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-                padding: '6px 12px', cursor: 'pointer', maxWidth: 300,
+                border: '1px solid var(--onyx-accent-edge)', borderRadius: 'var(--r-card)',
+                padding: 'var(--s-2) var(--s-3)', cursor: 'pointer', maxWidth: 300,
               }}
             >
               <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)', flexShrink: 0 }}>
                 <Icon name="layers" size={15} />
               </span>
               <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0, textAlign: 'left' }}>
-                <span style={{ fontFamily: mono, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>{t('nav.library')}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: mono, fontSize: 'var(--fs-0)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>{t('nav.library')}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', minWidth: 0 }}>
+                  <span style={{ fontSize: 'var(--fs-4)', fontWeight: 600, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {activeLib ? libraryDisplayLabel(activeLib) : 'No library'}
                   </span>
                   {activeLib && (
-                    <span style={{ flexShrink: 0, fontFamily: mono, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>
+                    <span style={{ flexShrink: 0, fontFamily: mono, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)' }}>
                       {librarySourceBadge(activeLib)}
                     </span>
                   )}
                 </span>
               </span>
               {canSwitch && (
-                <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)', marginLeft: 2, flexShrink: 0, transform: libMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)', marginLeft: 'var(--s-1)', flexShrink: 0, transform: libMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
                   <Icon name="chevron-down" size={13} />
                 </span>
               )}
@@ -220,17 +220,17 @@ export default function TopNav({ st }: TopNavProps) {
                     onMouseEnter={() => setHoverLib(l.id)}
                     onMouseLeave={() => setHoverLib(prev => (prev === l.id ? null : prev))}
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                      width: '100%', textAlign: 'left', padding: '8px 11px', borderRadius: 8,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-2)',
+                      width: '100%', textAlign: 'left', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)',
                       background: hover ? 'var(--onyx-accent)' : 'transparent',
                       color: hover ? 'var(--onyx-bg)' : (active ? 'var(--onyx-accent)' : 'var(--onyx-text)'),
-                      border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5,
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--fs-2)',
                       fontWeight: active ? 600 : 500,
                     }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', minWidth: 0 }}>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{libraryDisplayLabel(l)}</span>
-                      <span style={{ flexShrink: 0, fontFamily: mono, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: hover ? 0.75 : 0.65 }}>
+                      <span style={{ flexShrink: 0, fontFamily: mono, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', opacity: hover ? 0.75 : 0.65 }}>
                         {librarySourceBadge(l)}
                       </span>
                     </span>
@@ -281,7 +281,7 @@ export default function TopNav({ st }: TopNavProps) {
           </button>
         )}
       </div>
-      <div style={{ flex: 1, marginLeft: 24, position: 'relative' }}>
+      <div style={{ flex: 1, marginLeft: 'var(--s-6)', position: 'relative' }}>
         <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--onyx-text-mute)', display: 'flex', pointerEvents: 'none' }}>
           <Icon name="search" size={13} />
         </div>
@@ -297,7 +297,7 @@ export default function TopNav({ st }: TopNavProps) {
           style={{
             width: '100%',
             height: 'var(--h-md)',
-            paddingLeft: 32,
+            paddingLeft: 'var(--s-8)',
             paddingRight: isPodcast ? 'var(--s-3)' : 86,
           }}
         />
@@ -330,7 +330,7 @@ export default function TopNav({ st }: TopNavProps) {
               aria-label={t('topNav.searchScope')}
               title={t('topNav.searchScope')}
               className="ui-btn ui-btn--sm"
-              style={{ gap: 4, padding: '0 8px' }}
+              style={{ gap: 'var(--s-1)', padding: '0 var(--s-2)' }}
             >
               {(() => {
                 const current = SCOPES.find(s => s.value === st.searchScope);
@@ -347,15 +347,15 @@ export default function TopNav({ st }: TopNavProps) {
                 aria-label={t('topNav.searchScope')}
                 onKeyDown={(event) => handleListboxKey(event, scopeOptionRefs.current, () => setScopeOpen(false), scopeTriggerRef.current)}
                 style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 100, minWidth: 130,
+                position: 'absolute', top: '100%', right: 0, marginTop: 'var(--s-2)', zIndex: 100, minWidth: 130,
                 // Same frosted panel surface as the library switcher menu above:
                 // tinted translucent fill behind the blur, gold accent edge, deep
                 // shadow + inner highlight — so the two menus read as one family.
                 // Static frost, no live backdrop-filter (see Glass.tsx).
-                background: st.translucent ? 'rgba(20, 20, 25, 0.95)' : 'var(--onyx-panel)',
-                border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-                boxShadow: '0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
-                padding: 5, overflow: 'hidden',
+                background: 'var(--surface-overlay)',
+                border: '1px solid var(--onyx-accent-edge)', borderRadius: 'var(--r-card)',
+                boxShadow: 'var(--shadow-dialog)',
+                padding: 'var(--s-1)', overflow: 'hidden',
                 }}
               >
                 {SCOPES.map((s, index) => {
@@ -386,11 +386,11 @@ export default function TopNav({ st }: TopNavProps) {
                       onMouseEnter={() => setHoverScope(s.value)}
                       onMouseLeave={() => setHoverScope(prev => (prev === s.value ? null : prev))}
                       style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                        width: '100%', textAlign: 'left', padding: '8px 11px', borderRadius: 8,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-2)',
+                        width: '100%', textAlign: 'left', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)',
                         background: hover ? 'var(--onyx-accent)' : 'transparent',
                         color: hover ? 'var(--onyx-bg)' : (active ? 'var(--onyx-accent)' : 'var(--onyx-text)'),
-                        border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5,
+                        border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--fs-2)',
                         fontWeight: active ? 600 : 500,
                       }}
                     >
@@ -415,7 +415,7 @@ export default function TopNav({ st }: TopNavProps) {
           background: 'var(--onyx-accent)', color: 'var(--onyx-bg)',
           border: 'none', cursor: 'pointer', fontFamily: 'inherit',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 700, flexShrink: 0,
+          fontSize: 'var(--fs-1)', fontWeight: 700, flexShrink: 0,
         }}
       >{((st.user?.username || st.localDisplayName)?.[0] ?? '?').toUpperCase()}</button>
       )}

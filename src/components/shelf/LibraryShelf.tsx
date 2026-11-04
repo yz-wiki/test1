@@ -7,7 +7,6 @@ import {
   bookTitle, bookAuthor, bookSeries, bookNarrator, bookGenre,
   bookGenres, bookPublisher, bookDur, bookDurSecs, bookProgress,
 } from '../../state/onyx';
-import Glass from '../chrome/Glass';
 import Cover from '../Cover';
 import Icon from '../Icon';
 import SortIndicator from './SortIndicator';
@@ -113,14 +112,14 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
 
   if (libraryEmpty) {
     return (
-      <div style={{ padding: '58px 24px', textAlign: 'center' }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 9 }}>
+      <div style={{ padding: '58px var(--s-6)', textAlign: 'center' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--onyx-accent)', marginBottom: 'var(--s-3)' }}>
           {isCombined ? 'All libraries' : isLocal ? 'This PC library' : 'Server library'}
         </div>
-        <div style={{ fontFamily: SERIF, fontSize: 17, color: 'var(--onyx-text-dim)' }}>
+        <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-5)', color: 'var(--onyx-text-dim)' }}>
           {isCombined ? 'No books were found across your libraries.' : isLocal ? 'No books on this PC shelf yet.' : 'No books in this Audiobookshelf library yet.'}
         </div>
-        <div style={{ marginTop: 7, fontSize: 11.5, lineHeight: 1.5, color: 'var(--onyx-text-mute)' }}>
+        <div style={{ marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', lineHeight: 1.5, color: 'var(--onyx-text-mute)' }}>
           {isCombined
             ? 'Add books to a source library, then return here to search everything together.'
             : isLocal
@@ -134,7 +133,7 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
   }
 
   return (
-    <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 16, fontStyle: 'italic' }}>
+    <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 'var(--fs-5)', fontStyle: 'italic' }}>
       {st.search ? <>No titles match &ldquo;{st.search}&rdquo;.</> : 'No titles match the current filters.'}
     </div>
   );
@@ -142,7 +141,7 @@ function ShelfEmptyState({ st }: { st: OnyxState }) {
 
 function ItemSourceBadge({ item }: { item: LibraryItem }) {
   return (
-    <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.82 }}>
+    <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--onyx-accent)', opacity: 0.82 }}>
       {item.localPath ? 'This PC' : 'Server'}
     </span>
   );
@@ -218,8 +217,8 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
           labels and sort controls stay mounted while the body scrolls. Uses the
           same grid template as the rows for column alignment. */}
       <div style={{
-        display: 'grid', gridTemplateColumns: LIST_GRID, columnGap: 14, alignItems: 'end',
-        padding: '4px 12px 10px', borderBottom: '1px solid var(--onyx-line)',
+        display: 'grid', gridTemplateColumns: LIST_GRID, columnGap: 'var(--s-4)', alignItems: 'end',
+        padding: 'var(--s-1) var(--s-3) var(--s-3)', borderBottom: '1px solid var(--onyx-line)',
         borderLeft: '2px solid transparent', boxSizing: 'border-box',
       }}>
         <div />{/* cover column spacer */}
@@ -227,10 +226,10 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
           const active = sort?.col === c.id;
           return (
             <button key={c.id} onClick={() => onHeader(c.id)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
+              display: 'inline-flex', alignItems: 'center', gap: 'var(--s-2)',
               justifySelf: c.align === 'right' ? 'end' : 'start',
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-              fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+              background: 'none', border: 'none', padding: '0', cursor: 'pointer',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase',
               color: active ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)',
               whiteSpace: 'nowrap',
             }}>
@@ -260,8 +259,8 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
               className="onyx-row"
               style={{
                 position: 'absolute', top: vi.start, left: 0, width: '100%', height: LIST_ROW_H,
-                display: 'grid', gridTemplateColumns: LIST_GRID, columnGap: 14, alignItems: 'center',
-                padding: '0 12px', boxSizing: 'border-box',
+                display: 'grid', gridTemplateColumns: LIST_GRID, columnGap: 'var(--s-4)', alignItems: 'center',
+                padding: '0 var(--s-3)', boxSizing: 'border-box',
                 background: active ? 'var(--onyx-accent-dim)' : (i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)'),
                 borderTop: i > 0 ? '1px solid var(--onyx-line)' : undefined,
                 borderLeft: active ? '2px solid var(--onyx-accent)' : '2px solid transparent',
@@ -275,7 +274,7 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
                 aria-haspopup="menu"
                 title={`Actions for ${bookTitle(b)}`}
                 onClick={(event) => { event.stopPropagation(); onActionMenu(event.currentTarget, b); }}
-                style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', zIndex: 4, width: 28, height: 28, borderRadius: 6, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-panel2)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
+                style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', zIndex: 4, width: 28, height: 28, borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
               >•••</button>
               {/* Cover */}
               <div style={{ position: 'relative', display: 'inline-block', justifySelf: 'start' }}>
@@ -292,12 +291,12 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
                     style={{
                       position: 'absolute', bottom: st.showProgressOverlay && prog > 0 ? 4 : 2, right: 1,
                       zIndex: 3,
-                      background: 'rgba(0,0,0,0.72)', borderRadius: 2,
-                      padding: '1px 3px',
+                      background: 'rgba(0,0,0,0.72)', borderRadius: 'var(--r-xs)',
+                      padding: '2px var(--s-1)',
                       display: 'inline-flex', alignItems: 'center',
                       // Amber when the server has removed the book; brass when still on server.
                       color: dlRecord.serverDeleted ? '#d4834a' : 'var(--onyx-accent)',
-                      fontSize: 8, fontFamily: MONO,
+                      fontSize: 'var(--fs-0)', fontFamily: MONO,
                       lineHeight: 1, userSelect: 'none',
                     }}>
                     {dlRecord.serverDeleted ? '!' : '↓'}
@@ -306,38 +305,38 @@ function ShelfList({ books, st, openBook, onContextMenu, onActionMenu, scrollRef
               </div>
               {/* Title + series */}
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, minWidth: 0 }}>
-                  <div style={{ ...TRUNC, minWidth: 0, fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)', lineHeight: 1.2 }}>{bookTitle(b)}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)', minWidth: 0 }}>
+                  <div style={{ ...TRUNC, minWidth: 0, fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: active ? 'var(--onyx-accent)' : 'var(--onyx-text)', lineHeight: 1.2 }}>{bookTitle(b)}</div>
                   {st.activeLibrary?.source === 'all' && <ItemSourceBadge item={b} />}
                 </div>
                 {bookSeries(b) && (
-                  <div style={{ ...TRUNC, marginTop: 2, fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{bookSeries(b)}</div>
+                  <div style={{ ...TRUNC, marginTop: 'var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{bookSeries(b)}</div>
                 )}
               </div>
               {/* Author */}
-              <div style={{ ...TRUNC, minWidth: 0, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>{bookAuthor(b)}</div>
+              <div style={{ ...TRUNC, minWidth: 0, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{bookAuthor(b)}</div>
               {/* Genre */}
               <div style={{ minWidth: 0 }}>
                 {bookGenre(b) ? (
                   <span style={{
-                    display: 'inline-block', padding: '2px 8px', borderRadius: 999,
+                    display: 'inline-block', padding: 'var(--s-1) var(--s-2)', borderRadius: 999,
                     background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
-                    fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase',
+                    fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase',
                     maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'middle',
                   }}>{bookGenre(b)}</span>
                 ) : <span style={{ color: 'var(--onyx-text-mute)' }}>—</span>}
               </div>
               {/* Narrator */}
               <div style={{ minWidth: 0 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, maxWidth: '100%', overflow: 'hidden' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--s-2)', maxWidth: '100%', overflow: 'hidden' }}>
                   <span style={{ display: 'inline-flex', color: 'var(--onyx-text-mute)', flexShrink: 0 }}>
                     <Icon name="headphones" size={11} />
                   </span>
-                  <span style={{ ...TRUNC, fontSize: 12.5, color: 'var(--onyx-text-dim)' }}>{bookNarrator(b)}</span>
+                  <span style={{ ...TRUNC, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)' }}>{bookNarrator(b)}</span>
                 </span>
               </div>
               {/* Duration */}
-              <div style={{ justifySelf: 'end', fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', textAlign: 'right', whiteSpace: 'nowrap' }}>{bookDur(b)}</div>
+              <div style={{ justifySelf: 'end', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', textAlign: 'right', whiteSpace: 'nowrap' }}>{bookDur(b)}</div>
             </div>
           );
         })}
@@ -442,12 +441,12 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
               const dlRecord = st.downloads.find(d => d.itemId === b.id);
               return (
                 <div key={b.id} className="onyx-item-wrap" style={{ position: 'relative', minWidth: 0 }}>
-                <button onClick={() => openBook(b.id)} onContextMenu={e => onContextMenu(e, b)} className="onyx-tile" style={{ width: '100%', position: 'relative', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit' }}>
+                <button onClick={() => openBook(b.id)} onContextMenu={e => onContextMenu(e, b)} className="onyx-tile" style={{ width: '100%', position: 'relative', background: 'transparent', border: 'none', padding: '0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', color: 'inherit' }}>
                   <div style={{
                     position: 'relative',
                     display: 'inline-block',
                     overflow: 'hidden',
-                    borderRadius: 4,
+                    borderRadius: 'var(--r-xs)',
                     transform: b.id === selectedId ? 'translateY(-4px)' : 'none',
                     // box-shadow (not filter: drop-shadow) for the selected lift: a
                     // child `filter` spawns its own compositing layer and forces the
@@ -462,7 +461,7 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
                   }}>
                     <Cover item={b} size={coverW} serverUrl={st.serverUrl} />
                     {b.id === selectedId && (
-                      <div style={{ position: 'absolute', inset: 0, border: '2px solid var(--onyx-accent)', borderRadius: 4, pointerEvents: 'none', zIndex: 2 }} />
+                      <div style={{ position: 'absolute', inset: 0, border: '2px solid var(--onyx-accent)', borderRadius: 'var(--r-xs)', pointerEvents: 'none', zIndex: 2 }} />
                     )}
                     {st.showProgressOverlay && prog > 0 && (
                       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, background: 'rgba(0,0,0,0.4)' }}>
@@ -476,21 +475,21 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
                         style={{
                           position: 'absolute', bottom: st.showProgressOverlay && prog > 0 ? 6 : 4, right: 4,
                           zIndex: 3,
-                          background: 'rgba(0,0,0,0.72)', borderRadius: 3,
-                          padding: '1px 4px',
+                          background: 'rgba(0,0,0,0.72)', borderRadius: 'var(--r-xs)',
+                          padding: '2px var(--s-1)',
                           display: 'inline-flex', alignItems: 'center',
                           // Amber when the server has removed the book; brass when still on server.
                           color: dlRecord.serverDeleted ? '#d4834a' : 'var(--onyx-accent)',
-                          fontSize: 9, fontFamily: MONO,
+                          fontSize: 'var(--fs-0)', fontFamily: MONO,
                           lineHeight: 1, userSelect: 'none',
                         }}>
                         {dlRecord.serverDeleted ? '!' : '↓'}
                       </div>
                     )}
                   </div>
-                  <div style={{ marginTop: 7, fontSize: 11.5, fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--onyx-text)' }}>{bookTitle(b)}</div>
-                  <div style={{ marginTop: 1, display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
-                    <span style={{ minWidth: 0, fontSize: 10.5, color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookAuthor(b)}</span>
+                  <div style={{ marginTop: 'var(--s-2)', fontSize: 'var(--fs-2)', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--onyx-text)' }}>{bookTitle(b)}</div>
+                  <div style={{ marginTop: '2px', display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)', minWidth: 0 }}>
+                    <span style={{ minWidth: 0, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookAuthor(b)}</span>
                     {st.activeLibrary?.source === 'all' && <ItemSourceBadge item={b} />}
                   </div>
                 </button>
@@ -501,7 +500,7 @@ function ShelfGrid({ books, st, coverW, selectedId, openBook, onContextMenu, onA
                   aria-haspopup="menu"
                   title={`Actions for ${bookTitle(b)}`}
                   onClick={(event) => onActionMenu(event.currentTarget, b)}
-                  style={{ position: 'absolute', top: 6, right: 6, zIndex: 4, width: 28, height: 28, borderRadius: 6, border: '1px solid var(--onyx-glass-edge)', background: 'rgba(12,12,15,0.9)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
+                  style={{ position: 'absolute', top: 6, right: 6, zIndex: 4, width: 28, height: 28, borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: 'rgba(12,12,15,0.9)', color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: MONO, lineHeight: 1 }}
                 >•••</button>
                 </div>
               );
@@ -719,8 +718,8 @@ export default function LibraryShelf({ st, items, sortMode, groupBySeries }: Lib
   };
 
   return (
-    <Glass
-      translucent={st.translucent}
+    <div
+      className="ui-card"
       style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {/* Inner scroll container. The TanStack virtualizer must attach a ref to the
@@ -746,7 +745,7 @@ export default function LibraryShelf({ st, items, sortMode, groupBySeries }: Lib
             is reset imperatively above instead of via the remount. (The grid/list
             toggle still swaps component TYPE, an intentional one-time remount.) */}
         {seriesLoading ? (
-          <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 16, fontStyle: 'italic' }}>
+          <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontFamily: SERIF, fontSize: 'var(--fs-5)', fontStyle: 'italic' }}>
             Loading series…
           </div>
         ) : st.libraryView === 'list' ? (
@@ -827,6 +826,6 @@ export default function LibraryShelf({ st, items, sortMode, groupBySeries }: Lib
           onClose={() => setShareItem(null)}
         />
       )}
-    </Glass>
+    </div>
   );
 }

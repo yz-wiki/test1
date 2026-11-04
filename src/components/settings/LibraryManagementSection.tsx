@@ -49,14 +49,14 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
     return (
       <div ref={rootRef}>
         <SectionHead title={t('libMgmt.title')} subtitle="The local libraries on this computer." />
-        {pane('On this PC', <LocalLibrarySection st={st} embedded />, { marginTop: 0 })}
+        {pane('On this PC', <LocalLibrarySection st={st} embedded />, { marginTop: '0' })}
       </div>
     );
   }
 
   const colStyle: CSSProperties = sideBySide
-    ? { marginTop: 0, flex: 1, minWidth: 0 }
-    : { marginTop: 0, width: '100%' };
+    ? { marginTop: '0', flex: 1, minWidth: 0 }
+    : { marginTop: '0', width: '100%' };
 
   return (
     <div ref={rootRef}>
@@ -64,7 +64,7 @@ export default function LibraryManagementSection({ st }: LibraryManagementSectio
         title={t('libMgmt.title')}
         subtitle="Your Audiobookshelf server libraries and the local libraries on this computer."
       />
-      <div style={{ display: 'flex', flexDirection: sideBySide ? 'row' : 'column', gap: 24, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: sideBySide ? 'row' : 'column', gap: 'var(--s-6)', alignItems: 'flex-start' }}>
         {pane('Audiobookshelf server', <LibrariesSection st={st} embedded />, colStyle)}
         {pane('On this PC', <LocalLibrarySection st={st} embedded />, colStyle)}
       </div>

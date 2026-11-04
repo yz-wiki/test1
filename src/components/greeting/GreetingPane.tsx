@@ -108,7 +108,7 @@ function SubHead({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       fontFamily: MONO,
-      fontSize: 9.5,
+      fontSize: 'var(--fs-0)',
       letterSpacing: '0.16em',
       textTransform: 'uppercase',
       color: 'var(--onyx-text-mute)',
@@ -123,11 +123,11 @@ function BigStat({ value, label, w }: { value: string | number; label: string; w
   return (
     <div style={{ width: w, flexShrink: w ? 0 : undefined }}>
       {/* Number in serif 26/500 */}
-      <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 500, lineHeight: 1, color: 'var(--onyx-text)' }}>
+      <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-7)', fontWeight: 500, lineHeight: 1, color: 'var(--onyx-text)' }}>
         {value}
       </div>
       {/* Label in mono 9 uppercase */}
-      <div style={{ marginTop: 4, fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+      <div style={{ marginTop: 'var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
         {label}
       </div>
     </div>
@@ -139,12 +139,12 @@ function MiniStat({ value, unit, label }: { value: string | number; unit: string
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
       {/* Number + unit baseline-aligned */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-        <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: 'var(--onyx-text)' }}>{value}</span>
-        <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)' }}>{unit}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-1)' }}>
+        <span style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, color: 'var(--onyx-text)' }}>{value}</span>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{unit}</span>
       </div>
       {/* Label below */}
-      <div style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
+      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 'var(--s-1)' }}>
         {label}
       </div>
     </div>
@@ -157,7 +157,7 @@ function SparkBars({ data }: { data: Array<{ d: string; m: number }> }) {
   const max = Math.max(...data.map(d => d.m), 1);
 
   return (
-    <div style={{ marginTop: 12, display: 'flex', alignItems: 'flex-end', gap: 8, height: 96 }}>
+    <div style={{ marginTop: 'var(--s-3)', display: 'flex', alignItems: 'flex-end', gap: 'var(--s-2)', height: 96 }}>
       {data.map((d, i) => {
         // Zero days render a 2px stub; non-zero bars scale to 88px maximum.
         const h     = d.m === 0 ? 2 : Math.max(4, Math.round((d.m / max) * 88));
@@ -165,24 +165,24 @@ function SparkBars({ data }: { data: Array<{ d: string; m: number }> }) {
         return (
           <div
             key={i}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--s-2)', height: '100%', justifyContent: 'flex-end' }}
           >
             {/* Value label above bar — accent color on the max bar, muted otherwise */}
-            <div style={{ fontFamily: MONO, fontSize: 8.5, color: isMax ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', height: 12, textAlign: 'center' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: isMax ? 'var(--onyx-accent)' : 'var(--onyx-text-mute)', height: 12, textAlign: 'center' }}>
               {d.m > 0 ? d.m : ''}
             </div>
             {/* Bar — gradient for non-zero, translucent stub for zero */}
             <div style={{
               width: '100%',
               height: h,
-              borderRadius: 3,
+              borderRadius: 'var(--r-xs)',
               background: d.m === 0
                 ? 'rgba(255,255,255,0.08)'
                 : 'linear-gradient(180deg, var(--onyx-accent-bright), var(--onyx-accent))',
               boxShadow: isMax ? '0 0 12px var(--onyx-accent-edge)' : 'none',
             }} />
             {/* Day abbreviation below bar */}
-            <div style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
               {d.d}
             </div>
           </div>
@@ -208,28 +208,28 @@ function RankBar({
   return (
     <div>
       {/* Label row: optional rank, ellipsized label, right-aligned value */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--s-2)', marginBottom: 'var(--s-1)' }}>
         {rank != null && (
-          <span style={{ fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)', width: 14, flexShrink: 0 }}>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', width: 14, flexShrink: 0 }}>
             {rank}
           </span>
         )}
-        <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {label}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)', flexShrink: 0 }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-accent)', flexShrink: 0 }}>
           {display}
         </span>
       </div>
       {/* Track bar — indented under label when a rank number is present */}
-      <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden', marginLeft: rank != null ? 22 : 0 }}>
+      <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 'var(--r-xs)', overflow: 'hidden', marginLeft: rank != null ? 22 : 0 }}>
         {/* Fill: dark-gold → accent left-to-right; minimum 4% so hairline bars stay visible */}
         <div style={{
           width: `${Math.max(4, pct)}%`,
           height: '100%',
           // accentDeep approximated via the r/g/b CSS vars at half opacity.
           background: 'linear-gradient(90deg, rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.5), var(--onyx-accent))',
-          borderRadius: 3,
+          borderRadius: 'var(--r-xs)',
         }} />
       </div>
     </div>
@@ -241,11 +241,11 @@ function GreetStat({ label, value }: { label: string; value: string | number }) 
   return (
     <div>
       {/* Uppercase mono label */}
-      <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
         {label}
       </div>
       {/* Serif value */}
-      <div style={{ marginTop: 3, fontFamily: SERIF, fontSize: 22, fontWeight: 500, color: 'var(--onyx-text)' }}>
+      <div style={{ marginTop: 'var(--s-1)', fontFamily: SERIF, fontSize: 22, fontWeight: 500, color: 'var(--onyx-text)' }}>
         {value}
       </div>
     </div>
@@ -270,10 +270,10 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
 
   return (
     // gap: 28 gives sections more breathing room across the available pane height.
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-8)' }}>
 
       {/* Hero duo: Minutes · Days listened (Finished appears in the footer, not here) */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 32 }}> {/* centered with wider gap */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--s-8)' }}> {/* centered with wider gap */}
         <BigStat
           // totalTime is SECONDS (ABS unit; local stats match) — /60 for minutes.
           value={stats ? Math.round((stats.totalTime ?? 0) / 60).toLocaleString() : ph}
@@ -293,7 +293,7 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
         <SubHead>{t('greeting.minutesLast7')}</SubHead>
         <SparkBars data={last7} />
         {/* 4-up summary row below the sparkline — centered with even gaps */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 14 }}> {/* centered, gap: 24 */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--s-6)', marginTop: 'var(--s-4)' }}> {/* centered, gap: 24 */}
           <MiniStat value={loading ? ph : weekMinutes} unit="min" label={t('greeting.thisWeek')} />
           <MiniStat value={loading ? ph : dailyAvg}    unit="min" label={t('greeting.dailyAvg')} />
           <MiniStat value={loading ? ph : bestDay}     unit="min" label={t('greeting.bestDay')} />
@@ -304,14 +304,14 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
       {/* Recent sessions */}
       <div>
         <SubHead>{t('greeting.recentSessions')}</SubHead>
-        <div style={{ marginTop: 6 }}>
+        <div style={{ marginTop: 'var(--s-2)' }}>
           {loading ? (
             // Subtle loading placeholder — one muted line of text
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) 0' }}>
               Loading…
             </div>
           ) : recentSessions.length === 0 ? (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) 0' }}>
               {t('greeting.noRecentSessions')}
             </div>
           ) : (
@@ -319,22 +319,22 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
               <div
                 key={r.id}
                 style={{
-                  display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 0',
+                  display: 'flex', alignItems: 'baseline', gap: 'var(--s-3)', padding: 'var(--s-2) 0',
                   // Divider line between rows; first row has none
                   borderTop: i === 0 ? 'none' : '1px solid var(--onyx-line)',
                 }}
               >
                 {/* Left: title + relative date */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.displayTitle ?? 'Unknown'}
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 1 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: '2px' }}>
                     {relativeDate(r.date)}
                   </div>
                 </div>
                 {/* Right: session duration in accent mono */}
-                <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-accent)', flexShrink: 0 }}>
+                <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-accent)', flexShrink: 0 }}>
                   {fmtListeningTime(r.timeListening)}
                 </div>
               </div>
@@ -379,11 +379,11 @@ function LibraryStatsPage({
 
   return (
     // gap: 28 gives sections more breathing room across the available pane height.
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-8)' }}>
 
       {/* Hero quad: Hours · Authors · Tracks · GB */}
       {/* Widths tuned to fit the four numbers in one row at 360px. */}
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)' }}>
         <BigStat value={loading ? ph : hours}                           label={t('greeting.hours')}   w={74} />
         <BigStat value={stats ? stats.totalAuthors   : ph}              label={t('greeting.authors')} w={56} />
         <BigStat value={stats ? stats.numAudioTracks : ph}              label={t('greeting.tracks')}  w={56} />
@@ -394,7 +394,7 @@ function LibraryStatsPage({
       {topGenres.length > 0 && (
         <div>
           <SubHead>{t('greeting.topGenres')}</SubHead>
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
+          <div style={{ marginTop: 'var(--s-3)', display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
             {topGenres.map((g, i) => (
               <RankBar key={i} label={g.label} display={`${g.pct}%`} pct={g.pct} />
             ))}
@@ -406,7 +406,7 @@ function LibraryStatsPage({
       {topAuthors.length > 0 && (
         <div>
           <SubHead>{t('greeting.topAuthors')}</SubHead>
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 11 }}>
+          <div style={{ marginTop: 'var(--s-3)', display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
             {topAuthors.map((a, i) => (
               <RankBar
                 key={i}
@@ -568,7 +568,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
       {/* Date eyebrow — mono 10px, uppercase, muted */}
       <div style={{
         fontFamily: MONO,
-        fontSize: 10,
+        fontSize: 'var(--fs-0)',
         letterSpacing: '0.18em',
         color: 'var(--onyx-text-mute)',
         textTransform: 'uppercase',
@@ -578,9 +578,9 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
 
       {/* Greeting — serif 30px/500, two lines, gold period after name */}
       <div style={{
-        marginTop: 12,
+        marginTop: 'var(--s-3)',
         fontFamily: SERIF,
-        fontSize: 30,
+        fontSize: 'var(--fs-7)',
         fontWeight: 500,
         lineHeight: 1.08,
         letterSpacing: '-0.015em',
@@ -591,13 +591,13 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
 
       {/* Segmented toggle — Your stats / Library stats */}
       <div style={{
-        marginTop: 28, // increased from 18 to spread sections across available height
+        marginTop: 'var(--s-8)', // increased from 18 to spread sections across available height
         display: 'flex',
-        padding: 3,
-        gap: 3,
+        padding: 'var(--s-1)',
+        gap: 'var(--s-1)',
         background: 'var(--onyx-glass)',
         border: '1px solid var(--onyx-glass-edge)',
-        borderRadius: 10,
+        borderRadius: 'var(--r-card)',
       }}>
         {([ { id: 'user', label: 'Your stats' }, { id: 'library', label: 'Library stats' } ] as const).map(t => {
           const active = page === t.id;
@@ -607,12 +607,12 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
               onClick={() => switchPage(t.id)}
               style={{
                 flex: 1,
-                padding: '8px 0',
-                borderRadius: 7,
+                padding: 'var(--s-2) 0',
+                borderRadius: 'var(--r-sm)',
                 cursor: 'pointer',
                 border: 'none',
                 fontFamily: 'inherit',
-                fontSize: 12,
+                fontSize: 'var(--fs-2)',
                 fontWeight: active ? 600 : 500,
                 letterSpacing: '0.01em',
                 // Active: dimmed gold background + inset ring; inactive: transparent.
@@ -633,10 +633,10 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         flex: 1,
         minHeight: 0,
         overflowY: 'auto',
-        marginTop: 28, // increased from 18 to spread sections across available height
+        marginTop: 'var(--s-8)', // increased from 18 to spread sections across available height
         // Slight negative margin + padding trick keeps the scrollbar flush with the card edge.
         marginRight: -6,
-        paddingRight: 6,
+        paddingRight: 'var(--s-2)',
       }}>
         {page === 'user'
           ? <UserStatsPage stats={userStats} loading={loadingUser} />
@@ -653,11 +653,11 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
       {/* Footer strip — always present, derived from local library state */}
       <div style={{
         marginTop: 'auto', // anchors footer to the bottom when content is short; paddingTop provides separation
-        paddingTop: 18,
+        paddingTop: 'var(--s-5)',
         borderTop: '1px solid var(--onyx-line)',
         display: 'flex',
         justifyContent: 'center', // center the three footer stats across the pane width
-        gap: 32, // wider gap to match the hero row
+        gap: 'var(--s-8)', // wider gap to match the hero row
       }}>
         {/* Total items in the loaded library */}
         <GreetStat label={t('greeting.inLibrary')} value={st.library.length} />

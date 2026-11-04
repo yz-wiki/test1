@@ -84,23 +84,23 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
           display: 'flex', alignItems: 'center', gap: compact ? 6 : 10,
           padding: compact ? '6px 10px' : '6px 10px 6px 12px',
           border: `1px solid ${st.deviceOpen ? 'var(--onyx-accent-edge)' : 'var(--onyx-glass-edge)'}`,
-          borderRadius: 8,
+          borderRadius: 'var(--r-md)',
           background: st.deviceOpen ? 'var(--onyx-accent-dim)' : 'var(--onyx-glass)',
           // No backdrop-filter (see Glass.tsx) — this control sits on the already
           // static-tinted top bar, so blurring behind it did nothing visible.
           color: 'var(--onyx-text)', cursor: 'pointer', fontFamily: 'inherit',
         }}
       >
-        <span style={{ width: 6, height: 6, borderRadius: 3, background: '#5ac88a', boxShadow: '0 0 6px #5ac88a' }} />
+        <span style={{ width: 6, height: 6, borderRadius: 'var(--r-xs)', background: '#5ac88a', boxShadow: '0 0 6px #5ac88a' }} />
         <Icon name="headphones" size={14} color="var(--onyx-text-dim)" />
         {/* Device name — hidden in compact mode to fit the narrow transport slot */}
         {!compact && (
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, textAlign: 'left' }}>
-            <span style={{ fontSize: 11.5, color: 'var(--onyx-text)' }}>{current?.name ?? 'Audio output'}</span>
+            <span style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)' }}>{current?.name ?? 'Audio output'}</span>
           </div>
         )}
         <span style={{
-          color: 'var(--onyx-text-dim)', marginLeft: 4,
+          color: 'var(--onyx-text-dim)', marginLeft: 'var(--s-1)',
           display: 'inline-flex',
           transform: st.deviceOpen ? 'rotate(180deg)' : 'none',
           transition: 'transform 0.15s',
@@ -125,17 +125,17 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
             top: dropPos.top,
             right: dropPos.right,
             width: 300,
-            background: 'var(--onyx-panel2)',
+            background: 'var(--surface-overlay)',
             border: '1px solid var(--onyx-line)',
-            borderRadius: 10,
-            boxShadow: '0 16px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--onyx-accent-r),var(--onyx-accent-g),var(--onyx-accent-b),0.08)',
-            padding: 6,
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--shadow-popover)',
+            padding: 'var(--s-2)',
             zIndex: 9999,
           }}
         >
-          <div style={{ fontFamily: mono, fontSize: 9, color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: '6px 8px 4px' }}>{t('deviceSel.heading')}</div>
+          <div style={{ fontFamily: mono, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.12em', padding: 'var(--s-2) var(--s-2) var(--s-1)' }}>{t('deviceSel.heading')}</div>
           {devices.length === 0 ? (
-            <div style={{ padding: '8px', fontFamily: mono, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading devices…</div>
+            <div style={{ padding: 'var(--s-2)', fontFamily: mono, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>Loading devices…</div>
           ) : devices.map(d => (
             <button
               key={d.id}
@@ -147,7 +147,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
                 st.setDeviceOpen(false);
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 8px', borderRadius: 6,
+                display: 'flex', alignItems: 'center', gap: 'var(--s-3)', padding: 'var(--s-2) var(--s-2)', borderRadius: 'var(--r-sm)',
                 background: d.id === st.device ? 'var(--onyx-accent-dim)' : 'transparent',
                 border: 'none', width: '100%', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
               }}
@@ -159,7 +159,7 @@ export default function DeviceSelector({ st, compact, style }: DeviceSelectorPro
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 12,
+                  fontSize: 'var(--fs-2)',
                   color: d.id === st.device ? 'var(--onyx-accent)' : 'var(--onyx-text)',
                   fontWeight: d.id === st.device ? 500 : 400,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

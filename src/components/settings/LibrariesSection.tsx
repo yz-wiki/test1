@@ -168,14 +168,14 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       {/* Create form */}
       {createMode && (
         <div style={{
-          margin: '8px 2px 14px',
+          margin: 'var(--s-2) var(--s-1) var(--s-4)',
           border: '1px solid var(--onyx-accent-edge)',
-          borderRadius: 8,
+          borderRadius: 'var(--r-md)',
           overflow: 'hidden',
         }}>
           <div style={{
-            padding: '12px 20px 0',
-            fontFamily: SERIF, fontSize: 14, fontWeight: 500,
+            padding: 'var(--s-3) var(--s-5) 0',
+            fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500,
             color: 'var(--onyx-text-dim)',
           }}>
             {t('libs.newLibrary')}
@@ -194,12 +194,12 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
 
       {/* Loading / error */}
       {loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: '12px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: 'var(--s-3) 0' }}>
           Loading libraries…
         </div>
       )}
       {!loading && listError && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: '#e8716a', padding: '8px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: '#e8716a', padding: 'var(--s-2) 0' }}>
           {listError}
         </div>
       )}
@@ -208,7 +208,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       {!loading && !listError && (
         <div>
           {libraries.length === 0 && !createMode && (
-            <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: '12px 0' }}>
+            <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em', padding: 'var(--s-3) 0' }}>
               {t('libs.empty')}
             </div>
           )}
@@ -221,26 +221,26 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
             return (
               <div key={lib.id} style={{ borderBottom: idx < libraries.length - 1 && !isEditing ? '1px solid var(--onyx-line)' : 'none' }}>
                 {/* Library row */}
-                <div style={{ padding: '14px 2px' }}>
+                <div style={{ padding: 'var(--s-4) var(--s-1)' }}>
                   {/* Top row: icon · name+meta · action buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
+                    <span style={{ fontSize: 'var(--fs-6)', flexShrink: 0, lineHeight: 1 }}>
                       {iconEmoji(lib.icon)}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontSize: 14, fontWeight: 500, color: 'var(--onyx-text)',
+                        fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {lib.name}
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', marginTop: 2, letterSpacing: '0.04em' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', letterSpacing: '0.04em' }}>
                         {lib.mediaType}{lib.provider ? ` · ${lib.provider}` : ''}
                       </div>
                     </div>
 
                     {!isDeleting && (
-                      <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 'var(--s-2)', flexShrink: 0, alignItems: 'center' }}>
                         <SmallBtn
                           muted
                           onClick={() => handleScan(lib)}
@@ -275,9 +275,9 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
 
                   {/* Folder paths */}
                   {lib.folders.length > 0 && (
-                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: '2px 14px' }}>
+                    <div style={{ marginTop: 'var(--s-2)', display: 'flex', flexWrap: 'wrap', gap: '2px 14px' }}>
                       {lib.folders.map((f, i) => (
-                        <span key={i} style={{ fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', letterSpacing: '0.02em' }}>
+                        <span key={i} style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.02em' }}>
                           {f.fullPath}
                         </span>
                       ))}
@@ -285,24 +285,24 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                   )}
 
                   {/* Last scan */}
-                  <div style={{ marginTop: 5, fontFamily: MONO, fontSize: 10, color: 'var(--onyx-text-mute)', opacity: 0.65 }}>
+                  <div style={{ marginTop: 'var(--s-1)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', opacity: 0.65 }}>
                     Last scanned {relativeTime(lib.lastScan)}
                   </div>
 
                   {/* Delete confirmation — inline warning, no modal */}
                   {isDeleting && (
                     <div style={{
-                      marginTop: 14, padding: '14px 16px',
+                      marginTop: 'var(--s-4)', padding: 'var(--s-4) var(--s-4)',
                       background: 'rgba(232,113,106,0.07)',
                       border: '1px solid rgba(232,113,106,0.22)',
-                      borderRadius: 7,
+                      borderRadius: 'var(--r-sm)',
                     }}>
-                      <div style={{ fontSize: 12.5, color: 'var(--onyx-text)', lineHeight: 1.55, marginBottom: 14 }}>
+                      <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', lineHeight: 1.55, marginBottom: 'var(--s-4)' }}>
                         <span style={{ color: '#e8716a', fontWeight: 600 }}>⚠ Deleting "{lib.name}"</span>{' '}
                         will permanently remove all library items, collections, and listening progress from the server.
                         Files on disk are <strong>not</strong> deleted. This cannot be undone.
                       </div>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: 'var(--s-2)', justifyContent: 'flex-end' }}>
                         <SmallBtn muted onClick={() => setDeleteTarget(null)}>{t('libs.cancel')}</SmallBtn>
                         <SmallBtn danger onClick={handleDelete} disabled={deletePending}>
                           {deletePending ? 'Deleting…' : 'Delete Library'}
@@ -315,9 +315,9 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                 {/* Inline edit form — expands below the row */}
                 {isEditing && (
                   <div style={{
-                    margin: '0 2px 14px',
+                    margin: '0 var(--s-1) var(--s-4)',
                     border: '1px solid var(--onyx-accent-edge)',
-                    borderRadius: 8,
+                    borderRadius: 'var(--r-md)',
                     overflow: 'hidden',
                   }}>
                     <LibraryForm
@@ -364,13 +364,13 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
       {toast && (
         <div style={{
           position: 'fixed', bottom: 28, right: 32,
-          padding: '10px 18px',
-          background: 'var(--onyx-panel2)',
+          padding: 'var(--s-3) var(--s-5)',
+          background: 'var(--surface-overlay)',
           border: '1px solid var(--onyx-glass-edge)',
-          borderRadius: 8,
-          fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text)',
+          borderRadius: 'var(--r-md)',
+          fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text)',
           letterSpacing: '0.04em',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          boxShadow: 'var(--shadow-popover)',
           zIndex: 1000,
         }}>
           {toast}

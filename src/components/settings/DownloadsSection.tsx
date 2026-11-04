@@ -17,9 +17,9 @@ import { SectionHead, Row, MONO, SERIF, Panel, Toggle, useLocal } from './shared
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span style={{
-      fontFamily: MONO, fontSize: 10, letterSpacing: '0.03em', color: 'var(--onyx-text-dim)',
+      fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.03em', color: 'var(--onyx-text-dim)',
       background: 'rgba(255,255,255,0.04)', border: '1px solid var(--onyx-glass-edge)',
-      borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap',
+      borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)', whiteSpace: 'nowrap',
     }}>{children}</span>
   );
 }
@@ -50,21 +50,21 @@ function relativeTime(ms: number): string {
 function StorageControls({ value, busy, onOpen, onChange }: { value: string; busy: boolean; onOpen: () => void; onChange: () => void }) {
   const { t } = useI18n();
   const btn = {
-    padding: '7px 14px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
+    padding: 'var(--s-2) var(--s-4)', fontSize: 'var(--fs-0)', fontFamily: MONO, letterSpacing: '0.08em',
     textTransform: 'uppercase' as const, background: 'transparent',
-    border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, color: 'var(--onyx-text-dim)',
+    border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)',
   } as const;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
       <input
         readOnly
         value={value || t('common.loading')}
         onFocus={e => e.currentTarget.select()}
         title={value}
         style={{
-          fontFamily: MONO, fontSize: 11, background: 'rgba(0,0,0,0.3)',
-          border: '1px solid var(--onyx-glass-edge)', borderRadius: 7, color: 'var(--onyx-text-dim)',
-          padding: '7px 10px', width: 260, maxWidth: '32vw', outline: 'none',
+          fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--onyx-bg-deep)',
+          border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)',
+          padding: 'var(--s-2) var(--s-3)', width: 260, maxWidth: '32vw', outline: 'none',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}
       />
@@ -257,11 +257,11 @@ export default function DownloadsSection({ st }: Props) {
 
       {/* Total storage used — pill in lieu of a hard cache limit (none configured). */}
       {totalBytes > 0 && (
-        <div style={{ marginBottom: 4 }}>
+        <div style={{ marginBottom: 'var(--s-1)' }}>
           <span style={{
-            display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 6,
+            display: 'inline-flex', alignItems: 'center', padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)',
             background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)', color: 'var(--onyx-accent)',
-            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.1em', textTransform: 'uppercase',
+            fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase',
           }}>{fmtSize(totalBytes)} used</span>
         </div>
       )}
@@ -299,21 +299,21 @@ export default function DownloadsSection({ st }: Props) {
                 key={itemId}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--onyx-line)' : 'none', gap: 12,
+                  padding: 'var(--s-3) 0', borderBottom: i < arr.length - 1 ? '1px solid var(--onyx-line)' : 'none', gap: 'var(--s-3)',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, color: 'var(--onyx-text)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 6 }}>
+                  <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 'var(--s-2)' }}>
                     {title}
                   </div>
-                  <div style={{ height: 3, borderRadius: 2, background: 'var(--onyx-glass-edge)', overflow: 'hidden' }}>
+                  <div style={{ height: 3, borderRadius: 'var(--r-xs)', background: 'var(--onyx-glass-edge)', overflow: 'hidden' }}>
                     {pct !== null ? (
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'var(--onyx-accent)', borderRadius: 2, transition: 'width 0.2s ease' }} />
+                      <div style={{ height: '100%', width: `${pct}%`, background: 'var(--onyx-accent)', borderRadius: 'var(--r-xs)', transition: 'width 0.2s ease' }} />
                     ) : (
-                      <div style={{ height: '100%', width: '40%', background: 'var(--onyx-accent)', borderRadius: 2, animation: 'onyx-indeterminate 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: '100%', width: '40%', background: 'var(--onyx-accent)', borderRadius: 'var(--r-xs)', animation: 'onyx-indeterminate 1.4s ease-in-out infinite' }} />
                     )}
                   </div>
-                  <div style={{ marginTop: 4, fontSize: 11, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
+                  <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
                     {total > 0 ? `${fmtSize(bytesDownloaded)} / ${fmtSize(total)}` : fmtSize(bytesDownloaded)}
                   </div>
                 </div>
@@ -321,9 +321,9 @@ export default function DownloadsSection({ st }: Props) {
                   onClick={() => cancelDownload(itemId).catch(e => log.error('downloads', 'cancelDownload failed', { itemId, err: String(e) }))}
                   title={`Cancel download of "${title}"`}
                   style={{
-                    flexShrink: 0, padding: '6px 13px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
+                    flexShrink: 0, padding: 'var(--s-2) var(--s-4)', fontSize: 'var(--fs-0)', fontFamily: MONO, letterSpacing: '0.08em',
                     textTransform: 'uppercase' as const, background: 'transparent',
-                    border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, color: 'var(--onyx-text-dim)', cursor: 'pointer',
+                    border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', color: 'var(--onyx-text-dim)', cursor: 'pointer',
                   }}
                 >
                   {t('downloads.cancel')}
@@ -338,20 +338,20 @@ export default function DownloadsSection({ st }: Props) {
       <Panel
         label={t('downloads.history')}
         action={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
             {records.length > 1 && (
-              <select aria-label={t('downloads.sortHistory')} value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: '4px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 9.5 }}>
+              <select aria-label={t('downloads.sortHistory')} value={historySort} onChange={event => { const value = event.target.value as typeof historySort; setHistorySort(value); localStorage.setItem('onyx.downloads.historySort', value); }} style={{ padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: 'var(--onyx-glass)', color: 'var(--onyx-text-dim)', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>
                 <option value="newest">{t('downloads.newest')}</option>
                 <option value="oldest">{t('downloads.oldest')}</option>
                 <option value="largest">{t('downloads.largest')}</option>
               </select>
             )}
-            <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{records.length} book{records.length === 1 ? '' : 's'}</span>
+            <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>{records.length} book{records.length === 1 ? '' : 's'}</span>
           </div>
         }
       >
         {records.length === 0 ? (
-          <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontSize: 12, fontFamily: MONO, letterSpacing: '0.04em' }}>
+          <div style={{ padding: 'var(--s-8) 0', textAlign: 'center', color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-2)', fontFamily: MONO, letterSpacing: '0.04em' }}>
             {t('downloads.empty')}
           </div>
         ) : (
@@ -362,14 +362,14 @@ export default function DownloadsSection({ st }: Props) {
               return (
                 <div
                   key={record.itemId}
-                  style={{ display: 'flex', alignItems: 'center', padding: '13px 0', borderBottom: i < sortedRecords.length - 1 ? '1px solid var(--onyx-line)' : 'none', gap: 14 }}
+                  style={{ display: 'flex', alignItems: 'center', padding: 'var(--s-4) 0', borderBottom: i < sortedRecords.length - 1 ? '1px solid var(--onyx-line)' : 'none', gap: 'var(--s-4)' }}
                 >
                   {/* Cover thumbnail */}
-                  <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 6, overflow: 'hidden', background: 'var(--onyx-glass)' }}>
+                  <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 'var(--r-sm)', overflow: 'hidden', background: 'var(--onyx-glass)' }}>
                     {libraryItem ? (
                       <Cover item={libraryItem} size={52} serverUrl={st.serverUrl} />
                     ) : (
-                      <div style={{ width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 16, fontWeight: 600, color: 'var(--onyx-text-mute)' }}>
+                      <div style={{ width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 'var(--fs-5)', fontWeight: 600, color: 'var(--onyx-text-mute)' }}>
                         {record.title.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -377,20 +377,20 @@ export default function DownloadsSection({ st }: Props) {
 
                   {/* Title + author + size/date chips */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: 'var(--onyx-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
                       {record.title}
                     </div>
-                    <div style={{ marginTop: 2, fontSize: 12, color: 'var(--onyx-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {record.author || 'Unknown Author'}
                     </div>
-                    <div style={{ marginTop: 7, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap' }}>
                       <Chip>{fmtSize(record.fileSize)}</Chip>
                       <Chip><time dateTime={new Date(record.downloadedAt).toISOString()} title={new Date(record.downloadedAt).toLocaleString()}>{relativeTime(record.downloadedAt)}</time></Chip>
-                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: '2px 7px', borderRadius: 5, border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>{t('downloads.openLocation')}</button>
+                      <button onClick={() => revealDownloadLocation(record.itemId).catch(e => log.error('downloads', 'reveal downloaded file failed', { itemId: record.itemId, err: String(e) }))} title={record.filePath} style={{ padding: 'var(--s-1) var(--s-2)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-glass-edge)', background: 'transparent', color: 'var(--onyx-text-dim)', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{t('downloads.openLocation')}</button>
                     </div>
                     {/* Server-deleted warning — local copy retained and still playable offline. */}
                     {record.serverDeleted && (
-                      <div style={{ marginTop: 5, fontSize: 10, color: '#d4834a', fontFamily: MONO, letterSpacing: '0.04em' }}>
+                      <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-0)', color: '#d4834a', fontFamily: MONO, letterSpacing: '0.04em' }}>
                         ⚠ No longer on server — local copy only
                       </div>
                     )}
@@ -401,9 +401,9 @@ export default function DownloadsSection({ st }: Props) {
                     onClick={() => setPendingDelete(record)}
                     title={`Remove "${record.title}" from downloads`}
                     style={{
-                      flexShrink: 0, padding: '6px 13px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
+                      flexShrink: 0, padding: 'var(--s-2) var(--s-4)', fontSize: 'var(--fs-0)', fontFamily: MONO, letterSpacing: '0.08em',
                       textTransform: 'uppercase' as const, background: 'rgba(220,80,80,0.12)',
-                      border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
+                      border: '1px solid rgba(220,80,80,0.35)', borderRadius: 'var(--r-sm)', color: '#e08a8a', cursor: 'pointer',
                     }}
                   >
                     {t('downloads.delete')}
@@ -413,13 +413,13 @@ export default function DownloadsSection({ st }: Props) {
             })}
 
             {/* Clear all footer */}
-            <div style={{ marginTop: 6, paddingTop: 13, borderTop: '1px solid var(--onyx-line)', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: 'var(--s-2)', paddingTop: 'var(--s-4)', borderTop: '1px solid var(--onyx-line)', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setPendingClearAll(true)}
                 style={{
-                  padding: '7px 15px', fontSize: 10, fontFamily: MONO, letterSpacing: '0.08em',
+                  padding: 'var(--s-2) var(--s-4)', fontSize: 'var(--fs-0)', fontFamily: MONO, letterSpacing: '0.08em',
                   textTransform: 'uppercase' as const, background: 'rgba(220,80,80,0.12)',
-                  border: '1px solid rgba(220,80,80,0.35)', borderRadius: 6, color: '#e08a8a', cursor: 'pointer',
+                  border: '1px solid rgba(220,80,80,0.35)', borderRadius: 'var(--r-sm)', color: '#e08a8a', cursor: 'pointer',
                 }}
               >
                 {t('downloads.clearAll')}

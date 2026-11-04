@@ -26,7 +26,7 @@ const SWATCHES = ACCENT_PRESETS.map(preset => preset.hex);
 const STACK_BREAKPOINT = 840;
 
 // "Shelf tabs" sub-header inside the Shelf panel — eyebrow styling, block layout.
-const subEyebrow: CSSProperties = { ...eyebrowStyle, padding: '16px 0 8px' };
+const subEyebrow: CSSProperties = { ...eyebrowStyle, padding: 'var(--s-4) 0 var(--s-2)' };
 
 export default function AppearanceSection({ st }: AppearanceSectionProps) {
   const { t } = useI18n();
@@ -50,7 +50,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
 
   // ── Theme panel ────────────────────────────────────────────────────────────
   const themePanel = (
-    <Panel label={t('appearance.panelTheme')} style={{ marginTop: 0, width: stacked ? '100%' : 380, flexShrink: 0 }}>
+    <Panel label={t('appearance.panelTheme')} style={{ marginTop: '0', width: stacked ? '100%' : 380, flexShrink: 0 }}>
         <Row label={t('appearance.themeRow')}>
           <SegGroup>
             {[
@@ -63,7 +63,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
         </Row>
 
         <Row label={t('appearance.accent')} hint={t('appearance.accentHint')}>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 'var(--s-3)' }}>
             {SWATCHES.map(c => {
               const active = c.toLowerCase() === currentHex;
               return (
@@ -78,7 +78,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
                     // nudged every neighbour by 1px on selection.
                     border: active ? '2px solid var(--onyx-text)' : '2px solid transparent',
                     boxShadow: active ? `0 0 14px ${c}88` : 'none',
-                    padding: 0, transition: 'transform 0.12s, box-shadow 0.15s',
+                    padding: '0', transition: 'transform 0.12s, box-shadow 0.15s',
                     transform: active ? 'scale(1.08)' : 'scale(1)',
                   }}
                 />
@@ -90,7 +90,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
               onChange={e => st.setAccentColor(e.target.value)}
               aria-label={t('appearanceMod.customAccentAria')}
               title={t('appearanceMod.customAccent')}
-              style={{ width: 28, height: 28, padding: 0, border: '1px solid var(--onyx-glass-edge)', borderRadius: 14, background: 'transparent', cursor: 'pointer' }}
+              style={{ width: 28, height: 28, padding: '0', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-overlay)', background: 'transparent', cursor: 'pointer' }}
             />
           </div>
         </Row>
@@ -119,7 +119,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
 
   // ── Shelf panel ────────────────────────────────────────────────────────────
   const shelfPanel = (
-    <Panel label={t('appearance.panelShelf')} style={{ marginTop: 0, width: stacked ? '100%' : 'auto', flex: stacked ? '0 0 auto' : 1, minWidth: 0 }}>
+    <Panel label={t('appearance.panelShelf')} style={{ marginTop: '0', width: stacked ? '100%' : 'auto', flex: stacked ? '0 0 auto' : 1, minWidth: 0 }}>
         <Row label={t('appearance.defaultSort')}>
           <SegGroup>
             {SORTS.map(s => (
@@ -194,7 +194,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
 
       {/* Two glass panels: side by side at high resolution, stacked (with the
           settings pane scrolling) at low resolution. */}
-      <div style={{ display: 'flex', flexDirection: stacked ? 'column' : 'row', gap: 24, alignItems: 'flex-start', maxWidth: 1080 }}>
+      <div style={{ display: 'flex', flexDirection: stacked ? 'column' : 'row', gap: 'var(--s-6)', alignItems: 'flex-start', maxWidth: 1080 }}>
         {themePanel}
         {shelfPanel}
       </div>

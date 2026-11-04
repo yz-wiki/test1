@@ -19,20 +19,20 @@ function PathChip({ label, hint, path }: { label: string; hint?: string; path: s
       onClick={() => revealPath(path).catch(e => log.error('library', 'reveal path failed', { err: String(e) }))}
       title={`Open ${path}`}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 'var(--s-1)',
         width: '100%', boxSizing: 'border-box', textAlign: 'left', cursor: 'pointer',
-        padding: '8px 11px', borderRadius: 8,
+        padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)',
         background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)',
         transition: 'background 0.12s, border-color 0.12s',
       }}
       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'var(--onyx-accent-edge)'; }}
       onMouseLeave={e => { e.currentTarget.style.background = 'var(--onyx-glass)'; e.currentTarget.style.borderColor = 'var(--onyx-glass-edge)'; }}
     >
-      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>{label}</span>
-        {hint && <span style={{ fontSize: 10, color: 'var(--onyx-text-mute)', opacity: 0.85 }}>{hint}</span>}
+      <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)' }}>
+        <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>{label}</span>
+        {hint && <span style={{ fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', opacity: 0.85 }}>{hint}</span>}
       </span>
-      <span style={{ fontFamily: MONO, fontSize: 11.5, color: 'var(--onyx-text-dim)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {path}
       </span>
     </button>
@@ -178,10 +178,10 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
           <button
             onClick={() => { setCreating(c => !c); setNewName(''); setNewParent(null); }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '6px 12px', borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 'var(--s-2)', padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-md)',
               background: 'var(--onyx-accent-dim)', border: '1px solid var(--onyx-accent-edge)',
               color: 'var(--onyx-accent)', cursor: 'pointer',
-              fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+              fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', textTransform: 'uppercase',
             }}
           >
             <Icon name="plus" size={12} />
@@ -191,17 +191,17 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
       >
         {/* Create form — Skald provisions <location>/<name>/ with staging + quarantine. */}
         {creating && (
-          <div style={{ padding: '14px 0', borderBottom: '1px solid var(--onyx-line)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ padding: 'var(--s-4) 0', borderBottom: '1px solid var(--onyx-line)', display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+            <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center', flexWrap: 'wrap' }}>
               <TextInput value={newName} onChange={setNewName} placeholder={newType === 'podcast' ? 'Library name (e.g. Podcasts)' : 'Library name (e.g. Audiobooks)'} />
               {/* Media type — segmented Audiobooks / Podcasts toggle. */}
-              <div style={{ display: 'flex', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', overflow: 'hidden' }}>
                 {(['book', 'podcast'] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setNewType(t)}
                     style={{
-                      padding: '6px 11px', fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
+                      padding: 'var(--s-2) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.06em', textTransform: 'uppercase',
                       cursor: 'pointer', border: 'none',
                       background: newType === t ? 'var(--onyx-accent-dim)' : 'transparent',
                       color: newType === t ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)',
@@ -218,7 +218,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                 {busy === '__new__' ? 'Creating…' : 'Create'}
               </button>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
+            <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
               {newParent
                 ? `Will create: ${newParent.replace(/[\\/]+$/, '')}\\${newName.trim() || '<name>'}\\  (with Staging\\, Unidentified\\, Audiobooks\\, Podcasts\\)`
                 : 'Pick a location; Skald creates the library folder with Staging, Unidentified, Audiobooks, and Podcasts subfolders.'}
@@ -227,7 +227,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
         )}
 
         {locals.length === 0 && !creating ? (
-          <div style={{ padding: '22px 4px', color: 'var(--onyx-text-mute)', fontSize: 13 }}>
+          <div style={{ padding: 'var(--s-6) var(--s-1)', color: 'var(--onyx-text-mute)', fontSize: 'var(--fs-3)' }}>
             {t('localLib.empty')}
           </div>
         ) : (
@@ -238,18 +238,18 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
             return (
               <div
                 key={lib.id}
-                style={{ padding: '14px 0', borderBottom: '1px solid var(--onyx-line)' }}
+                style={{ padding: 'var(--s-4) 0', borderBottom: '1px solid var(--onyx-line)' }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--onyx-text)' }}>{lib.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-4)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)' }}>{lib.name}</span>
                     {active && (
-                      <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: DIM_GOLD }}>
+                      <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.1em', textTransform: 'uppercase', color: DIM_GOLD }}>
                         {t('localLib.active')}
                       </span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: 'var(--s-2)', flexShrink: 0 }}>
                     {!active && (
                       <button onClick={() => st.setActiveLibrary(lib.id)} style={btn()} title={t('localLib.switchTo')}>{t('localLib.open')}</button>
                     )}
@@ -281,12 +281,12 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
                 </div>
 
                 {scanning && progress && (
-                  <div style={{ marginTop: 9 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontFamily: MONO, fontSize: 9.5, color: 'var(--onyx-text-mute)' }}>
+                  <div style={{ marginTop: 'var(--s-3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>
                       <span>{progress.phase === 'discovering' ? 'Discovering book folders…' : progress.phase === 'cataloguing' ? 'Updating catalog…' : `Scanning${progress.currentItem ? ` ${progress.currentItem}` : '…'}`}</span>
                       {progress.total > 0 && <span>{progress.processed} / {progress.total}</span>}
                     </div>
-                    <div role="progressbar" aria-label={`Scanning ${lib.name}`} aria-valuemin={0} aria-valuemax={progress.total || undefined} aria-valuenow={progress.total ? progress.processed : undefined} style={{ height: 3, marginTop: 6, overflow: 'hidden', borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
+                    <div role="progressbar" aria-label={`Scanning ${lib.name}`} aria-valuemin={0} aria-valuemax={progress.total || undefined} aria-valuenow={progress.total ? progress.processed : undefined} style={{ height: 3, marginTop: 'var(--s-2)', overflow: 'hidden', borderRadius: 'var(--r-xs)', background: 'rgba(255,255,255,0.08)' }}>
                       <div style={{ height: '100%', width: progress.total ? `${Math.min(100, progress.processed / progress.total * 100)}%` : '35%', background: 'var(--onyx-accent)', transition: 'width 0.15s' }} />
                     </div>
                   </div>
@@ -294,7 +294,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 
                 {/* Folder paths — aligned glass buttons that open the location.
                     Staging is auto-organized by the app-wide watcher on drop. */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)', marginTop: 'var(--s-3)' }}>
                   <PathChip label={t('localLib.folder')} path={rootPath(lib)} />
                   {lib.stagingPath && (
                     <PathChip label={t('localLib.staging')} hint={t('localLib.stagingHint')} path={lib.stagingPath} />
@@ -313,13 +313,13 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
             (unidentified[lib.id] ?? []).map(item => (
               <div
                 key={item.sourcePath}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--onyx-line)' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--s-4)', padding: 'var(--s-3) 0', borderBottom: '1px solid var(--onyx-line)' }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.sourcePath.split(/[\\/]/).filter(Boolean).pop()}
                   </div>
-                  <div style={{ marginTop: 2, fontSize: 10.5, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>{lib.name} · unidentified</div>
+                  <div style={{ marginTop: 'var(--s-1)', fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', fontFamily: MONO }}>{lib.name} · unidentified</div>
                 </div>
                 <button onClick={() => setMatchTarget({ libId: lib.id, item })} style={btn()}>{t('localLib.match')}</button>
               </div>
@@ -359,7 +359,7 @@ export default function LocalLibrarySection({ st, embedded = false }: LocalLibra
 // Small mono action button used in the library rows.
 function btn(disabled = false, danger = false): React.CSSProperties {
   return {
-    padding: '6px 11px', borderRadius: 6, fontFamily: MONO, fontSize: 10,
+    padding: 'var(--s-2) var(--s-3)', borderRadius: 'var(--r-sm)', fontFamily: MONO, fontSize: 'var(--fs-0)',
     letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
     cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1,
     background: 'transparent',

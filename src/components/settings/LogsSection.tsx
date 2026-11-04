@@ -33,7 +33,7 @@ function SkaldLogPanel() {
   const [fullFile, setFullFile] = useState<string | null>(null); // null = live buffer view
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const inputStyle = { fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '5px 8px' } as const;
+  const inputStyle = { fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)' } as const;
 
   const entries = getLogBuffer();
   const q = search.toLowerCase();
@@ -54,7 +54,7 @@ function SkaldLogPanel() {
 
   return (
     <Panel label={t('logs.skaldLog')}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center', flexWrap: 'wrap', padding: 'var(--s-3) 0 var(--s-4)' }}>
         <select value={minRank} onChange={e => setMinRank(Number(e.target.value))} style={{ ...inputStyle, cursor: 'pointer' }}>
           {SKALD_LEVELS.map(l => <option key={l.value} value={l.rank}>{l.label}+</option>)}
         </select>
@@ -62,7 +62,7 @@ function SkaldLogPanel() {
           {SKALD_CATS.map(c => <option key={c} value={c}>{c === 'all' ? 'All categories' : c}</option>)}
         </select>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('logs.filterPlaceholder')} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
           {t('logs.autoScroll')}
         </label>
@@ -82,16 +82,16 @@ function SkaldLogPanel() {
       <div
         ref={scrollRef}
         className="onyx-selectable"
-        style={{ maxHeight: '58vh', overflowY: 'auto', background: 'var(--onyx-bg-deep)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 8, padding: '8px 10px', fontFamily: MONO, fontSize: 11, lineHeight: 1.6 }}
+        style={{ maxHeight: '58vh', overflowY: 'auto', background: 'var(--onyx-bg-deep)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-md)', padding: 'var(--s-2) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-1)', lineHeight: 1.6 }}
       >
         {fullFile !== null ? (
           fullFile.trim() === ''
             ? <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.emptyFile')}</div>
-            : <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--onyx-text)' }}>{fullFile}</pre>
+            : <pre style={{ margin: '0', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--onyx-text)' }}>{fullFile}</pre>
         ) : filtered.length === 0 ? (
           <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.emptySession')}</div>
         ) : filtered.map((e, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          <div key={i} style={{ display: 'flex', gap: 'var(--s-2)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <span style={{ color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{fmtTs(e.ts)}</span>
             <span style={{ color: colorFor(e.level), flexShrink: 0, minWidth: 40, textTransform: 'uppercase' }}>{e.level}</span>
             <span style={{ color: 'var(--onyx-accent)', flexShrink: 0, minWidth: 64 }}>{e.cat}</span>
@@ -100,7 +100,7 @@ function SkaldLogPanel() {
         ))}
       </div>
 
-      <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 12, paddingBottom: 4 }}>
+      <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-3)', paddingBottom: 'var(--s-1)' }}>
         {fullFile !== null
           ? 'Showing the on-disk log file (skald.log).'
           : `Showing ${filtered.length} of ${entries.length} buffered (current session). The full history is in the log file.`}
@@ -205,8 +205,8 @@ function LogsSectionInner({ st }: LogsSectionProps) {
   }, [filtered.length, autoScroll]);
 
   const inputStyle = {
-    fontFamily: MONO, fontSize: 11, background: 'var(--onyx-panel2)', color: 'var(--onyx-text)',
-    border: '1px solid var(--onyx-glass-edge)', borderRadius: 6, padding: '5px 8px',
+    fontFamily: MONO, fontSize: 'var(--fs-1)', background: 'var(--surface-overlay)', color: 'var(--onyx-text)',
+    border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-sm)', padding: 'var(--s-1) var(--s-2)',
   } as const;
 
   return (
@@ -214,7 +214,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
       <SectionHead title={t('logs.title')} subtitle="Server and Skald app logs for diagnosing failures. Admin only." />
 
       {/* Source switcher: Audiobookshelf server log vs Skald's own app log */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 'var(--s-2)', marginBottom: 'var(--s-1)' }}>
         <Seg active={subtab === 'server'} onClick={() => switchSubtab('server')}>{t('logs.tabServer')}</Seg>
         <Seg active={subtab === 'skald'} onClick={() => switchSubtab('skald')}>Skald</Seg>
       </div>
@@ -224,7 +224,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
       {subtab === 'server' && (
       <Panel label={t('logs.serverLog')}>
       {/* Controls */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '10px 0 14px' }}>
+      <div style={{ display: 'flex', gap: 'var(--s-3)', alignItems: 'center', flexWrap: 'wrap', padding: 'var(--s-3) 0 var(--s-4)' }}>
         <select
           value={minLevel}
           onChange={e => setMinLevel(Number(e.target.value))}
@@ -255,7 +255,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
           placeholder={t('logs.filterPlaceholder')}
           style={{ ...inputStyle, flex: 1, minWidth: 160 }}
         />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-2)', fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', cursor: 'pointer' }}>
           <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
           {t('logsMod.autoScroll')}
         </label>
@@ -268,16 +268,16 @@ function LogsSectionInner({ st }: LogsSectionProps) {
       </div>
 
       {!liveSyncOn && (
-        <div style={{ fontSize: 11.5, color: 'var(--onyx-text-mute)', padding: '0 0 10px', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', padding: '0 0 var(--s-3)', lineHeight: 1.5 }}>
           Live tail is off — showing the current day's recent log only. Enable live sync (Settings → Server) to stream new lines.
         </div>
       )}
 
       {loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>Loading logs…</div>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) 0' }}>Loading logs…</div>
       )}
       {error && !loading && (
-        <div style={{ fontFamily: MONO, fontSize: 11, color: 'var(--onyx-text-mute)', padding: '8px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', padding: 'var(--s-2) 0' }}>
           Couldn't load logs: {error}
         </div>
       )}
@@ -289,15 +289,15 @@ function LogsSectionInner({ st }: LogsSectionProps) {
           className="onyx-selectable"
           style={{
             maxHeight: '58vh', overflowY: 'auto',
-            background: 'var(--onyx-bg-deep)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 8,
-            padding: '8px 10px', fontFamily: MONO, fontSize: 11, lineHeight: 1.6,
+            background: 'var(--onyx-bg-deep)', border: '1px solid var(--onyx-glass-edge)', borderRadius: 'var(--r-md)',
+            padding: 'var(--s-2) var(--s-3)', fontFamily: MONO, fontSize: 'var(--fs-1)', lineHeight: 1.6,
           }}
         >
           {filtered.length === 0 && (
             <div style={{ color: 'var(--onyx-text-mute)' }}>{t('logs.noMatch')}</div>
           )}
           {filtered.map((l, i) => (
-            <div key={`${l.timestamp}-${i}`} style={{ display: 'flex', gap: 8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={l.source}>
+            <div key={`${l.timestamp}-${i}`} style={{ display: 'flex', gap: 'var(--s-2)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} title={l.source}>
               <span style={{ color: 'var(--onyx-text-mute)', flexShrink: 0 }}>{l.timestamp}</span>
               <span style={{ color: colorForLevel(l.level), flexShrink: 0, minWidth: 42 }}>{l.levelName}</span>
               <span style={{ color: 'var(--onyx-text)' }}>{l.message}</span>
@@ -306,7 +306,7 @@ function LogsSectionInner({ st }: LogsSectionProps) {
         </div>
       )}
 
-      <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', marginTop: 12, paddingBottom: 4 }}>
+      <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-3)', paddingBottom: 'var(--s-1)' }}>
         Showing {filtered.length} of {logs.length} buffered. Log level and retention are configured in Settings → Server → Logging.
       </div>
       </Panel>

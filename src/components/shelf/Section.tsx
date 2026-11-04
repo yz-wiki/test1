@@ -12,8 +12,8 @@ export interface SectionProps {
 
 export default function Section({ title, children }: SectionProps) {
   return (
-    <div style={{ marginBottom: 28 }}>
-      <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, letterSpacing: '-0.01em', marginBottom: 12, padding: '0 4px' }}>{title}</div>
+    <div style={{ marginBottom: 'var(--s-8)' }}>
+      <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-6)', fontWeight: 500, letterSpacing: '-0.01em', marginBottom: 'var(--s-3)', padding: '0 var(--s-1)' }}>{title}</div>
       {children}
     </div>
   );

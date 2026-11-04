@@ -186,7 +186,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
                   width: 300,
                   maxHeight: 320,
                   overflowY: 'auto',
-                  padding: 6,
+                  padding: 'var(--s-2)',
                   zIndex: 120,
                   background: 'var(--mac-panel-bg-strong)',
                 }}
@@ -209,7 +209,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
                       style={active ? { background: 'var(--onyx-accent-dim)', fontWeight: 600 } : undefined}
                     >
                       <span className="mac-nav-item__icon">
-                        <span style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
+                        <span style={{ fontFamily: 'var(--mac-font-mono)', fontSize: 'var(--fs-0)', minWidth: 18, textAlign: 'right' }}>
                           {index + 1}
                         </span>
                       </span>
@@ -225,7 +225,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
           </div>
         )}
         <span className="mac-nowbar__volume" style={{ display: 'inline-flex' }}>
-          <VolumeControl st={st} compact style={{ padding: '2px 6px', background: 'transparent', border: 'none' }} />
+          <VolumeControl st={st} compact style={{ padding: 'var(--s-1) var(--s-2)', background: 'transparent', border: 'none' }} />
         </span>
         <button
           type="button"

@@ -74,27 +74,27 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 'var(--s-3)',
         width: 340,
-        background: 'var(--onyx-panel2)',
+        background: 'var(--surface-overlay)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         border: '1px solid var(--onyx-glass-edge)',
         borderLeft: '3px solid var(--onyx-accent)',
-        borderRadius: 8,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-        padding: 12,
+        borderRadius: 'var(--r-md)',
+        boxShadow: 'var(--shadow-popover)',
+        padding: 'var(--s-3)',
         pointerEvents: 'auto',
       }}
     >
-      <Cover item={target.item} size={48} serverUrl={serverUrl} style={{ flexShrink: 0, borderRadius: 4 }} />
+      <Cover item={target.item} size={48} serverUrl={serverUrl} style={{ flexShrink: 0, borderRadius: 'var(--r-xs)' }} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.08em', color: 'var(--onyx-text-mute)' }}>
           {t('upNext.heading')}
         </div>
         <div style={{
-          fontSize: 13,
+          fontSize: 'var(--fs-3)',
           color: 'var(--onyx-text)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -104,7 +104,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
         </div>
         {subtitle && (
           <div style={{
-            fontSize: 11,
+            fontSize: 'var(--fs-1)',
             color: 'var(--onyx-text-dim)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -113,17 +113,17 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
             {subtitle}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <div style={{ display: 'flex', gap: 'var(--s-2)', marginTop: 'var(--s-2)' }}>
           <button
             onClick={() => dispatch({ type: 'play-now' })}
             style={{
               background: 'var(--onyx-accent)',
               border: 'none',
-              borderRadius: 4,
+              borderRadius: 'var(--r-xs)',
               color: 'var(--onyx-bg)',
               cursor: 'pointer',
-              fontSize: 11,
-              padding: '4px 10px',
+              fontSize: 'var(--fs-1)',
+              padding: 'var(--s-1) var(--s-3)',
             }}
           >
             {t('upNext.playNow')}
@@ -133,11 +133,11 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
             style={{
               background: 'none',
               border: '1px solid var(--onyx-glass-edge)',
-              borderRadius: 4,
+              borderRadius: 'var(--r-xs)',
               color: 'var(--onyx-text-dim)',
               cursor: 'pointer',
-              fontSize: 11,
-              padding: '4px 10px',
+              fontSize: 'var(--fs-1)',
+              padding: 'var(--s-1) var(--s-3)',
             }}
           >
             {t('upNext.cancel')}
@@ -167,7 +167,7 @@ export default function UpNextPanel({ target, seconds, serverUrl, onPlay, onDism
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: MONO,
-          fontSize: 11,
+          fontSize: 'var(--fs-1)',
           color: 'var(--onyx-text-dim)',
         }}>
           {state.secondsLeft}

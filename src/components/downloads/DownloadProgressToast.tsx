@@ -143,7 +143,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
       zIndex: 998,
       display: 'flex',
       flexDirection: 'column',
-      gap: 8,
+      gap: 'var(--s-2)',
       pointerEvents: 'none',
     }}>
       {Array.from(downloads.entries()).map(([itemId, { title, bytesDownloaded, totalBytes }]) => {
@@ -157,14 +157,14 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
           <div key={itemId} style={{
             minWidth: 260,
             maxWidth: 420,
-            background: 'var(--onyx-panel2)',
+            background: 'var(--surface-overlay)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid var(--onyx-glass-edge)',
             borderLeft: '3px solid var(--onyx-accent)',
-            borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            padding: '11px 14px',
+            borderRadius: 'var(--r-md)',
+            boxShadow: 'var(--shadow-popover)',
+            padding: 'var(--s-3) var(--s-4)',
             pointerEvents: 'auto', // re-enable so the cancel button is clickable
           }}>
             {/* Title row — book name on the left, cancel button on the right */}
@@ -172,11 +172,11 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: 8,
-              marginBottom: 8,
+              gap: 'var(--s-2)',
+              marginBottom: 'var(--s-2)',
             }}>
               <div style={{
-                fontSize: 13,
+                fontSize: 'var(--fs-3)',
                 color: 'var(--onyx-text)',
                 fontWeight: 500,
                 whiteSpace: 'nowrap',
@@ -203,11 +203,11 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                   justifyContent: 'center',
                   background: 'transparent',
                   border: '1px solid var(--onyx-glass-edge)',
-                  borderRadius: 4,
+                  borderRadius: 'var(--r-xs)',
                   color: 'var(--onyx-text-mute)',
-                  fontSize: 12,
+                  fontSize: 'var(--fs-2)',
                   cursor: 'pointer',
-                  padding: 0,
+                  padding: '0',
                   lineHeight: 1,
                 }}
               >
@@ -218,10 +218,10 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
             {/* Progress bar track */}
             <div style={{
               height: 4,
-              borderRadius: 2,
+              borderRadius: 'var(--r-xs)',
               background: 'var(--onyx-glass-edge)',
               overflow: 'hidden',
-              marginBottom: 6,
+              marginBottom: 'var(--s-2)',
             }}>
               {pct !== null ? (
                 // Determinate: grows left-to-right as bytes arrive.
@@ -229,7 +229,7 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                   height: '100%',
                   width: `${pct}%`,
                   background: 'var(--onyx-accent)',
-                  borderRadius: 2,
+                  borderRadius: 'var(--r-xs)',
                   transition: 'width 0.2s ease',
                 }} />
               ) : (
@@ -238,14 +238,14 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
                   height: '100%',
                   width: '40%',
                   background: 'var(--onyx-accent)',
-                  borderRadius: 2,
+                  borderRadius: 'var(--r-xs)',
                   animation: 'onyx-indeterminate 1.4s ease-in-out infinite',
                 }} />
               )}
             </div>
 
             {/* Byte counter — "245.0 MB / 604.0 MB" or just "245.0 MB" for unknown total */}
-            <div style={{ fontSize: 11, color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
+            <div style={{ fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', fontFamily: MONO }}>
               {totalBytes > 0
                 ? `${fmtBytes(bytesDownloaded)} / ${fmtBytes(totalBytes)}`
                 : fmtBytes(bytesDownloaded)}
@@ -254,13 +254,13 @@ export default function DownloadProgressToast({ serverUrl, onComplete, onCancel,
         );
       })}
       {Array.from(failed.values()).map(entry => (
-        <div key={entry.itemId} style={{ minWidth: 260, maxWidth: 420, background: 'var(--onyx-panel2)', border: '1px solid rgba(220,100,100,0.45)', borderRadius: 8, padding: '11px 14px', pointerEvents: 'auto' }}>
-          <div style={{ fontSize: 13, color: 'var(--onyx-text)', marginBottom: 7 }}>Download failed: “{entry.title}”</div>
+        <div key={entry.itemId} style={{ minWidth: 260, maxWidth: 420, background: 'var(--surface-overlay)', border: '1px solid rgba(220,100,100,0.45)', borderRadius: 'var(--r-md)', padding: 'var(--s-3) var(--s-4)', pointerEvents: 'auto' }}>
+          <div style={{ fontSize: 'var(--fs-3)', color: 'var(--onyx-text)', marginBottom: 'var(--s-2)' }}>Download failed: “{entry.title}”</div>
           <button onClick={() => {
             setFailed(prev => { const next = new Map(prev); next.delete(entry.itemId); return next; });
             downloadItem(serverUrl, entry.itemId, `${entry.title}.zip`, entry.title, '')
               .catch(e => log.error('downloads', 'retry download command failed', { itemId: entry.itemId, err: String(e) }));
-          }} style={{ padding: '5px 10px', borderRadius: 5, border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 10 }}>{t('dlToast.retry')}</button>
+          }} style={{ padding: 'var(--s-1) var(--s-3)', borderRadius: 'var(--r-sm)', border: '1px solid var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)', color: 'var(--onyx-accent)', cursor: 'pointer', fontFamily: MONO, fontSize: 'var(--fs-0)' }}>{t('dlToast.retry')}</button>
         </div>
       ))}
     </div>

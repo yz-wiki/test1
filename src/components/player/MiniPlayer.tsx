@@ -90,39 +90,39 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
       // covers the title/synopsis. Fills the column's full width.
       width: '100%',
       flexShrink: 0,
-      marginTop: 14,
+      marginTop: 'var(--s-4)',
       // Static frost, no live backdrop-filter (see Glass.tsx for why). A soft
       // diagonal gradient (lit at the top, deeper at the bottom) reads as glass
       // rather than a flat tint, matching the Glass panels.
       background: 'linear-gradient(158deg, rgba(28, 28, 35, 0.74) 0%, rgba(18, 18, 23, 0.84) 100%)',
       border: '1px solid var(--onyx-glass-edge)',
-      borderRadius: 14,
-      boxShadow: '0 16px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)',
-      padding: 14,
+      borderRadius: 'var(--r-overlay)',
+      boxShadow: 'var(--shadow-popover)',
+      padding: 'var(--s-4)',
       display: 'flex',
       flexDirection: 'column',
-      gap: 10,
+      gap: 'var(--s-3)',
       boxSizing: 'border-box',
     }}>
       {/* Header — cover + chapter eyebrow + title + subtitle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s-3)' }}>
         <button
           onClick={returnToNowPlaying}
           aria-label={`Return to now playing: ${title}`}
           title={t('miniPlayer.returnToNowPlaying')}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, lineHeight: 0 }}
+          style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', flexShrink: 0, lineHeight: 0 }}
         >
-          <Cover item={item} size={40} serverUrl={st.serverUrl} style={{ borderRadius: 6 }} fallbackImageUrl={fallbackImageUrl} />
+          <Cover item={item} size={40} serverUrl={st.serverUrl} style={{ borderRadius: 'var(--r-sm)' }} fallbackImageUrl={fallbackImageUrl} />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: MONO, fontSize: 8.5, color: 'var(--onyx-text-mute)', letterSpacing: '0.14em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.14em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {eyebrow}
           </div>
-          <div style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: 'var(--onyx-text)', lineHeight: 1.15, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-4)', fontWeight: 500, color: 'var(--onyx-text)', lineHeight: 1.15, marginTop: 'var(--s-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {title}
           </div>
           {subtitle && (
-            <div style={{ fontSize: 11.5, color: 'var(--onyx-text-dim)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {subtitle}
             </div>
           )}
@@ -155,7 +155,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         aria-valuemax={Math.max(0, st.bookSecs)}
         aria-valuenow={Math.max(0, Math.min(st.position, st.bookSecs))}
         aria-valuetext={`${fmtTime(st.position)} of ${fmtTime(st.bookSecs)}`}
-        style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }}
+        style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center', gap: 'var(--s-1)', cursor: 'pointer' }}
         title={t('miniPlayer.seek')}
       >
         {Array.from({ length: BARS }).map((_, i) => (
@@ -170,7 +170,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
 
       {/* Footer — elapsed / total + play-pause */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontFamily: MONO, fontSize: 11 }}>
+        <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)' }}>
           <span style={{ color: 'var(--onyx-text)', fontWeight: 600 }}>{fmtTime(st.position)}</span>
           <span style={{ color: 'var(--onyx-text-mute)' }}> / {fmtTime(st.bookSecs)}</span>
         </div>
@@ -182,7 +182,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
             background: 'var(--onyx-accent)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--onyx-bg)',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+            boxShadow: 'var(--shadow-popover)',
           }}
           title={playing ? 'Pause' : 'Play'}
         >
