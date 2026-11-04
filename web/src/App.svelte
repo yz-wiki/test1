@@ -10,6 +10,7 @@
   import Book from './routes/Book.svelte';
   import Podcast from './routes/Podcast.svelte';
   import Downloads from './routes/Downloads.svelte';
+  import Admin from './routes/Admin.svelte';
   import Settings from './routes/Settings.svelte';
   import Player from './routes/Player.svelte';
   import Shell from './components/Shell.svelte';
@@ -63,6 +64,8 @@
       <Podcast />
     {:else if ui.route === 'downloads'}
       <Downloads />
+    {:else if ui.route === 'admin'}
+      <Admin />
     {:else if ui.route === 'settings'}
       <Settings />
     {:else}

@@ -180,6 +180,63 @@ export const getOfflineProgressCount = () => call<number>('get_offline_progress_
 export const flushOfflineProgress = (serverUrl: string) =>
   call<number>('flush_offline_progress', { serverUrl });
 
+// ─── Administration (server-side; root/admin accounts only) ──────────────────
+
+export interface AdminLibrary {
+  id: string;
+  name: string;
+  mediaType: string;
+  folders?: { id: string; fullPath: string }[];
+  lastScan?: number | null;
+}
+
+export interface AdminUserRow {
+  id: string;
+  username: string;
+  type: string;
+  lastSeen?: number | null;
+  createdAt?: number | null;
+  isActive?: boolean | null;
+  email?: string | null;
+}
+
+export interface ServerTask {
+  id: string;
+  action?: string;
+  title?: string;
+  description?: string;
+  error?: string | null;
+  isFinished?: boolean;
+  isFailed?: boolean;
+  startedAt?: number | null;
+  finishedAt?: number | null;
+}
+
+export interface ServerBackup {
+  id: string;
+  datePretty?: string;
+  filename?: string;
+  fileSize?: number;
+}
+
+export const getLibrariesFull = (serverUrl: string) =>
+  call<AdminLibrary[]>('get_libraries_full', { serverUrl });
+
+export const scanLibrary = (serverUrl: string, libraryId: string, force = false) =>
+  call<void>('scan_library', { serverUrl, libraryId, force });
+
+export const getAllUsers = (serverUrl: string) =>
+  call<AdminUserRow[]>('get_all_users', { serverUrl });
+
+export const getTasks = (serverUrl: string) =>
+  call<{ tasks: ServerTask[] }>('get_tasks', { serverUrl });
+
+export const getBackups = (serverUrl: string) =>
+  call<{ backups: ServerBackup[]; backupLocation?: string }>('get_backups', { serverUrl });
+
+export const createBackup = (serverUrl: string) =>
+  call<{ backups: ServerBackup[]; backupLocation?: string }>('create_backup', { serverUrl });
+
 // ─── Playback ────────────────────────────────────────────────────────────────
 
 export interface OpenSessionResult {

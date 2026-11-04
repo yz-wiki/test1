@@ -79,6 +79,20 @@
 
     <div class="rail__spacer"></div>
 
+    {#if session.user?.type === 'root' || session.user?.type === 'admin'}
+      <button
+        class="nav-item"
+        aria-current={ui.route === 'admin' && !player.expanded ? 'page' : undefined}
+        onclick={() => {
+          player.collapse();
+          ui.route = 'admin';
+        }}
+      >
+        <span class="nav-item__icon"><Icon name="server" /></span>
+        <span class="nav-item__label">{t('nav.admin')}</span>
+      </button>
+    {/if}
+
     <button
       class="nav-item"
       aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}

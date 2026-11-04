@@ -25,6 +25,7 @@
     | 'chevron-down'
     | 'expand'
     | 'download'
+    | 'server'
     | 'dots';
 
   let { name, size = 16, filled = false }: {
@@ -100,6 +101,10 @@
     <path d="M8 2.6v7.2" />
     <path d="M5 7l3 3 3-3" />
     <path d="M3.2 12.4h9.6" />
+  {:else if name === 'server'}
+    <rect x="2.4" y="3" width="11.2" height="4" rx="1.2" />
+    <rect x="2.4" y="9" width="11.2" height="4" rx="1.2" />
+    <path d="M4.8 5h.01M4.8 11h.01" />
   {:else if name === 'dots'}
     <circle cx="4" cy="8" r="1.1" fill="currentColor" stroke="none" />
     <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />

@@ -2,6 +2,7 @@
   import { library, session, ui } from '../lib/state.svelte';
   import { progress } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
+  import { matchesQuery, preloadPinyin } from '../lib/search';
   import { t, formatLength } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
@@ -12,16 +13,15 @@
   });
 
   let query = $state('');
+  // Set once the pinyin dictionary has arrived, so the filter re-runs against it.
+  let pinyinReady = $state(false);
 
+  // Pinyin-aware: "santi" and "st" both find 《三体》.
   const visible = $derived.by(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (!q) return library.items;
-    return library.items.filter(item => {
-      const meta = item.media?.metadata;
-      return [meta?.title, meta?.authorName, meta?.seriesName]
-        .filter(Boolean)
-        .some(value => String(value).toLowerCase().includes(q));
-    });
+    void pinyinReady;
+    return library.items.filter(item => matchesQuery(item, q));
   });
 
   /** "Continue listening" means unfinished rows the server actually has, newest
@@ -63,7 +63,13 @@
 <div class="toolbar">
   <div class="search" style="width: 320px">
     <span class="search__icon"><Icon name="search" size={14} /></span>
-    <input class="input" bind:value={query} placeholder={t('library.search')} spellcheck="false" />
+    <input
+      class="input"
+      bind:value={query}
+      placeholder={t('library.search')}
+      spellcheck="false"
+      onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
+    />
   </div>
 
   <span class="t-small t-num">{t('library.count', { count: visible.length })}</span>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { library, progress, ui } from '../lib/state.svelte';
   import { episodesNewestFirst, player } from '../lib/player.svelte';
+  import { preloadPinyin, textMatches } from '../lib/search';
   import { t, formatDuration, type TranslationKey } from '../lib/i18n.svelte';
   import Cover from '../components/Cover.svelte';
   import Icon from '../components/Icon.svelte';
@@ -16,6 +17,7 @@
 
   let filter = $state<Filter>('all');
   let query = $state('');
+  let pinyinReady = $state(false);
 
   const item = $derived(library.items.find(entry => entry.id === ui.itemId) ?? null);
   const meta = $derived(item?.media?.metadata);
@@ -28,13 +30,12 @@
   }
 
   const visible = $derived.by(() => {
-    const needle = query.trim().toLowerCase();
+    void pinyinReady;
+    const needle = query.trim();
     return episodes.filter(episode => {
       if (filter !== 'all' && stateOf(episode.id) !== filter) return false;
       if (!needle) return true;
-      return [episode.title, episode.subtitle]
-        .filter(Boolean)
-        .some(value => String(value).toLowerCase().includes(needle));
+      return textMatches(`${episode.title} ${episode.subtitle ?? ''}`, needle);
     });
   });
 
@@ -102,7 +103,13 @@
     <div class="toolbar">
       <div class="search" style="width: 280px">
         <span class="search__icon"><Icon name="search" size={14} /></span>
-        <input class="input" bind:value={query} placeholder={t('podcast.search')} spellcheck="false" />
+        <input
+          class="input"
+          bind:value={query}
+          placeholder={t('podcast.search')}
+          spellcheck="false"
+          onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
+        />
       </div>
 
       <div class="segmented">

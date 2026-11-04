@@ -2,7 +2,7 @@
   "name": "skald",
   "description": "A native audiobook client for Audiobookshelf",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -37,6 +37,7 @@
     "@tauri-apps/plugin-global-shortcut": "^2.3.2",
     "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2",
+    "pinyin-pro": "^3.29.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

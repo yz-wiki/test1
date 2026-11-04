@@ -2,7 +2,7 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.3.0 (2026-11-04) — preview
+## 2.4.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
@@ -52,6 +52,13 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
 - **Keyboard shortcuts**, installed once for the window: Space or K play/pause,
   ←/→ skip 15 s (Shift for 90 s), [ / ] (or P / N) previous/next chapter or
   episode, Esc leaves the player. None of them fire while a field has focus.
+- **Pinyin search.** Typing "santi" or "st" finds 《三体》, and the same works
+  for author and series names. The dictionary is loaded when a search field is
+  focused rather than at startup, so the initial bundle stays small.
+- **Server screen** for root/admin accounts: libraries with folder counts and
+  last scan plus a one-click scan, the user list with roles and last seen, the
+  server's running/finished/failed tasks, and backups with a "back up now"
+  button. Hidden entirely for ordinary accounts.
 - **Continue listening is real.** The shelf now asks `/api/me` which titles were
   actually started and orders them by when you last listened, instead of showing
   the first six books in the library.
@@ -60,10 +67,11 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
 - Three themes (Graphite / Paper / Midnight), full English and 简体中文,
   reduced-motion preference.
 
-### Not ported yet
-Sharing and RSS, cron jobs, the admin screens (libraries, users, backups, log
-stream), onboarding, and the metadata-matching dialogs. The routes are absent
-rather than broken — nothing in the menu leads to a dead end.
+### Deliberately not ported
+Metadata matching and upload dialogs, share links/RSS feeds, cron editing,
+server log streaming, and library create/edit forms. These are server
+administration tasks that Audiobookshelf's own web UI does better, and half a
+dialog is worse than none. Nothing in the menu leads to a dead end.
 
 ## 1.6.0 (2026-11-04)
 
