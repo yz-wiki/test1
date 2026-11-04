@@ -2,7 +2,7 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.2.0 (2026-11-04) — preview
+## 2.3.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
@@ -44,6 +44,14 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
   new Downloads screen, remove it again. A downloaded book also plays with no
   network: playback falls back to the local file and queues the listening for
   the server.
+- **Bookmarks.** In the player's third panel: add a bookmark at the current
+  position with an optional label, and click any bookmark to jump back to it.
+- **Server connection panel** in Settings: live socket state with reconnect,
+  how many offline listenings are queued and a button to send them now, plus
+  whatever other device is currently playing.
+- **Keyboard shortcuts**, installed once for the window: Space or K play/pause,
+  ←/→ skip 15 s (Shift for 90 s), [ / ] (or P / N) previous/next chapter or
+  episode, Esc leaves the player. None of them fire while a field has focus.
 - **Continue listening is real.** The shelf now asks `/api/me` which titles were
   actually started and orders them by when you last listened, instead of showing
   the first six books in the library.
@@ -53,8 +61,8 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
   reduced-motion preference.
 
 ### Not ported yet
-The ABS sync and sessions panels, sharing/RSS, cron jobs, admin screens,
-onboarding, bookmarks, and the metadata-matching dialogs. The routes are absent
+Sharing and RSS, cron jobs, the admin screens (libraries, users, backups, log
+stream), onboarding, and the metadata-matching dialogs. The routes are absent
 rather than broken — nothing in the menu leads to a dead end.
 
 ## 1.6.0 (2026-11-04)

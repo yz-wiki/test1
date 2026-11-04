@@ -13,6 +13,7 @@ import {
   hasToken,
   login as loginCommand,
   loginWithApiKey,
+  type Bookmark,
   type Library,
   type LibraryItem,
   type MediaProgress,
@@ -179,6 +180,7 @@ export const ui = new UiStore();
  */
 class ProgressStore {
   rows = $state<MediaProgress[]>([]);
+  marks = $state<Bookmark[]>([]);
   private loadedFor = '';
 
   async load(serverUrl: string, force = false): Promise<void> {
@@ -186,6 +188,7 @@ class ProgressStore {
     try {
       const me = await getMe(serverUrl);
       this.rows = me.mediaProgress ?? [];
+      this.marks = me.bookmarks ?? [];
       this.loadedFor = serverUrl;
     } catch {
       // Progress is decoration: a failure must never block the library.
@@ -208,8 +211,16 @@ class ProgressStore {
     return Math.min(Math.max(row.progress, 0), 1);
   }
 
+  /** Bookmarks for one title, earliest first — the order they are reached in. */
+  bookmarksFor(itemId: string): Bookmark[] {
+    return this.marks
+      .filter(mark => mark.libraryItemId === itemId)
+      .sort((a, b) => a.time - b.time);
+  }
+
   reset(): void {
     this.rows = [];
+    this.marks = [];
     this.loadedFor = '';
   }
 }

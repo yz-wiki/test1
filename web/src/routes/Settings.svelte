@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getVersion } from '@tauri-apps/api/app';
-  import { ui } from '../lib/state.svelte';
+  import { session, ui } from '../lib/state.svelte';
+  import { sync } from '../lib/sync.svelte';
   import { LOCALES, LOCALE_LABEL, getLocale, setLocale, t, type Locale } from '../lib/i18n.svelte';
   import {
     getAudioDevices,
@@ -26,6 +27,7 @@
   let cacheDir = $state('');
   let version = $state('');
   let error = $state<string | null>(null);
+  let flushed = $state<number | null>(null);
 
   onMount(async () => {
     try {
@@ -43,7 +45,12 @@
       // Devices are optional: a machine with no enumerable output still plays,
       // so a failure here is not worth an error banner.
     }
+    void sync.refresh(session.serverUrl);
   });
+
+  async function sendOffline(): Promise<void> {
+    flushed = await sync.flush(session.serverUrl);
+  }
 
   async function chooseDevice(id: string): Promise<void> {
     deviceId = id;
@@ -178,6 +185,80 @@
     </div>
   </section>
 
+  <h2 class="t-label section-title">{t('sync.title')}</h2>
+  <section class="card" style="max-width: 720px">
+    <div class="card__body">
+      <div class="setting">
+        <div class="setting__main">
+          <span class="setting__label">{t('sync.socket')}</span>
+          <span class="setting__hint">
+            <span class="dot" class:on={sync.socket === 'connected'} class:pending={sync.socket === 'connecting'}></span>
+            {sync.socket === 'connected'
+              ? t('sync.connected')
+              : sync.socket === 'connecting'
+                ? t('sync.connecting')
+                : t('sync.offline')}
+          </span>
+        </div>
+        <div class="setting__control">
+          {#if sync.socket === 'connected'}
+            <button class="btn btn--quiet btn--sm" onclick={() => void sync.disconnect()}>
+              {t('sync.disconnect')}
+            </button>
+          {:else}
+            <button class="btn btn--quiet btn--sm" onclick={() => void sync.connect(session.serverUrl)}>
+              {t('sync.reconnect')}
+            </button>
+          {/if}
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting__main">
+          <span class="setting__label">{t('sync.pending')}</span>
+          <span class="setting__hint">{t('sync.pendingHint')}</span>
+        </div>
+        <div class="setting__control">
+          <span class="t-num t-small t-tertiary">{sync.pending}</span>
+          <button
+            class="btn btn--quiet btn--sm"
+            disabled={sync.busy || sync.pending === 0}
+            onclick={() => void sendOffline()}
+          >{t('sync.flush')}</button>
+        </div>
+      </div>
+
+      <div class="setting setting--stack">
+        <div class="setting__main">
+          <span class="setting__label">{t('sync.sessions')}</span>
+          {#if sync.sessions.length === 0}
+            <span class="setting__hint">{t('sync.sessionsEmpty')}</span>
+          {:else}
+            <ul class="sessions">
+              {#each sync.sessions as entry (entry.id)}
+                <li class="session">
+                  <span class="truncate">{entry.displayTitle ?? entry.bookId ?? entry.id}</span>
+                  <span class="t-small t-tertiary truncate">
+                    {entry.deviceInfo?.deviceName ?? entry.username ?? ''}
+                  </span>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
+        <div class="setting__control">
+          <button class="btn btn--quiet btn--sm" onclick={() => void sync.refresh(session.serverUrl)}>
+            {t('sync.refresh')}
+          </button>
+        </div>
+      </div>
+
+      {#if flushed !== null && flushed > 0}
+        <p class="t-small t-accent">{t('sync.flushed', { count: flushed })}</p>
+      {/if}
+    </div>
+  </section>
+
   <h2 class="t-label section-title">{t('settings.about')}</h2>
   <section class="card" style="max-width: 720px">
     <div class="card__body">
@@ -221,6 +302,46 @@
   .form-error {
     color: var(--danger);
     margin-top: var(--gap-row);
+  }
+
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    vertical-align: middle;
+  }
+
+  .dot.on {
+    background: var(--positive);
+  }
+
+  .dot.pending {
+    background: var(--warning);
+  }
+
+  .setting--stack {
+    align-items: flex-start;
+  }
+
+  .sessions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-tight);
+    list-style: none;
+    margin-top: var(--gap-inline);
+  }
+
+  .session {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: var(--gap-inline);
+    border-radius: var(--radius-xs);
+    background: var(--surface-inset);
+    font-size: var(--text-sm);
   }
 </style>
 

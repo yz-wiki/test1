@@ -1,12 +1,33 @@
 <script lang="ts">
+  import { createBookmark } from '../lib/ipc';
+  import { progress, session } from '../lib/state.svelte';
   import { player, RATES } from '../lib/player.svelte';
   import { t, formatDuration } from '../lib/i18n.svelte';
   import Cover from '../components/Cover.svelte';
   import Icon from '../components/Icon.svelte';
   import SeekBar from '../components/SeekBar.svelte';
 
-  let tab = $state<'chapters' | 'details'>('chapters');
+  let tab = $state<'chapters' | 'bookmarks' | 'details'>('chapters');
   let sleepOpen = $state(false);
+  let markLabel = $state('');
+  let markError = $state<string | null>(null);
+
+  async function addMark(): Promise<void> {
+    if (!item || !session.serverUrl) return;
+    markError = null;
+    try {
+      await createBookmark(
+        session.serverUrl,
+        item.id,
+        player.position,
+        markLabel.trim() || formatDuration(player.position),
+      );
+      markLabel = '';
+      await progress.load(session.serverUrl, true);
+    } catch (reason) {
+      markError = (reason as Error).message;
+    }
+  }
 
   const SLEEP_CHOICES = [15, 30, 45, 60] as const;
 
@@ -22,6 +43,7 @@
   const item = $derived(player.item);
   const meta = $derived(item?.media?.metadata);
   const chapters = $derived(player.chapters);
+  const marks = $derived(item ? progress.bookmarksFor(item.id) : []);
   const isEpisode = $derived(player.kind === 'episode');
   const shownTab = $derived(isEpisode ? 'details' : tab);
 
@@ -219,6 +241,11 @@
               >{t('player.chapters')}</button>
               <button
                 class="segmented__item"
+                aria-pressed={tab === 'bookmarks'}
+                onclick={() => (tab = 'bookmarks')}
+              >{t('player.bookmarks')}</button>
+              <button
+                class="segmented__item"
                 aria-pressed={tab === 'details'}
                 onclick={() => (tab = 'details')}
               >{t('player.details')}</button>
@@ -249,6 +276,37 @@
                   {/if}
                 </button>
               {/each}
+            {/if}
+          </div>
+        {:else if shownTab === 'bookmarks'}
+          <div class="bookmarks">
+            <div class="mark-add">
+              <input
+                class="input"
+                bind:value={markLabel}
+                placeholder={t('bookmark.placeholder')}
+                onkeydown={event => {
+                  if (event.key === 'Enter') void addMark();
+                }}
+              />
+              <button class="btn btn--sm" onclick={() => void addMark()}>{t('bookmark.add')}</button>
+            </div>
+            {#if markError}
+              <p class="t-small player__error" role="alert">{markError}</p>
+            {/if}
+            {#if marks.length === 0}
+              <p class="t-small t-tertiary">{t('bookmark.empty')}</p>
+            {:else}
+              <div class="chapter-list scroll-y">
+                {#each marks as mark (mark.time + mark.title)}
+                  <button class="chapter" onclick={() => void player.seek(mark.time)}>
+                    <span class="chapter__index t-num">{formatDuration(mark.time)}</span>
+                    <span class="chapter__body">
+                      <span class="truncate chapter__title">{mark.title}</span>
+                    </span>
+                  </button>
+                {/each}
+              </div>
             {/if}
           </div>
         {:else}
@@ -501,6 +559,23 @@
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
+  }
+
+  .bookmarks {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-inline);
+  }
+
+  .mark-add {
+    display: flex;
+    gap: var(--gap-inline);
+  }
+
+  .mark-add .input {
+    flex: 1 1 auto;
   }
 
   .details__genres {

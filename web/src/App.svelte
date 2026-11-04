@@ -3,6 +3,8 @@
   import { progress, session, ui } from './lib/state.svelte';
   import { player } from './lib/player.svelte';
   import { downloads } from './lib/downloads.svelte';
+  import { sync } from './lib/sync.svelte';
+  import { installShortcuts } from './lib/shortcuts';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
   import Book from './routes/Book.svelte';
@@ -13,17 +15,25 @@
   import Shell from './components/Shell.svelte';
 
   let booting = $state(true);
+  let uninstallShortcuts: (() => void) | null = null;
 
   onMount(async () => {
+    uninstallShortcuts = installShortcuts();
     // The transport is driven by the Rust session's ticks; subscribe once for
     // the lifetime of the window rather than per screen.
     void player.attach();
     void downloads.attach();
+    void sync.attach();
     try {
       await session.bootstrap();
     } finally {
       booting = false;
     }
+  });
+
+  $effect(() => () => {
+    uninstallShortcuts?.();
+    uninstallShortcuts = null;
   });
 
   // Listening progress belongs to the server, not to a screen: load it once the
@@ -32,6 +42,7 @@
     if (session.authenticated && session.serverUrl) {
       void progress.load(session.serverUrl);
       void downloads.load();
+      void sync.ensureConnected(session.serverUrl);
     }
   });
 </script>

@@ -102,10 +102,17 @@ export interface MediaProgress {
   lastUpdate: number;
 }
 
+export interface Bookmark {
+  libraryItemId: string;
+  title: string;
+  time: number;
+}
+
 export interface MeResponse {
   id: string;
   username: string;
   mediaProgress?: MediaProgress[];
+  bookmarks?: Bookmark[];
 }
 
 export interface User {
@@ -140,6 +147,38 @@ export const fetchItem = (serverUrl: string, itemId: string) =>
   call<LibraryItem>('fetch_item', { serverUrl, itemId });
 
 export const getMe = (serverUrl: string) => call<MeResponse>('get_me', { serverUrl });
+
+export const createBookmark = (serverUrl: string, itemId: string, time: number, title: string) =>
+  call<Bookmark>('create_bookmark', { serverUrl, itemId, time, title });
+
+// ─── Sync ────────────────────────────────────────────────────────────────────
+
+export interface ListeningSession {
+  id: string;
+  bookId?: string | null;
+  displayTitle?: string | null;
+  author?: string | null;
+  userId?: string;
+  username?: string | null;
+  playMethod?: number | null;
+  deviceInfo?: { deviceName?: string; clientName?: string; osName?: string } | null;
+  listeningTime?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export const getOpenSessions = (serverUrl: string) =>
+  call<ListeningSession[]>('get_open_sessions', { serverUrl });
+
+export const connectSocket = (serverUrl: string) =>
+  call<void>('connect_socket', { serverUrl });
+
+export const disconnectSocket = () => call<void>('disconnect_socket');
+
+export const getOfflineProgressCount = () => call<number>('get_offline_progress_count');
+
+export const flushOfflineProgress = (serverUrl: string) =>
+  call<number>('flush_offline_progress', { serverUrl });
 
 // ─── Playback ────────────────────────────────────────────────────────────────
 
