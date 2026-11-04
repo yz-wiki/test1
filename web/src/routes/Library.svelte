@@ -51,6 +51,84 @@
     void player.open(item);
   }
 
+  // ─── Windowed grid ─────────────────────────────────────────────────────
+  // A few hundred covers are fine to render outright; a few thousand are not.
+  // Above THRESHOLD only the rows in view (plus a small overscan) are mounted.
+  const THRESHOLD = 240;
+  const GAP = 16;
+  const ROW_GAP = 24;
+  // Cover is square and the caption block is ~67px; 72 keeps a hair of slack so
+  // nothing is clipped by the fixed row height.
+  const TEXT_H = 72;
+  const MIN_W = 148;
+
+  let scroller = $state<HTMLDivElement | null>(null);
+  let gridEl = $state<HTMLDivElement | null>(null);
+  let scrollTop = $state(0);
+  let viewportH = $state(0);
+  let gridWidth = $state(0);
+  let gridTop = $state(0);
+
+  const windowed = $derived(visible.length > THRESHOLD);
+
+  $effect(() => {
+    const el = scroller;
+    if (!el) return;
+    const measure = () => {
+      viewportH = el.clientHeight;
+      if (gridEl) {
+        gridWidth = gridEl.clientWidth;
+        gridTop = gridEl.offsetTop;
+      }
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    if (gridEl) observer.observe(gridEl);
+    measure();
+    return () => observer.disconnect();
+  });
+
+  function onScroll(event: Event): void {
+    scrollTop = (event.currentTarget as HTMLElement).scrollTop;
+  }
+
+  // A new query is a new list; staying scrolled into the old one shows nothing.
+  $effect(() => {
+    void query;
+    if (scroller && scroller.scrollTop > 0) scroller.scrollTop = 0;
+  });
+
+  const columns = $derived(Math.max(1, Math.floor((gridWidth + GAP) / (MIN_W + GAP))));
+  const tileW = $derived(columns > 0 ? (gridWidth - GAP * (columns - 1)) / columns : 0);
+  const tileH = $derived(tileW + TEXT_H);
+  const stride = $derived(tileH + ROW_GAP);
+  const rowCount = $derived(Math.ceil(visible.length / columns));
+
+  const startRow = $derived.by(() => {
+    if (!windowed) return 0;
+    const offset = Math.max(scrollTop - gridTop, 0);
+    const row = Math.floor(offset / Math.max(stride, 1)) - 2;
+    return Math.min(Math.max(row, 0), Math.max(rowCount - 1, 0));
+  });
+  const endRow = $derived.by(() => {
+    if (!windowed) return rowCount;
+    const offset = Math.max(scrollTop - gridTop, 0);
+    const row = Math.ceil((offset + viewportH) / Math.max(stride, 1)) + 2;
+    return Math.min(Math.max(row, startRow + 1), rowCount);
+  });
+
+  // Before the first measurement there is no column count, so a windowed grid
+  // draws nothing for one frame instead of guessing and reflowing.
+  const drawn = $derived(
+    windowed
+      ? gridWidth > 0
+        ? visible.slice(startRow * columns, endRow * columns)
+        : []
+      : visible,
+  );
+  const offsetY = $derived(windowed ? startRow * stride : 0);
+  const totalH = $derived(windowed ? Math.max(rowCount * stride - ROW_GAP, 0) : 0);
+
   function title(item: (typeof library.items)[number]): string {
     return item.media?.metadata?.title?.trim() || t('common.unknown');
   }
@@ -86,7 +164,7 @@
   </button>
 </div>
 
-<div class="page scroll-y">
+<div class="page scroll-y" bind:this={scroller} onscroll={onScroll}>
   {#if library.error}
     <div class="empty">
       <span class="empty__title">{t('library.error')}</span>
@@ -138,18 +216,26 @@
 
     <section class="section">
       <h2 class="t-label">{t('library.all')}</h2>
-      <div class="grid">
-        {#each visible as item (item.id)}
-          <button
-            class="tile"
-            aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
-            onclick={() => open(item)}
-          >
-            <Cover itemId={item.id} size={320} />
-            <span class="tile__title">{title(item)}</span>
-            <span class="tile__meta">{author(item) || formatLength(item.media?.duration ?? 0)}</span>
-          </button>
-        {/each}
+      <div class="grid" bind:this={gridEl} style:height={windowed ? `${totalH}px` : undefined}>
+        <div
+          class="grid__slice"
+          class:windowed
+          style:top={windowed ? `${offsetY}px` : undefined}
+          style:grid-template-columns={windowed ? `repeat(${columns}, minmax(0, 1fr))` : undefined}
+          style:grid-auto-rows={windowed ? `${tileH}px` : undefined}
+        >
+          {#each drawn as item (item.id)}
+            <button
+              class="tile"
+              aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
+              onclick={() => open(item)}
+            >
+              <Cover itemId={item.id} size={320} />
+              <span class="tile__title">{title(item)}</span>
+              <span class="tile__meta">{author(item) || formatLength(item.media?.duration ?? 0)}</span>
+            </button>
+          {/each}
+        </div>
       </div>
     </section>
   {/if}
@@ -157,6 +243,7 @@
 
 <style>
   .page {
+    position: relative;
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
@@ -225,9 +312,27 @@
   }
 
   .grid {
+    position: relative;
+  }
+
+  .grid__slice {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: var(--gap-block) var(--gap-panel);
+  }
+
+  /* Absolute only in windowed mode: the slice is positioned by scroll offset
+     while its parent reserves the full scroll height. */
+  .grid__slice.windowed {
+    position: absolute;
+    left: 0;
+    right: 0;
+    gap: 24px 16px;
+  }
+
+  .grid__slice.windowed .tile {
+    min-height: 0;
+    overflow: hidden;
   }
 
   .skeleton {

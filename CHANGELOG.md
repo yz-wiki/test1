@@ -2,7 +2,7 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.4.0 (2026-11-04) — preview
+## 2.5.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
@@ -59,6 +59,10 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
   last scan plus a one-click scan, the user list with roles and last seen, the
   server's running/finished/failed tasks, and backups with a "back up now"
   button. Hidden entirely for ordinary accounts.
+- **Large libraries scroll smoothly.** Above 240 titles the shelf grid only
+  mounts the rows in view (plus two rows of overscan) and reserves the full
+  scroll height, so a few thousand covers no longer mean a few thousand DOM
+  nodes. Below the threshold nothing changes.
 - **Continue listening is real.** The shelf now asks `/api/me` which titles were
   actually started and orders them by when you last listened, instead of showing
   the first six books in the library.
