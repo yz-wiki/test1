@@ -48,16 +48,51 @@ export interface MediaMetadata {
   tags?: string[];
 }
 
+export interface Episode {
+  id: string;
+  index?: number;
+  season?: string;
+  episode?: string;
+  episodeType?: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  publishedAt?: number;
+  pubDate?: string;
+  duration?: number;
+}
+
 export interface LibraryItem {
   id: string;
   libraryId?: string;
   mediaType?: 'book' | 'podcast';
+  addedAt?: number;
   media?: {
     metadata?: MediaMetadata;
     duration?: number;
     numAudioFiles?: number;
     chapters?: { title: string; start: number; end: number }[];
+    /** Podcasts only — ABS ships the episode list with the library items. */
+    episodes?: Episode[];
   };
+}
+
+/** One row of `/api/me`'s mediaProgress. Books key on the item id alone,
+ *  podcasts add the episode id. */
+export interface MediaProgress {
+  libraryItemId: string;
+  episodeId?: string | null;
+  duration: number;
+  progress: number;
+  currentTime: number;
+  isFinished: boolean;
+  lastUpdate: number;
+}
+
+export interface MeResponse {
+  id: string;
+  username: string;
+  mediaProgress?: MediaProgress[];
 }
 
 export interface User {
@@ -90,6 +125,8 @@ export const fetchLibraryItems = (serverUrl: string, libraryId: string) =>
 
 export const fetchItem = (serverUrl: string, itemId: string) =>
   call<LibraryItem>('fetch_item', { serverUrl, itemId });
+
+export const getMe = (serverUrl: string) => call<MeResponse>('get_me', { serverUrl });
 
 // ─── Playback ────────────────────────────────────────────────────────────────
 

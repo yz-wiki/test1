@@ -9,11 +9,13 @@
 import {
   fetchLibraries,
   fetchLibraryItems,
+  getMe,
   hasToken,
   login as loginCommand,
   loginWithApiKey,
   type Library,
   type LibraryItem,
+  type MediaProgress,
   type User,
 } from './ipc';
 
@@ -133,7 +135,9 @@ class UiStore {
     (localStorage.getItem('skald.theme') as 'graphite') ?? 'graphite',
   );
   reduceMotion = $state(localStorage.getItem('skald.reduceMotion') === 'true');
-  route = $state<'library' | 'settings'>('library');
+  route = $state<'library' | 'settings' | 'podcast'>('library');
+  /** The item a detail route is showing. */
+  itemId = $state<string | null>(null);
   query = $state('');
 
   constructor() {
@@ -165,3 +169,49 @@ class UiStore {
 export const session = new SessionStore();
 export const library = new LibraryStore();
 export const ui = new UiStore();
+
+/**
+ * Listening progress, straight from `/api/me`.
+ *
+ * ABS already stores this; the client's job is only to look it up. Keeping it
+ * in one store means the shelf, the podcast list and the player all read the
+ * same numbers instead of each fetching their own copy.
+ */
+class ProgressStore {
+  rows = $state<MediaProgress[]>([]);
+  private loadedFor = '';
+
+  async load(serverUrl: string, force = false): Promise<void> {
+    if (!serverUrl || (!force && serverUrl === this.loadedFor)) return;
+    try {
+      const me = await getMe(serverUrl);
+      this.rows = me.mediaProgress ?? [];
+      this.loadedFor = serverUrl;
+    } catch {
+      // Progress is decoration: a failure must never block the library.
+    }
+  }
+
+  for(itemId: string, episodeId?: string | null): MediaProgress | undefined {
+    const wanted = episodeId ?? null;
+    return this.rows.find(
+      row => row.libraryItemId === itemId && (row.episodeId ?? null) === wanted,
+    );
+  }
+
+  /** 0–1, finished rows counted as complete even if ABS stored 0.99. */
+  fraction(itemId: string, episodeId?: string | null): number {
+    const row = this.for(itemId, episodeId);
+    if (!row) return 0;
+    if (row.isFinished) return 1;
+    if (row.duration > 0) return Math.min(row.currentTime / row.duration, 1);
+    return Math.min(Math.max(row.progress, 0), 1);
+  }
+
+  reset(): void {
+    this.rows = [];
+    this.loadedFor = '';
+  }
+}
+
+export const progress = new ProgressStore();

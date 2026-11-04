@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { session, ui } from './lib/state.svelte';
+  import { progress, session, ui } from './lib/state.svelte';
   import { player } from './lib/player.svelte';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
+  import Podcast from './routes/Podcast.svelte';
   import Settings from './routes/Settings.svelte';
   import Player from './routes/Player.svelte';
   import Shell from './components/Shell.svelte';
@@ -20,6 +21,14 @@
       booting = false;
     }
   });
+
+  // Listening progress belongs to the server, not to a screen: load it once the
+  // session is up, and again whenever the server changes.
+  $effect(() => {
+    if (session.authenticated && session.serverUrl) {
+      void progress.load(session.serverUrl);
+    }
+  });
 </script>
 
 {#if booting}
@@ -32,6 +41,8 @@
   <Shell>
     {#if player.expanded}
       <Player />
+    {:else if ui.route === 'podcast'}
+      <Podcast />
     {:else if ui.route === 'settings'}
       <Settings />
     {:else}

@@ -41,7 +41,8 @@
           class="icon-btn icon-btn--sm"
           aria-label={t('player.prevChapter')}
           title={t('player.prevChapter')}
-          onclick={() => void player.skipChapter(-1)}
+          onclick={() => void player.step(-1)}
+          disabled={!player.canStepBack}
         >
           <Icon name="skip-back" />
         </button>
@@ -60,7 +61,8 @@
           class="icon-btn icon-btn--sm"
           aria-label={t('player.nextChapter')}
           title={t('player.nextChapter')}
-          onclick={() => void player.skipChapter(1)}
+          onclick={() => void player.step(1)}
+          disabled={!player.canStepForward}
         >
           <Icon name="skip-forward" />
         </button>

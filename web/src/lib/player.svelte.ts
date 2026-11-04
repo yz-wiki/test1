@@ -6,6 +6,9 @@
  * of those ticks plus the actions the transport can take — it deliberately
  * keeps no timer of its own, because a local clock is exactly what makes a
  * playhead drift away from the audio.
+ *
+ * Books and podcast episodes share one player. Which one is loaded is `kind`;
+ * the only behavioural difference is what "next" means (chapter vs episode).
  */
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import {
@@ -16,10 +19,11 @@ import {
   seekAudio,
   setSpeed as setSpeedCommand,
   setVolume as setVolumeCommand,
+  type Episode,
   type LibraryItem,
   type PlaybackTick,
 } from './ipc';
-import { session } from './state.svelte';
+import { progress, session } from './state.svelte';
 
 export interface Chapter {
   title: string;
@@ -47,9 +51,24 @@ export function chapterSpans(item: LibraryItem | null): Chapter[] {
   });
 }
 
+/** Newest first: ABS returns podcast episodes in feed order, while listeners
+ *  expect the latest episode at the top. */
+export function episodesNewestFirst(item: LibraryItem | null): Episode[] {
+  const list = [...(item?.media?.episodes ?? [])];
+  return list.sort((a, b) => {
+    const at = a.publishedAt ?? (a.pubDate ? Date.parse(a.pubDate) : 0) ?? 0;
+    const bt = b.publishedAt ?? (b.pubDate ? Date.parse(b.pubDate) : 0) ?? 0;
+    if (at !== bt) return bt - at;
+    return (b.index ?? 0) - (a.index ?? 0);
+  });
+}
+
 class PlayerStore {
+  kind = $state<'book' | 'episode'>('book');
   item = $state<LibraryItem | null>(null);
-  episodeId = $state<string | null>(null);
+  episode = $state<Episode | null>(null);
+  /** Sibling episodes, so next/previous walks the show, not the whole library. */
+  queue = $state<Episode[]>([]);
   sessionId = $state<string | null>(null);
 
   position = $state(0);
@@ -66,7 +85,7 @@ class PlayerStore {
   /** True while the full player screen is open; the bar hides then. */
   expanded = $state(false);
 
-  readonly chapters = $derived(chapterSpans(this.item));
+  readonly chapters = $derived(this.kind === 'book' ? chapterSpans(this.item) : []);
 
   readonly chapterIndex = $derived.by(() => {
     const list = this.chapters;
@@ -82,17 +101,42 @@ class PlayerStore {
     this.chapterIndex >= 0 ? this.chapters[this.chapterIndex] : null,
   );
 
+  /** How far "next" can go: a chapter list for books, an episode queue for shows. */
+  readonly queueIndex = $derived(
+    this.kind === 'episode' && this.episode
+      ? this.queue.findIndex(entry => entry.id === this.episode?.id)
+      : -1,
+  );
+
+  readonly canStepBack = $derived(
+    this.kind === 'episode'
+      ? this.queueIndex > 0
+      : this.chapterIndex > 0,
+  );
+
+  readonly canStepForward = $derived(
+    this.kind === 'episode'
+      ? this.queueIndex >= 0 && this.queueIndex < this.queue.length - 1
+      : this.chapters.length > 0 && this.chapterIndex < this.chapters.length - 1,
+  );
+
   readonly progress = $derived(this.duration > 0 ? this.position / this.duration : 0);
 
+  readonly showTitle = $derived(this.item?.media?.metadata?.title?.trim() ?? '');
+
   readonly title = $derived(
-    this.item?.media?.metadata?.title?.trim() || this.item?.id || '',
+    this.kind === 'episode' && this.episode
+      ? this.episode.title
+      : (this.showTitle || this.item?.id || ''),
   );
 
   readonly subtitle = $derived.by(() => {
     const meta = this.item?.media?.metadata;
-    if (!meta) return '';
+    if (this.kind === 'episode') {
+      return [this.showTitle, meta?.authorName].filter(Boolean).join(' · ');
+    }
     if (this.chapter?.title) return this.chapter.title;
-    return [meta.authorName, meta.seriesName].filter(Boolean).join(' · ');
+    return [meta?.authorName, meta?.seriesName].filter(Boolean).join(' · ');
   });
 
   private unlisten: UnlistenFn | null = null;
@@ -100,10 +144,18 @@ class PlayerStore {
   /** Subscribe once, at application start. Safe to call repeatedly. */
   async attach(): Promise<void> {
     if (this.unlisten) return;
+    let wasPlaying = false;
     this.unlisten = await listen<PlaybackTick>('playback-tick', ({ payload }) => {
       this.position = payload.currentTime;
       this.playing = payload.isPlaying;
       if (payload.duration > 0) this.duration = payload.duration;
+
+      // The server writes progress on pause; re-reading it here is what keeps
+      // the shelf's "continue listening" bar honest without polling.
+      if (wasPlaying && !payload.isPlaying) {
+        void progress.load(session.serverUrl, true);
+      }
+      wasPlaying = payload.isPlaying;
     });
   }
 
@@ -112,18 +164,32 @@ class PlayerStore {
     this.unlisten = null;
   }
 
-  /** Start (or restart) an item. Clicking the item already playing toggles it. */
-  async open(item: LibraryItem): Promise<void> {
-    if (this.item?.id === item.id) {
+  private isCurrent(item: LibraryItem, episode?: Episode | null): boolean {
+    if (this.item?.id !== item.id) return false;
+    const currentEpisode = this.episode?.id ?? null;
+    const wanted = episode?.id ?? null;
+    return currentEpisode === wanted;
+  }
+
+  /** Start a book, or an episode of a podcast. Re-opening what is already
+   *  loaded toggles it, so clicking a title is never destructive. */
+  async open(item: LibraryItem, episode?: Episode | null, queue?: Episode[]): Promise<void> {
+    if (this.isCurrent(item, episode)) {
       await this.toggle();
       return;
     }
+
     this.loading = true;
     this.error = null;
+    this.kind = episode ? 'episode' : 'book';
     this.item = item;
-    this.episodeId = null;
-    this.position = 0;
-    this.duration = item.media?.duration ?? 0;
+    this.episode = episode ?? null;
+    if (queue) this.queue = queue;
+    if (!episode) this.queue = [];
+
+    const saved = progress.for(item.id, episode?.id ?? null);
+    this.duration = episode?.duration ?? item.media?.duration ?? 0;
+    this.position = saved && !saved.isFinished ? saved.currentTime : 0;
     this.playing = false;
 
     try {
@@ -131,6 +197,8 @@ class PlayerStore {
         session.serverUrl,
         item.id,
         session.user?.id ?? '',
+        undefined,
+        episode?.id,
       );
       this.sessionId = result.sessionId;
       if (result.currentTime > 0) this.position = result.currentTime;
@@ -183,15 +251,29 @@ class PlayerStore {
     return this.seek(this.position + delta);
   }
 
-  async skipChapter(direction: 1 | -1): Promise<void> {
+  /** "Next" = next chapter in a book, next episode in a show. */
+  async step(direction: 1 | -1): Promise<void> {
+    if (this.kind === 'episode') {
+      await this.stepEpisode(direction);
+      return;
+    }
     const list = this.chapters;
     if (list.length === 0) {
       await this.skip(direction * 30);
       return;
     }
-    const index = this.chapterIndex;
-    const next = list[index + direction];
+    const next = list[this.chapterIndex + direction];
     if (next) await this.seek(next.start);
+  }
+
+  private async stepEpisode(direction: 1 | -1): Promise<void> {
+    const item = this.item;
+    if (!item || this.queueIndex < 0) return;
+    const next = this.queue[this.queueIndex + direction];
+    if (!next) return;
+    // Moving to another episode is an explicit "play this", so it starts
+    // playing even if the previous one was paused.
+    await this.open(item, next, this.queue);
   }
 
   async setRate(rate: number): Promise<void> {

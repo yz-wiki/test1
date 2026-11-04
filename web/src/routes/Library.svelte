@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { library, session } from '../lib/state.svelte';
+  import { library, session, ui } from '../lib/state.svelte';
+  import { progress } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { t, formatLength } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
@@ -23,7 +24,27 @@
     });
   });
 
-  const recent = $derived(visible.slice(0, 6));
+  /** "Continue listening" means unfinished rows the server actually has, newest
+   *  first — not simply the first six titles in the library. */
+  const recent = $derived.by(() => {
+    const started = progress.rows
+      .filter(row => !row.isFinished && row.currentTime > 0)
+      .sort((a, b) => b.lastUpdate - a.lastUpdate)
+      .slice(0, 6)
+      .map(row => library.items.find(item => item.id === row.libraryItemId))
+      .filter((item): item is (typeof library.items)[number] => Boolean(item));
+    return started.length > 0 ? started : visible.slice(0, 6);
+  });
+
+  /** Podcasts have their own screen; a book starts playing where it stands. */
+  function open(item: (typeof library.items)[number]): void {
+    if (item.mediaType === 'podcast') {
+      ui.itemId = item.id;
+      ui.route = 'podcast';
+      return;
+    }
+    void player.open(item);
+  }
 
   function title(item: (typeof library.items)[number]): string {
     return item.media?.metadata?.title?.trim() || t('common.unknown');
@@ -80,7 +101,8 @@
       <h2 class="t-label">{t('library.continue')}</h2>
       <div class="shelf">
         {#each recent as item (item.id)}
-          <button class="shelf__card" onclick={() => void player.open(item)}>
+          {@const fraction = progress.fraction(item.id)}
+          <button class="shelf__card" onclick={() => open(item)}>
             <div class="shelf__cover">
               <Cover itemId={item.id} size={168} />
             </div>
@@ -88,8 +110,15 @@
               <span class="truncate" style="font-weight: var(--weight-medium)">{title(item)}</span>
               <span class="t-small truncate">{author(item)}</span>
               <span class="t-tertiary t-num" style="font-size: var(--text-xs)">
-                {formatLength(item.media?.duration ?? 0)}
+                {item.mediaType === 'podcast'
+                  ? t('podcast.episodes', { count: item.media?.episodes?.length ?? 0 })
+                  : formatLength(item.media?.duration ?? 0)}
               </span>
+              {#if fraction > 0}
+                <span class="mini-bar" aria-hidden="true">
+                  <span style:width="{fraction * 100}%"></span>
+                </span>
+              {/if}
             </div>
           </button>
         {/each}
@@ -103,7 +132,7 @@
           <button
             class="tile"
             aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
-            onclick={() => void player.open(item)}
+            onclick={() => open(item)}
           >
             <Cover itemId={item.id} size={320} />
             <span class="tile__title">{title(item)}</span>
@@ -167,6 +196,21 @@
     gap: 2px;
     justify-content: center;
     min-width: 0;
+  }
+
+  .mini-bar {
+    display: block;
+    height: 2px;
+    margin-top: 5px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .mini-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
   }
 
   .grid {

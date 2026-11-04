@@ -10,13 +10,26 @@
   const item = $derived(player.item);
   const meta = $derived(item?.media?.metadata);
   const chapters = $derived(player.chapters);
+  const isEpisode = $derived(player.kind === 'episode');
+  const shownTab = $derived(isEpisode ? 'details' : tab);
+
+  const description = $derived(
+    isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
+  );
 
   const facts = $derived(
-    [
-      meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
-      meta?.publisher ? `${t('player.publisher')} · ${meta.publisher}` : '',
-      meta?.publishedYear ? `${t('player.year')} · ${meta.publishedYear}` : '',
-    ].filter(Boolean),
+    isEpisode
+      ? [
+          player.showTitle,
+          player.episode?.publishedAt
+            ? new Date(player.episode.publishedAt).toLocaleDateString()
+            : '',
+        ].filter(Boolean)
+      : [
+          meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
+          meta?.publisher ? `${t('player.publisher')} · ${meta.publisher}` : '',
+          meta?.publishedYear ? `${t('player.year')} · ${meta.publishedYear}` : '',
+        ].filter(Boolean),
   );
 </script>
 
@@ -40,7 +53,7 @@
 
         <div class="stage__titles">
           <h1 class="t-title clamp-2">{player.title}</h1>
-          <p class="t-secondary truncate">{meta?.authorName ?? ''}</p>
+          <p class="t-secondary truncate">{isEpisode ? player.showTitle : (meta?.authorName ?? '')}</p>
           {#if facts.length > 0}
             <p class="t-small t-tertiary truncate">{facts.join('  ·  ')}</p>
           {/if}
@@ -67,7 +80,8 @@
               class="icon-btn"
               aria-label={t('player.prevChapter')}
               title={t('player.prevChapter')}
-              onclick={() => void player.skipChapter(-1)}
+              onclick={() => void player.step(-1)}
+              disabled={!player.canStepBack}
             >
               <Icon name="skip-back" />
             </button>
@@ -100,7 +114,8 @@
               class="icon-btn"
               aria-label={t('player.nextChapter')}
               title={t('player.nextChapter')}
-              onclick={() => void player.skipChapter(1)}
+              onclick={() => void player.step(1)}
+              disabled={!player.canStepForward}
             >
               <Icon name="skip-forward" />
             </button>
@@ -138,22 +153,24 @@
       </section>
 
       <aside class="side">
-        <div class="side__tabs">
-          <div class="segmented">
-            <button
-              class="segmented__item"
-              aria-pressed={tab === 'chapters'}
-              onclick={() => (tab = 'chapters')}
-            >{t('player.chapters')}</button>
-            <button
-              class="segmented__item"
-              aria-pressed={tab === 'details'}
-              onclick={() => (tab = 'details')}
-            >{t('player.details')}</button>
+        {#if !isEpisode}
+          <div class="side__tabs">
+            <div class="segmented">
+              <button
+                class="segmented__item"
+                aria-pressed={tab === 'chapters'}
+                onclick={() => (tab = 'chapters')}
+              >{t('player.chapters')}</button>
+              <button
+                class="segmented__item"
+                aria-pressed={tab === 'details'}
+                onclick={() => (tab = 'details')}
+              >{t('player.details')}</button>
+            </div>
           </div>
-        </div>
+        {/if}
 
-        {#if tab === 'chapters'}
+        {#if shownTab === 'chapters'}
           <div class="chapter-list scroll-y">
             {#if chapters.length === 0}
               <p class="t-small t-tertiary" style="padding: var(--gap-row)">{t('player.noChapters')}</p>
@@ -180,8 +197,8 @@
           </div>
         {:else}
           <div class="details scroll-y">
-            {#if meta?.description}
-              <p class="t-body selectable">{meta.description}</p>
+            {#if description}
+              <p class="t-body selectable">{description}</p>
             {:else}
               <p class="t-small t-tertiary">{t('common.unknown')}</p>
             {/if}

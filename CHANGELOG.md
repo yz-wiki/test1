@@ -24,16 +24,23 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
 - Click a title to play it. Chapters, a 1.2×–2× speed control, volume, a
   ‑30/+30 second step, previous/next chapter, and a persistent transport bar
   that survives navigation.
+- **Podcasts.** A show opens its own screen: cover, description, and the episode
+  list with per-episode progress, played/in-progress badges and a resume button
+  that picks up whatever is half-listened. Playing an episode keeps the rest of
+  the show as a queue, so the transport's previous/next walk episodes.
+- **Continue listening is real.** The shelf now asks `/api/me` which titles were
+  actually started and orders them by when you last listened, instead of showing
+  the first six books in the library.
 - Position comes from the Rust session's `playback-tick`, not a local timer, so
   the playhead cannot drift from the audio.
 - Three themes (Graphite / Paper / Midnight), full English and 简体中文,
   reduced-motion preference.
 
 ### Not ported yet
-Podcasts and episode lists, downloads and offline playback, the ABS sync and
-sessions panels, sharing/RSS, cron jobs, admin screens, onboarding, sleep timer
-and equaliser. The routes are stubs or absent rather than broken — nothing in
-the menu leads to a dead end.
+Downloads and offline playback, the ABS sync and sessions panels,
+sharing/RSS, cron jobs, admin screens, onboarding, sleep timer and equaliser.
+The routes are stubs or absent rather than broken — nothing in the menu leads
+to a dead end.
 
 ## 1.6.0 (2026-11-04)
 
