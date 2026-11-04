@@ -7,12 +7,13 @@
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') menu.hide();
     };
-    window.addEventListener('pointerdown', close, true);
+    // No pointerdown listener here on purpose: a capture-phase listener would
+    // hide the menu before the item's click could land on it. The scrim below
+    // covers everything except the menu itself, which is what dismisses it.
     window.addEventListener('blur', close);
     window.addEventListener('keydown', onKey);
     window.addEventListener('wheel', close, { passive: true });
     return () => {
-      window.removeEventListener('pointerdown', close, true);
       window.removeEventListener('blur', close);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('wheel', close);
@@ -23,7 +24,12 @@
 {#if menu.open}
   <!-- The overlay swallows the click that dismisses the menu, so the item under
        the cursor never also activates. -->
-  <div class="menu__scrim" role="presentation"></div>
+  <div
+    class="menu__scrim"
+    role="presentation"
+    onpointerdown={() => menu.hide()}
+    oncontextmenu={event => event.preventDefault()}
+  ></div>
 
   <div class="menu" role="menu" style:left="{menu.x}px" style:top="{menu.y}px">
     {#each menu.items as item (item.id)}
