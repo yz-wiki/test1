@@ -1,12 +1,6 @@
 <script lang="ts">
-  import { open as openDialog } from '@tauri-apps/plugin-dialog';
-  import {
-    fetchItem,
-    getDownloadsDir,
-    setDownloadsDir,
-    updateProgress,
-    type LibraryItem,
-  } from '../lib/ipc';
+  import { fetchItem, updateMedia, updateProgress, type LibraryItem } from '../lib/ipc';
+  import { beginDownload } from '../lib/downloadFlow';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { chapterSpans, player } from '../lib/player.svelte';
   import { downloads } from '../lib/downloads.svelte';
@@ -19,6 +13,21 @@
   let error = $state<string | null>(null);
   let tab = $state<'chapters' | 'files'>('chapters');
   let expanded = $state(false);
+  let editing = $state(false);
+  let saving = $state(false);
+  let form = $state({
+    title: '',
+    subtitle: '',
+    authors: '',
+    narrators: '',
+    series: '',
+    publisher: '',
+    year: '',
+    language: '',
+    genres: '',
+    tags: '',
+    description: '',
+  });
 
   /** The shelf copy renders instantly; the full item (files, chapters, series)
    *  replaces it when the server answers. */
@@ -99,30 +108,71 @@
     }
   }
 
-  /**
-   * Downloading is a deliberate act with a destination: the folder is chosen
-   * here rather than silently inherited from a setting, and nothing is ever
-   * fetched in the background.
-   */
+  /** "Name #3" → series name plus sequence, which is how ABS models a series. */
+  function parseSeries(value: string): { seriesName: string; sequence: string } | null {
+    const text = value.trim();
+    if (!text) return null;
+    const match = text.match(/^(.*?)\s*#\s*([\w.]+)\s*$/);
+    if (match) return { seriesName: match[1].trim(), sequence: match[2].trim() };
+    return { seriesName: text, sequence: '' };
+  }
+
+  function openEditor(): void {
+    const m = meta;
+    form = {
+      title: m?.title ?? '',
+      subtitle: m?.subtitle ?? '',
+      authors: m?.authorName ?? '',
+      narrators: m?.narratorName ?? '',
+      series: [m?.seriesName, m?.seriesSequence].filter(Boolean).join(' #'),
+      publisher: m?.publisher ?? '',
+      year: m?.publishedYear ?? '',
+      language: m?.language ?? '',
+      genres: (m?.genres ?? []).join(', '),
+      tags: (m?.tags ?? []).join(', '),
+      description: m?.description ?? '',
+    };
+    editing = true;
+  }
+
+  async function saveMetadata(): Promise<void> {
+    if (!item || !session.serverUrl) return;
+    saving = true;
+    error = null;
+    const series = parseSeries(form.series);
+    try {
+      await updateMedia(session.serverUrl, item.id, {
+        metadata: {
+          title: form.title.trim(),
+          subtitle: form.subtitle.trim(),
+          authors: form.authors
+            .split(',')
+            .map(name => ({ name: name.trim() }))
+            .filter(author => author.name),
+          narrators: form.narrators.split(',').map(name => name.trim()).filter(Boolean),
+          series: series ? [series] : [],
+          publisher: form.publisher.trim(),
+          publishedYear: form.year.trim(),
+          language: form.language.trim(),
+          genres: form.genres.split(',').map(genre => genre.trim()).filter(Boolean),
+          description: form.description,
+        },
+        tags: form.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      });
+      detail = await fetchItem(session.serverUrl, item.id);
+      await library.load(session.serverUrl, session.activeLibraryId, true);
+      editing = false;
+    } catch (reason) {
+      error = (reason as Error).message;
+    } finally {
+      saving = false;
+    }
+  }
+
   async function startDownload(): Promise<void> {
     if (!item) return;
-    let current = '';
     try {
-      current = await getDownloadsDir();
-    } catch {
-      current = '';
-    }
-    const chosen = await openDialog({
-      directory: true,
-      multiple: false,
-      title: t('downloads.chooseDir'),
-      defaultPath: current || undefined,
-    });
-    if (typeof chosen !== 'string') return;
-
-    try {
-      await setDownloadsDir(chosen);
-      await downloads.start(item, meta?.title ?? item.id, meta?.authorName ?? '');
+      await beginDownload(item, meta?.title ?? item.id, meta?.authorName ?? '');
     } catch (reason) {
       error = (reason as Error).message;
     }
@@ -143,7 +193,7 @@
 
     <header class="head">
       <div class="head__cover">
-        <Cover itemId={item.id} size={420} radius="var(--radius-md)" />
+        <Cover itemId={item.id} size={420} radius="var(--radius-md)" title={meta?.title ?? ''} />
       </div>
 
       <div class="head__text">
@@ -184,6 +234,9 @@
           {#if fraction > 0}
             <button class="btn btn--quiet" onclick={() => play(0)}>{t('book.restart')}</button>
           {/if}
+          <button class="btn btn--quiet" onclick={() => (editing ? (editing = false) : openEditor())}>
+            {t('book.edit')}
+          </button>
           <button class="btn btn--quiet" onclick={() => void toggleFinished()}>
             {isFinished ? t('book.markUnfinished') : t('book.markFinished')}
           </button>
@@ -213,6 +266,43 @@
         {/if}
       </div>
     </header>
+
+    {#if editing}
+      <section class="block editor">
+        <div class="editor__grid">
+          <label class="field"><span class="field__label">{t('meta.title')}</span>
+            <input class="input" bind:value={form.title} /></label>
+          <label class="field"><span class="field__label">{t('meta.subtitle')}</span>
+            <input class="input" bind:value={form.subtitle} /></label>
+          <label class="field"><span class="field__label">{t('meta.authors')}</span>
+            <input class="input" bind:value={form.authors} placeholder={t('meta.commaHint')} /></label>
+          <label class="field"><span class="field__label">{t('meta.narrators')}</span>
+            <input class="input" bind:value={form.narrators} placeholder={t('meta.commaHint')} /></label>
+          <label class="field"><span class="field__label">{t('meta.series')}</span>
+            <input class="input" bind:value={form.series} placeholder="名称 #3" /></label>
+          <label class="field"><span class="field__label">{t('meta.publisher')}</span>
+            <input class="input" bind:value={form.publisher} /></label>
+          <label class="field"><span class="field__label">{t('meta.year')}</span>
+            <input class="input" bind:value={form.year} /></label>
+          <label class="field"><span class="field__label">{t('meta.language')}</span>
+            <input class="input" bind:value={form.language} /></label>
+          <label class="field"><span class="field__label">{t('meta.genres')}</span>
+            <input class="input" bind:value={form.genres} placeholder={t('meta.commaHint')} /></label>
+          <label class="field"><span class="field__label">{t('meta.tags')}</span>
+            <input class="input" bind:value={form.tags} placeholder={t('meta.commaHint')} /></label>
+        </div>
+        <label class="field">
+          <span class="field__label">{t('meta.description')}</span>
+          <textarea class="textarea" rows="6" bind:value={form.description}></textarea>
+        </label>
+        <div class="editor__actions">
+          <button class="btn btn--primary btn--sm" disabled={saving} onclick={() => void saveMetadata()}>
+            {saving ? t('meta.saving') : t('meta.save')}
+          </button>
+          <button class="btn btn--quiet btn--sm" onclick={() => (editing = false)}>{t('common.cancel')}</button>
+        </div>
+      </section>
+    {/if}
 
     {#if meta?.description || (meta?.genres?.length ?? 0) > 0}
       <section class="block">
@@ -453,5 +543,23 @@
 
   .form-error {
     color: var(--danger);
+  }
+
+  .editor {
+    padding: var(--gap-panel);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+
+  .editor__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--gap-row);
+  }
+
+  .editor__actions {
+    display: flex;
+    gap: var(--gap-inline);
   }
 </style>

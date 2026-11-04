@@ -111,18 +111,18 @@
 /* ─── Theme: paper (light) ────────────────────────────────────────────────── */
 
 [data-theme='paper'] {
-  --canvas:            #f6f5f7;
+  --canvas:            #f4f3f6;
   --surface:           #ffffff;
-  --surface-raised:    #ffffff;
+  --surface-raised:    #fbfafd;
   --surface-overlay:   #ffffff;
-  --surface-inset:     #eeecef;
+  --surface-inset:     #eceaf0;
 
-  --hairline:          rgb(20 18 26 / 0.09);
-  --hairline-strong:   rgb(20 18 26 / 0.16);
+  --hairline:          rgb(20 18 26 / 0.12);
+  --hairline-strong:   rgb(20 18 26 / 0.22);
 
-  --text:              #1b1a20;
-  --text-secondary:    rgb(27 26 32 / 0.66);
-  --text-tertiary:     rgb(27 26 32 / 0.44);
+  --text:              #17161c;
+  --text-secondary:    rgb(23 22 28 / 0.72);
+  --text-tertiary:     rgb(23 22 28 / 0.52);
 
   --accent:            #6b57e8;
   --accent-hover:      #5b46e0;
@@ -256,4 +256,35 @@
 
   --scrim:             rgb(50 38 24 / 0.34);
   --cover-fallback:    #e2d6c3;
+}
+
+
+/* ─── Theme: daylight (bright, cool, high contrast) ───────────────────────── */
+
+[data-theme='daylight'] {
+  --canvas:            #ffffff;
+  --surface:           #f7f9fc;
+  --surface-raised:    #eef2f8;
+  --surface-overlay:   #ffffff;
+  --surface-inset:     #e6ebf3;
+
+  --hairline:          rgb(16 24 40 / 0.10);
+  --hairline-strong:   rgb(16 24 40 / 0.20);
+
+  --text:              #111827;
+  --text-secondary:    rgb(17 24 39 / 0.70);
+  --text-tertiary:     rgb(17 24 39 / 0.50);
+
+  --accent:            #2563eb;
+  --accent-hover:      #1d4ed8;
+  --accent-soft:       rgb(37 99 235 / 0.12);
+  --accent-line:       rgb(37 99 235 / 0.34);
+  --on-accent:         #ffffff;
+
+  --positive:          #15803d;
+  --warning:           #b45309;
+  --danger:            #b91c1c;
+
+  --scrim:             rgb(17 24 39 / 0.30);
+  --cover-fallback:    #e2e8f0;
 }

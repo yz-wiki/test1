@@ -9,6 +9,16 @@
 
   let tab = $state<'chapters' | 'bookmarks' | 'details'>('chapters');
   let sleepOpen = $state(false);
+  /** Shows the percentage only while the volume slider is in use. */
+  let volumeActive = $state(false);
+  let volumeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function onVolumeInput(value: number): void {
+    void player.setVolume(value);
+    volumeActive = true;
+    if (volumeTimer) clearTimeout(volumeTimer);
+    volumeTimer = setTimeout(() => (volumeActive = false), 1200);
+  }
   let markLabel = $state('');
   let markError = $state<string | null>(null);
 
@@ -55,6 +65,27 @@
       : [],
   );
 
+  /** The transport's main bar measures the current chapter, not the book: a
+   *  189-hour title otherwise moves its playhead by one pixel an hour. */
+  const chapterLength = $derived(player.chapter ? player.chapter.end - player.chapter.start : 0);
+  const chapterPos = $derived(
+    player.chapter ? Math.max(player.position - player.chapter.start, 0) : player.position,
+  );
+  const chapterFraction = $derived(
+    chapterLength > 0
+      ? Math.min(Math.max(chapterPos / chapterLength, 0), 1)
+      : player.progress,
+  );
+
+  function seekChapter(fraction: number): void {
+    const chapter = player.chapter;
+    if (!chapter || chapterLength <= 0) {
+      void player.seekFraction(fraction);
+      return;
+    }
+    void player.seek(chapter.start + fraction * chapterLength);
+  }
+
   /** "12 / 189 · 第十二章" — where you are, in chapter terms. */
   const chapterLine = $derived.by(() => {
     if (isEpisode || chapters.length === 0) return '';
@@ -98,7 +129,7 @@
     <div class="player__body">
       <section class="stage">
         <div class="stage__cover">
-          <Cover itemId={item.id} size={560} radius="var(--radius-lg)" />
+          <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
         </div>
 
         <div class="stage__titles">
@@ -111,23 +142,41 @@
 
         <div class="transport">
           <SeekBar
-            value={player.progress}
+            value={chapterFraction}
             size="lg"
             label={t('player.progressOf', {
-              done: formatDuration(player.position),
-              total: formatDuration(player.duration),
+              done: formatDuration(chapterPos),
+              total: formatDuration(chapterLength || player.duration),
             })}
-            onSeek={fraction => void player.seekFraction(fraction)}
+            onSeek={seekChapter}
             disabled={player.duration <= 0}
-            marks={chapterMarks}
           />
           <div class="transport__times t-num t-small t-tertiary">
-            <span>{formatDuration(player.position)}</span>
+            <span>{formatDuration(chapterPos)}</span>
             {#if chapterLine}
               <span class="transport__chapter truncate">{chapterLine}</span>
             {/if}
-            <span>−{formatDuration(Math.max(player.duration - player.position, 0))}</span>
+            <span>
+              −{formatDuration(Math.max((chapterLength || player.duration) - chapterPos, 0))}
+            </span>
           </div>
+
+          {#if !isEpisode && chapters.length > 1}
+            <div class="book-bar">
+              <SeekBar
+                value={player.progress}
+                size="sm"
+                label={t('player.wholeBook')}
+                onSeek={fraction => void player.seekFraction(fraction)}
+                marks={chapterMarks}
+              />
+              <div class="book-bar__legend t-small t-tertiary t-num">
+                <span>{formatDuration(player.position)}</span>
+                <span class="book-bar__label">{t('player.wholeBook')}</span>
+                <span>−{formatDuration(Math.max(player.duration - player.position, 0))}</span>
+              </div>
+            </div>
+          {/if}
 
           <div class="transport__buttons">
             <button
@@ -191,16 +240,21 @@
 
             <div class="extra">
               <span class="t-label"><Icon name="volume" size={14} /> {t('player.volume')}</span>
-              <input
-                class="volume"
-                type="range"
-                min="0"
-                max="1"
-                step="0.02"
-                value={player.volume}
-                aria-label={t('player.volume')}
-                oninput={event => void player.setVolume(Number(event.currentTarget.value))}
-              />
+              <div class="volume-wrap">
+                <input
+                  class="volume"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.02"
+                  value={player.volume}
+                  aria-label={t('player.volume')}
+                  oninput={event => onVolumeInput(Number(event.currentTarget.value))}
+                />
+                <span class="volume__value t-num" class:shown={volumeActive}>
+                  {Math.round(player.volume * 100)}%
+                </span>
+              </div>
             </div>
 
             <div class="extra extra--sleep">
@@ -424,6 +478,24 @@
     color: var(--text-secondary);
   }
 
+  .book-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: var(--gap-inline);
+    opacity: 0.85;
+  }
+
+  .book-bar__legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-2xs);
+  }
+
+  .book-bar__label {
+    letter-spacing: 0.02em;
+  }
+
   .transport__buttons {
     display: flex;
     align-items: center;
@@ -470,9 +542,27 @@
     min-width: 0;
   }
 
+  .volume-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+  }
+
   .volume {
     width: 120px;
     accent-color: var(--accent);
+  }
+
+  .volume__value {
+    min-width: 38px;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease);
+  }
+
+  .volume__value.shown {
+    opacity: 1;
   }
 
   .extra--sleep {

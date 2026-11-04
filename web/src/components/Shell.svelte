@@ -105,10 +105,18 @@
       <span class="nav-item__label">{t('nav.settings')}</span>
     </button>
 
-    <div class="rail__account">
+    <button
+      class="rail__account"
+      onclick={() => {
+        player.collapse();
+        ui.settingsSection = 'account';
+        ui.route = 'settings';
+      }}
+      title={session.user?.username ?? t('common.unknown')}
+    >
       <span class="rail__avatar">{(session.user?.username ?? '?').slice(0, 1).toUpperCase()}</span>
       <span class="truncate t-small">{session.user?.username ?? t('common.unknown')}</span>
-    </div>
+    </button>
   </nav>
 
   <div class="main-col">
@@ -166,6 +174,8 @@
     display: flex;
     align-items: center;
     gap: var(--gap-inline);
+    text-align: left;
+    color: var(--text-secondary);
     padding: var(--gap-inline) var(--gap-inline) var(--gap-tight);
     margin-top: var(--gap-inline);
     border-top: 1px solid var(--hairline);

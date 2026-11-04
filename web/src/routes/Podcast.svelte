@@ -80,7 +80,7 @@
 
     <header class="head">
       <div class="head__cover">
-        <Cover itemId={item.id} size={360} radius="var(--radius-md)" />
+        <Cover itemId={item.id} size={360} radius="var(--radius-md)" title={meta?.title ?? ''} />
       </div>
 
       <div class="head__text">

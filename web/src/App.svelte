@@ -14,12 +14,25 @@
   import Settings from './routes/Settings.svelte';
   import Player from './routes/Player.svelte';
   import Shell from './components/Shell.svelte';
+  import ContextMenu from './components/ContextMenu.svelte';
 
   let booting = $state(true);
   let uninstallShortcuts: (() => void) | null = null;
+  let uninstallMenu: (() => void) | null = null;
 
   onMount(async () => {
     uninstallShortcuts = installShortcuts();
+
+    // The webview's default menu (Back / Reload / Save as / Print) belongs to a
+    // browser. Text fields keep theirs so copy and paste still work.
+    const suppressDefaultMenu = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return;
+      if (target?.closest('[data-native-menu]')) return;
+      event.preventDefault();
+    };
+    window.addEventListener('contextmenu', suppressDefaultMenu);
+    uninstallMenu = () => window.removeEventListener('contextmenu', suppressDefaultMenu);
     // The transport is driven by the Rust session's ticks; subscribe once for
     // the lifetime of the window rather than per screen.
     void player.attach();
@@ -35,6 +48,8 @@
   $effect(() => () => {
     uninstallShortcuts?.();
     uninstallShortcuts = null;
+    uninstallMenu?.();
+    uninstallMenu = null;
   });
 
   // Listening progress belongs to the server, not to a screen: load it once the
@@ -73,6 +88,8 @@
     {/if}
   </Shell>
 {/if}
+
+<ContextMenu />
 
 <style>
   .boot {

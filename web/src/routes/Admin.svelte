@@ -1,5 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+  import { open as openDialog } from '@tauri-apps/plugin-dialog';
+  import {
+    uploadMedia,
+    type UploadProgress,
+  } from '../lib/ipc';
   import {
     createBackup,
     getBackups,
@@ -16,10 +22,11 @@
   import { t, type TranslationKey } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
 
-  type Tab = 'libraries' | 'users' | 'tasks' | 'backups';
+  type Tab = 'libraries' | 'upload' | 'users' | 'tasks' | 'backups';
 
   const TABS: { id: Tab; key: TranslationKey }[] = [
     { id: 'libraries', key: 'admin.libraries' },
+    { id: 'upload', key: 'admin.upload' },
     { id: 'users', key: 'admin.users' },
     { id: 'tasks', key: 'admin.tasks' },
     { id: 'backups', key: 'admin.backups' },
@@ -41,6 +48,88 @@
   let loading = $state(true);
   let scanning = $state<string | null>(null);
   let error = $state<string | null>(null);
+
+  // ── Upload ────────────────────────────────────────────────────────────────
+  let upLibrary = $state('');
+  let upFolder = $state('');
+  let upTitle = $state('');
+  let upAuthor = $state('');
+  let upSeries = $state('');
+  let upFiles = $state<string[]>([]);
+  let upBusy = $state(false);
+  let upNotice = $state<string | null>(null);
+  let upProgress = $state<UploadProgress | null>(null);
+  let unlisten: UnlistenFn[] = [];
+
+  const bookLibraries = $derived(libraries.filter(entry => entry.mediaType === 'book'));
+  const upFolders = $derived(
+    bookLibraries.find(entry => entry.id === upLibrary)?.folders ?? [],
+  );
+
+  onMount(() => {
+    let disposed = false;
+    void (async () => {
+      const stops = await Promise.all([
+        listen<UploadProgress>('upload-progress', ({ payload }) => {
+          upProgress = payload;
+        }),
+        listen<{ title: string }>('upload-complete', ({ payload }) => {
+          upNotice = t('upload.done', { title: payload.title });
+          upProgress = null;
+          upBusy = false;
+        }),
+      ]);
+      // The screen can be torn down before listen() resolves.
+      if (disposed) stops.forEach(stop => stop());
+      else unlisten = stops;
+    })();
+
+    return () => {
+      disposed = true;
+      unlisten.forEach(stop => stop());
+      unlisten = [];
+    };
+  });
+
+  async function pickFiles(): Promise<void> {
+    const chosen = await openDialog({
+      multiple: true,
+      title: t('upload.chooseFiles'),
+      filters: [{ name: 'Audio', extensions: ['mp3', 'm4a', 'm4b', 'flac', 'ogg', 'opus', 'aac', 'wav'] }],
+    });
+    if (!chosen) return;
+    upFiles = Array.isArray(chosen) ? chosen : [chosen];
+  }
+
+  async function startUpload(): Promise<void> {
+    upNotice = null;
+    if (!upLibrary || !upFolder || upFiles.length === 0) {
+      error = t('upload.missing');
+      return;
+    }
+    upBusy = true;
+    error = null;
+    try {
+      await uploadMedia(
+        session.serverUrl,
+        crypto.randomUUID(),
+        upLibrary,
+        upFolder,
+        upTitle.trim() || t('common.unknown'),
+        upAuthor.trim(),
+        upSeries.trim(),
+        upFiles,
+      );
+      upFiles = [];
+      upTitle = '';
+      await load();
+    } catch (reason) {
+      error = (reason as Error).message;
+    } finally {
+      upBusy = false;
+      upProgress = null;
+    }
+  }
 
   const isAdmin = $derived(
     session.user?.type === 'root' || session.user?.type === 'admin',
@@ -169,6 +258,79 @@
           </li>
         {/each}
       </ul>
+    {:else if tab === 'upload'}
+      <section class="card upload">
+        <div class="card__body">
+          <div class="upload__grid">
+            <label class="field">
+              <span class="field__label">{t('upload.library')}</span>
+              <select class="select" bind:value={upLibrary}>
+                <option value="">—</option>
+                {#each bookLibraries as entry (entry.id)}
+                  <option value={entry.id}>{entry.name}</option>
+                {/each}
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">{t('upload.folder')}</span>
+              <select class="select" bind:value={upFolder}>
+                <option value="">—</option>
+                {#each upFolders as folder (folder.id)}
+                  <option value={folder.id}>{folder.fullPath}</option>
+                {/each}
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">{t('upload.title')}</span>
+              <input class="input" bind:value={upTitle} />
+            </label>
+
+            <label class="field">
+              <span class="field__label">{t('upload.author')}</span>
+              <input class="input" bind:value={upAuthor} />
+            </label>
+
+            <label class="field">
+              <span class="field__label">{t('upload.series')}</span>
+              <input class="input" bind:value={upSeries} />
+            </label>
+          </div>
+
+          <div class="upload__files">
+            <button class="btn btn--quiet btn--sm" onclick={() => void pickFiles()}>
+              {t('upload.chooseFiles')}
+            </button>
+            <span class="t-small t-tertiary truncate">
+              {upFiles.length > 0 ? t('upload.selected', { count: upFiles.length }) : t('upload.none')}
+            </span>
+          </div>
+
+          {#if upProgress}
+            {@const pct = upProgress.totalBytes > 0
+              ? Math.round((upProgress.bytesSent / upProgress.totalBytes) * 100)
+              : 0}
+            <div class="upload__progress">
+              <span class="t-small t-tertiary">{t('upload.uploading', { pct })}</span>
+              <span class="bar" aria-hidden="true"><span style:width="{pct}%"></span></span>
+            </div>
+          {/if}
+
+          {#if upNotice}
+            <p class="t-small t-accent">{upNotice}</p>
+          {/if}
+
+          <div class="upload__actions">
+            <button
+              class="btn btn--primary btn--sm"
+              disabled={upBusy || upFiles.length === 0 || !upFolder}
+              onclick={() => void startUpload()}
+            >{upBusy ? t('upload.working') : t('upload.start')}</button>
+            <span class="t-small t-tertiary">{t('upload.hint')}</span>
+          </div>
+        </div>
+      </section>
     {:else if tab === 'users'}
       <ul class="rows">
         {#each users as user (user.id)}
@@ -346,6 +508,51 @@
 
   .warn {
     color: var(--warning);
+  }
+
+  .upload {
+    max-width: 720px;
+  }
+
+  .upload__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--gap-row);
+  }
+
+  .upload__files {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    margin-top: var(--gap-row);
+  }
+
+  .upload__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: var(--gap-row);
+  }
+
+  .upload__progress .bar {
+    display: block;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .upload__progress .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .upload__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    margin-top: var(--gap-row);
   }
 
   .form-error {

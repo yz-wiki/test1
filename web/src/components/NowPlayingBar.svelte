@@ -23,8 +23,9 @@
   /** Chapters for a book, episodes for a show — one list, whichever applies. */
   const entries = $derived(
     player.kind === 'episode'
-      ? player.queue.map(episode => ({
+      ? player.queue.map((episode, index) => ({
           key: episode.id,
+          n: episode.index ?? player.queue.length - index,
           title: episode.title,
           at: episode.duration ?? 0,
           current: episode.id === player.episode?.id,
@@ -32,6 +33,7 @@
         }))
       : chapters.map((chapter, index) => ({
           key: `c${index}`,
+          n: index + 1,
           title: chapter.title,
           at: chapter.start,
           current: index === player.chapterIndex,
@@ -77,7 +79,7 @@
         title={t('player.expand')}
       >
         <div class="bar__cover">
-          <Cover itemId={item.id} size={96} />
+          <Cover itemId={item.id} size={96} title={player.showTitle} />
         </div>
         <div class="bar__text">
           <span class="truncate bar__title">{player.title}</span>
@@ -148,10 +150,9 @@
                       menuOpen = false;
                     }}
                   >
-                    <span class="truncate">{entry.title}</span>
-                    <span class="t-num t-small t-tertiary">
-                      {player.kind === 'episode' ? formatDuration(entry.at) : formatDuration(entry.at)}
-                    </span>
+                    <span class="jump__n t-num">{entry.n}</span>
+                    <span class="truncate jump__title">{entry.title}</span>
+                    <span class="t-num t-small t-tertiary">{formatDuration(entry.at)}</span>
                   </button>
                 {/each}
                 {#if entries.length === 0}
@@ -290,7 +291,6 @@
   .jump__item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--gap-row);
     width: 100%;
     padding: var(--gap-inline) var(--gap-row);
@@ -308,6 +308,17 @@
   .jump__item[aria-current='true'] {
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  .jump__n {
+    flex: 0 0 30px;
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: var(--text-xs);
+  }
+
+  .jump__title {
+    flex: 1 1 auto;
   }
 
   .jump__empty {

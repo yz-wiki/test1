@@ -160,6 +160,41 @@ export const fetchItem = (serverUrl: string, itemId: string) =>
 
 export const getMe = (serverUrl: string) => call<MeResponse>('get_me', { serverUrl });
 
+/** PATCH /api/items/:id/media — the shape Audiobookshelf expects. */
+export const updateMedia = (
+  serverUrl: string,
+  itemId: string,
+  payload: { metadata: Record<string, unknown>; tags?: string[] },
+) => call<unknown>('update_media', { serverUrl, itemId, payload });
+
+export interface UploadProgress {
+  uploadId: string;
+  title: string;
+  bytesSent: number;
+  totalBytes: number;
+}
+
+export const uploadMedia = (
+  serverUrl: string,
+  uploadId: string,
+  libraryId: string,
+  folderId: string,
+  title: string,
+  author: string,
+  series: string,
+  filePaths: string[],
+) =>
+  call<void>('upload_media', {
+    serverUrl,
+    uploadId,
+    libraryId,
+    folderId,
+    title,
+    author,
+    series,
+    filePaths,
+  });
+
 export const createBookmark = (serverUrl: string, itemId: string, time: number, title: string) =>
   call<Bookmark>('create_bookmark', { serverUrl, itemId, time, title });
 

@@ -3,14 +3,19 @@
   import { invoke } from '@tauri-apps/api/core';
   import { session } from '../lib/state.svelte';
 
-  let { itemId, size = 320, radius }: {
+  let { itemId, size = 320, radius, title = '' }: {
     itemId: string;
     size?: number;
     radius?: string;
+    /** Shown when there is no cover: a title's own first character beats a
+     *  random slice of the id, which made empty covers read as noise. */
+    title?: string;
   } = $props();
 
   let src = $state<string | null>(null);
   let failed = $state(false);
+
+  const initial = $derived((title.trim() || itemId).slice(0, 1).toUpperCase() || '?');
 
   /**
    * Covers come from Rust, which caches them on disk and returns a path; the
@@ -42,7 +47,7 @@
     <img {src} alt="" loading="lazy" onerror={() => (failed = true)} />
   {:else}
     <div class="cover__fallback">
-      <span>{itemId.slice(0, 1).toUpperCase()}</span>
+      <span>{initial}</span>
     </div>
   {/if}
 </div>
@@ -55,7 +60,8 @@
     height: 100%;
     background: linear-gradient(160deg, var(--surface-raised), var(--surface-inset));
     color: var(--text-tertiary);
-    font-size: var(--text-xl);
+    font-size: clamp(16px, 26%, 64px);
     font-weight: var(--weight-semibold);
+    letter-spacing: 0.02em;
   }
 </style>

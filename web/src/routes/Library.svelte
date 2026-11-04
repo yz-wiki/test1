@@ -3,6 +3,10 @@
   import { progress } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { matchesQuery, preloadPinyin } from '../lib/search';
+  import { menu, type MenuItem } from '../lib/menu.svelte';
+  import { beginDownload } from '../lib/downloadFlow';
+  import { downloads } from '../lib/downloads.svelte';
+  import { updateProgress } from '../lib/ipc';
   import { t, formatLength } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
@@ -16,24 +20,60 @@
   // Set once the pinyin dictionary has arrived, so the filter re-runs against it.
   let pinyinReady = $state(false);
 
+  type View = 'all' | 'series' | 'author';
+  let view = $state<View>('all');
+  /** Set when a series or author has been opened; null means the group list. */
+  let group = $state<string | null>(null);
+
+  const VIEWS: { id: View; key: 'library.all' | 'library.series' | 'library.authors' }[] = [
+    { id: 'all', key: 'library.all' },
+    { id: 'series', key: 'library.series' },
+    { id: 'author', key: 'library.authors' },
+  ];
+
+  function keyOf(item: (typeof library.items)[number], by: View): string {
+    if (by === 'series') return item.media?.metadata?.seriesName?.trim() ?? '';
+    if (by === 'author') return item.media?.metadata?.authorName?.trim() ?? '';
+    return '';
+  }
+
+  const groups = $derived.by(() => {
+    if (view === 'all') return [];
+    const map = new Map<string, typeof library.items>();
+    for (const item of library.items) {
+      const key = keyOf(item, view);
+      if (!key) continue;
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    }
+    return [...map.entries()]
+      .map(([name, items]) => ({ name, items }))
+      .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
+  });
+
   // Pinyin-aware: "santi" and "st" both find 《三体》.
   const visible = $derived.by(() => {
-    const q = query.trim();
-    if (!q) return library.items;
     void pinyinReady;
-    return library.items.filter(item => matchesQuery(item, q));
+    const q = query.trim();
+    const base = group && view !== 'all'
+      ? library.items.filter(item => keyOf(item, view) === group)
+      : library.items;
+    if (!q) return base;
+    return base.filter(item => matchesQuery(item, q));
   });
 
   /** "Continue listening" means unfinished rows the server actually has, newest
    *  first — not simply the first six titles in the library. */
+  /** Only what was actually started: an empty shelf is honest, a shelf of
+   *  unrelated books labelled "continue" is not. */
   const recent = $derived.by(() => {
-    const started = progress.rows
+    return progress.rows
       .filter(row => !row.isFinished && row.currentTime > 0)
       .sort((a, b) => b.lastUpdate - a.lastUpdate)
-      .slice(0, 6)
+      .slice(0, 8)
       .map(row => library.items.find(item => item.id === row.libraryItemId))
       .filter((item): item is (typeof library.items)[number] => Boolean(item));
-    return started.length > 0 ? started : visible.slice(0, 6);
   });
 
   /** Podcasts and books both have a detail screen; the continue shelf is the
@@ -143,6 +183,71 @@
     return item.media?.metadata?.title?.trim() || t('common.unknown');
   }
 
+  async function markFinished(
+    item: (typeof library.items)[number],
+    finished: boolean,
+  ): Promise<void> {
+    const duration = item.media?.duration ?? 0;
+    try {
+      await updateProgress(
+        session.serverUrl,
+        item.id,
+        finished ? duration : 0,
+        duration,
+        finished,
+      );
+      await progress.load(session.serverUrl, true);
+    } catch {
+      // The shelf is a read-only surface; a failed write is not worth a banner.
+    }
+  }
+
+  function openMenu(event: MouseEvent, item: (typeof library.items)[number]): void {
+    const isPodcast = item.mediaType === 'podcast';
+    const downloaded = downloads.has(item.id);
+    const busy = Boolean(downloads.transfers[item.id]);
+    const finished = progress.for(item.id)?.isFinished ?? false;
+
+    const items: MenuItem[] = [
+      { id: 'play', label: t('menu.play'), action: () => resume(item) },
+      { id: 'details', label: t('menu.details'), action: () => open(item) },
+    ];
+
+    if (!isPodcast) {
+      items.push(
+        {
+          id: 'download',
+          label: downloaded ? t('downloads.downloaded') : t('downloads.download'),
+          disabled: downloaded || busy,
+          separatorBefore: true,
+          action: () => void beginDownload(item, title(item), author(item)),
+        },
+        {
+          id: 'remove',
+          label: t('downloads.remove'),
+          danger: true,
+          disabled: !downloaded,
+          action: () => void downloads.remove(item.id),
+        },
+        {
+          id: 'finished',
+          label: finished ? t('menu.markUnfinished') : t('menu.markFinished'),
+          separatorBefore: true,
+          action: () => void markFinished(item, !finished),
+        },
+      );
+    }
+
+    items.push({
+      id: 'copy',
+      label: t('menu.copyTitle'),
+      separatorBefore: true,
+      action: () => void navigator.clipboard.writeText(title(item)),
+    });
+
+    menu.show(event, items);
+  }
+
   function author(item: (typeof library.items)[number]): string {
     return item.media?.metadata?.authorName?.trim() || '';
   }
@@ -159,6 +264,19 @@
       spellcheck="false"
       onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
     />
+  </div>
+
+  <div class="segmented">
+    {#each VIEWS as entry (entry.id)}
+      <button
+        class="segmented__item"
+        aria-pressed={view === entry.id}
+        onclick={() => {
+          view = entry.id;
+          group = null;
+        }}
+      >{t(entry.key)}</button>
+    {/each}
   </div>
 
   <span class="t-small t-num">{t('library.count', { count: visible.length })}</span>
@@ -196,15 +314,48 @@
       <span class="empty__title">{t('library.empty')}</span>
       <span class="empty__body">{t('library.emptyHint')}</span>
     </div>
+  {:else if view !== 'all' && group === null}
+    {#if groups.length === 0}
+      <div class="empty">
+        <Icon name="book" size={26} />
+        <span class="empty__title">{t('library.noGroups')}</span>
+      </div>
+    {:else}
+      <div class="groups">
+        {#each groups as entry (entry.name)}
+          <button class="group" onclick={() => (group = entry.name)}>
+            <span class="group__cover">
+              <Cover itemId={entry.items[0].id} size={120} title={entry.name} />
+            </span>
+            <span class="group__text">
+              <span class="truncate group__name">{entry.name}</span>
+              <span class="t-small t-tertiary t-num">{entry.items.length}</span>
+            </span>
+          </button>
+        {/each}
+      </div>
+    {/if}
   {:else}
+    {#if group}
+      <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
+        <Icon name="chevron-left" size={14} />
+        {group}
+      </button>
+    {/if}
+
+    {#if recent.length > 0}
     <section class="section">
       <h2 class="t-label">{t('library.continue')}</h2>
       <div class="shelf">
         {#each recent as item (item.id)}
           {@const fraction = progress.fraction(item.id)}
-          <button class="shelf__card" onclick={() => resume(item)}>
+          <button
+            class="shelf__card"
+            onclick={() => resume(item)}
+            oncontextmenu={event => openMenu(event, item)}
+          >
             <div class="shelf__cover">
-              <Cover itemId={item.id} size={168} />
+              <Cover itemId={item.id} size={168} title={title(item)} />
             </div>
             <div class="shelf__text">
               <span class="truncate" style="font-weight: var(--weight-medium)">{title(item)}</span>
@@ -224,6 +375,7 @@
         {/each}
       </div>
     </section>
+    {/if}
 
     <section class="section">
       <h2 class="t-label">{t('library.all')}</h2>
@@ -240,8 +392,9 @@
               class="tile"
               aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
               onclick={() => open(item)}
+              oncontextmenu={event => openMenu(event, item)}
             >
-              <Cover itemId={item.id} size={320} />
+              <Cover itemId={item.id} size={320} title={title(item)} />
               <span class="tile__title">{title(item)}</span>
               <span class="tile__meta">{author(item) || formatLength(item.media?.duration ?? 0)}</span>
             </button>
@@ -344,6 +497,55 @@
   .grid__slice.windowed .tile {
     min-height: 0;
     overflow: hidden;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--gap-row);
+    margin-bottom: var(--gap-section);
+  }
+
+  .group {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: var(--gap-inline);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    text-align: left;
+  }
+
+  .group:hover {
+    background: var(--surface-raised);
+    border-color: var(--hairline-strong);
+  }
+
+  .group__cover {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .group__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .group__name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .group-back {
+    align-self: flex-start;
+    margin-bottom: var(--gap-row);
   }
 
   .skeleton {

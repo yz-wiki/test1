@@ -2,10 +2,52 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.6.0 (2026-11-04) — preview
+## 2.7.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
+
+### Fixed
+
+- **The player's bar measures the chapter, not the book.** On a 189-hour title
+  the playhead moved a pixel an hour. The large bar is now the current chapter
+  (drag = scrub within the chapter, times are chapter-relative), with a thin
+  full-book bar underneath that still scrubs across the whole title and marks
+  every chapter boundary.
+- **The chapter menu numbers its rows.** It listed titles and offsets but no
+  ordinal, so "which chapter am I on" needed counting.
+- **Empty covers showed a random letter.** The placeholder was the first
+  character of the item *id* ("B", "4", "0"); it is now the first character of
+  the title, which is at least meaningful.
+- **The sidebar said "Unknown".** Restoring a token never fetched the user, so
+  the account chip, and the admin entry that depends on the role, were blank.
+  The chip is also a button now and opens Settings → Account.
+- **The webview's context menu appeared on right-click** (Back, Reload, Save as,
+  Print). It is suppressed outside text fields and replaced by a real menu on
+  shelf and grid items: play, details, download, remove download, mark
+  finished, copy title.
+- **Volume showed no value while adjusting** — it now shows the percentage
+  for a moment after each change.
+
+### New
+
+- **Series and author views** in the library, next to All. Group cards show how
+  many titles each holds; opening one filters the grid, with the group name as
+  the way back.
+- **Metadata editing** on the book screen: title, subtitle, authors, narrators,
+  series and sequence, publisher, year, language, genres, tags, description.
+- **Upload** in the server screen: pick a book library and folder, enter title
+  and author, choose the audio files, watch the transfer.
+- **Another light theme** (Daylight) and higher contrast in Paper. Seven
+  themes total.
+- Minimise now goes to the tray along with close, so playback survives either.
+
+### Known gap
+
+Windows' media flyout still shows "Unknown app": that card is driven by a
+system media session (SMTC), which this build does not create — LibVLC plays
+outside it. Adding SMTC also brings hardware media keys and needs a dedicated
+Rust pass rather than a UI change.
 
 ### Fixed in this build
 - **Volume did nothing.** `set_volume` takes 0–100 (LibVLC), the UI sent 0–1,

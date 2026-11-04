@@ -47,6 +47,16 @@ class SessionStore {
       return;
     }
     if (!token) return;
+
+    // Restoring the token is not the same as knowing who the user is: without
+    // this the sidebar showed "Unknown" and the admin entry stayed hidden.
+    try {
+      const me = await getMe(this.serverUrl);
+      this.user = { id: me.id, username: me.username };
+    } catch {
+      // A dead token fails later on the first real request; do not block boot.
+    }
+
     this.authenticated = true;
     await this.loadLibraries();
   }
@@ -141,7 +151,7 @@ class LibraryStore {
   }
 }
 
-export const THEMES = ['graphite', 'slate', 'midnight', 'nord', 'paper', 'sepia'] as const;
+export const THEMES = ['graphite', 'slate', 'midnight', 'nord', 'paper', 'daylight', 'sepia'] as const;
 export type ThemeId = (typeof THEMES)[number];
 
 /** Accent swatches: the first one is each theme's own accent. */
@@ -177,6 +187,8 @@ class UiStore {
   query = $state('');
   /** Bumped when something asks the library search box for focus. */
   focusSearch = $state(0);
+  /** Which settings pane to open; set when the account chip is clicked. */
+  settingsSection = $state('appearance');
 
   constructor() {
     this.applyTheme();

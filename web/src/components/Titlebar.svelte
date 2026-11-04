@@ -34,7 +34,11 @@
   <div class="titlebar__spacer"></div>
 
   <div class="titlebar__controls" data-no-drag>
-    <button class="winbtn" aria-label="Minimize" onclick={() => void win.minimize()}>
+    <button
+      class="winbtn"
+      aria-label="Minimize"
+      onclick={() => void (ui.closeToTray ? win.hide() : win.minimize())}
+    >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
         <path d="M2 5h6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
       </svg>

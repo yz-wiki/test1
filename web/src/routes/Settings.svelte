@@ -57,6 +57,7 @@
     midnight: 'theme.midnight',
     nord: 'theme.nord',
     paper: 'theme.paper',
+    daylight: 'theme.daylight',
     sepia: 'theme.sepia',
   };
 
@@ -66,7 +67,8 @@
     slate: ['#17191c', '#282c32', '#5fb3a1'],
     midnight: ['#0d1117', '#1d2734', '#4c9aef'],
     nord: ['#2e3440', '#434c5e', '#88c0d0'],
-    paper: ['#f6f5f7', '#ffffff', '#6b57e8'],
+    paper: ['#f4f3f6', '#ffffff', '#6b57e8'],
+    daylight: ['#ffffff', '#eef2f8', '#2563eb'],
     sepia: ['#f3ece0', '#fffaf3', '#a05f2c'],
   };
 
@@ -80,7 +82,12 @@
     { keys: 'Ctrl + ,', key: 'keys.settings' },
   ];
 
-  let section = $state<Section>('appearance');
+  let section = $state<Section>((ui.settingsSection as Section) ?? 'appearance');
+
+  // Remember the pane so the account chip and Ctrl+, land where they were.
+  $effect(() => {
+    ui.settingsSection = section;
+  });
   let devices = $state<AudioDevice[]>([]);
   let deviceId = $state('');
   let downloadsDir = $state('');

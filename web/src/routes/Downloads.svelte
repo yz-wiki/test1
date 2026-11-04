@@ -43,7 +43,7 @@
           : 0}
         <li>
           <div class="row row--static">
-            <span class="row__cover"><Cover itemId={transfer.itemId} size={72} /></span>
+            <span class="row__cover"><Cover itemId={transfer.itemId} size={72} title={transfer.title} /></span>
             <span class="row__body">
               <span class="truncate row__title">{transfer.title || transfer.itemId}</span>
               <span class="t-small t-tertiary t-num">
@@ -70,7 +70,7 @@
         <li>
           <div class="row row--static">
             <button class="row__cover" onclick={() => open(record.itemId)} aria-label={title(record.itemId, record.title)}>
-              <Cover itemId={record.itemId} size={72} />
+              <Cover itemId={record.itemId} size={72} title={title(record.itemId, record.title)} />
             </button>
             <span class="row__body">
               <button class="row__title-btn" onclick={() => open(record.itemId)}>
