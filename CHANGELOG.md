@@ -2,7 +2,7 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.0.0 (2026-11-04) — preview
+## 2.1.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
