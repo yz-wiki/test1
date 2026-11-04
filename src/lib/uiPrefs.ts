@@ -155,6 +155,26 @@ export function useReduceMotion(): boolean {
   return value;
 }
 
+// ─── Minimise to tray ────────────────────────────────────────────────────────
+//
+// The window is undecorated, so a minimised one has no taskbar button and no
+// way back except the tray icon. Default on: that is what "minimise" means for a
+// background audio app. Turning it off restores a normal taskbar minimise.
+
+const minimizeToTrayPref = createStoredPref('skald.ui.minimizeToTray', true, raw => raw !== 'false');
+
+export function getMinimizeToTray(): boolean {
+  return minimizeToTrayPref.get();
+}
+
+export function setMinimizeToTray(on: boolean): void {
+  minimizeToTrayPref.set(on);
+}
+
+export function useMinimizeToTray(): boolean {
+  return useSyncExternalStore(minimizeToTrayPref.subscribe, minimizeToTrayPref.get, minimizeToTrayPref.get);
+}
+
 // ─── Test hook ───────────────────────────────────────────────────────────────
 
 /** Drop memoised values so a fresh localStorage read happens (tests only). */
@@ -163,4 +183,5 @@ export function resetUiPrefsCache(): void {
   sidebarCompactPref.reset();
   focusRailPref.reset();
   reduceMotionPref.reset();
+  minimizeToTrayPref.reset();
 }

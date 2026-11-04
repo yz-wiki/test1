@@ -655,7 +655,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
           </div>
           {/* Auto-refresh indicator */}
           <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.08em' }}>
-            refreshes every 30s
+            {t('sessions.refreshHint')}
           </span>
         </div>
 
@@ -682,7 +682,7 @@ export default function ListeningSessionsSection({ st }: ListeningSessionsSectio
               ) : openSessions.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? 6 : 5} style={{ padding: 'var(--s-5) 0', fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)' }}>
-                    No open sessions detected in the last 5 minutes.
+                    {t('sessions.noOpen')}
                   </td>
                 </tr>
               ) : (

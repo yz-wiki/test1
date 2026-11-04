@@ -38,7 +38,7 @@ function localDateKey(d: Date): string {
 
 // Build the last-7-days sparkline data from the stats "days" map.
 // Returns oldest-first (index 0 = 6 days ago, index 6 = today).
-function buildLast7(days: Record<string, number>): Array<{ d: string; m: number }> {
+function buildLast7(days: Record<string, number>, locale: string): Array<{ d: string; m: number }> {
   return Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - 6 + i); // 6 days ago → today
@@ -46,8 +46,9 @@ function buildLast7(days: Record<string, number>): Array<{ d: string; m: number 
     // Day totals are SECONDS (ABS unit, verified against the web client's own
     // /60 conversion; local stats match) — divide by 60 for whole minutes.
     const mins  = Math.round((days[key] ?? 0) / 60);
-    // "Mon", "Tue", etc. — slice to 3 chars for consistency.
-    const label = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 3);
+    // Locale weekday, trimmed for a compact axis ("Mon" / "周一").
+    const raw = date.toLocaleDateString(locale, { weekday: 'short' });
+    const label = raw.length > 3 ? raw.replace(/^周/, '').replace(/^星期/, '') : raw;
     return { d: label, m: mins };
   });
 }
@@ -255,11 +256,11 @@ function GreetStat({ label, value }: { label: string; value: string | number }) 
 // ── Your stats page ────────────────────────────────────────────────────────
 
 function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const ph = loading ? '…' : '—'; // placeholder value while fetching
 
   // Derive sparkline data from the ABS days map (empty map → all-zero bars).
-  const last7       = buildLast7(stats?.days ?? {});
+  const last7       = buildLast7(stats?.days ?? {}, locale);
   const weekMinutes = last7.reduce((s, d) => s + d.m, 0);
   const dailyAvg    = Math.round(weekMinutes / 7);
   const bestDay     = Math.max(...last7.map(d => d.m), 0);
@@ -297,7 +298,7 @@ function UserStatsPage({ stats, loading }: { stats: UserStats | null; loading: b
           <MiniStat value={loading ? ph : weekMinutes} unit="min" label={t('greeting.thisWeek')} />
           <MiniStat value={loading ? ph : dailyAvg}    unit="min" label={t('greeting.dailyAvg')} />
           <MiniStat value={loading ? ph : bestDay}     unit="min" label={t('greeting.bestDay')} />
-          <MiniStat value={loading ? ph : streak} unit={streak === 1 ? 'day' : 'days'} label={t('greeting.streak')} />
+          <MiniStat value={loading ? ph : streak} unit={streak === 1 ? t('greeting.day') : t('greeting.days')} label={t('greeting.streak')} />
         </div>
       </div>
 
@@ -432,7 +433,7 @@ export interface GreetingPaneProps {
 }
 
 export default function GreetingPane({ st, name }: GreetingPaneProps) {
-  const { t } = useI18n();
+  const { t, formatDate } = useI18n();
   // Toggle state — persisted to localStorage so the user's choice survives reloads.
   const [page, setPage] = useState<'user' | 'library'>(
     () => (localStorage.getItem('onyx.greeting.tab') as 'user' | 'library') ?? 'user',
@@ -449,10 +450,10 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
   const hr  = now.getHours();
   // Time-aware greeting: night < 5, morning < 12, afternoon < 17, evening < 21.
   const greeting =
-    hr < 5  ? 'Still up'       :
-    hr < 12 ? 'Good morning'   :
-    hr < 17 ? 'Good afternoon' :
-    hr < 21 ? 'Good evening'   : 'Still up';
+    hr < 5  ? t('greeting.stillUp')      :
+    hr < 12 ? t('greeting.goodMorning')  :
+    hr < 17 ? t('greeting.goodAfternoon'):
+    hr < 21 ? t('greeting.goodEvening')  : t('greeting.stillUp');
 
   // Display the name with each word's leading letter capitalized — usernames
   // (e.g. from ABS) are often all-lowercase, and "Good morning, javier" reads
@@ -460,9 +461,8 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
   // names (McDonald, O'Brien) are preserved.
   const displayName = name.replace(/(^|[\s'-])(\p{L})/gu, (_, sep, ch: string) => sep + ch.toUpperCase());
   // "TUESDAY, JUNE 2" — locale-formatted and uppercased.
-  const dateLine = now.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
-  }).toUpperCase();
+  // Locale-aware, and uppercased only where that is idiomatic (Latin scripts).
+  const dateLineUpper = formatDate(now, { pref: 'long' });
 
   // ── Footer counts — derived locally, no server call needed ────────────────
   const inProg = st.library.filter(b => {
@@ -573,7 +573,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         color: 'var(--onyx-text-mute)',
         textTransform: 'uppercase',
       }}>
-        {dateLine}
+        {dateLineUpper}
       </div>
 
       {/* Greeting — serif 30px/500, two lines, gold period after name */}
@@ -599,12 +599,12 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         border: '1px solid var(--onyx-glass-edge)',
         borderRadius: 'var(--r-card)',
       }}>
-        {([ { id: 'user', label: 'Your stats' }, { id: 'library', label: 'Library stats' } ] as const).map(t => {
-          const active = page === t.id;
+        {([ { id: 'user', label: t('greeting.yourStats') }, { id: 'library', label: t('greeting.libraryStats') } ] as const).map(tab => {
+          const active = page === tab.id;
           return (
             <button
-              key={t.id}
-              onClick={() => switchPage(t.id)}
+              key={tab.id}
+              onClick={() => switchPage(tab.id)}
               style={{
                 flex: 1,
                 padding: 'var(--s-2) 0',
@@ -622,7 +622,7 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
                 transition: 'background 0.15s, color 0.15s',
               }}
             >
-              {t.label}
+              {tab.label}
             </button>
           );
         })}

@@ -300,7 +300,7 @@ export default function LibrariesSection({ st, embedded = false }: LibrariesSect
                       <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text)', lineHeight: 1.55, marginBottom: 'var(--s-4)' }}>
                         <span style={{ color: '#e8716a', fontWeight: 600 }}>⚠ Deleting "{lib.name}"</span>{' '}
                         will permanently remove all library items, collections, and listening progress from the server.
-                        Files on disk are <strong>not</strong> deleted. This cannot be undone.
+                        Files on disk are <strong>not</strong> {t('libs.deletedCannotUndo')}
                       </div>
                       <div style={{ display: 'flex', gap: 'var(--s-2)', justifyContent: 'flex-end' }}>
                         <SmallBtn muted onClick={() => setDeleteTarget(null)}>{t('libs.cancel')}</SmallBtn>

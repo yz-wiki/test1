@@ -94,7 +94,7 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
   // Library list + tags for the permissions editor (tags derived from the loaded
   // library, mirroring FilterPopover; covers the active library's tags). Empty
   // ids/tags are filtered out so React list keys stay unique.
-  // Exclude local libraries — they're a client-side concept with no server-side
+  // Exclude {t('onbWelcome.localLibraries')} — they're a client-side concept with no server-side
   // user/permission counterpart, so a managed server user can never access them.
   const libraryOptions = st.libraries.filter(l => l.id && l.source !== 'local').map(l => ({ id: l.id, name: l.name }));
   const availableTags = [...new Set(st.library.flatMap(b => b.media.tags ?? []))].filter(Boolean).sort((a, b) => a.localeCompare(b));
@@ -333,14 +333,14 @@ export default function AccountSection({ st, onSignOut }: AccountSectionProps) {
                 the missing encryption visible where the address is shown. */}
             {hasAbs && st.serverUrl.startsWith('http://') && (
               <span
-                title="Traffic to this server (including media tokens) is not encrypted. Fine on a trusted home network; use an https:// address to encrypt."
+                title="Traffic to this server (including media tokens) is {t('account.notEncrypted')}. Fine on a trusted home network; use an https:// address to encrypt."
                 style={{
                   marginLeft: 'var(--s-2)', padding: '2px var(--s-1)', borderRadius: 'var(--r-xs)',
                   color: '#d4834a', border: '1px solid rgba(212,131,74,0.4)',
                   background: 'rgba(212,131,74,0.08)', textTransform: 'uppercase',
                   letterSpacing: '0.08em', fontSize: 'var(--fs-0)',
                 }}
-              >not encrypted</span>
+              >{t('account.notEncrypted')}</span>
             )}
           </div>
         </div>

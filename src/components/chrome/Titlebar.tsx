@@ -6,6 +6,7 @@
 // screen and onboarding — which is why `minimal` exists (chrome-only, no status
 // pills, no toolbar actions).
 import type { CSSProperties, ReactNode } from 'react';
+import { getMinimizeToTray } from '../../lib/uiPrefs';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
@@ -55,7 +56,10 @@ const NO_DRAG_SELECTOR = 'button, input, textarea, select, a, [data-tauri-drag-r
 function WindowButton({ kind, label }: { kind: 'min' | 'max' | 'close'; label: string }) {
   const onClick = () => {
     const win = getCurrentWindow();
-    if (kind === 'min') void win.minimize().catch(() => {});
+    // Undecorated windows leave no taskbar entry once minimised, so the default
+    // is to hide into the tray instead (the tray icon restores). Users who want a
+    // conventional minimise turn this off in Settings → Appearance.
+    if (kind === 'min') void (getMinimizeToTray() ? win.hide() : win.minimize()).catch(() => {});
     else if (kind === 'max') void win.toggleMaximize().catch(() => {});
     else void win.close().catch(() => {});
   };

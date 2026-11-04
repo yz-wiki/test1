@@ -3,7 +3,7 @@ import type { OnyxState } from '../../state/onyx';
 import { SectionHead, Row, Toggle, Panel, Seg, SegGroup, eyebrowStyle } from './shared';
 import { COVER_SIZES } from '../shelf/LibraryShelf';
 import { ACCENT_PRESETS, THEME_PRESETS } from '../../state/theme';
-import { useSidebarCompact, setSidebarCompact, useReduceMotion, setReduceMotion } from '../../lib/uiPrefs';
+import { useSidebarCompact, setSidebarCompact, useReduceMotion, setReduceMotion, useMinimizeToTray, setMinimizeToTray } from '../../lib/uiPrefs';
 import { useI18n } from '../../i18n';
 
 export interface AppearanceSectionProps { st: OnyxState; }
@@ -33,6 +33,7 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
   const currentHex = (st.accentColor || '').toLowerCase();
   const sidebarCompact = useSidebarCompact();
   const reduceMotion = useReduceMotion();
+  const minimizeToTray = useMinimizeToTray();
 
   // Responsive layout: observe the section's own width (not the window) so the
   // breakpoint reacts to the settings pane, which is narrower than the viewport.
@@ -109,6 +110,10 @@ export default function AppearanceSection({ st }: AppearanceSectionProps) {
 
         <Row label={t('appearance.sidebarCompact')} hint={t('appearance.sidebarCompactHint')}>
           <Toggle on={sidebarCompact} onChange={setSidebarCompact} />
+        </Row>
+
+        <Row label={t('appearance.minimizeToTray')} hint={t('appearance.minimizeToTrayHint')}>
+          <Toggle on={minimizeToTray} onChange={setMinimizeToTray} />
         </Row>
 
         <Row label={t('appearance.reduceMotion')} hint={t('appearance.reduceMotionHint')}>

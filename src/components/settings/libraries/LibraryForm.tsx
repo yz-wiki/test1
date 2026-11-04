@@ -238,7 +238,7 @@ export default function LibraryForm({ initial, lockMediaType = false, onSubmit, 
               outline: 'none', textAlign: 'center',
             }}
           />
-          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>s remaining</span>
+          <span style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-dim)' }}>{t('libForm.secondsRemaining')}</span>
         </div>
       ))}
 

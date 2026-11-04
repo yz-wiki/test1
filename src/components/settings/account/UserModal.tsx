@@ -317,8 +317,8 @@ export default function UserModal({
             <div style={pickerBox}>
               <div style={fieldLabel}>{t('userModal.accessibleTags')}</div>
               <div style={{ display: 'flex', gap: 'var(--s-2)' }}>
-                <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>only selected</Pill>
-                <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>all except</Pill>
+                <Pill active={!tagsExclusive} onClick={() => setTagsExclusive(false)}>{t('userModal.onlySelected')}</Pill>
+                <Pill active={tagsExclusive} onClick={() => setTagsExclusive(true)}>{t('userModal.allExcept')}</Pill>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s-2)', maxHeight: 150, overflowY: 'auto' }}>
                 {availableTags.length === 0 && <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)' }}>{t('userModal.noTags')}</div>}

@@ -1,41 +1,36 @@
 export interface WaveformProps {
-  width?: number;
+  /** Total width of the track. Omit to fill the parent. */
+  width?: number | string;
+  /** Height of the *hit area* (the row the bar lives in) — not the bar itself. */
   height?: number;
   progress?: number;
   color?: string;
   dim?: string;
+  /** Accepted for compatibility with older call sites; unused. */
   bars?: number;
   seed?: number;
   flat?: boolean;
 }
 
 /**
- * Playback progress bar.
+ * Seek bar.
  *
- * This used to be a 140-segment "waveform" (a faux-equaliser made of vertical
- * bars). Two problems with that: it read as an audio visualiser rather than a
- * seek bar, and at 140 bars the 1px gaps produced a moiré pattern on scaled
- * displays. It is now a single rounded capsule with a solid fill and a playhead
- * dot — the shape every native player uses, and the one that survives being
- * stretched across a 4K window.
+ * Geometry, deliberately fixed: a 4px track with a 12px playhead inside a taller
+ * transparent hit area. The `height` prop sizes the *hit area* only.
  *
- * The props are kept so call sites (the Player) do not change: `bars`/`seed`
- * are accepted for compatibility and intentionally unused.
+ * An earlier version used `height` for the track thickness, so the Player — which
+ * passes 72 for a comfortable click target — drew a 72px-tall purple slab across
+ * the transport card. Keeping the two concepts separate is the whole point of
+ * this component.
  */
 export default function Waveform({
-  width = 600,
-  height = 80,
-  progress = 0.42,
-  color = '#fff',
-  dim = 'rgba(255,255,255,0.22)',
-  flat = false,
+  width = '100%',
+  height = 72,
+  progress = 0,
+  color = 'var(--onyx-accent)',
+  dim = 'var(--onyx-glass-strong)',
 }: WaveformProps) {
   const clamped = Math.max(0, Math.min(1, progress));
-  // In "flat" mode the caller wants a thin seek bar; otherwise keep a tall band
-  // whose fill still reads as a single shape.
-  const thickness = flat ? height : Math.max(10, Math.round(height * 0.34));
-  const radius = thickness / 2;
-  const knob = Math.max(6, Math.min(14, Math.round(thickness * 0.9)));
 
   return (
     <div
@@ -51,10 +46,9 @@ export default function Waveform({
         style={{
           position: 'relative',
           width: '100%',
-          height: thickness,
-          borderRadius: radius,
+          height: 4,
+          borderRadius: 'var(--r-pill)',
           background: dim,
-          overflow: 'visible',
         }}
       >
         <div
@@ -62,26 +56,26 @@ export default function Waveform({
             position: 'absolute',
             inset: 0,
             width: `${clamped * 100}%`,
-            borderRadius: radius,
+            borderRadius: 'var(--r-pill)',
             background: color,
             // 200ms linear tracks the 1 Hz playback tick without lagging a seek.
             transition: 'width 200ms linear',
           }}
         />
-        {/* Playhead: a solid dot sitting on the fill edge, ringed with the page
-            background so it stays visible over any cover colour. */}
+        {/* Playhead: a small dot on the fill edge, ringed with the card surface so
+            it stays visible over the accent fill. */}
         <div
           style={{
             position: 'absolute',
             top: '50%',
             left: `${clamped * 100}%`,
-            width: knob,
-            height: knob,
-            marginLeft: -knob / 2,
-            marginTop: -knob / 2,
+            width: 12,
+            height: 12,
+            marginLeft: -6,
+            marginTop: -6,
             borderRadius: '50%',
             background: color,
-            boxShadow: '0 0 0 2px var(--onyx-panel, #111)',
+            boxShadow: '0 0 0 2px var(--surface-raised, #111)',
             transition: 'left 200ms linear',
             pointerEvents: 'none',
           }}

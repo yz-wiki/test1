@@ -1240,14 +1240,14 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: var(--onyx-text);
-  color: var(--surface-canvas);
+  background: var(--onyx-accent);
+  color: #101014;
   cursor: default;
   transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
 }
 
 .mac-nowbar__play:hover {
-  opacity: 0.88;
+  background: var(--onyx-accent-bright);
 }
 
 .mac-nowbar__scrub {

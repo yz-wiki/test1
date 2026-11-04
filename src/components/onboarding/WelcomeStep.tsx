@@ -12,7 +12,7 @@ export default function WelcomeStep({ onBegin }: WelcomeStepProps) {
       <div style={{ fontSize: 'var(--fs-4)', lineHeight: 1.6, color: 'var(--onyx-text)', fontFamily: SERIF, maxWidth: 460 }}>
         Skald plays your audiobooks — streamed from an{' '}
         <span style={{ color: 'var(--onyx-accent)', fontStyle: 'italic' }}>Audiobookshelf</span> server,
-        kept as <span style={{ color: 'var(--onyx-accent)', fontStyle: 'italic' }}>local libraries</span> on this
+        kept as <span style={{ color: 'var(--onyx-accent)', fontStyle: 'italic' }}>{t('onbWelcome.localLibraries')}</span> on this
         computer, or both at once. A few short steps and the hall is yours.
       </div>
 

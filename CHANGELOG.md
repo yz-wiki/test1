@@ -2,6 +2,48 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 1.6.0 (2026-11-04)
+
+Reported from the 1.5.0 build.
+
+### New
+- **System tray.** The window is undecorated, so a minimised one used to vanish
+  with no way back. There is now a tray icon: left-click restores, its menu
+  offers restore and a real quit. **Minimise hides to the tray by default**;
+  Settings → Appearance has a "Minimise to tray" switch to restore a normal
+  taskbar minimise.
+- **Previous / next episode buttons** in the transport and the now-playing bar.
+  On a podcast they walk episodes in that show's own order; on a book they walk
+  chapters. (`lib/trackStep.ts`)
+
+### Fixed
+- **The seek bar rendered as a 72px purple slab.** `Waveform` used its `height`
+  prop for the *bar thickness* while the Player passes 72 for a comfortable
+  click target. The component now separates hit area from track: a 4px capsule
+  with a 12px playhead, everywhere.
+- **The mini-player drew 64 vertical ticks** that read as an audio waveform and
+  moiréd when scaled. It uses the same capsule as the full player.
+- **The now-playing bar's play button was a black disc** in the light theme
+  (it was filled with the text colour). It is accent-filled now.
+
+### Localisation gaps closed
+Found by scanning for untranslated JSX, not by guessing:
+- Greeting: time-of-day greeting, "Your stats"/"Library stats", the day unit,
+  the date line (was hard-coded to `en-US`), and weekday axis labels.
+- Player: "Now playing", every detail-pane row label (Publisher, Genre, Year,
+  Language, Duration, Tags, Progress, Listened, Remaining, Last played…), the
+  section heads, the Saved/Local bookmark tabs, download copy, seek aria-labels
+  and the Back/Forward-seconds aria-labels.
+- Also: Open Library shelf chips, user-modal access modes, podcast download
+  state, listening-session empty state, the plain-HTTP warning, onboarding copy,
+  library delete confirmation, About tagline, notification failure note.
+
+Two shadowing bugs of the same shape were fixed on the way: loop variables named
+`t` in the greeting toggle and the tag list, which would have made the translate
+function uncallable.
+
+Verified: `tsc` clean, 44 files / 350 tests, console gate clean, build passes.
+
 ## 1.5.0 (2026-11-04)
 
 Completes the front-end reconstruction. 1.4.0 introduced the design system and

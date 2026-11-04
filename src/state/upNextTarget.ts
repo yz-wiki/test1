@@ -87,7 +87,7 @@ async function seriesCandidates(st: UpNextContext, ended: LibraryItem): Promise<
   }
 }
 
-function episodesOf(item: LibraryItem): PodcastEpisode[] {
+export function episodesOf(item: LibraryItem): PodcastEpisode[] {
   return asPodcastItem(item).media?.episodes ?? [];
 }
 
@@ -102,7 +102,7 @@ function episodesOf(item: LibraryItem): PodcastEpisode[] {
  * had one (the browse feed knows only a show id), and is guarded by
  * `numEpisodes` so it fires only against the minified shape that provoked it.
  */
-async function showWithEpisodes(
+export async function showWithEpisodes(
   st: UpNextContext,
   itemId: string,
   candidates: Array<LibraryItem | undefined>,

@@ -13,7 +13,8 @@ import type { OnyxState } from '../../state/onyx';
 import { bookTitle, bookAuthor, fmtTime } from '../../state/onyx';
 import { asPodcastItem, seekAudio } from '../../api/abs';
 import { togglePlayback } from '../../api/playbook';
-import { chapterIndexAt, chapterStarts, seekChapter } from '../../lib/chapterNav';
+import { chapterIndexAt, chapterStarts } from '../../lib/chapterNav';
+import { stepTrack } from '../../lib/trackStep';
 import { log } from '../../lib/log';
 import { useI18n } from '../../i18n';
 import Cover from '../Cover';
@@ -103,7 +104,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
           <button
             type="button"
             className="ui-iconbtn"
-            onClick={() => seekChapter(st, -1)}
+            onClick={() => { void stepTrack(st, -1).catch(() => {}); }}
             title={t('palette.action.prevChapter')}
             aria-label={t('palette.action.prevChapter')}
           >
@@ -121,7 +122,7 @@ export default function NowPlayingBar({ st, onExpand }: NowPlayingBarProps) {
           <button
             type="button"
             className="ui-iconbtn"
-            onClick={() => seekChapter(st, 1)}
+            onClick={() => { void stepTrack(st, 1).catch(() => {}); }}
             title={t('palette.action.nextChapter')}
             aria-label={t('palette.action.nextChapter')}
           >

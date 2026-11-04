@@ -73,7 +73,7 @@ export default function AddBooksStep({ st, library, onContinue }: AddBooksStepPr
 
       <div style={{ display: 'flex', gap: 'var(--s-3)', flexWrap: 'wrap' }}>
         <RouteCard badge="Automatic" title={t('onbBooks.dropToStaging')}>
-          Copy audiobooks — files <em>or whole book folders</em> — into the library's{' '}
+          Copy audiobooks — files <em>{t('onbBooks.orFolders')}</em> — into the library's{' '}
           <span style={{ color: 'var(--onyx-text)' }}>{t('onbBooks.staging')}</span> folder. Skald reads each book's tags and
           chapters and files it under Author / Series / Title automatically.
         </RouteCard>

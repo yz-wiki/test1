@@ -313,6 +313,56 @@ pub fn run() {
             // per-minute cron evaluation). No-op until a podcast enables it.
             crate::podcast_scheduler::start(app.handle().clone());
 
+            // ── System tray ───────────────────────────────────────────────────
+            // The window has no native decorations, so once it is hidden there is
+            // no taskbar entry and no way back. The tray icon is that way back:
+            // left-click restores, the menu offers restore and a real quit.
+            // Minimise-to-tray itself is driven from the titlebar (the minimise
+            // button calls window.hide() when the preference is on).
+            {
+                use tauri::menu::{Menu, MenuItem};
+                use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+                let show_item = MenuItem::with_id(app, "tray-show", "显示主窗口", true, None::<&str>)?;
+                let quit_item = MenuItem::with_id(app, "tray-quit", "退出 Skald", true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+                let mut tray = TrayIconBuilder::with_id("skald-tray")
+                    .tooltip("Skald")
+                    .menu(&menu)
+                    // Left-click restores the window instead of opening the menu;
+                    // right-click still opens it on Windows.
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, event| match event.id().as_ref() {
+                        "tray-show" => reveal_main_window(app),
+                        "tray-quit" => app.exit(0),
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            reveal_main_window(tray.app_handle());
+                        }
+                    });
+
+                if let Some(icon) = app.default_window_icon() {
+                    tray = tray.icon(icon.clone());
+                }
+
+                match tray.build(app) {
+                    Ok(_) => log::info!(target: "skald::app", "system tray icon registered"),
+                    // A missing tray (some Linux sessions have no StatusNotifier
+                    // host) must not abort startup — the app still works, the
+                    // minimise-to-tray preference is simply ignored.
+                    Err(error) => log::warn!(target: "skald::app",
+                        "could not register the system tray icon: {error}"),
+                }
+            }
+
             // Close any offline listening session left open by a crash or a kill.
             // Nothing is playing yet at startup, so an accruing session can only
             // be a leftover — and one that is never retired is never flushed,
@@ -752,6 +802,16 @@ pub fn run() {
 }
 
 #[cfg(test)]
+/// Bring the main window back from the tray: un-minimise, show, focus.
+fn reveal_main_window(app: &tauri::AppHandle) {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 mod redact_url_tests {
     use super::redact_url;
 

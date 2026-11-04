@@ -183,7 +183,7 @@ export default function AboutSection({ st }: { st: OnyxState }) {
         <div>
           <div style={{ fontFamily: SERIF, fontSize: 'var(--fs-7)', fontWeight: 500 }}>Skald<span style={{ color: 'var(--onyx-accent)' }}>.</span></div>
           <div style={{ fontFamily: MONO, fontSize: 'var(--fs-1)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)' }}>{version ? `v${version} · Onyx` : 'Onyx'}</div>
-          <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-2)', maxWidth: 480 }}>A native desktop client for Audiobookshelf.</div>
+          <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-dim)', marginTop: 'var(--s-2)', maxWidth: 480 }}>{t('about.tagline')}</div>
         </div>
       </div>
 

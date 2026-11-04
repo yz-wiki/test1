@@ -22,6 +22,7 @@ import {
 import Cover from '../components/Cover';
 import Icon from '../components/Icon';
 import Waveform from '../components/Waveform';
+import { stepTrack } from '../lib/trackStep';
 import VolumeControl from '../components/chrome/VolumeControl';
 import DeviceSelector from '../components/chrome/DeviceSelector';
 import { getCachedReview, setCachedReview } from '../api/reviewCache';
@@ -103,6 +104,10 @@ export default function Player({ st }: PlayerProps) {
   // ABS episode id, so there's no session to play — the player offers Download.
   const episodePending = isPodcast && !!st.currentEpisode && !st.currentEpisodeId;
   const detailLabel = isPodcast ? t('player.description') : t('player.synopsis');
+  // Transport labels: the chevrons move between episodes on a podcast and
+  // between chapters in a book, so the wording follows the media type.
+  const stepPrevLabel = isPodcast ? t('player.prevEpisode') : t('player.prevChapter');
+  const stepNextLabel = isPodcast ? t('player.nextEpisode') : t('player.nextChapter');
   // Descriptions are remote HTML (ABS metadata / arbitrary podcast RSS) headed
   // for dangerouslySetInnerHTML — sanitize down to basic formatting first.
   // Memoized because the player re-renders on every 1 Hz playback tick.
@@ -893,11 +898,11 @@ export default function Player({ st }: PlayerProps) {
                   }}
                 >
                   <Icon name={dlState === 'downloading' ? 'dot' : 'play'} size={13} />
-                  {dlState === 'downloading' ? 'Downloading…' : 'Download episode'}
+                  {dlState === 'downloading' ? t('player.downloading') : t('player.downloadEpisode')}
                 </button>
                 {dlState === 'downloading' && (
                   <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em' }}>
-                    Fetching from the feed — playback starts automatically.
+                    {t('player.fetchingFeed')}
                   </div>
                 )}
               </div>
@@ -934,7 +939,7 @@ export default function Player({ st }: PlayerProps) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--s-6)' }}>
                 <div style={{ minWidth: 0 }}>
                   {/* Eyebrow always visible — tells the user what will play when they press the button */}
-                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>Now playing · {bookTitle(st.currentBook ?? b)}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)' }}>{t('player.nowPlaying')} · {bookTitle(st.currentBook ?? b)}</div>
                   {/* Only show chapter title once playback has started — before that,
                       nothing is technically playing so showing a chapter would be misleading. */}
                   {(st.playing || st.position > 0) && (
@@ -952,7 +957,9 @@ export default function Player({ st }: PlayerProps) {
                 ref={waveformRef}
                 role="slider"
                 tabIndex={0}
-                aria-label={hasChapters ? `Seek within ${curCh.t || `chapter ${chIdx + 1}`}` : 'Seek within episode'}
+                aria-label={hasChapters
+                  ? t('player.seekWithinChapter', { chapter: curCh.t || t('player.chapterN', { n: chIdx + 1 }) })
+                  : t('player.seekWithinEpisode')}
                 aria-valuemin={0}
                 aria-valuemax={Math.round(dispTotal)}
                 aria-valuenow={Math.round(dispLocal)}
@@ -1010,22 +1017,42 @@ export default function Player({ st }: PlayerProps) {
 
               {/* Center group — primary transport controls; flex: 1 with centered content
                   ensures play/pause/skip always sit at the geometric center of the row */}
-              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--s-4)' }}>
-                <button onClick={() => seekAudio(Math.max(0, st.position - skipSeconds())).catch(logErr)} aria-label={`Back ${skipSeconds()} seconds`} title={`Back ${skipSeconds()}s`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
+              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--s-3)' }}>
+                {/* Previous / next track. For a podcast this walks episodes in the
+                    show's own order; for a book it walks chapters. */}
+                <button
+                  onClick={() => { void stepTrack(st, -1).catch(err => log.warn('playback', 'previous track failed', { err: String(err) })); }}
+                  aria-label={stepPrevLabel}
+                  title={stepPrevLabel}
+                  style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()}
+                >
+                  <Icon name="prev-chapter" size={isCompact ? 13 : 17} />
+                </button>
+
+                <button onClick={() => seekAudio(Math.max(0, st.position - skipSeconds())).catch(logErr)} aria-label={t('playerUi.backSeconds', { seconds: skipSeconds() })} title={t('playerUi.backSeconds', { seconds: skipSeconds() })} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
                   <Icon name="skip-back" size={isCompact ? 14 : 20} />
                 </button>
                 <button
                   onClick={handlePlayPause}
-                  aria-label={st.playing ? 'Pause' : 'Play'}
-                  title={st.playing ? 'Pause (space)' : 'Play (space)'}
-                  style={{ width: isCompact ? 36 : 64, height: isCompact ? 36 : 64, borderRadius: isCompact ? 18 : 32, background: 'var(--onyx-accent)', color: 'var(--onyx-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-popover)' }}
+                  aria-label={st.playing ? t('player.pause') : t('player.play')}
+                  title={st.playing ? t('player.pause') : t('player.play')}
+                  style={{ width: isCompact ? 36 : 64, height: isCompact ? 36 : 64, borderRadius: isCompact ? 18 : 32, background: 'var(--onyx-accent)', color: '#101014', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none', boxShadow: 'var(--shadow-popover)' }}
                 >
                   <span style={{ display: 'inline-flex', marginLeft: st.playing ? 0 : 3 }}>
                     <Icon name={st.playing ? 'pause' : 'play'} size={isCompact ? 15 : 26} />
                   </span>
                 </button>
-                <button onClick={() => seekAudio(Math.min(st.bookSecs, st.position + skipSeconds())).catch(logErr)} aria-label={`Forward ${skipSeconds()} seconds`} title={`Forward ${skipSeconds()}s`} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
+                <button onClick={() => seekAudio(Math.min(st.bookSecs, st.position + skipSeconds())).catch(logErr)} aria-label={t('playerUi.forwardSeconds', { seconds: skipSeconds() })} title={t('playerUi.forwardSeconds', { seconds: skipSeconds() })} style={isCompact ? { ...transportBtn(), width: 28, height: 28 } : transportBtn()}>
                   <Icon name="skip-forward" size={isCompact ? 14 : 20} />
+                </button>
+
+                <button
+                  onClick={() => { void stepTrack(st, 1).catch(err => log.warn('playback', 'next track failed', { err: String(err) })); }}
+                  aria-label={stepNextLabel}
+                  title={stepNextLabel}
+                  style={isCompact ? { ...transportBtnSmall(), width: 28, height: 28 } : transportBtnSmall()}
+                >
+                  <Icon name="next-chapter" size={isCompact ? 13 : 17} />
                 </button>
               </div>
 
@@ -1150,14 +1177,14 @@ export default function Player({ st }: PlayerProps) {
                   );
                   const listeningRows = prog ? (
                     <>
-                      {detailRow('Progress',
+                      {detailRow(t('playerUi.rowProgress'),
                         <span style={{ color: prog.isFinished ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
                           {Math.round(prog.progress * 100)}%{prog.isFinished && ' ✓'}
                         </span>
                       )}
-                      {detailRow('Listened',   fmtTime(prog.currentTime))}
-                      {detailRow('Remaining',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
-                      {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                      {detailRow(t('playerUi.rowListened'),   fmtTime(prog.currentTime))}
+                      {detailRow(t('playerUi.rowRemaining'),  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
+                      {detailRow(t('playerUi.rowLastPlayed'), new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                     </>
                   ) : (
                     <div style={{ padding: 'var(--s-3) 0', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
@@ -1172,19 +1199,19 @@ export default function Player({ st }: PlayerProps) {
                     const epNum = [ep?.season ? `S${ep.season}` : '', ep?.episode ? `E${ep.episode}` : ''].filter(Boolean).join(' ');
                     return (
                       <>
-                        {sectionHead('Podcast')}
-                        {detailRow('Author',   pMeta?.author   || dash)}
-                        {detailRow('Genre',    pGenres.join(', ') || dash)}
-                        {detailRow('Language', pMeta?.language || dash)}
-                        {pMeta?.explicit !== undefined && detailRow('Explicit', pMeta.explicit ? 'Yes' : 'No')}
+                        {sectionHead(t('playerUi.headPodcast'))}
+                        {detailRow(t('playerUi.rowAuthor'),   pMeta?.author   || dash)}
+                        {detailRow(t('playerUi.rowGenre'),    pGenres.join(', ') || dash)}
+                        {detailRow(t('playerUi.rowLanguage'), pMeta?.language || dash)}
+                        {pMeta?.explicit !== undefined && detailRow(t('playerUi.rowExplicit'), pMeta.explicit ? 'Yes' : 'No')}
 
-                        {sectionHead('Episode', 16)}
-                        {ep?.title && detailRow('Title', ep.title)}
-                        {pub && !isNaN(pub.getTime()) && detailRow('Published', pub.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
-                        {epNum && detailRow('Number', epNum)}
-                        {detailRow('Duration', epDur > 0 ? fmtRemaining(epDur) : dash)}
+                        {sectionHead(t('playerUi.headEpisode'), 16)}
+                        {ep?.title && detailRow(t('playerUi.rowTitle'), ep.title)}
+                        {pub && !isNaN(pub.getTime()) && detailRow(t('playerUi.rowPublished'), pub.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                        {epNum && detailRow(t('playerUi.rowNumber'), epNum)}
+                        {detailRow(t('playerUi.rowDuration'), epDur > 0 ? fmtRemaining(epDur) : dash)}
 
-                        {sectionHead('Listening', 16)}
+                        {sectionHead(t('playerUi.headListening'), 16)}
                         {listeningRows}
                       </>
                     );
@@ -1194,15 +1221,15 @@ export default function Player({ st }: PlayerProps) {
                     <>
                       {/* Book details */}
                       <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>{t('playerUi.typeBook')}</div>
-                      {detailRow('Publisher',  meta?.publisher    || dash)}
-                      {detailRow('Genre',      genres.join(', ')  || dash)}
-                      {detailRow('Year',       meta?.publishedYear || dash)}
-                      {detailRow('Language',   meta?.language      || dash)}
-                      {detailRow('Duration',   bookDur(b))}
-                      {tags.length > 0 && detailRow('Tags',
+                      {detailRow(t('playerUi.rowPublisher'),  meta?.publisher    || dash)}
+                      {detailRow(t('playerUi.rowGenre'),      genres.join(', ')  || dash)}
+                      {detailRow(t('playerUi.rowYear'),       meta?.publishedYear || dash)}
+                      {detailRow(t('playerUi.rowLanguage'),   meta?.language      || dash)}
+                      {detailRow(t('playerUi.rowDuration'),   bookDur(b))}
+                      {tags.length > 0 && detailRow(t('playerUi.rowTags'),
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s-1)', justifyContent: 'flex-end' }}>
-                          {tags.map(t => (
-                            <span key={t} style={{ padding: '2px var(--s-2)', borderRadius: 999, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t}</span>
+                          {tags.map(tag => (
+                            <span key={tag} style={{ padding: '2px var(--s-2)', borderRadius: 999, background: 'var(--onyx-glass)', border: '1px solid var(--onyx-glass-edge)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{tag}</span>
                           ))}
                         </div>
                       )}
@@ -1211,14 +1238,14 @@ export default function Player({ st }: PlayerProps) {
                       <div style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-4)', marginBottom: 'var(--s-1)', paddingBottom: 'var(--s-1)' }}>{t('playerUi.listening')}</div>
                       {prog ? (
                         <>
-                          {detailRow('Progress',
+                          {detailRow(t('playerUi.rowProgress'),
                             <span style={{ color: prog.isFinished ? 'var(--onyx-accent)' : 'var(--onyx-text-dim)' }}>
                               {Math.round(prog.progress * 100)}%{prog.isFinished && ' ✓'}
                             </span>
                           )}
-                          {detailRow('Listened',   fmtTime(prog.currentTime))}
-                          {detailRow('Remaining',  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
-                          {detailRow('Last played', new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
+                          {detailRow(t('playerUi.rowListened'),   fmtTime(prog.currentTime))}
+                          {detailRow(t('playerUi.rowRemaining'),  fmtRemaining(Math.max(0, prog.duration - prog.currentTime)))}
+                          {detailRow(t('playerUi.rowLastPlayed'), new Date(prog.lastUpdate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }))}
                         </>
                       ) : (
                         <div style={{ padding: 'var(--s-3) 0', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.06em' }}>{t('playerUi.notStarted')}</div>
@@ -1244,9 +1271,9 @@ export default function Player({ st }: PlayerProps) {
                               </div>
                               {olShelves && (
                                 <div style={{ padding: 'var(--s-2) 0', borderBottom: '1px solid var(--onyx-line)', fontFamily: MONO, fontSize: 'var(--fs-0)', color: 'var(--onyx-text-mute)', letterSpacing: '0.04em', lineHeight: 1.8 }}>
-                                  <div>Want to read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.wantToRead?.toLocaleString() ?? '—'}</span></div>
-                                  <div>Reading: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.reading?.toLocaleString() ?? '—'}</span></div>
-                                  <div>Read: <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.alreadyRead?.toLocaleString() ?? '—'}</span></div>
+                                  <div>{t('playerUi.shelfWantToRead')} <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.wantToRead?.toLocaleString() ?? '—'}</span></div>
+                                  <div>{t('playerUi.shelfReading')} <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.reading?.toLocaleString() ?? '—'}</span></div>
+                                  <div>{t('playerUi.shelfRead')} <span style={{ color: 'var(--onyx-text-dim)' }}>{olShelves.alreadyRead?.toLocaleString() ?? '—'}</span></div>
                                 </div>
                               )}
                               <a
@@ -1376,7 +1403,7 @@ export default function Player({ st }: PlayerProps) {
                         cursor: 'pointer',
                       }}
                     >
-                      {tab === 'bookmarks' ? 'Saved' : 'Local'}
+                      {tab === 'bookmarks' ? t('player.bookmarkSavedTab') : t('player.bookmarkLocalTab')}
                     </button>
                   ))}
                 </div>

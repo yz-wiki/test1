@@ -1,4 +1,5 @@
 import { useI18n } from '../../i18n';
+import Waveform from '../Waveform';
 import type { OnyxState } from '../../state/onyx';
 import { bookTitle, bookAuthor, fmtTime } from '../../state/onyx';
 import { asPodcastItem } from '../../api/abs';
@@ -15,7 +16,6 @@ const UI_STACK = 'var(--font-ui)';
 
 const MONO = UI_STACK;
 const SERIF = UI_STACK;
-const BARS = 64;
 
 export interface MiniPlayerProps {
   st: OnyxState;
@@ -43,7 +43,6 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
   const isPodcast = !!ep;
 
   const progress = st.bookSecs > 0 ? Math.min(1, st.position / st.bookSecs) : 0;
-  const playedTo = Math.floor(BARS * progress);
 
   // Title/subtitle/eyebrow differ for books vs podcast episodes.
   let title: string;
@@ -150,22 +149,19 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         }}
         role="slider"
         tabIndex={0}
-        aria-label={`Seek in ${title}`}
+        aria-label={t('miniPlayer.seekIn', { title })}
         aria-valuemin={0}
         aria-valuemax={Math.max(0, st.bookSecs)}
         aria-valuenow={Math.max(0, Math.min(st.position, st.bookSecs))}
-        aria-valuetext={`${fmtTime(st.position)} of ${fmtTime(st.bookSecs)}`}
+        aria-valuetext={t('miniPlayer.seekValue', { position: fmtTime(st.position), total: fmtTime(st.bookSecs) })}
         style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center', gap: 'var(--s-1)', cursor: 'pointer' }}
         title={t('miniPlayer.seek')}
       >
-        {Array.from({ length: BARS }).map((_, i) => (
-          <div key={i} style={{
-            flex: 1, minWidth: 0, height: '100%', borderRadius: 1,
-            background: 'var(--onyx-accent)',
-            opacity: i < playedTo ? 1 : 0.28,
-          }} />
-        ))}
-        <div style={{ position: 'absolute', top: -2, bottom: -2, left: `${progress * 100}%`, width: 2, background: 'var(--onyx-accent)', borderRadius: 1, boxShadow: '0 0 6px var(--onyx-accent)', pointerEvents: 'none' }} />
+        {/* One seek bar, identical to the full player's — the tick strip that
+            used to live here read as an audio waveform and moiréd at scale. */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+          <Waveform height={22} progress={progress} color="var(--onyx-accent)" />
+        </div>
       </div>
 
       {/* Footer — elapsed / total + play-pause */}
@@ -176,7 +172,7 @@ export default function MiniPlayer({ st, force = false }: MiniPlayerProps) {
         </div>
         <button
           onClick={() => togglePlayback(st)} // togglePlayback syncs st.playing immediately
-          aria-label={playing ? 'Pause' : 'Play'}
+          aria-label={playing ? t('player.pause') : t('player.play')}
           style={{
             width: 40, height: 40, borderRadius: 20, flexShrink: 0,
             background: 'var(--onyx-accent)', border: 'none',

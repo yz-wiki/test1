@@ -495,7 +495,7 @@ function NotificationsSectionInner({ st }: NotificationsSectionProps) {
               }} />
               <span style={{ fontSize: 'var(--fs-4)', fontWeight: 500 }}>{rule.eventName}</span>
               {rule.lastAttemptFailed && (
-                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: '#e08a8a' }}>last attempt failed</span>
+                <span style={{ fontFamily: MONO, fontSize: 'var(--fs-0)', color: '#e08a8a' }}>{t('notify.lastAttemptFailed')}</span>
               )}
             </div>
             <div style={{ fontSize: 'var(--fs-2)', color: 'var(--onyx-text-mute)', marginTop: 'var(--s-1)', fontFamily: MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 420 }}>
