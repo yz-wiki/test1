@@ -12,6 +12,11 @@
   const subtitle = $derived(
     session.activeLibrary ? session.activeLibrary.name : t('app.name'),
   );
+
+  /** Book and podcast screens are still "inside" the library for the nav. */
+  const isBrowsing = $derived(
+    ui.route === 'library' || ui.route === 'book' || ui.route === 'podcast',
+  );
 </script>
 
 <Titlebar title={t('app.name')} subtitle={subtitle} />
@@ -20,7 +25,7 @@
   <nav class="rail" aria-label={t('nav.section.browse')}>
     <button
       class="nav-item"
-      aria-current={ui.route === 'library' && !player.expanded ? 'page' : undefined}
+      aria-current={isBrowsing && !player.expanded ? 'page' : undefined}
       onclick={() => {
         player.collapse();
         ui.route = 'library';
@@ -41,12 +46,24 @@
       </button>
     {/if}
 
+    <button
+      class="nav-item"
+      aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
+      onclick={() => {
+        player.collapse();
+        ui.route = 'downloads';
+      }}
+    >
+      <span class="nav-item__icon"><Icon name="download" /></span>
+      <span class="nav-item__label">{t('nav.downloads')}</span>
+    </button>
+
     <div class="rail__divider"></div>
 
     {#each session.libraries as lib (lib.id)}
       <button
         class="nav-item"
-        aria-current={lib.id === session.activeLibraryId && ui.route === 'library' && !player.expanded ? 'page' : undefined}
+        aria-current={lib.id === session.activeLibraryId && isBrowsing && !player.expanded ? 'page' : undefined}
         onclick={() => {
           player.collapse();
           session.selectLibrary(lib.id);

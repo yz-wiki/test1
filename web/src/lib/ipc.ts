@@ -62,11 +62,24 @@ export interface Episode {
   duration?: number;
 }
 
+export interface LibraryFile {
+  ino: string;
+  fileType?: string;
+  isSupplementary?: boolean;
+  metadata?: {
+    filename: string;
+    size?: number;
+    ext?: string;
+    path?: string;
+  };
+}
+
 export interface LibraryItem {
   id: string;
   libraryId?: string;
   mediaType?: 'book' | 'podcast';
   addedAt?: number;
+  libraryFiles?: LibraryFile[];
   media?: {
     metadata?: MediaMetadata;
     duration?: number;
@@ -174,3 +187,111 @@ export const seekAudio = (secs: number) => call<void>('seek_audio', { secs });
 export const setSpeed = (rate: number) => call<void>('set_speed', { rate });
 export const setVolume = (vol: number) => call<void>('set_volume', { vol });
 export const closeActiveSession = () => call<void>('close_active_session');
+
+export const updateProgress = (
+  serverUrl: string,
+  itemId: string,
+  currentTime: number,
+  duration: number,
+  isFinished: boolean,
+  episodeId?: string,
+) =>
+  call<void>('update_progress', {
+    serverUrl,
+    itemId,
+    episodeId: episodeId ?? null,
+    currentTime,
+    duration,
+    isFinished,
+  });
+
+// ─── Devices, storage, equaliser ─────────────────────────────────────────────
+
+export interface AudioDevice {
+  id: string;
+  name: string;
+}
+
+export const getAudioDevices = () => call<AudioDevice[]>('get_audio_devices');
+export const setAudioDevice = (deviceId: string) =>
+  call<void>('set_audio_device', { deviceId });
+
+export const getDownloadsDir = () => call<string>('get_downloads_dir');
+export const getCacheDir = () => call<string>('get_cache_dir');
+export const setDownloadsDir = (dir: string) => call<void>('set_downloads_dir', { path: dir });
+export const setCacheDir = (dir: string) => call<void>('set_cache_dir', { path: dir });
+export const revealPath = (path: string) => call<void>('reveal_path', { path });
+export const openLogDir = () => call<void>('open_log_dir');
+
+export interface EqPreset {
+  index: number;
+  name: string;
+}
+
+export interface EqSettings {
+  enabled: boolean;
+  preamp: number;
+  bands: number[];
+  presetName?: string | null;
+}
+
+export const getEqPresets = () => call<EqPreset[]>('get_eq_presets');
+export const getEqSettings = () => call<EqSettings>('get_eq_settings');
+export const getEqBandFrequencies = () => call<number[]>('get_eq_band_frequencies');
+export const setEqEnabled = (enabled: boolean) => call<void>('set_eq_enabled', { enabled });
+export const setEqBand = (band: number, gain: number) =>
+  call<void>('set_eq_band', { band, gain });
+export const setEqPreamp = (gain: number) => call<void>('set_eq_preamp', { gain });
+export const applyEqPreset = (index: number) => call<void>('apply_eq_preset', { index });
+export const resetEq = () => call<void>('reset_eq');
+
+// ─── Downloads ───────────────────────────────────────────────────────────────
+
+export interface DownloadRecord {
+  itemId: string;
+  title: string;
+  author: string;
+  filePath: string;
+  fileSize: number;
+  downloadedAt: number;
+  serverDeleted?: boolean;
+}
+
+export const getDownloads = () => call<DownloadRecord[]>('get_downloads');
+
+export const downloadItem = (
+  serverUrl: string,
+  itemId: string,
+  fileName: string,
+  title: string,
+  author: string,
+) => call<string>('download_item', { serverUrl, itemId, fileName, title, author });
+
+export const removeDownload = (itemId: string) => call<void>('remove_download', { itemId });
+
+/** Offline playback: LibVLC reads the file directly, and the listening is
+ *  queued for the server instead of streamed against a live session. */
+export const playLocalFile = (
+  filePath: string,
+  itemId: string,
+  startTime: number,
+  localLibrary = false,
+  episodeId?: string,
+  baselineCaptured = false,
+  serverLastUpdate?: number,
+  speed?: number,
+  serverUrl?: string,
+  userId?: string,
+) =>
+  call<void>('play_local_file', {
+    filePath,
+    itemId,
+    startTime,
+    localLibrary,
+    episodeId: episodeId ?? null,
+    baselineCaptured,
+    serverLastUpdate: serverLastUpdate ?? null,
+    speed: speed ?? null,
+    serverUrl: serverUrl ?? null,
+    userId: userId ?? null,
+  });

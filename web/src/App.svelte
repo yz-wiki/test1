@@ -2,9 +2,12 @@
   import { onMount } from 'svelte';
   import { progress, session, ui } from './lib/state.svelte';
   import { player } from './lib/player.svelte';
+  import { downloads } from './lib/downloads.svelte';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
+  import Book from './routes/Book.svelte';
   import Podcast from './routes/Podcast.svelte';
+  import Downloads from './routes/Downloads.svelte';
   import Settings from './routes/Settings.svelte';
   import Player from './routes/Player.svelte';
   import Shell from './components/Shell.svelte';
@@ -15,6 +18,7 @@
     // The transport is driven by the Rust session's ticks; subscribe once for
     // the lifetime of the window rather than per screen.
     void player.attach();
+    void downloads.attach();
     try {
       await session.bootstrap();
     } finally {
@@ -27,6 +31,7 @@
   $effect(() => {
     if (session.authenticated && session.serverUrl) {
       void progress.load(session.serverUrl);
+      void downloads.load();
     }
   });
 </script>
@@ -41,8 +46,12 @@
   <Shell>
     {#if player.expanded}
       <Player />
+    {:else if ui.route === 'book'}
+      <Book />
     {:else if ui.route === 'podcast'}
       <Podcast />
+    {:else if ui.route === 'downloads'}
+      <Downloads />
     {:else if ui.route === 'settings'}
       <Settings />
     {:else}

@@ -15,6 +15,7 @@ import {
   openPlaybackSession,
   pauseAudio,
   playAudio,
+  playLocalFile,
   resumeAudio,
   seekAudio,
   setSpeed as setSpeedCommand,
@@ -24,6 +25,7 @@ import {
   type PlaybackTick,
 } from './ipc';
 import { progress, session } from './state.svelte';
+import { downloads } from './downloads.svelte';
 
 export interface Chapter {
   title: string;
@@ -35,6 +37,9 @@ const KEY_RATE = 'skald.player.rate';
 const KEY_VOLUME = 'skald.player.volume';
 
 export const RATES = [0.8, 1, 1.2, 1.5, 1.75, 2] as const;
+
+/** Sleep timer choices. `chapter` stops at the end of the current chapter. */
+export type SleepMode = 'off' | 15 | 30 | 45 | 60 | 'chapter';
 
 /** Chapters arrive from ABS with absolute offsets; older caches only carry a
  *  duration, so a missing `start` is derived by accumulating. */
@@ -84,6 +89,12 @@ class PlayerStore {
 
   /** True while the full player screen is open; the bar hides then. */
   expanded = $state(false);
+
+  sleepMode = $state<SleepMode>('off');
+  sleepRemaining = $state(0);
+
+  private sleepTimer: ReturnType<typeof setInterval> | null = null;
+  private sleepChapter = -1;
 
   readonly chapters = $derived(this.kind === 'book' ? chapterSpans(this.item) : []);
 
@@ -156,6 +167,12 @@ class PlayerStore {
         void progress.load(session.serverUrl, true);
       }
       wasPlaying = payload.isPlaying;
+
+      // End-of-chapter sleep: the chapter index moving past the armed one means
+      // the chapter that was playing when the timer was set has finished.
+      if (this.sleepMode === 'chapter' && this.playing && this.chapterIndex > this.sleepChapter) {
+        this.stopForSleep();
+      }
     });
   }
 
@@ -173,8 +190,13 @@ class PlayerStore {
 
   /** Start a book, or an episode of a podcast. Re-opening what is already
    *  loaded toggles it, so clicking a title is never destructive. */
-  async open(item: LibraryItem, episode?: Episode | null, queue?: Episode[]): Promise<void> {
-    if (this.isCurrent(item, episode)) {
+  async open(
+    item: LibraryItem,
+    episode?: Episode | null,
+    queue?: Episode[],
+    startAt?: number,
+  ): Promise<void> {
+    if (!startAt && this.isCurrent(item, episode)) {
       await this.toggle();
       return;
     }
@@ -189,7 +211,7 @@ class PlayerStore {
 
     const saved = progress.for(item.id, episode?.id ?? null);
     this.duration = episode?.duration ?? item.media?.duration ?? 0;
-    this.position = saved && !saved.isFinished ? saved.currentTime : 0;
+    this.position = startAt ?? (saved && !saved.isFinished ? saved.currentTime : 0);
     this.playing = false;
 
     try {
@@ -197,7 +219,7 @@ class PlayerStore {
         session.serverUrl,
         item.id,
         session.user?.id ?? '',
-        undefined,
+        startAt,
         episode?.id,
       );
       this.sessionId = result.sessionId;
@@ -208,10 +230,47 @@ class PlayerStore {
       this.playing = true;
       this.expanded = true;
     } catch (error) {
+      // A downloaded book still plays with no network at all: LibVLC reads the
+      // local file and the listening is queued for the server instead.
+      const local = downloads.forItem(item.id);
+      if (local && !episode && (await this.tryLocal(local.filePath, item.id, saved?.lastUpdate))) {
+        return;
+      }
       this.error = (error as Error).message;
       this.playing = false;
     } finally {
       this.loading = false;
+    }
+  }
+
+  /** Returns true when the local file actually started playing. */
+  private async tryLocal(
+    filePath: string,
+    itemId: string,
+    serverLastUpdate?: number,
+  ): Promise<boolean> {
+    try {
+      await playLocalFile(
+        filePath,
+        itemId,
+        this.position,
+        false,
+        undefined,
+        // The server revision this listening branches from, so the queued
+        // progress can be merged instead of overwriting newer server state.
+        true,
+        serverLastUpdate,
+        this.rate,
+        session.serverUrl,
+        session.user?.id ?? '',
+      );
+      this.sessionId = null;
+      this.playing = true;
+      this.expanded = true;
+      this.error = null;
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -295,6 +354,47 @@ class PlayerStore {
     } catch (error) {
       this.error = (error as Error).message;
     }
+  }
+
+  /**
+   * Sleep timer.
+   *
+   * The countdown is the one clock this store does own — it is wall time, not
+   * audio position, so it cannot drift from anything. `chapter` mode instead
+   * arms a flag that the tick listener checks against the chapter index.
+   */
+  setSleep(mode: SleepMode): void {
+    this.clearSleep();
+    this.sleepMode = mode;
+    if (mode === 'off') return;
+
+    if (mode === 'chapter') {
+      this.sleepChapter = this.chapterIndex;
+      return;
+    }
+
+    this.sleepRemaining = mode * 60;
+    this.sleepTimer = setInterval(() => {
+      if (!this.playing) return; // paused time does not count down
+      this.sleepRemaining -= 1;
+      if (this.sleepRemaining <= 0) this.stopForSleep();
+    }, 1000);
+  }
+
+  clearSleep(): void {
+    if (this.sleepTimer) {
+      clearInterval(this.sleepTimer);
+      this.sleepTimer = null;
+    }
+    this.sleepMode = 'off';
+    this.sleepRemaining = 0;
+    this.sleepChapter = -1;
+  }
+
+  private stopForSleep(): void {
+    this.clearSleep();
+    this.playing = false;
+    void pauseAudio().catch(() => {});
   }
 
   collapse(): void {

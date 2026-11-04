@@ -36,11 +36,16 @@
     return started.length > 0 ? started : visible.slice(0, 6);
   });
 
-  /** Podcasts have their own screen; a book starts playing where it stands. */
+  /** Podcasts and books both have a detail screen; the continue shelf is the
+   *  one place a click starts playing, because that is what "continue" means. */
   function open(item: (typeof library.items)[number]): void {
+    ui.itemId = item.id;
+    ui.route = item.mediaType === 'podcast' ? 'podcast' : 'book';
+  }
+
+  function resume(item: (typeof library.items)[number]): void {
     if (item.mediaType === 'podcast') {
-      ui.itemId = item.id;
-      ui.route = 'podcast';
+      open(item);
       return;
     }
     void player.open(item);
@@ -102,7 +107,7 @@
       <div class="shelf">
         {#each recent as item (item.id)}
           {@const fraction = progress.fraction(item.id)}
-          <button class="shelf__card" onclick={() => open(item)}>
+          <button class="shelf__card" onclick={() => resume(item)}>
             <div class="shelf__cover">
               <Cover itemId={item.id} size={168} />
             </div>

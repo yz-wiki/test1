@@ -2,7 +2,7 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.1.0 (2026-11-04) — preview
+## 2.2.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
@@ -28,6 +28,22 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
   list with per-episode progress, played/in-progress badges and a resume button
   that picks up whatever is half-listened. Playing an episode keeps the rest of
   the show as a queue, so the transport's previous/next walk episodes.
+- **Book detail screen.** A title now opens a page — cover, series, narrator,
+  publisher, description with a "more" toggle, the chapter list (click a chapter
+  to start there), the underlying files with sizes, and buttons to continue,
+  start over or mark finished. Clicking a tile browses; clicking a card in
+  Continue listening still plays immediately.
+- **Sleep timer** in the player: 15/30/45/60 minutes, or end of chapter. Paused
+  time does not count down, and the button shows the time left.
+- **Equaliser** in Settings: ten bands from 62 Hz to 16 kHz, the built-in
+  audiobook presets, preamp, and a reset. Bands commit on release, not on every
+  pixel of the drag.
+- **Output device picker**, storage folders with "show in folder", and the
+  version/log-folder row in Settings.
+- **Downloads.** Download a book from its detail page, watch the transfer in a
+  new Downloads screen, remove it again. A downloaded book also plays with no
+  network: playback falls back to the local file and queues the listening for
+  the server.
 - **Continue listening is real.** The shelf now asks `/api/me` which titles were
   actually started and orders them by when you last listened, instead of showing
   the first six books in the library.
@@ -37,10 +53,9 @@ offline cache — 21k lines, 205 commands) is unchanged; everything above it is 
   reduced-motion preference.
 
 ### Not ported yet
-Downloads and offline playback, the ABS sync and sessions panels,
-sharing/RSS, cron jobs, admin screens, onboarding, sleep timer and equaliser.
-The routes are stubs or absent rather than broken — nothing in the menu leads
-to a dead end.
+The ABS sync and sessions panels, sharing/RSS, cron jobs, admin screens,
+onboarding, bookmarks, and the metadata-matching dialogs. The routes are absent
+rather than broken — nothing in the menu leads to a dead end.
 
 ## 1.6.0 (2026-11-04)
 

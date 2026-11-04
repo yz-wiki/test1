@@ -6,6 +6,18 @@
   import SeekBar from '../components/SeekBar.svelte';
 
   let tab = $state<'chapters' | 'details'>('chapters');
+  let sleepOpen = $state(false);
+
+  const SLEEP_CHOICES = [15, 30, 45, 60] as const;
+
+  const sleepLabel = $derived.by(() => {
+    if (player.sleepMode === 'off') return t('sleep.title');
+    if (player.sleepMode === 'chapter') return t('sleep.chapter');
+    if (player.sleepRemaining > 0) {
+      return t('sleep.remaining', { time: formatDuration(player.sleepRemaining) });
+    }
+    return t('sleep.title');
+  });
 
   const item = $derived(player.item);
   const meta = $derived(item?.media?.metadata);
@@ -147,6 +159,50 @@
                 aria-label={t('player.volume')}
                 oninput={event => void player.setVolume(Number(event.currentTarget.value))}
               />
+            </div>
+
+            <div class="extra extra--sleep">
+              <button
+                class="btn btn--quiet btn--sm"
+                aria-expanded={sleepOpen}
+                onclick={() => (sleepOpen = !sleepOpen)}
+              >
+                <Icon name="clock" size={14} />
+                {sleepLabel}
+              </button>
+
+              {#if sleepOpen}
+                <div class="sleep-menu" role="menu">
+                  <button
+                    class="sleep-menu__item"
+                    aria-pressed={player.sleepMode === 'off'}
+                    onclick={() => {
+                      player.setSleep('off');
+                      sleepOpen = false;
+                    }}
+                  >{t('sleep.off')}</button>
+
+                  {#each SLEEP_CHOICES as minutes (minutes)}
+                    <button
+                      class="sleep-menu__item"
+                      aria-pressed={player.sleepMode === minutes}
+                      onclick={() => {
+                        player.setSleep(minutes);
+                        sleepOpen = false;
+                      }}
+                    >{t('sleep.minutes', { count: minutes })}</button>
+                  {/each}
+
+                  <button
+                    class="sleep-menu__item"
+                    aria-pressed={player.sleepMode === 'chapter'}
+                    onclick={() => {
+                      player.setSleep('chapter');
+                      sleepOpen = false;
+                    }}
+                  >{t('sleep.chapter')}</button>
+                </div>
+              {/if}
             </div>
           </div>
         </div>
@@ -331,6 +387,42 @@
   .volume {
     width: 120px;
     accent-color: var(--accent);
+  }
+
+  .extra--sleep {
+    position: relative;
+  }
+
+  .sleep-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 168px;
+    padding: var(--gap-hair);
+    border-radius: var(--radius-md);
+    background: var(--surface-overlay);
+    border: 1px solid var(--hairline-strong);
+    box-shadow: var(--shadow-2);
+  }
+
+  .sleep-menu__item {
+    padding: var(--gap-inline) var(--gap-row);
+    border-radius: var(--radius-xs);
+    text-align: left;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .sleep-menu__item:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .sleep-menu__item[aria-pressed='true'] {
+    color: var(--accent);
   }
 
   .side {

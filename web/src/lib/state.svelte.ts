@@ -135,7 +135,7 @@ class UiStore {
     (localStorage.getItem('skald.theme') as 'graphite') ?? 'graphite',
   );
   reduceMotion = $state(localStorage.getItem('skald.reduceMotion') === 'true');
-  route = $state<'library' | 'settings' | 'podcast'>('library');
+  route = $state<'library' | 'settings' | 'podcast' | 'book' | 'downloads'>('library');
   /** The item a detail route is showing. */
   itemId = $state<string | null>(null);
   query = $state('');

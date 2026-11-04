@@ -24,6 +24,7 @@
     | 'volume'
     | 'chevron-down'
     | 'expand'
+    | 'download'
     | 'dots';
 
   let { name, size = 16, filled = false }: {
@@ -95,6 +96,10 @@
   {:else if name === 'expand'}
     <path d="M6.2 2.9h6.9v6.9" />
     <path d="M9.8 6.2L2.9 13.1" />
+  {:else if name === 'download'}
+    <path d="M8 2.6v7.2" />
+    <path d="M5 7l3 3 3-3" />
+    <path d="M3.2 12.4h9.6" />
   {:else if name === 'dots'}
     <circle cx="4" cy="8" r="1.1" fill="currentColor" stroke="none" />
     <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />
