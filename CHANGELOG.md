@@ -2,10 +2,35 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.5.0 (2026-11-04) — preview
+## 2.6.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
+
+### Fixed in this build
+- **Volume did nothing.** `set_volume` takes 0–100 (LibVLC), the UI sent 0–1,
+  so every call failed with `invalid type: floating point, expected i32`.
+- **Settings was unreadable.** The page was a scrolling *flex column*, so once
+  the cards were taller than the viewport they were shrunk to ~20px slivers and
+  clipped. Children of a scrolling column no longer shrink — the same latent bug
+  was present on the book, podcast, downloads and server screens.
+- **Books without chapters showed one 189-hour bar.** When ABS has no chapter
+  table, the audio files now stand in as chapters: the grid shows them, the
+  transport's prev/next walk them, and the seek bar draws a tick at each
+  boundary with a "12 / 189 · chapter name" line under the times.
+- **The expand button in the transport is gone.** In its place, a list button
+  opens a chapter (or episode) menu for jumping straight to one.
+
+### New in this build
+- Six themes — Graphite, Slate, Midnight, Nord, Paper, Sepia — an accent
+  swatch override, and a 90–125% interface scale.
+- Settings is a two-pane screen again: appearance, language, playback, storage,
+  keyboard, account, server, about.
+- Downloads ask where to go: the folder picker opens on the download button and
+  the choice is remembered. Nothing is ever prefetched; only the item playing is
+  streamed.
+- Close-to-tray, sign out, Ctrl+F for search, Ctrl+, for settings, and a
+  shortcut reference.
 
 ### Architecture
 - **React 19 → Svelte 5 (runes).** No virtual DOM. The bundle went from 971 kB

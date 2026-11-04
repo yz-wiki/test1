@@ -47,6 +47,22 @@
   const isEpisode = $derived(player.kind === 'episode');
   const shownTab = $derived(isEpisode ? 'details' : tab);
 
+  const chapterMarks = $derived(
+    player.duration > 0
+      ? chapters
+          .map(chapter => chapter.start / player.duration)
+          .filter(fraction => fraction > 0.002 && fraction < 0.998)
+      : [],
+  );
+
+  /** "12 / 189 · 第十二章" — where you are, in chapter terms. */
+  const chapterLine = $derived.by(() => {
+    if (isEpisode || chapters.length === 0) return '';
+    const index = Math.max(player.chapterIndex, 0);
+    const name = player.chapter?.title ?? '';
+    return `${index + 1} / ${chapters.length}${name ? ` · ${name}` : ''}`;
+  });
+
   const description = $derived(
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
   );
@@ -103,9 +119,13 @@
             })}
             onSeek={fraction => void player.seekFraction(fraction)}
             disabled={player.duration <= 0}
+            marks={chapterMarks}
           />
           <div class="transport__times t-num t-small t-tertiary">
             <span>{formatDuration(player.position)}</span>
+            {#if chapterLine}
+              <span class="transport__chapter truncate">{chapterLine}</span>
+            {/if}
             <span>−{formatDuration(Math.max(player.duration - player.position, 0))}</span>
           </div>
 
@@ -393,7 +413,15 @@
 
   .transport__times {
     display: flex;
+    align-items: baseline;
     justify-content: space-between;
+    gap: var(--gap-row);
+  }
+
+  .transport__chapter {
+    flex: 1 1 auto;
+    text-align: center;
+    color: var(--text-secondary);
   }
 
   .transport__buttons {

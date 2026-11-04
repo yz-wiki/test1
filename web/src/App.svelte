@@ -78,7 +78,7 @@
   .boot {
     display: grid;
     place-items: center;
-    height: 100vh;
+    height: calc(100vh / var(--ui-scale, 1));
     background: var(--canvas);
   }
 </style>

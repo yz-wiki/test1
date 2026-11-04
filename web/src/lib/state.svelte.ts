@@ -88,6 +88,16 @@ class SessionStore {
     localStorage.setItem(KEY_SERVER, serverUrl);
   }
 
+  /** Forget the session locally; the caller clears the stored token first. */
+  signOut(): void {
+    this.user = null;
+    this.authenticated = false;
+    this.libraries = [];
+    this.activeLibraryId = null;
+    localStorage.removeItem(KEY_SERVER);
+    localStorage.removeItem(KEY_LIBRARY);
+  }
+
   selectLibrary(id: string): void {
     this.activeLibraryId = id;
     localStorage.setItem(KEY_LIBRARY, id);
@@ -131,25 +141,67 @@ class LibraryStore {
   }
 }
 
+export const THEMES = ['graphite', 'slate', 'midnight', 'nord', 'paper', 'sepia'] as const;
+export type ThemeId = (typeof THEMES)[number];
+
+/** Accent swatches: the first one is each theme's own accent. */
+export const ACCENTS = [
+  '#8b7bf7',
+  '#5b8def',
+  '#3aa6a0',
+  '#4caf72',
+  '#e0a13a',
+  '#e2606a',
+  '#c46bd0',
+  '#9aa2ad',
+] as const;
+
+export const SCALES = [0.9, 1, 1.1, 1.25] as const;
+
+function stored<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  const value = localStorage.getItem(key);
+  return value && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+}
+
 class UiStore {
-  theme = $state<'graphite' | 'paper' | 'midnight'>(
-    (localStorage.getItem('skald.theme') as 'graphite') ?? 'graphite',
-  );
+  theme = $state<ThemeId>(stored('skald.theme', THEMES, 'graphite'));
+  /** null = use the theme's own accent. */
+  accent = $state<string | null>(localStorage.getItem('skald.accent'));
+  scale = $state<number>(Number(localStorage.getItem('skald.scale')) || 1);
   reduceMotion = $state(localStorage.getItem('skald.reduceMotion') === 'true');
+  /** Undecorated window: closing hides to the tray instead of quitting. */
+  closeToTray = $state(localStorage.getItem('skald.closeToTray') !== 'false');
   route = $state<'library' | 'settings' | 'podcast' | 'book' | 'downloads' | 'admin'>('library');
   /** The item a detail route is showing. */
   itemId = $state<string | null>(null);
   query = $state('');
+  /** Bumped when something asks the library search box for focus. */
+  focusSearch = $state(0);
 
   constructor() {
     this.applyTheme();
+    this.applyAccent();
+    this.applyScale();
     this.applyMotion();
   }
 
-  setTheme(theme: 'graphite' | 'paper' | 'midnight'): void {
+  setTheme(theme: ThemeId): void {
     this.theme = theme;
     localStorage.setItem('skald.theme', theme);
     this.applyTheme();
+  }
+
+  setAccent(accent: string | null): void {
+    this.accent = accent;
+    if (accent) localStorage.setItem('skald.accent', accent);
+    else localStorage.removeItem('skald.accent');
+    this.applyAccent();
+  }
+
+  setScale(scale: number): void {
+    this.scale = scale;
+    localStorage.setItem('skald.scale', String(scale));
+    this.applyScale();
   }
 
   setReduceMotion(on: boolean): void {
@@ -158,8 +210,42 @@ class UiStore {
     this.applyMotion();
   }
 
+  setCloseToTray(on: boolean): void {
+    this.closeToTray = on;
+    localStorage.setItem('skald.closeToTray', String(on));
+  }
+
   private applyTheme(): void {
     document.documentElement.dataset.theme = this.theme;
+  }
+
+  /**
+   * The accent overrides the theme's own. Hover/soft/line are derived with
+   * color-mix so a single hex produces a coherent set.
+   */
+  private applyAccent(): void {
+    const root = document.documentElement;
+    if (!this.accent) {
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent-hover');
+      root.style.removeProperty('--accent-soft');
+      root.style.removeProperty('--accent-line');
+      return;
+    }
+    root.style.setProperty('--accent', this.accent);
+    root.style.setProperty('--accent-hover', `color-mix(in oklab, ${this.accent} 82%, white)`);
+    root.style.setProperty('--accent-soft', `color-mix(in oklab, ${this.accent} 16%, transparent)`);
+    root.style.setProperty('--accent-line', `color-mix(in oklab, ${this.accent} 42%, transparent)`);
+  }
+
+  /**
+   * Chromium's `zoom` scales CSS pixels, including `vh`, so the shell divides
+   * the viewport by the scale to keep the window exactly filled.
+   */
+  private applyScale(): void {
+    const root = document.documentElement;
+    root.style.setProperty('--ui-scale', String(this.scale));
+    root.style.zoom = String(this.scale);
   }
 
   private applyMotion(): void {

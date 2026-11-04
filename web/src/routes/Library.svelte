@@ -62,6 +62,7 @@
   const TEXT_H = 72;
   const MIN_W = 148;
 
+  let searchEl = $state<HTMLInputElement | null>(null);
   let scroller = $state<HTMLDivElement | null>(null);
   let gridEl = $state<HTMLDivElement | null>(null);
   let scrollTop = $state(0);
@@ -91,6 +92,15 @@
   function onScroll(event: Event): void {
     scrollTop = (event.currentTarget as HTMLElement).scrollTop;
   }
+
+  // Ctrl+F bumps this counter; the box takes focus and selects what is there.
+  $effect(() => {
+    void ui.focusSearch;
+    if (searchEl) {
+      searchEl.focus();
+      searchEl.select();
+    }
+  });
 
   // A new query is a new list; staying scrolled into the old one shows nothing.
   $effect(() => {
@@ -143,6 +153,7 @@
     <span class="search__icon"><Icon name="search" size={14} /></span>
     <input
       class="input"
+      bind:this={searchEl}
       bind:value={query}
       placeholder={t('library.search')}
       spellcheck="false"

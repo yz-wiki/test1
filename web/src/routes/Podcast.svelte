@@ -201,6 +201,12 @@
     gap: var(--gap-block);
   }
 
+  /* In a scrolling flex column, children default to flex-shrink:1 and get
+     squeezed to a sliver once the content is taller than the viewport. */
+  .page > * {
+    flex: 0 0 auto;
+  }
+
   .head {
     display: flex;
     gap: var(--gap-section);

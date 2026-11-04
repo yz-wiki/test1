@@ -26,6 +26,7 @@
     | 'expand'
     | 'download'
     | 'server'
+    | 'list'
     | 'dots';
 
   let { name, size = 16, filled = false }: {
@@ -101,6 +102,8 @@
     <path d="M8 2.6v7.2" />
     <path d="M5 7l3 3 3-3" />
     <path d="M3.2 12.4h9.6" />
+  {:else if name === 'list'}
+    <path d="M3.2 4.4h9.6M3.2 8h9.6M3.2 11.6h6" />
   {:else if name === 'server'}
     <rect x="2.4" y="3" width="11.2" height="4" rx="1.2" />
     <rect x="2.4" y="9" width="11.2" height="4" rx="1.2" />

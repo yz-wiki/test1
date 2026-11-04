@@ -127,7 +127,7 @@
 <style>
   .shell {
     display: flex;
-    height: calc(100vh - 46px);
+    height: calc((100vh / var(--ui-scale, 1)) - 46px);
     min-height: 0;
   }
 

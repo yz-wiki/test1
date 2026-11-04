@@ -6,6 +6,7 @@
  * on every space would be worse than no shortcut at all.
  */
 import { player } from './player.svelte';
+import { ui } from './state.svelte';
 
 const SKIP_SECONDS = 15;
 
@@ -22,8 +23,28 @@ function isTyping(target: EventTarget | null): boolean {
 
 export function installShortcuts(): () => void {
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.defaultPrevented || isTyping(event.target)) return;
-    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.defaultPrevented) return;
+
+    // The two window-level chords work even from inside a field.
+    if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+      if (event.key === 'f') {
+        event.preventDefault();
+        ui.route = 'library';
+        player.collapse();
+        ui.focusSearch += 1;
+        return;
+      }
+      if (event.key === ',') {
+        event.preventDefault();
+        player.collapse();
+        ui.route = 'settings';
+        return;
+      }
+      return;
+    }
+
+    if (isTyping(event.target)) return;
+    if (event.altKey) return;
 
     switch (event.key) {
       case ' ':

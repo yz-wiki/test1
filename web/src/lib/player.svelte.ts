@@ -41,18 +41,40 @@ export const RATES = [0.8, 1, 1.2, 1.5, 1.75, 2] as const;
 /** Sleep timer choices. `chapter` stops at the end of the current chapter. */
 export type SleepMode = 'off' | 15 | 30 | 45 | 60 | 'chapter';
 
-/** Chapters arrive from ABS with absolute offsets; older caches only carry a
- *  duration, so a missing `start` is derived by accumulating. */
+/**
+ * Chapter list for an item.
+ *
+ * ABS books normally carry explicit chapters. Some do not — a serialised novel
+ * is often one audio file per chapter with no chapter table — and those would
+ * otherwise show an empty chapter panel and a single 189-hour progress bar.
+ * In that case the audio files *are* the chapters, so they stand in.
+ */
 export function chapterSpans(item: LibraryItem | null): Chapter[] {
   const raw = item?.media?.chapters ?? [];
+  if (raw.length > 0) {
+    let cursor = 0;
+    return raw.map(chapter => {
+      const start = Number.isFinite(chapter.start) ? chapter.start : cursor;
+      const end = Number.isFinite(chapter.end) && chapter.end > start
+        ? chapter.end
+        : start + 1;
+      cursor = end;
+      return { title: chapter.title, start, end };
+    });
+  }
+
+  const files = [...(item?.media?.audioFiles ?? [])].sort(
+    (a, b) => (a.startOffset ?? 0) - (b.startOffset ?? 0),
+  );
+  if (files.length <= 1) return [];
+
   let cursor = 0;
-  return raw.map(chapter => {
-    const start = Number.isFinite(chapter.start) ? chapter.start : cursor;
-    const end = Number.isFinite(chapter.end) && chapter.end > start
-      ? chapter.end
-      : start + 1;
+  return files.map((file, index) => {
+    const start = Number.isFinite(file.startOffset) ? file.startOffset : cursor;
+    const end = start + (file.duration > 0 ? file.duration : 1);
     cursor = end;
-    return { title: chapter.title, start, end };
+    const name = (file.metadata?.filename ?? '').replace(/\.[^.]+$/, '').trim();
+    return { title: name || `#${index + 1}`, start, end };
   });
 }
 
@@ -225,7 +247,7 @@ class PlayerStore {
       this.sessionId = result.sessionId;
       if (result.currentTime > 0) this.position = result.currentTime;
       if (this.rate !== 1) await setSpeedCommand(this.rate);
-      if (this.volume !== 1) await setVolumeCommand(this.volume);
+      if (this.volume !== 1) await setVolumeCommand(Math.round(this.volume * 100));
       await playAudio();
       this.playing = true;
       this.expanded = true;
@@ -350,7 +372,8 @@ class PlayerStore {
     this.volume = volume;
     localStorage.setItem(KEY_VOLUME, String(volume));
     try {
-      await setVolumeCommand(volume);
+      // LibVLC takes 0–100; the UI works in 0–1 like every other audio API.
+      await setVolumeCommand(Math.round(volume * 100));
     } catch (error) {
       this.error = (error as Error).message;
     }

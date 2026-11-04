@@ -167,3 +167,93 @@
   --scrim:             rgb(2 6 12 / 0.64);
   --cover-fallback:    #1d2734;
 }
+
+/* ─── Theme: slate (cool grey, the quietest dark) ─────────────────────────── */
+
+[data-theme='slate'] {
+  --canvas:            #17191c;
+  --surface:           #1d2024;
+  --surface-raised:    #24282d;
+  --surface-overlay:   #282c32;
+  --surface-inset:     #121417;
+
+  --hairline:          rgb(255 255 255 / 0.07);
+  --hairline-strong:   rgb(255 255 255 / 0.13);
+
+  --text:              #e8eaea;
+  --text-secondary:    rgb(232 234 234 / 0.64);
+  --text-tertiary:     rgb(232 234 234 / 0.40);
+
+  --accent:            #5fb3a1;
+  --accent-hover:      #74c3b1;
+  --accent-soft:       rgb(95 179 161 / 0.16);
+  --accent-line:       rgb(95 179 161 / 0.42);
+  --on-accent:         #061410;
+
+  --positive:          #55b981;
+  --warning:           #d5a04a;
+  --danger:            #dd6a5f;
+
+  --scrim:             rgb(6 8 9 / 0.62);
+  --cover-fallback:    #2b3036;
+}
+
+/* ─── Theme: nord (blue-grey, low contrast at night) ──────────────────────── */
+
+[data-theme='nord'] {
+  --canvas:            #2e3440;
+  --surface:           #343b48;
+  --surface-raised:    #3b4252;
+  --surface-overlay:   #434c5e;
+  --surface-inset:     #272c36;
+
+  --hairline:          rgb(236 239 244 / 0.10);
+  --hairline-strong:   rgb(236 239 244 / 0.18);
+
+  --text:              #eceff4;
+  --text-secondary:    rgb(236 239 244 / 0.72);
+  --text-tertiary:     rgb(236 239 244 / 0.48);
+
+  --accent:            #88c0d0;
+  --accent-hover:      #9fd0dd;
+  --accent-soft:       rgb(136 192 208 / 0.18);
+  --accent-line:       rgb(136 192 208 / 0.44);
+  --on-accent:         #202733;
+
+  --positive:          #a3be8c;
+  --warning:           #ebcb8b;
+  --danger:            #bf616a;
+
+  --scrim:             rgb(15 18 24 / 0.58);
+  --cover-fallback:    #3b4252;
+}
+
+/* ─── Theme: sepia (warm paper, for daylight) ─────────────────────────────── */
+
+[data-theme='sepia'] {
+  --canvas:            #f3ece0;
+  --surface:           #fbf6ee;
+  --surface-raised:    #fffaf3;
+  --surface-overlay:   #fffdf9;
+  --surface-inset:     #e8dfd0;
+
+  --hairline:          rgb(60 46 30 / 0.11);
+  --hairline-strong:   rgb(60 46 30 / 0.20);
+
+  --text:              #2a2218;
+  --text-secondary:    rgb(42 34 24 / 0.68);
+  --text-tertiary:     rgb(42 34 24 / 0.46);
+
+  --accent:            #a05f2c;
+  --accent-hover:      #8c5023;
+  --accent-soft:       rgb(160 95 44 / 0.14);
+  --accent-line:       rgb(160 95 44 / 0.38);
+  --on-accent:         #fffaf3;
+
+  --positive:          #4f7d3f;
+  --warning:           #a1721c;
+  --danger:            #b2412f;
+
+  --scrim:             rgb(50 38 24 / 0.34);
+  --cover-fallback:    #e2d6c3;
+}

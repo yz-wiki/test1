@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { ui } from '../lib/state.svelte';
 
   let { title = 'Skald', subtitle = '' }: { title?: string; subtitle?: string } = $props();
 
@@ -43,7 +44,12 @@
         <rect x="2.2" y="2.2" width="5.6" height="5.6" rx="1" stroke="currentColor" stroke-width="1.1" fill="none" />
       </svg>
     </button>
-    <button class="winbtn winbtn--close" aria-label="Close" onclick={() => void win.close()}>
+    <button
+      class="winbtn winbtn--close"
+      aria-label="Close"
+      title={ui.closeToTray ? 'Skald' : undefined}
+      onclick={() => void (ui.closeToTray ? win.hide() : win.close())}
+    >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
         <path d="M2.6 2.6l4.8 4.8M7.4 2.6L2.6 7.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
       </svg>

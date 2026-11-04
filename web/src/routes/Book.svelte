@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { fetchItem, updateProgress, type LibraryItem } from '../lib/ipc';
+  import { open as openDialog } from '@tauri-apps/plugin-dialog';
+  import {
+    fetchItem,
+    getDownloadsDir,
+    setDownloadsDir,
+    updateProgress,
+    type LibraryItem,
+  } from '../lib/ipc';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { chapterSpans, player } from '../lib/player.svelte';
   import { downloads } from '../lib/downloads.svelte';
@@ -92,9 +99,29 @@
     }
   }
 
+  /**
+   * Downloading is a deliberate act with a destination: the folder is chosen
+   * here rather than silently inherited from a setting, and nothing is ever
+   * fetched in the background.
+   */
   async function startDownload(): Promise<void> {
     if (!item) return;
+    let current = '';
     try {
+      current = await getDownloadsDir();
+    } catch {
+      current = '';
+    }
+    const chosen = await openDialog({
+      directory: true,
+      multiple: false,
+      title: t('downloads.chooseDir'),
+      defaultPath: current || undefined,
+    });
+    if (typeof chosen !== 'string') return;
+
+    try {
+      await setDownloadsDir(chosen);
       await downloads.start(item, meta?.title ?? item.id, meta?.authorName ?? '');
     } catch (reason) {
       error = (reason as Error).message;
@@ -279,6 +306,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--gap-block);
+  }
+
+  /* In a scrolling flex column, children default to flex-shrink:1 and get
+     squeezed to a sliver once the content is taller than the viewport. */
+  .page > * {
+    flex: 0 0 auto;
   }
 
   .head {

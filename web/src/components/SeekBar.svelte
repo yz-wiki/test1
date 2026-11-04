@@ -11,12 +11,15 @@
     size = 'sm',
     label,
     disabled = false,
+    marks = [],
   }: {
     value: number;
     onSeek: (fraction: number) => void;
     size?: 'sm' | 'lg';
     label?: string;
     disabled?: boolean;
+    /** Chapter boundaries as 0–1 fractions; drawn as ticks on the track. */
+    marks?: number[];
   } = $props();
 
   let track = $state<HTMLDivElement | null>(null);
@@ -83,6 +86,11 @@
 >
   <div class="seek__track">
     <div class="seek__fill" style:width="{shown * 100}%"></div>
+    {#if marks.length > 0 && marks.length <= 400}
+      {#each marks as mark (mark)}
+        <span class="seek__mark" style:left="{mark * 100}%"></span>
+      {/each}
+    {/if}
     <div class="seek__thumb" style:left="{shown * 100}%"></div>
   </div>
 </div>
@@ -120,6 +128,19 @@
     left: 0;
     border-radius: inherit;
     background: var(--accent);
+  }
+
+  /* Chapter boundaries: a hairline in the canvas colour, so it reads as a gap
+     in the accent fill rather than as another coloured element. */
+  .seek__mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    margin-left: -0.5px;
+    background: var(--canvas);
+    opacity: 0.85;
+    pointer-events: none;
   }
 
   .seek__thumb {

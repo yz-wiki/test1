@@ -62,6 +62,15 @@ export interface Episode {
   duration?: number;
 }
 
+export interface AudioFile {
+  index?: number;
+  ino?: string;
+  /** Global offset of this file inside the book, in seconds. */
+  startOffset: number;
+  duration: number;
+  metadata?: { filename?: string; ext?: string };
+}
+
 export interface LibraryFile {
   ino: string;
   fileType?: string;
@@ -87,6 +96,8 @@ export interface LibraryItem {
     chapters?: { title: string; start: number; end: number }[];
     /** Podcasts only — ABS ships the episode list with the library items. */
     episodes?: Episode[];
+    /** One entry per audio file; the only chapter-like data some books have. */
+    audioFiles?: AudioFile[];
   };
 }
 
@@ -130,6 +141,7 @@ export interface LoginResult {
 // ─── Commands ────────────────────────────────────────────────────────────────
 
 export const hasToken = () => call<boolean>('has_token');
+export const logout = () => call<void>('logout');
 
 export const login = (serverUrl: string, username: string, password: string) =>
   call<LoginResult>('login', { serverUrl, username, password });
