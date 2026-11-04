@@ -801,7 +801,6 @@ pub fn run() {
         });
 }
 
-#[cfg(test)]
 /// Bring the main window back from the tray: un-minimise, show, focus.
 fn reveal_main_window(app: &tauri::AppHandle) {
     use tauri::Manager;
@@ -812,6 +811,7 @@ fn reveal_main_window(app: &tauri::AppHandle) {
     }
 }
 
+#[cfg(test)]
 mod redact_url_tests {
     use super::redact_url;
 
