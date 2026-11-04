@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { OnyxState } from '../../state/onyx';
 import type { SearchScope } from '../../lib/shelfFilters';
-import Glass from './Glass';
 import Icon from '../Icon';
 import LocalImportDialog from '../LocalImportDialog';
 import UploadModal from '../UploadModal';
@@ -123,7 +122,7 @@ export default function TopNav({ st }: TopNavProps) {
 
   return (
     <>
-    <Glass translucent={st.translucent} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 18, overflow: 'visible', position: 'relative', zIndex: 40 }}>
+    <div className="ui-toolbar" style={{ padding: '0 var(--s-3)', gap: 'var(--s-3)', overflow: 'visible', position: 'relative', zIndex: 40, borderBottom: '1px solid var(--hairline)' }}>
       {/* Current-library chip paired with the (local-only) Add-books button. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       {/* Current library — the prominent "you are here" indicator, and (when more
@@ -198,18 +197,8 @@ export default function TopNav({ st }: TopNavProps) {
               role="listbox"
               aria-label={t('topNav.chooseLibrary')}
               onKeyDown={(event) => handleListboxKey(event, libOptionRefs.current, () => setLibMenuOpen(false), libTriggerRef.current)}
-              style={{
-              position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 100, minWidth: 220,
-              // Frosted dark fill (panel tone, mostly opaque) behind the blur —
-              // `--onyx-glass` alone is near-clear and hurts text readability over
-              // the shelf, so we tint it for a frosted-but-legible menu surface.
-              // Static frost, no live backdrop-filter (see Glass.tsx) — the menu is
-              // near-opaque for legibility, so dropping the blur is visually minor.
-              background: st.translucent ? 'rgba(20, 20, 25, 0.95)' : 'var(--onyx-panel)',
-              border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-              boxShadow: '0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
-              padding: 5, overflow: 'hidden',
-              }}
+              className="ui-popover"
+              style={{ position: 'absolute', top: '100%', left: 0, marginTop: 'var(--s-1)', zIndex: 100, minWidth: 220 }}
             >
               {libraryChoices.map((l, index) => {
                 const active = l.id === st.currentLibraryId;
@@ -258,15 +247,10 @@ export default function TopNav({ st }: TopNavProps) {
           <button
             onClick={openLocalLibrarySetup}
             title={t('topNav.createLocalLibrary')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-              background: 'transparent', color: 'var(--onyx-text-dim)',
-              border: '1px solid var(--onyx-glass-edge)', borderRadius: 10,
-              padding: '8px 13px', cursor: 'pointer',
-            }}
+            className="ui-btn ui-btn--sm"
           >
-            <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}><Icon name="plus" size={14} /></span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.addLocalLibrary')}</span>
+            <Icon name="plus" size={13} />
+            {t('topNav.addLocalLibrary')}
           </button>
         )}
         {/* Local book libraries share the same Files / Folder / Staging import
@@ -275,17 +259,11 @@ export default function TopNav({ st }: TopNavProps) {
           <button
             onClick={() => setLocalImportOpen(true)}
             title={t('topNav.addBooksHint')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-              background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
-              border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-              padding: '8px 13px', cursor: 'pointer',
-            }}
+            className="ui-btn ui-btn--sm"
+            style={{ borderColor: 'var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)' }}
           >
-            <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
-              <Icon name="plus" size={15} />
-            </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.addBooks')}</span>
+            <Icon name="plus" size={14} />
+            {t('topNav.addBooks')}
           </button>
         )}
         {/* Upload — ABS libraries, users with the upload permission (admin/root
@@ -295,17 +273,11 @@ export default function TopNav({ st }: TopNavProps) {
           <button
             onClick={() => setUploadOpen(true)}
             title={t('topNav.uploadHint')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-              background: 'var(--onyx-accent-dim)', color: 'var(--onyx-text)',
-              border: '1px solid var(--onyx-accent-edge)', borderRadius: 10,
-              padding: '8px 13px', cursor: 'pointer',
-            }}
+            className="ui-btn ui-btn--sm"
+            style={{ borderColor: 'var(--onyx-accent-edge)', background: 'var(--onyx-accent-dim)' }}
           >
-            <span style={{ display: 'inline-flex', color: 'var(--onyx-accent)' }}>
-              <Icon name="upload" size={15} />
-            </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('topNav.upload')}</span>
+            <Icon name="upload" size={14} />
+            {t('topNav.upload')}
           </button>
         )}
       </div>
@@ -321,12 +293,12 @@ export default function TopNav({ st }: TopNavProps) {
             : t('search.placeholder', { count: st.library.length })}
           value={st.search}
           onChange={(e) => st.setSearch(e.target.value)}
+          className="ui-input"
           style={{
-            width: '100%', boxSizing: 'border-box',
-            padding: isPodcast ? '8px 12px 8px 34px' : '8px 92px 8px 34px',
-            background: 'rgba(0,0,0,0.3)', borderRadius: 8,
-            fontSize: 12, color: 'var(--onyx-text)',
-            border: '1px solid var(--onyx-line)', outline: 'none', fontFamily: 'inherit',
+            width: '100%',
+            height: 'var(--h-md)',
+            paddingLeft: 32,
+            paddingRight: isPodcast ? 'var(--s-3)' : 86,
           }}
         />
         {/* Search scope — narrows the query to a single field (Ctrl+K still
@@ -357,12 +329,8 @@ export default function TopNav({ st }: TopNavProps) {
               aria-controls="onyx-search-scope-listbox"
               aria-label={t('topNav.searchScope')}
               title={t('topNav.searchScope')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontFamily: mono, fontSize: 10, letterSpacing: '0.04em',
-                background: 'var(--onyx-bg)', color: 'var(--onyx-text-dim)',
-                border: '1px solid var(--onyx-glass-edge)', borderRadius: 4, padding: '3px 6px', cursor: 'pointer',
-              }}
+              className="ui-btn ui-btn--sm"
+              style={{ gap: 4, padding: '0 8px' }}
             >
               {(() => {
                 const current = SCOPES.find(s => s.value === st.searchScope);
@@ -451,7 +419,7 @@ export default function TopNav({ st }: TopNavProps) {
         }}
       >{((st.user?.username || st.localDisplayName)?.[0] ?? '?').toUpperCase()}</button>
       )}
-    </Glass>
+    </div>
 
     {localImportOpen && st.activeLibrary?.source === 'local' && (
       <LocalImportDialog st={st} library={st.activeLibrary} onClose={() => setLocalImportOpen(false)} />

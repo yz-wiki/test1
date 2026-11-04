@@ -853,6 +853,7 @@ const en = {
   'focus.speed': 'Speed',
   'focus.speedHeading': 'Playback Speed',
   'focus.inFocus': 'In focus',
+'focus.by': 'by',
   'focus.synopsis': 'Synopsis',
   'focus.noBookmarks': 'No bookmarks yet.',
   'focus.noSynopsis': 'No synopsis available.',

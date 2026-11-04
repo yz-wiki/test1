@@ -16,7 +16,6 @@ import type { OnyxState } from '../../state/onyx';
 import { bookAuthor, mergeUserStats, computeLocalLibraryStats } from '../../state/onyx';
 import type { UserStats, LibraryStats } from '../../api/abs';
 import { getUserStats, getLibraryStats, getLocalListeningStats } from '../../api/abs';
-import Glass from '../chrome/Glass';
 import { log } from '../../lib/log';
 
 // One family for interface text; monospace is opt-in via .ui-tech.
@@ -546,18 +545,18 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
   };
 
   return (
-    <Glass
-      translucent={st.translucent}
+    <div
+      className="ui-card"
       style={{
-        width: 360,
-        padding: 28,
+        width: 340,
+        padding: 'var(--s-5)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
         position: 'relative',
         overflow: 'hidden',
-        height: '100%', // fill the left column so content is spread across the full height
-        boxSizing: 'border-box', // include padding in the 100% height; without this, padding adds 56 px of overflow and clips the footer
+        height: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* Gold hairline along the top edge — echoes the player chrome */}
@@ -667,6 +666,6 @@ export default function GreetingPane({ st, name }: GreetingPaneProps) {
         {/* Items with progress ≥ 0.98 */}
         <GreetStat label={t('greeting.finished')} value={finished} />
       </div>
-    </Glass>
+    </div>
   );
 }

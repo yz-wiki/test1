@@ -14,7 +14,6 @@ import {
   bookTitle, bookAuthor, bookSeries, bookNarrator, bookDur,
   bookProgress, bookCurrentTime, // bookSynopsis removed — not rendered
 } from '../state/onyx';
-import Glass from './chrome/Glass';
 import Cover from './Cover';
 import Icon from './Icon';
 import { sanitizeHtml } from '../lib/sanitize';
@@ -323,9 +322,9 @@ export default function FocusPanel({ st }: FocusPanelProps) {
 
   if (st.focusCollapsed) {
     return (
-      <Glass
-        translucent={st.translucent}
-        style={{ width: 76, padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, position: 'relative', gap: 18 }}
+      <div
+        className="ui-card"
+        style={{ width: 76, padding: 'var(--s-4) 0', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, position: 'relative', gap: 'var(--s-4)' }}
       >
         <CollapseHandle collapsed onToggle={() => st.setFocusCollapsed(false)} />
         <div onClick={() => openBook(focus.id)} style={{ cursor: 'pointer' }}>
@@ -346,7 +345,7 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         <div style={{ fontFamily: MONO, fontSize: 9, color: 'var(--onyx-text-mute)', writingMode: 'vertical-rl', transform: 'rotate(180deg)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           {bookTitle(focus)}
         </div>
-      </Glass>
+      </div>
     );
   }
 
@@ -354,13 +353,13 @@ export default function FocusPanel({ st }: FocusPanelProps) {
   const focusAuthor = bookAuthor(focus);
   const focusNarrator = bookNarrator(focus);
   return (
-    <Glass
-      translucent={st.translucent}
-      style={{ width: 360, padding: 28, display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'relative', overflow: 'visible' }}
+    <div
+      className="ui-card"
+      style={{ width: 340, padding: 'var(--s-5)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'relative', overflow: 'visible' }}
     >
       <CollapseHandle collapsed={false} onToggle={() => st.setFocusCollapsed(true)} />
 
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.18em', color: 'var(--onyx-text-mute)', textTransform: 'uppercase', marginBottom: 16 }}>
+      <div className="ui-group-label" style={{ marginBottom: 'var(--s-3)' }}>
         {t('focus.inFocus')}
       </div>
 
@@ -381,12 +380,12 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         </button>
       )}
 
-      <div style={{ marginTop: focusSeries ? 6 : 22, fontFamily: SERIF, fontSize: 30, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.01em' }}>
+      <div className="ui-h2" style={{ marginTop: focusSeries ? 'var(--s-1)' : 'var(--s-5)', fontSize: 'var(--fs-6)' }}>
         {bookTitle(focus)}
       </div>
 
       <div style={{ marginTop: 8, fontSize: 14, color: 'var(--onyx-text-dim)', display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 4px' }}>
-        <span>by</span>
+        <span>{t('focus.by')}</span>
         <button
           onClick={() => toggleContext('author', focusAuthor)}
           title={ctxIs('author', focusAuthor) ? 'Clear author filter' : `Show all books by ${focusAuthor}`}
@@ -524,6 +523,6 @@ export default function FocusPanel({ st }: FocusPanelProps) {
         <ChaptersStat st={st} chIdx={chIdx} chapterCount={chapterCount} chapters={chapters} />
         <SpeedStat st={st} />
       </div>
-    </Glass>
+    </div>
   );
 }

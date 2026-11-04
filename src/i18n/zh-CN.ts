@@ -852,6 +852,7 @@ const zhCN: Dict = {
   'focus.speed': '倍速',
   'focus.speedHeading': '播放速度',
   'focus.inFocus': '当前焦点',
+'focus.by': '作者：',
   'focus.synopsis': '简介',
   'focus.noBookmarks': '暂无书签。',
   'focus.noSynopsis': '暂无简介。',
