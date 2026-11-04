@@ -184,8 +184,28 @@ try {
     # ----------------------------------------------------------------- ffprobe
     Step 'Stage ffprobe.exe into src-tauri\bin'
     $ffzip = Join-Path $work 'ffmpeg.zip'
-    Info "Downloading $FfmpegArchiveUrl"
-    Invoke-WebRequest -Uri $FfmpegArchiveUrl -OutFile $ffzip -UseBasicParsing -TimeoutSec 600
+    # gyan.dev sometimes answers 503 when busy. Both archives contain
+    # bin/ffprobe.exe, and the recursive lookup below does not care about the
+    # name of the top-level folder, so a second mirror is a safe fallback.
+    $ffUrls = @(
+        $FfmpegArchiveUrl,
+        'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip'
+    )
+    $ffOk = $false
+    foreach ($url in $ffUrls) {
+        if (Test-Path $ffzip) { Remove-Item $ffzip -Force -ErrorAction SilentlyContinue }
+        Info "Downloading $url"
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $ffzip -UseBasicParsing -TimeoutSec 600
+            if ((Get-Item $ffzip).Length -lt 5MB) { throw 'archive suspiciously small' }
+            $ffOk = $true
+            break
+        }
+        catch {
+            Write-Host "    download failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+    if (-not $ffOk) { Die 'could not download an FFmpeg build from any mirror.' }
     $ffx = Join-Path $work 'ffmpeg-x'
     New-Item -ItemType Directory -Force -Path $ffx | Out-Null
     Expand-Archive -Path $ffzip -DestinationPath $ffx -Force

@@ -7,6 +7,11 @@ Notable user-facing changes to Skald. Dates are the build cut dates.
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
+### Build
+
+- The Windows build's ffprobe download now falls back to a GitHub-hosted
+  FFmpeg build when gyan.dev answers 503 (it did for the first 2.11.0 run).
+
 ### Continue listening is a real screen now
 
 The shelf could never say which chapter a book was on: `chapterSpans()` needs
@@ -304,6 +309,11 @@ Reported from the 1.5.0 build.
 - **Previous / next episode buttons** in the transport and the now-playing bar.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
+
+### Build
+
+- The Windows build's ffprobe download now falls back to a GitHub-hosted
+  FFmpeg build when gyan.dev answers 503 (it did for the first 2.11.0 run).
 
 ### Continue listening is a real screen now
 
