@@ -120,12 +120,13 @@
   }
 
   .seek--lg .seek__track {
-    height: 6px;
+    height: 8px;
+    box-shadow: inset 0 0 0 1px var(--hairline);
   }
 
   .seek--lg:hover .seek__track,
   .seek--lg.dragging .seek__track {
-    height: 8px;
+    height: 10px;
   }
 
   .seek__fill {
@@ -134,6 +135,10 @@
     left: 0;
     border-radius: inherit;
     background: var(--accent);
+  }
+
+  .seek--lg .seek__fill {
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent));
   }
 
   /* Chapter boundaries: a hairline in the canvas colour, so it reads as a gap
@@ -161,10 +166,20 @@
     transition: transform var(--dur-1) var(--ease);
   }
 
+  /* The main bar always shows where you are, not only on hover. */
   .seek--lg .seek__thumb {
-    width: 14px;
-    height: 14px;
-    margin-left: -7px;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    background: var(--surface-overlay);
+    border: 3px solid var(--accent);
+    box-shadow: 0 1px 5px rgb(0 0 0 / 0.24);
+    transform: translateY(-50%) scale(1);
+  }
+
+  .seek--lg:hover .seek__thumb,
+  .seek--lg.dragging .seek__thumb {
+    transform: translateY(-50%) scale(1.16);
   }
 
   .seek:hover .seek__thumb,

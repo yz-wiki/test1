@@ -2,12 +2,40 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.10.0 (2026-11-04) — preview
+## 2.11.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
-### Fixed — the server screen was gone
+### Continue listening is a real screen now
+
+The shelf could never say which chapter a book was on: `chapterSpans()` needs
+`media.chapters` / `audioFiles`, and library list items deliberately omit both.
+A lazy detail cache (`reading.svelte.ts`) now fetches full items for only the
+handful of ids on screen and resolves a saved time into a chapter. The shelf
+shows "Chapter 1 of 50 · name", and there is a **dedicated Continue listening
+page** (sidebar entry + "View all" on the shelf) with a resume hero, per-book
+chapter, percentage, remaining time and last-listened date.
+
+### Player transport
+
+- **Play/pause and the skip controls moved above the progress bars**; volume
+  now sits on that same row at the right, and the tool strip below keeps speed
+  and sleep timer.
+- The main bar is 8px (10px on hover), has an always-visible thumb and a
+  gradient fill. The full-book bar is quieter.
+- The full-book legend is no longer the words "Whole book": it shows the
+  chapter ordinal, the chapter name and the whole-book percentage.
+- Chapter name and ordinal in the time row are now emphasised.
+
+### Library toolbar
+
+- The library name is a **click-to-switch menu** listing every library.
+- The right-hand cluster is grouped with separators: status filter
+  (all / not finished / finished), sort, grid-list, cover size with a visible
+  px value, refresh.
+
+### Fixed — the server screen was gone (2.10.0)
 
 `MeResponse` had no `type` field and bootstrap stored only `{id, username}`, so
 `session.user?.type` was always undefined and the conditional that renders the
@@ -277,7 +305,35 @@ Reported from the 1.5.0 build.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
 
-### Fixed — the server screen was gone
+### Continue listening is a real screen now
+
+The shelf could never say which chapter a book was on: `chapterSpans()` needs
+`media.chapters` / `audioFiles`, and library list items deliberately omit both.
+A lazy detail cache (`reading.svelte.ts`) now fetches full items for only the
+handful of ids on screen and resolves a saved time into a chapter. The shelf
+shows "Chapter 1 of 50 · name", and there is a **dedicated Continue listening
+page** (sidebar entry + "View all" on the shelf) with a resume hero, per-book
+chapter, percentage, remaining time and last-listened date.
+
+### Player transport
+
+- **Play/pause and the skip controls moved above the progress bars**; volume
+  now sits on that same row at the right, and the tool strip below keeps speed
+  and sleep timer.
+- The main bar is 8px (10px on hover), has an always-visible thumb and a
+  gradient fill. The full-book bar is quieter.
+- The full-book legend is no longer the words "Whole book": it shows the
+  chapter ordinal, the chapter name and the whole-book percentage.
+- Chapter name and ordinal in the time row are now emphasised.
+
+### Library toolbar
+
+- The library name is a **click-to-switch menu** listing every library.
+- The right-hand cluster is grouped with separators: status filter
+  (all / not finished / finished), sort, grid-list, cover size with a visible
+  px value, refresh.
+
+### Fixed — the server screen was gone (2.10.0)
 
 `MeResponse` had no `type` field and bootstrap stored only `{id, username}`, so
 `session.user?.type` was always undefined and the conditional that renders the

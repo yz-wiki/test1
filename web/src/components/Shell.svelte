@@ -11,7 +11,7 @@
   let { children }: { children: Snippet } = $props();
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
-  type Route = 'library' | 'downloads' | 'settings' | 'admin';
+  type Route = 'library' | 'continue' | 'downloads' | 'settings' | 'admin';
 
   const VIEWS: { id: View; key: TranslationKey; icon: IconName }[] = [
     { id: 'home', key: 'library.home', icon: 'home' },
@@ -65,6 +65,16 @@
       >
         <span class="nav-item__icon"><Icon name="home" /></span>
         <span class="nav-item__label">{t('library.home')}</span>
+      </button>
+
+      <button
+        class="nav-item"
+        aria-current={ui.route === 'continue' && !player.expanded ? 'page' : undefined}
+        title={t('nav.continue')}
+        onclick={() => go('continue')}
+      >
+        <span class="nav-item__icon"><Icon name="play" /></span>
+        <span class="nav-item__label">{t('nav.continue')}</span>
       </button>
 
       {#if player.item}

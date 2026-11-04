@@ -1,7 +1,8 @@
 <script lang="ts">
   import { library, progress, session, ui } from '../lib/state.svelte';
-  import { chapterSpans, player } from '../lib/player.svelte';
+  import { player } from '../lib/player.svelte';
   import { matchScore, preloadPinyin } from '../lib/search';
+  import { reading } from '../lib/reading.svelte';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
   import { downloads } from '../lib/downloads.svelte';
@@ -18,6 +19,7 @@
   let query = $state('');
   let pinyinReady = $state(false);
   let sort = $state<'recent' | 'title' | 'author' | 'progress'>('recent');
+  let filter = $state<'all' | 'unfinished' | 'finished'>('all');
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
 
@@ -83,7 +85,13 @@
       return hits.sort((a, b) => (scored.get(b.id) ?? 0) - (scored.get(a.id) ?? 0));
     }
 
-    let list = view === 'home' && !group ? base.slice(0, 60) : [...base];
+    let list: typeof library.items = [...base];
+    if (filter === 'finished') {
+      list = list.filter(item => progress.for(item.id)?.isFinished === true);
+    } else if (filter === 'unfinished') {
+      list = list.filter(item => progress.for(item.id)?.isFinished !== true);
+    }
+    if (view === 'home' && !group) list = list.slice(0, 60);
     if (sort === 'title') {
       list.sort((a, b) => title(a).localeCompare(title(b), 'zh-CN'));
     } else if (sort === 'author') {
@@ -102,6 +110,22 @@
       .map(row => library.items.find(item => item.id === row.libraryItemId))
       .filter((item): item is (typeof library.items)[number] => Boolean(item));
   });
+
+  $effect(() => {
+    void reading.ensure(session.serverUrl, recent.map(item => item.id));
+  });
+
+  function openLibraryMenu(event: MouseEvent): void {
+    menu.show(
+      event,
+      session.libraries.map(lib => ({
+        id: lib.id,
+        label: lib.name,
+        hint: lib.id === session.activeLibraryId ? '✓' : '',
+        action: () => session.selectLibrary(lib.id),
+      })),
+    );
+  }
 
   function open(item: (typeof library.items)[number]): void {
     ui.itemId = item.id;
@@ -270,17 +294,24 @@
       const episode = item.media?.episodes?.find(entry => entry.id === row.episodeId);
       return episode?.title ?? '';
     }
-    const spans = chapterSpans(item);
-    for (let index = spans.length - 1; index >= 0; index -= 1) {
-      if (row.currentTime >= spans[index].start) return spans[index].title;
-    }
-    return '';
+    const chapter = reading.chapterAt(item, row.currentTime);
+    if (!chapter) return '';
+    return `${t('continue.chapter', { index: chapter.index, total: chapter.total })} · ${chapter.title}`;
   }
 </script>
 
 <div class="toolbar">
   <div class="toolbar__left">
-    <span class="toolbar__library truncate">{session.activeLibrary?.name ?? t('app.name')}</span>
+    <button
+      class="library-switch"
+      title={t('library.switch')}
+      aria-label={t('library.switch')}
+      onclick={openLibraryMenu}
+    >
+      <Icon name="library" size={14} />
+      <span class="truncate">{session.activeLibrary?.name ?? t('app.name')}</span>
+      <Icon name="chevron-down" size={11} />
+    </button>
     <span class="t-small t-tertiary t-num">{t('library.total', { count: library.items.length })}</span>
   </div>
 
@@ -302,12 +333,20 @@
       <span class="t-small t-num t-accent">{t('library.found', { count: visible.length })}</span>
     {/if}
 
+    <select class="select select--sm" bind:value={filter} aria-label={t('library.filter')} title={t('library.filter')}>
+      <option value="all">{t('library.filter.all')}</option>
+      <option value="unfinished">{t('library.filter.unfinished')}</option>
+      <option value="finished">{t('library.filter.finished')}</option>
+    </select>
+
     <select class="select select--sm" bind:value={sort} aria-label={t('library.sort')} title={t('library.sort')}>
       <option value="recent">{t('library.sort.recent')}</option>
       <option value="title">{t('library.sort.title')}</option>
       <option value="author">{t('library.sort.author')}</option>
       <option value="progress">{t('library.sort.progress')}</option>
     </select>
+
+    <span class="toolbar__sep"></span>
 
     <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.grid')}>
       <button
@@ -329,11 +368,14 @@
         <button class="icon-btn icon-btn--sm" aria-label={t('library.tileSize')} onclick={() => ui.setTileSize(ui.tileSize - 20)}>
           <Icon name="minus" size={13} />
         </button>
+        <span class="sizer__value t-num t-small t-tertiary">{ui.tileSize}px</span>
         <button class="icon-btn icon-btn--sm" aria-label={t('library.tileSize')} onclick={() => ui.setTileSize(ui.tileSize + 20)}>
           <Icon name="plus" size={13} />
         </button>
       </div>
     {/if}
+
+    <span class="toolbar__sep"></span>
 
     <button
       class="icon-btn"
@@ -364,7 +406,13 @@
   {:else}
     {#if recent.length > 0 && !GROUPED && !group}
       <section class="section">
-        <h2 class="t-label">{t('library.continue')}</h2>
+        <div class="section__head">
+          <h2 class="t-label">{t('library.continue')}</h2>
+          <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'continue')}>
+            {t('continue.viewAll')}
+            <Icon name="chevron-right" size={12} />
+          </button>
+        </div>
         <div class="shelf">
           {#each recent as item (item.id)}
             {@const fraction = progress.fraction(item.id)}
@@ -526,9 +574,47 @@
     min-width: 0;
   }
 
-  .toolbar__library {
+  .library-switch {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 180px;
+    padding: 4px 7px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .library-switch:hover {
+    background: var(--surface-raised);
+    border-color: var(--hairline);
+  }
+
+  .library-switch > :global(svg) {
+    flex: 0 0 auto;
+    color: var(--text-tertiary);
+  }
+
+  .toolbar__sep {
+    width: 1px;
+    height: 20px;
+    margin-inline: 2px;
+    background: var(--hairline);
+  }
+
+  .sizer__value {
+    min-width: 38px;
+    text-align: center;
+  }
+
+  .section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-row);
+    margin-bottom: var(--gap-row);
   }
 
   .toolbar__right {
@@ -585,11 +671,6 @@
 
   .section {
     margin-bottom: var(--gap-section);
-  }
-
-  .section > .t-label {
-    display: block;
-    margin-bottom: var(--gap-row);
   }
 
   .shelf {

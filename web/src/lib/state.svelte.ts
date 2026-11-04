@@ -248,7 +248,7 @@ class UiStore {
   reduceMotion = $state(localStorage.getItem('skald.reduceMotion') === 'true');
   /** Undecorated window: closing hides to the tray instead of quitting. */
   closeToTray = $state(localStorage.getItem('skald.closeToTray') !== 'false');
-  route = $state<'library' | 'settings' | 'podcast' | 'book' | 'downloads' | 'admin'>('library');
+  route = $state<'library' | 'continue' | 'settings' | 'podcast' | 'book' | 'downloads' | 'admin'>('library');
   /** The item a detail route is showing. */
   itemId = $state<string | null>(null);
   query = $state('');

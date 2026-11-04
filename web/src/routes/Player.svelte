@@ -12,6 +12,16 @@
   /** Shows the percentage only while the volume slider is in use. */
   let volumeActive = $state(false);
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastVolume = $state(1);
+
+  function toggleMute(): void {
+    if (player.volume > 0) {
+      lastVolume = player.volume;
+      void player.setVolume(0);
+    } else {
+      void player.setVolume(lastVolume || 0.8);
+    }
+  }
 
   function onVolumeInput(value: number): void {
     void player.setVolume(value);
@@ -117,6 +127,8 @@
     return `${index + 1} / ${chapters.length}${name ? ` · ${name}` : ''}`;
   });
 
+  const chapterTitleNow = $derived(player.chapter?.title ?? '');
+
   const description = $derived(
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
   );
@@ -164,6 +176,76 @@
         </div>
 
         <div class="transport">
+          <div class="transport__top">
+            <div class="transport__buttons">
+              <button
+                class="icon-btn"
+                aria-label={t('player.prevChapter')}
+                title={t('player.prevChapter')}
+                onclick={() => void player.step(-1)}
+                disabled={!player.canStepBack}
+              >
+                <Icon name="skip-back" />
+              </button>
+              <button
+                class="icon-btn"
+                aria-label={t('player.back30')}
+                title={t('player.back30')}
+                onclick={() => void player.skip(-30)}
+              >
+                <span class="t-num t-small">30</span>
+              </button>
+              <button
+                class="transport__play"
+                aria-label={player.playing ? t('player.pause') : t('player.play')}
+                title={player.playing ? t('player.pause') : t('player.play')}
+                onclick={() => void player.toggle()}
+                disabled={player.loading}
+              >
+                <Icon name={player.playing ? 'pause' : 'play'} size={22} />
+              </button>
+              <button
+                class="icon-btn"
+                aria-label={t('player.forward30')}
+                title={t('player.forward30')}
+                onclick={() => void player.skip(30)}
+              >
+                <span class="t-num t-small">30</span>
+              </button>
+              <button
+                class="icon-btn"
+                aria-label={t('player.nextChapter')}
+                title={t('player.nextChapter')}
+                onclick={() => void player.step(1)}
+                disabled={!player.canStepForward}
+              >
+                <Icon name="skip-forward" />
+              </button>
+            </div>
+
+            <div class="transport__volume">
+              <button
+                class="icon-btn icon-btn--sm"
+                aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+                title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+                onclick={toggleMute}
+              ><Icon name="volume" size={14} /></button>
+              <input
+                class="volume"
+                type="range"
+                min="0"
+                max="1"
+                step="0.02"
+                value={player.volume}
+                aria-label={t('player.volume')}
+                oninput={event => onVolumeInput(Number(event.currentTarget.value))}
+              />
+              <span class="volume__value t-num" class:shown={volumeActive}>
+                {Math.round(player.volume * 100)}%
+              </span>
+            </div>
+          </div>
+
           <SeekBar
             value={chapterFraction}
             size="lg"
@@ -195,57 +277,20 @@
               />
               <div class="book-bar__legend t-small t-tertiary t-num">
                 <span>{formatDuration(player.position)}</span>
-                <span class="book-bar__label">{t('player.wholeBook')}</span>
+                <span class="book-bar__label">
+                  {#if !isEpisode && chapters.length > 0}
+                    {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: chapters.length })}
+                    · {chapterTitleNow}
+                    · {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+                  {:else}
+                    {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+                  {/if}
+                </span>
                 <span>−{formatDuration(Math.max(player.duration - player.position, 0))}</span>
               </div>
             </div>
           {/if}
 
-          <div class="transport__buttons">
-            <button
-              class="icon-btn"
-              aria-label={t('player.prevChapter')}
-              title={t('player.prevChapter')}
-              onclick={() => void player.step(-1)}
-              disabled={!player.canStepBack}
-            >
-              <Icon name="skip-back" />
-            </button>
-            <button
-              class="icon-btn"
-              aria-label={t('player.back30')}
-              title={t('player.back30')}
-              onclick={() => void player.skip(-30)}
-            >
-              <span class="t-num t-small">30</span>
-            </button>
-            <button
-              class="transport__play"
-              aria-label={player.playing ? t('player.pause') : t('player.play')}
-              title={player.playing ? t('player.pause') : t('player.play')}
-              onclick={() => void player.toggle()}
-              disabled={player.loading}
-            >
-              <Icon name={player.playing ? 'pause' : 'play'} size={22} />
-            </button>
-            <button
-              class="icon-btn"
-              aria-label={t('player.forward30')}
-              title={t('player.forward30')}
-              onclick={() => void player.skip(30)}
-            >
-              <span class="t-num t-small">30</span>
-            </button>
-            <button
-              class="icon-btn"
-              aria-label={t('player.nextChapter')}
-              title={t('player.nextChapter')}
-              onclick={() => void player.step(1)}
-              disabled={!player.canStepForward}
-            >
-              <Icon name="skip-forward" />
-            </button>
-          </div>
 
           <div class="transport__extras">
             <div class="extra">
@@ -258,25 +303,6 @@
                     onclick={() => void player.setRate(rate)}
                   >{rate}×</button>
                 {/each}
-              </div>
-            </div>
-
-            <div class="extra extra--sleep volume-extra">
-              <div class="volume-wrap">
-                <span class="t-label"><Icon name="volume" size={14} /></span>
-                <input
-                  class="volume"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.02"
-                  value={player.volume}
-                  aria-label={t('player.volume')}
-                  oninput={event => onVolumeInput(Number(event.currentTarget.value))}
-                />
-                <span class="volume__value t-num" class:shown={volumeActive}>
-                  {Math.round(player.volume * 100)}%
-                </span>
               </div>
             </div>
 
@@ -513,6 +539,28 @@
     gap: var(--gap-hair);
   }
 
+  /* Controls sit above the progress now, with volume sharing their row. */
+  .transport__top {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 58px;
+    margin-bottom: var(--gap-inline);
+  }
+
+  .transport__volume {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .book-bar :global(.seek__fill) {
+    opacity: 0.55;
+  }
+
   .transport__times {
     display: flex;
     align-items: baseline;
@@ -523,7 +571,9 @@
   .transport__chapter {
     flex: 1 1 auto;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
   }
 
   .book-bar {
@@ -542,6 +592,8 @@
 
   .book-bar__label {
     letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    font-weight: var(--weight-medium);
   }
 
   .transport__buttons {
@@ -595,21 +647,11 @@
     border-left: 1px solid var(--hairline);
   }
 
-  .volume-extra {
-    margin-left: 0;
-  }
-
   .extra {
     display: flex;
     align-items: center;
     gap: var(--gap-inline);
     min-width: 0;
-  }
-
-  .volume-wrap {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-inline);
   }
 
   .volume {

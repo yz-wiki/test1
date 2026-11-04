@@ -10,6 +10,7 @@
   import { logs } from './lib/logs.svelte';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
+  import Continue from './routes/Continue.svelte';
   import Book from './routes/Book.svelte';
   import Podcast from './routes/Podcast.svelte';
   import Downloads from './routes/Downloads.svelte';
@@ -131,6 +132,8 @@
   <Shell>
     {#if player.expanded}
       <Player />
+    {:else if ui.route === 'continue'}
+      <Continue />
     {:else if ui.route === 'book'}
       <Book />
     {:else if ui.route === 'podcast'}
