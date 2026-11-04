@@ -19,6 +19,11 @@
     | 'close'
     | 'book'
     | 'clock'
+    | 'skip-back'
+    | 'skip-forward'
+    | 'volume'
+    | 'chevron-down'
+    | 'expand'
     | 'dots';
 
   let { name, size = 16, filled = false }: {
@@ -76,6 +81,20 @@
   {:else if name === 'clock'}
     <circle cx="8" cy="8" r="5.4" />
     <path d="M8 4.9V8l2.2 1.4" />
+  {:else if name === 'skip-back'}
+    <path d="M3.4 3.4v9.2" />
+    <path d="M12.6 3.6L5.4 8l7.2 4.4z" fill="currentColor" stroke="none" />
+  {:else if name === 'skip-forward'}
+    <path d="M12.6 3.4v9.2" />
+    <path d="M3.4 3.6L10.6 8l-7.2 4.4z" fill="currentColor" stroke="none" />
+  {:else if name === 'volume'}
+    <path d="M3 6.2h2.2L9 3.4v9.2L5.2 9.8H3z" />
+    <path d="M11.4 6.1a2.9 2.9 0 010 3.8" />
+  {:else if name === 'chevron-down'}
+    <path d="M3.6 6.2L8 10.6l4.4-4.4" />
+  {:else if name === 'expand'}
+    <path d="M6.2 2.9h6.9v6.9" />
+    <path d="M9.8 6.2L2.9 13.1" />
   {:else if name === 'dots'}
     <circle cx="4" cy="8" r="1.1" fill="currentColor" stroke="none" />
     <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />

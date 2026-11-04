@@ -63,7 +63,14 @@ library  items / loading / error
          load(serverUrl, libraryId, force?)   // 同一 library 不重复请求
 ui       theme / reduceMotion / route / query
          setTheme() setReduceMotion()
+player   item / position / duration / playing / rate / volume / expanded
+         open() toggle() seek() skip() skipChapter() setRate() setVolume()
 ```
+
+`player` 不自己数秒：Rust 会话每秒发一次 `playback-tick`（`currentTime /
+duration / isPlaying`），store 只是它的投影。这一点是刻意的——本地计时器
+是播放头与音频走偏的唯一来源。`resume_audio` 也只在 store 里调用，因为
+后端会在恢复时按配置回退几秒，UI 不能自己再算一遍。
 
 要点：
 
@@ -119,11 +126,13 @@ ui       theme / reduceMotion / route / query
 | 侧栏导航（库切换、账户） | ✅ |
 | 书库页（搜索、继续收听、封面网格、骨架屏、空/错状态） | ✅ |
 | 设置页（语言、主题、动效） | ✅ |
-| 播放器（传输、章节、书签、速度、睡眠定时） | ⬜ 下一步 |
-| 播放条（全局常驻） | ⬜ |
-| 播客（浏览、单集、订阅） | ⬜ |
+| 播放器（传输条、章节列表、详情、速度、音量） | ✅ |
+| 播放条（全局常驻，随导航存活） | ✅ |
+| 播客（浏览、单集、订阅） | ⬜ 下一步 |
 | 弹窗组（匹配、元数据、文件检查器、上传、分享） | ⬜ |
 | 引导流程 | ⬜ |
+| 播放器：书签、睡眠定时、均衡器 | ⬜ |
+| 下载 / 离线播放 / 同步面板 / 计划任务 | ⬜ |
 | 拼音搜索 / 虚拟滚动 / 拖拽排序 | ⬜ |
 
 完成一项就在上表打勾，全部完成后删除 `src/` 并把 `root` 移回仓库根。

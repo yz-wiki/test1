@@ -90,3 +90,50 @@ export const fetchLibraryItems = (serverUrl: string, libraryId: string) =>
 
 export const fetchItem = (serverUrl: string, itemId: string) =>
   call<LibraryItem>('fetch_item', { serverUrl, itemId });
+
+// ─── Playback ────────────────────────────────────────────────────────────────
+
+export interface OpenSessionResult {
+  sessionId: string;
+  currentTime: number;
+}
+
+/** The Rust session's 1 Hz heartbeat. Everything the transport shows comes
+ *  from here, so the UI never guesses a position and then drifts. */
+export interface PlaybackTick {
+  currentTime: number;
+  duration: number;
+  isPlaying: boolean;
+}
+
+export interface ResumeOutcome {
+  position: number;
+  rewound: number;
+}
+
+export const openPlaybackSession = (
+  serverUrl: string,
+  itemId: string,
+  userId: string,
+  startTime?: number,
+  episodeId?: string,
+) =>
+  call<OpenSessionResult>('open_playback_session', {
+    serverUrl,
+    itemId,
+    userId,
+    episodeId: episodeId ?? null,
+    startTime: startTime ?? null,
+  });
+
+export const playAudio = () => call<void>('play_audio');
+export const pauseAudio = () => call<void>('pause_audio');
+
+/** Resume applies the backend's configured auto-rewind. Do not reimplement it. */
+export const resumeAudio = (chapterStart?: number) =>
+  call<ResumeOutcome>('resume_audio', { chapterStart: chapterStart ?? null });
+
+export const seekAudio = (secs: number) => call<void>('seek_audio', { secs });
+export const setSpeed = (rate: number) => call<void>('set_speed', { rate });
+export const setVolume = (vol: number) => call<void>('set_volume', { vol });
+export const closeActiveSession = () => call<void>('close_active_session');

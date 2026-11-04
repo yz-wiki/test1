@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { library, session, ui } from '../lib/state.svelte';
+  import { library, session } from '../lib/state.svelte';
+  import { player } from '../lib/player.svelte';
   import { t, formatLength } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
@@ -79,7 +80,7 @@
       <h2 class="t-label">{t('library.continue')}</h2>
       <div class="shelf">
         {#each recent as item (item.id)}
-          <button class="shelf__card" onclick={() => (ui.query = item.id)}>
+          <button class="shelf__card" onclick={() => void player.open(item)}>
             <div class="shelf__cover">
               <Cover itemId={item.id} size={168} />
             </div>
@@ -99,7 +100,11 @@
       <h2 class="t-label">{t('library.all')}</h2>
       <div class="grid">
         {#each visible as item (item.id)}
-          <button class="tile">
+          <button
+            class="tile"
+            aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
+            onclick={() => void player.open(item)}
+          >
             <Cover itemId={item.id} size={320} />
             <span class="tile__title">{title(item)}</span>
             <span class="tile__meta">{author(item) || formatLength(item.media?.duration ?? 0)}</span>

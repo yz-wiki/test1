@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { session, ui } from '../lib/state.svelte';
+  import { player } from '../lib/player.svelte';
   import { t } from '../lib/i18n.svelte';
   import Titlebar from './Titlebar.svelte';
+  import NowPlayingBar from './NowPlayingBar.svelte';
   import Icon from './Icon.svelte';
 
   let { children }: { children: Snippet } = $props();
@@ -18,20 +20,35 @@
   <nav class="rail" aria-label={t('nav.section.browse')}>
     <button
       class="nav-item"
-      aria-current={ui.route === 'library' ? 'page' : undefined}
-      onclick={() => (ui.route = 'library')}
+      aria-current={ui.route === 'library' && !player.expanded ? 'page' : undefined}
+      onclick={() => {
+        player.collapse();
+        ui.route = 'library';
+      }}
     >
       <span class="nav-item__icon"><Icon name="library" /></span>
       <span class="nav-item__label">{t('nav.library')}</span>
     </button>
+
+    {#if player.item}
+      <button
+        class="nav-item"
+        aria-current={player.expanded ? 'page' : undefined}
+        onclick={() => player.expand()}
+      >
+        <span class="nav-item__icon"><Icon name="headphones" /></span>
+        <span class="nav-item__label">{t('nav.nowPlaying')}</span>
+      </button>
+    {/if}
 
     <div class="rail__divider"></div>
 
     {#each session.libraries as lib (lib.id)}
       <button
         class="nav-item"
-        aria-current={lib.id === session.activeLibraryId && ui.route === 'library' ? 'page' : undefined}
+        aria-current={lib.id === session.activeLibraryId && ui.route === 'library' && !player.expanded ? 'page' : undefined}
         onclick={() => {
+          player.collapse();
           session.selectLibrary(lib.id);
           ui.route = 'library';
         }}
@@ -47,8 +64,11 @@
 
     <button
       class="nav-item"
-      aria-current={ui.route === 'settings' ? 'page' : undefined}
-      onclick={() => (ui.route = 'settings')}
+      aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
+      onclick={() => {
+        player.collapse();
+        ui.route = 'settings';
+      }}
     >
       <span class="nav-item__icon"><Icon name="settings" /></span>
       <span class="nav-item__label">{t('nav.settings')}</span>
@@ -60,15 +80,31 @@
     </div>
   </nav>
 
-  <main class="content">
-    {@render children()}
-  </main>
+  <div class="main-col">
+    <main class="content">
+      {@render children()}
+    </main>
+
+    <!-- The transport lives outside the routed content: it survives navigation
+         and there is only ever one of it. -->
+    {#if !player.expanded}
+      <NowPlayingBar />
+    {/if}
+  </div>
 </div>
 
 <style>
   .shell {
     display: flex;
     height: calc(100vh - 46px);
+    min-height: 0;
+  }
+
+  .main-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
   }
 

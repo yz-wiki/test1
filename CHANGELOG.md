@@ -2,6 +2,39 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 2.0.0 (2026-11-04) — preview
+
+A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
+offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
+
+### Architecture
+- **React 19 → Svelte 5 (runes).** No virtual DOM. The bundle went from 971 kB
+  of JS to 97 kB, CSS from 48.9 kB to 26.8 kB.
+- **One design system, three files.** `tokens.css` (colour/type/spacing/motion),
+  `base.css` (reset, text roles, scroll), `components.css` (buttons, inputs,
+  segmented, cards, lists). Nothing is styled inline, so there is exactly one
+  place a colour can come from.
+- **Three small stores instead of one 1,600-line hook** — `session`, `library`,
+  `player`. A screen imports what it reads.
+- **A single typed IPC boundary** (`lib/ipc.ts`): every Rust command, its
+  payload and its error shape live in one file.
+
+### Working in this build
+- Sign in with an API key or a password; libraries and titles load and search.
+- Click a title to play it. Chapters, a 1.2×–2× speed control, volume, a
+  ‑30/+30 second step, previous/next chapter, and a persistent transport bar
+  that survives navigation.
+- Position comes from the Rust session's `playback-tick`, not a local timer, so
+  the playhead cannot drift from the audio.
+- Three themes (Graphite / Paper / Midnight), full English and 简体中文,
+  reduced-motion preference.
+
+### Not ported yet
+Podcasts and episode lists, downloads and offline playback, the ABS sync and
+sessions panels, sharing/RSS, cron jobs, admin screens, onboarding, sleep timer
+and equaliser. The routes are stubs or absent rather than broken — nothing in
+the menu leads to a dead end.
+
 ## 1.6.0 (2026-11-04)
 
 Reported from the 1.5.0 build.
