@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { library, session, ui } from '../lib/state.svelte';
-  import { progress } from '../lib/state.svelte';
+  import { library, progress, session, ui } from '../lib/state.svelte';
   import { chapterSpans, player } from '../lib/player.svelte';
-  import { matchesQuery, preloadPinyin } from '../lib/search';
+  import { matchScore, preloadPinyin } from '../lib/search';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
   import { downloads } from '../lib/downloads.svelte';
@@ -17,13 +16,13 @@
   });
 
   let query = $state('');
-  // Set once the pinyin dictionary has arrived, so the filter re-runs against it.
   let pinyinReady = $state(false);
+  let sort = $state<'recent' | 'title' | 'author' | 'progress'>('recent');
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
 
-  let view = $state<View>('home');
-  /** Set when a series, author or narrator has been opened. */
+  /** The sidebar owns the view now; the page switcher is a second way in. */
+  const view = $derived(ui.libraryView as View);
   let group = $state<string | null>(null);
 
   const VIEWS: { id: View; key: TranslationKey }[] = [
@@ -35,6 +34,13 @@
   ];
 
   const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
+  const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
+
+  function setView(next: View): void {
+    ui.setLibraryView(next);
+    group = null;
+    if (scroller) scroller.scrollTop = 0;
+  }
 
   function keyOf(item: (typeof library.items)[number], by: View): string {
     const meta = item.media?.metadata;
@@ -59,24 +65,35 @@
       .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
   });
 
-  // Pinyin-aware: "santi" and "st" both find 《三体》.
+  /** Pinyin-aware, multi-word, ranked. A title hit beats an author hit. */
   const visible = $derived.by(() => {
     void pinyinReady;
     const q = query.trim();
     const base = group && GROUPED
       ? library.items.filter(item => keyOf(item, view) === group)
       : library.items;
-    if (!q) {
-      // The home view is a taste of the library, not the whole thing.
-      return view === 'home' && !group ? base.slice(0, 60) : base;
+
+    if (q) {
+      const scored = new Map<string, number>();
+      const hits = base.filter(item => {
+        const score = matchScore(item, q);
+        if (score > 0) scored.set(item.id, score);
+        return score > 0;
+      });
+      return hits.sort((a, b) => (scored.get(b.id) ?? 0) - (scored.get(a.id) ?? 0));
     }
-    return base.filter(item => matchesQuery(item, q));
+
+    let list = view === 'home' && !group ? base.slice(0, 60) : [...base];
+    if (sort === 'title') {
+      list.sort((a, b) => title(a).localeCompare(title(b), 'zh-CN'));
+    } else if (sort === 'author') {
+      list.sort((a, b) => author(a).localeCompare(author(b), 'zh-CN'));
+    } else if (sort === 'progress') {
+      list.sort((a, b) => progress.fraction(b.id) - progress.fraction(a.id));
+    }
+    return list;
   });
 
-  /** "Continue listening" means unfinished rows the server actually has, newest
-   *  first — not simply the first six titles in the library. */
-  /** Only what was actually started: an empty shelf is honest, a shelf of
-   *  unrelated books labelled "continue" is not. */
   const recent = $derived.by(() => {
     return progress.rows
       .filter(row => !row.isFinished && row.currentTime > 0)
@@ -86,31 +103,25 @@
       .filter((item): item is (typeof library.items)[number] => Boolean(item));
   });
 
-  /** Podcasts and books both have a detail screen; the continue shelf is the
-   *  one place a click starts playing, because that is what "continue" means. */
   function open(item: (typeof library.items)[number]): void {
     ui.itemId = item.id;
     ui.route = item.mediaType === 'podcast' ? 'podcast' : 'book';
   }
 
+  /** "Continue" means both: resume playback AND show where it is playing. */
   function resume(item: (typeof library.items)[number]): void {
     if (item.mediaType === 'podcast') {
       open(item);
       return;
     }
-    void player.open(item);
+    void player.open(item).then(() => player.expand());
   }
 
   // ─── Windowed grid ─────────────────────────────────────────────────────
-  // A few hundred covers are fine to render outright; a few thousand are not.
-  // Above THRESHOLD only the rows in view (plus a small overscan) are mounted.
   const THRESHOLD = 240;
   const GAP = 16;
   const ROW_GAP = 24;
-  // Cover is square and the caption block is ~67px; 72 keeps a hair of slack so
-  // nothing is clipped by the fixed row height.
   const TEXT_H = 72;
-  const MIN_W = 148;
 
   let searchEl = $state<HTMLInputElement | null>(null);
   let scroller = $state<HTMLDivElement | null>(null);
@@ -120,7 +131,9 @@
   let gridWidth = $state(0);
   let gridTop = $state(0);
 
-  const windowed = $derived(visible.length > THRESHOLD);
+  const isList = $derived(ui.libraryLayout === 'list');
+  const windowed = $derived(!isList && visible.length > THRESHOLD);
+  const minW = $derived(ui.tileSize);
 
   $effect(() => {
     const el = scroller;
@@ -143,7 +156,6 @@
     scrollTop = (event.currentTarget as HTMLElement).scrollTop;
   }
 
-  // Ctrl+F bumps this counter; the box takes focus and selects what is there.
   $effect(() => {
     void ui.focusSearch;
     if (searchEl) {
@@ -152,13 +164,13 @@
     }
   });
 
-  // A new query is a new list; staying scrolled into the old one shows nothing.
   $effect(() => {
     void query;
+    void ui.libraryView;
     if (scroller && scroller.scrollTop > 0) scroller.scrollTop = 0;
   });
 
-  const columns = $derived(Math.max(1, Math.floor((gridWidth + GAP) / (MIN_W + GAP))));
+  const columns = $derived(Math.max(1, Math.floor((gridWidth + GAP) / (minW + GAP))));
   const tileW = $derived(columns > 0 ? (gridWidth - GAP * (columns - 1)) / columns : 0);
   const tileH = $derived(tileW + TEXT_H);
   const stride = $derived(tileH + ROW_GAP);
@@ -177,14 +189,8 @@
     return Math.min(Math.max(row, startRow + 1), rowCount);
   });
 
-  // Before the first measurement there is no column count, so a windowed grid
-  // draws nothing for one frame instead of guessing and reflowing.
   const drawn = $derived(
-    windowed
-      ? gridWidth > 0
-        ? visible.slice(startRow * columns, endRow * columns)
-        : []
-      : visible,
+    windowed ? (gridWidth > 0 ? visible.slice(startRow * columns, endRow * columns) : []) : visible,
   );
   const offsetY = $derived(windowed ? startRow * stride : 0);
   const totalH = $derived(windowed ? Math.max(rowCount * stride - ROW_GAP, 0) : 0);
@@ -193,19 +199,17 @@
     return item.media?.metadata?.title?.trim() || t('common.unknown');
   }
 
+  function author(item: (typeof library.items)[number]): string {
+    return item.media?.metadata?.authorName?.trim() || '';
+  }
+
   async function markFinished(
     item: (typeof library.items)[number],
     finished: boolean,
   ): Promise<void> {
     const duration = item.media?.duration ?? 0;
     try {
-      await updateProgress(
-        session.serverUrl,
-        item.id,
-        finished ? duration : 0,
-        duration,
-        finished,
-      );
+      await updateProgress(session.serverUrl, item.id, finished ? duration : 0, duration, finished);
       await progress.load(session.serverUrl, true);
     } catch {
       // The shelf is a read-only surface; a failed write is not worth a banner.
@@ -258,8 +262,7 @@
     menu.show(event, items);
   }
 
-  /** What is playing *now*: a chapter name for a book, an episode for a show.
-   *  A duration tells you nothing about where you are. */
+  /** What is playing *now*: a chapter name for a book, an episode for a show. */
   function currentChapter(item: (typeof library.items)[number]): string {
     const row = progress.for(item.id);
     if (!row) return '';
@@ -273,37 +276,74 @@
     }
     return '';
   }
-
-  function author(item: (typeof library.items)[number]): string {
-    return item.media?.metadata?.authorName?.trim() || '';
-  }
 </script>
 
 <div class="toolbar">
-  <div class="search" style="width: 320px">
+  <div class="toolbar__left">
+    <span class="toolbar__library truncate">{session.activeLibrary?.name ?? t('app.name')}</span>
+    <span class="t-small t-tertiary t-num">{t('library.total', { count: library.items.length })}</span>
+  </div>
+
+  <div class="search">
     <span class="search__icon"><Icon name="search" size={14} /></span>
     <input
       class="input"
       bind:this={searchEl}
       bind:value={query}
       placeholder={t('library.search')}
+      title={t('library.searchHint')}
       spellcheck="false"
       onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
     />
   </div>
 
-  <span class="t-small t-num">{t('library.count', { count: visible.length })}</span>
+  <div class="toolbar__right">
+    {#if query.trim()}
+      <span class="t-small t-num t-accent">{t('library.found', { count: visible.length })}</span>
+    {/if}
 
-  <div class="grow"></div>
+    <select class="select select--sm" bind:value={sort} aria-label={t('library.sort')} title={t('library.sort')}>
+      <option value="recent">{t('library.sort.recent')}</option>
+      <option value="title">{t('library.sort.title')}</option>
+      <option value="author">{t('library.sort.author')}</option>
+      <option value="progress">{t('library.sort.progress')}</option>
+    </select>
 
-  <button
-    class="icon-btn"
-    aria-label={t('library.refresh')}
-    title={t('library.refresh')}
-    onclick={() => void library.load(session.serverUrl, session.activeLibraryId, true)}
-  >
-    <Icon name="refresh" />
-  </button>
+    <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.grid')}>
+      <button
+        class="segmented__item"
+        aria-pressed={!isList}
+        title={t('library.layout.grid')}
+        onclick={() => ui.setLibraryLayout('grid')}
+      ><Icon name="grid" size={14} /></button>
+      <button
+        class="segmented__item"
+        aria-pressed={isList}
+        title={t('library.layout.list')}
+        onclick={() => ui.setLibraryLayout('list')}
+      ><Icon name="rows" size={14} /></button>
+    </div>
+
+    {#if !isList}
+      <div class="sizer" title={t('library.tileSize')}>
+        <button class="icon-btn icon-btn--sm" aria-label={t('library.tileSize')} onclick={() => ui.setTileSize(ui.tileSize - 20)}>
+          <Icon name="minus" size={13} />
+        </button>
+        <button class="icon-btn icon-btn--sm" aria-label={t('library.tileSize')} onclick={() => ui.setTileSize(ui.tileSize + 20)}>
+          <Icon name="plus" size={13} />
+        </button>
+      </div>
+    {/if}
+
+    <button
+      class="icon-btn"
+      aria-label={t('library.refresh')}
+      title={t('library.refresh')}
+      onclick={() => void library.load(session.serverUrl, session.activeLibraryId, true)}
+    >
+      <Icon name="refresh" />
+    </button>
+  </div>
 </div>
 
 <div class="page scroll-y" bind:this={scroller} onscroll={onScroll}>
@@ -339,12 +379,15 @@
               </div>
               <div class="shelf__text">
                 <span class="truncate shelf__title">{title(item)}</span>
-                <span class="t-small t-tertiary truncate">{chapter || author(item)}</span>
-                {#if fraction > 0}
+                <span class="t-small t-tertiary truncate shelf__chapter">
+                  {chapter || author(item)}
+                </span>
+                <span class="shelf__foot">
                   <span class="mini-bar" aria-hidden="true">
-                    <span style:width="{fraction * 100}%"></span>
+                    <span style:width="{Math.max(fraction * 100, 2)}%"></span>
                   </span>
-                {/if}
+                  <span class="t-num t-tertiary shelf__pct">{Math.round(fraction * 100)}%</span>
+                </span>
               </div>
             </button>
           {/each}
@@ -352,23 +395,37 @@
       </section>
     {/if}
 
-    <div class="views">
-      <div class="segmented">
-        {#each VIEWS as entry (entry.id)}
-          <button
-            class="segmented__item"
-            aria-pressed={view === entry.id}
-            onclick={() => {
-              view = entry.id;
-              group = null;
-            }}
-          >{t(entry.key)}</button>
-        {/each}
+    <!-- Centred, high-contrast view switch. Selecting one is a real page
+         change: the heading, the count and the content all follow. -->
+    <div class="viewbar">
+      <div class="viewbar__head">
+        <h1 class="viewbar__title">{group ?? viewName}</h1>
+        <span class="t-small t-tertiary t-num">
+          {t('library.count', { count: visible.length })}
+        </span>
       </div>
-      <span class="t-small t-num t-tertiary">
-        {t('library.count', { count: visible.length })}
-      </span>
+
+      <div class="views">
+        <div class="segmented segmented--views">
+          {#each VIEWS as entry (entry.id)}
+            <button
+              class="segmented__item"
+              aria-pressed={view === entry.id}
+              onclick={() => setView(entry.id)}
+            >{t(entry.key)}</button>
+          {/each}
+        </div>
+      </div>
+
+      <p class="t-small t-tertiary viewbar__hint">{t('library.viewHint')}</p>
     </div>
+
+    {#if group}
+      <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
+        <Icon name="chevron-left" size={14} />
+        {viewName}
+      </button>
+    {/if}
 
     {#if GROUPED && group === null}
       {#if groups.length === 0}
@@ -387,6 +444,7 @@
                 <span class="truncate group__name">{entry.name}</span>
                 <span class="t-small t-tertiary t-num">{entry.items.length}</span>
               </span>
+              <Icon name="chevron-right" size={13} />
             </button>
           {/each}
         </div>
@@ -397,20 +455,39 @@
         <span class="empty__title">{t('library.empty')}</span>
         <span class="empty__body">{t('library.emptyHint')}</span>
       </div>
+    {:else if isList}
+      <div class="list">
+        {#each visible as item (item.id)}
+          {@const fraction = progress.fraction(item.id)}
+          {@const chapter = currentChapter(item)}
+          <button
+            class="list__row"
+            aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
+            onclick={() => open(item)}
+            oncontextmenu={event => openMenu(event, item)}
+          >
+            <span class="list__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
+            <span class="list__main">
+              <span class="truncate list__title">{title(item)}</span>
+              <span class="t-small t-tertiary truncate">{chapter || author(item)}</span>
+            </span>
+            <span class="list__progress">
+              <span class="mini-bar" aria-hidden="true"><span style:width="{fraction * 100}%"></span></span>
+              <span class="t-small t-num t-tertiary">{Math.round(fraction * 100)}%</span>
+            </span>
+            <span class="t-small t-num t-tertiary list__len">
+              {formatLength(item.media?.duration ?? 0)}
+            </span>
+          </button>
+        {/each}
+      </div>
     {:else}
-      {#if group}
-        <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
-          <Icon name="chevron-left" size={14} />
-          {group}
-        </button>
-      {/if}
-
       <div class="grid" bind:this={gridEl} style:height={windowed ? `${totalH}px` : undefined}>
         <div
           class="grid__slice"
           class:windowed
           style:top={windowed ? `${offsetY}px` : undefined}
-          style:grid-template-columns={windowed ? `repeat(${columns}, minmax(0, 1fr))` : undefined}
+          style:grid-template-columns={windowed ? `repeat(${columns}, minmax(0, 1fr))` : `repeat(auto-fill, minmax(${minW}px, 1fr))`}
           style:grid-auto-rows={windowed ? `${tileH}px` : undefined}
         >
           {#each drawn as item (item.id)}
@@ -432,6 +509,73 @@
 </div>
 
 <style>
+  .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--gap-row);
+    padding: var(--gap-inline) var(--gap-block);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+
+  .toolbar__left {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gap-inline);
+    min-width: 0;
+  }
+
+  .toolbar__library {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .toolbar__right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .search {
+    position: relative;
+    width: 100%;
+  }
+
+  .search__icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .search .input {
+    width: 100%;
+    padding-left: 32px;
+  }
+
+  .select--sm {
+    width: auto;
+    min-width: 92px;
+    height: var(--control-sm);
+    font-size: var(--text-xs);
+  }
+
+  .segmented--tools .segmented__item {
+    display: grid;
+    place-items: center;
+    padding-inline: 9px;
+  }
+
+  .sizer {
+    display: flex;
+    gap: 1px;
+  }
+
   .page {
     position: relative;
     flex: 1 1 auto;
@@ -451,56 +595,125 @@
   .shelf {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 260px;
-    gap: var(--gap-panel);
+    grid-auto-columns: 272px;
+    gap: var(--gap-row);
     overflow-x: auto;
     padding-bottom: var(--gap-inline);
+    scrollbar-width: thin;
   }
 
   .shelf__card {
     display: flex;
-    gap: var(--gap-panel);
-    padding: var(--gap-row);
+    gap: var(--gap-row);
+    padding: 10px;
     border-radius: var(--radius-md);
     background: var(--surface);
     border: 1px solid var(--hairline);
     text-align: left;
-    transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+    transition: transform var(--dur-1) var(--ease), background var(--dur-1) var(--ease),
+      border-color var(--dur-1) var(--ease);
   }
 
   .shelf__card:hover {
+    transform: translateY(-2px);
     background: var(--surface-raised);
-    border-color: var(--hairline-strong);
+    border-color: var(--accent-line);
   }
 
   .shelf__cover {
-    width: 64px;
-    flex: 0 0 64px;
+    width: 58px;
+    flex: 0 0 58px;
   }
 
   .shelf__text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
     justify-content: center;
+    gap: 3px;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
   .shelf__title {
+    font-size: var(--text-sm);
     font-weight: var(--weight-medium);
+  }
+
+  .shelf__chapter {
+    color: var(--text-secondary);
+  }
+
+  .shelf__foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .shelf__foot .mini-bar {
+    flex: 1 1 auto;
+    margin-top: 0;
+  }
+
+  .shelf__pct {
+    font-size: var(--text-2xs);
+  }
+
+  .viewbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: var(--gap-row) 0 var(--gap-block);
+    margin-bottom: var(--gap-row);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .viewbar__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gap-inline);
+  }
+
+  .viewbar__title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
   }
 
   .views {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-row);
-    margin-bottom: var(--gap-row);
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Active view gets a solid accent pill: a grey underline was invisible. */
+  .views :global(.segmented--views) {
+    gap: 2px;
+    padding: 3px;
+    background: var(--surface-inset);
+    border: 1px solid var(--hairline);
+  }
+
+  .views :global(.segmented__item) {
+    padding: 6px 18px;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .views :global(.segmented__item[aria-pressed='true']) {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: var(--weight-medium);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.14);
+  }
+
+  .viewbar__hint {
+    font-size: var(--text-2xs);
   }
 
   .mini-bar {
     display: block;
-    height: 2px;
+    height: 3px;
     margin-top: 5px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
@@ -519,12 +732,9 @@
 
   .grid__slice {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: var(--gap-block) var(--gap-panel);
   }
 
-  /* Absolute only in windowed mode: the slice is positioned by scroll offset
-     while its parent reserves the full scroll height. */
   .grid__slice.windowed {
     position: absolute;
     left: 0;
@@ -537,9 +747,64 @@
     overflow: hidden;
   }
 
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .list__row {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 140px 90px;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: 7px var(--gap-row);
+    border-radius: var(--radius-sm);
+    text-align: left;
+  }
+
+  .list__row:hover,
+  .list__row[aria-current='true'] {
+    background: var(--surface-raised);
+  }
+
+  .list__cover {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .list__main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .list__title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .list__progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .list__progress .mini-bar {
+    flex: 1 1 auto;
+    margin-top: 0;
+  }
+
+  .list__len {
+    text-align: right;
+  }
+
   .groups {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: var(--gap-row);
     margin-bottom: var(--gap-section);
   }
@@ -548,16 +813,18 @@
     display: flex;
     align-items: center;
     gap: var(--gap-row);
-    padding: var(--gap-inline);
+    padding: var(--gap-inline) var(--gap-row);
     border-radius: var(--radius-sm);
     border: 1px solid var(--hairline);
     background: var(--surface);
     text-align: left;
+    color: var(--text-tertiary);
   }
 
   .group:hover {
     background: var(--surface-raised);
-    border-color: var(--hairline-strong);
+    border-color: var(--accent-line);
+    color: var(--accent);
   }
 
   .group__cover {
@@ -570,6 +837,7 @@
 
   .group__text {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 2px;
     min-width: 0;

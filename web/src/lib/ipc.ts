@@ -7,6 +7,7 @@
  * never has to know a command name or guess at a payload.
  */
 import { invoke } from '@tauri-apps/api/core';
+import { logs } from './logs.svelte';
 
 export class IpcError extends Error {
   constructor(public command: string, message: string) {
@@ -23,10 +24,14 @@ function looksLikeDeadSession(message: string): boolean {
 }
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+  const started = performance.now();
   try {
-    return await invoke<T>(command, args);
+    const result = await invoke<T>(command, args);
+    logs.server('debug', command, `ok · ${Math.round(performance.now() - started)} ms`);
+    return result;
   } catch (error) {
     const message = typeof error === 'string' ? error : String(error);
+    logs.server('error', command, message);
     // One dead-session error means every later call fails the same way, and the
     // screens would sit there empty. Tell the shell once.
     if (looksLikeDeadSession(message)) {
@@ -135,6 +140,8 @@ export interface Bookmark {
 export interface MeResponse {
   id: string;
   username: string;
+  /** ABS role: root / admin / user. Older servers may omit it. */
+  type?: string;
   mediaProgress?: MediaProgress[];
   bookmarks?: Bookmark[];
 }

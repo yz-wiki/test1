@@ -288,3 +288,34 @@
   --scrim:             rgb(17 24 39 / 0.30);
   --cover-fallback:    #e2e8f0;
 }
+
+
+/* ─── Theme: porcelain (warm white, quiet blue-grey) ──────────────────────── */
+
+[data-theme='porcelain'] {
+  --canvas:            #eef1f6;
+  --surface:           #fdfdfe;
+  --surface-raised:    #f3f6fb;
+  --surface-overlay:   #ffffff;
+  --surface-inset:     #e3e9f2;
+
+  --hairline:          rgb(30 45 70 / 0.11);
+  --hairline-strong:   rgb(30 45 70 / 0.22);
+
+  --text:              #172033;
+  --text-secondary:    rgb(23 32 51 / 0.72);
+  --text-tertiary:     rgb(23 32 51 / 0.52);
+
+  --accent:            #3358c9;
+  --accent-hover:      #2846a8;
+  --accent-soft:       rgb(51 88 201 / 0.12);
+  --accent-line:       rgb(51 88 201 / 0.36);
+  --on-accent:         #ffffff;
+
+  --positive:          #16794a;
+  --warning:           #a5650c;
+  --danger:            #b3261e;
+
+  --scrim:             rgb(23 32 51 / 0.32);
+  --cover-fallback:    #dde5f0;
+}

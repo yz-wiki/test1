@@ -7,6 +7,7 @@
   import { sync } from './lib/sync.svelte';
   import { installShortcuts } from './lib/shortcuts';
   import { AUTH_LOST } from './lib/ipc';
+  import { logs } from './lib/logs.svelte';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
   import Book from './routes/Book.svelte';
@@ -22,9 +23,24 @@
   let uninstallShortcuts: (() => void) | null = null;
   let uninstallMenu: (() => void) | null = null;
   let uninstallAuth: (() => void) | null = null;
+  let uninstallLogs: (() => void) | null = null;
 
   onMount(async () => {
     uninstallShortcuts = installShortcuts();
+    logs.app('info', 'boot', 'window created');
+
+    // The app stream: uncaught errors, rejected promises, session and sync
+    // transitions. The server stream is filled by every call() in ipc.ts.
+    const onError = (event: ErrorEvent) =>
+      logs.app('error', 'window', event.message || 'unknown error');
+    const onReject = (event: PromiseRejectionEvent) =>
+      logs.app('error', 'promise', String(event.reason));
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onReject);
+    uninstallLogs = () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onReject);
+    };
 
     // The webview's default menu (Back / Reload / Save as / Print) belongs to a
     // browser. Text fields keep theirs so copy and paste still work.
@@ -44,12 +60,22 @@
 
     // A dead credential used to leave every screen blank with a red line of
     // Rust text. Go back to sign-in instead, and say why.
-    const onAuthLost = () => session.expire();
+    const onAuthLost = () => {
+      logs.app('warn', 'auth', 'session expired — returning to sign-in');
+      session.expire();
+    };
     window.addEventListener(AUTH_LOST, onAuthLost);
     void listen('auth-expired', () => session.expire());
     uninstallAuth = () => window.removeEventListener(AUTH_LOST, onAuthLost);
     try {
       await session.bootstrap();
+      logs.app(
+        'info',
+        'auth',
+        session.authenticated
+          ? `signed in as ${session.user?.username ?? 'unknown'} on ${session.serverUrl}`
+          : 'no stored session',
+      );
     } finally {
       booting = false;
     }
@@ -62,6 +88,26 @@
     uninstallMenu = null;
     uninstallAuth?.();
     uninstallAuth = null;
+    uninstallLogs?.();
+    uninstallLogs = null;
+  });
+
+  let lastSocket = '';
+  $effect(() => {
+    const state = sync.socket;
+    if (state !== lastSocket) {
+      lastSocket = state;
+      logs.app('info', 'sync', `socket ${state}`);
+    }
+  });
+
+  let lastRoute = '';
+  $effect(() => {
+    const route = ui.route;
+    if (route !== lastRoute) {
+      lastRoute = route;
+      logs.app('debug', 'ui', `route → ${route}`);
+    }
   });
 
   // Listening progress belongs to the server, not to a screen: load it once the

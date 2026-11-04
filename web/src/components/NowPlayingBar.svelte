@@ -19,6 +19,29 @@
 
   let menuOpen = $state(false);
   let menuEl = $state<HTMLDivElement | null>(null);
+  let sleepOpen = $state(false);
+  let volumeActive = $state(false);
+  let volumeTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastVolume = $state(1);
+
+  const RATES = [0.8, 1, 1.25, 1.5, 1.75, 2];
+  const SLEEPS = [15, 30, 45, 60] as const;
+
+  function onVolume(value: number): void {
+    void player.setVolume(value);
+    volumeActive = true;
+    if (volumeTimer) clearTimeout(volumeTimer);
+    volumeTimer = setTimeout(() => (volumeActive = false), 1200);
+  }
+
+  function toggleMute(): void {
+    if (player.volume > 0) {
+      lastVolume = player.volume;
+      void player.setVolume(0);
+    } else {
+      void player.setVolume(lastVolume || 0.8);
+    }
+  }
 
   /** Chapters for a book, episodes for a show — one list, whichever applies. */
   const entries = $derived(
@@ -43,11 +66,15 @@
 
   onMount(() => {
     const onPointerDown = (event: PointerEvent) => {
-      if (!menuOpen) return;
-      if (menuEl && !menuEl.contains(event.target as Node)) menuOpen = false;
+      if (menuOpen && menuEl && !menuEl.contains(event.target as Node)) menuOpen = false;
+      const target = event.target as HTMLElement | null;
+      if (sleepOpen && !target?.closest('.bar__pop-anchor')) sleepOpen = false;
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') menuOpen = false;
+      if (event.key === 'Escape') {
+        menuOpen = false;
+        sleepOpen = false;
+      }
     };
     window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('keydown', onKey);
@@ -123,6 +150,72 @@
         <span class="t-num t-small t-tertiary bar__time">
           {formatDuration(player.position)} / {formatDuration(player.duration)}
         </span>
+
+        <div class="bar__volume">
+          <button
+            class="icon-btn icon-btn--sm"
+            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            onclick={toggleMute}
+          ><Icon name="volume" size={14} /></button>
+          <input
+            class="bar__slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={player.volume}
+            aria-label={t('player.volume')}
+            oninput={event => onVolume(Number(event.currentTarget.value))}
+          />
+          <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
+        </div>
+
+        <select
+          class="select select--xs"
+          aria-label={t('player.speed')}
+          title={t('player.speed')}
+          value={player.rate}
+          onchange={event => void player.setRate(Number(event.currentTarget.value))}
+        >
+          {#each RATES as rate (rate)}
+            <option value={rate}>{rate}×</option>
+          {/each}
+        </select>
+
+        <div class="bar__pop-anchor">
+          <button
+            class="icon-btn icon-btn--sm"
+            class:active={sleepOpen || player.sleepMode !== 'off'}
+            aria-label={t('player.sleepShort')}
+            title={t('player.sleepShort')}
+            aria-expanded={sleepOpen}
+            onclick={() => (sleepOpen = !sleepOpen)}
+          ><Icon name="clock" size={14} /></button>
+          {#if sleepOpen}
+            <div class="bar__pop" role="menu">
+              <button class="bar__pop-item" onclick={() => { player.setSleep('off'); sleepOpen = false; }}>
+                {t('sleep.off')}
+              </button>
+              {#each SLEEPS as minutes (minutes)}
+                <button class="bar__pop-item" onclick={() => { player.setSleep(minutes); sleepOpen = false; }}>
+                  {t('sleep.minutes', { count: minutes })}
+                </button>
+              {/each}
+              <button class="bar__pop-item" onclick={() => { player.setSleep('chapter'); sleepOpen = false; }}>
+                {t('sleep.chapter')}
+              </button>
+            </div>
+          {/if}
+        </div>
+
+        <button
+          class="icon-btn icon-btn--sm"
+          aria-label={t('player.openPlayer')}
+          title={t('player.openPlayer')}
+          onclick={() => player.expand()}
+        ><Icon name="expand" size={14} /></button>
+
         <div class="bar__menu-anchor" bind:this={menuEl}>
           <button
             class="icon-btn icon-btn--sm"
@@ -213,6 +306,73 @@
     color: var(--text);
   }
 
+  .bar__volume {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .bar__slider {
+    width: 68px;
+    accent-color: var(--accent);
+  }
+
+  .bar__pct {
+    min-width: 32px;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease);
+  }
+
+  .bar__pct.shown {
+    opacity: 1;
+  }
+
+  .select--xs {
+    width: auto;
+    height: var(--control-sm);
+    min-width: 58px;
+    padding-inline: 4px;
+    font-size: var(--text-xs);
+  }
+
+  .bar__pop-anchor {
+    position: relative;
+  }
+
+  .bar__pop {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 132px;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-overlay);
+    box-shadow: var(--shadow-2);
+  }
+
+  .bar__pop-item {
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    text-align: left;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+
+  .bar__pop-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .icon-btn.active {
+    color: var(--accent);
+  }
+
   .bar__transport {
     display: flex;
     align-items: center;
@@ -247,7 +407,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--gap-inline);
+    gap: 4px;
     flex: 1 1 0;
     min-width: 0;
   }

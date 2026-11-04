@@ -87,15 +87,35 @@
       : meta.seriesName;
   });
 
+  /** The chapter the saved position falls in — what "already listened" means. */
+  const chapterIndexNow = $derived.by(() => {
+    const at = saved?.currentTime ?? 0;
+    for (let index = chapters.length - 1; index >= 0; index -= 1) {
+      if (at >= chapters[index].start) return index;
+    }
+    return 0;
+  });
+  const currentChapterTitle = $derived(
+    chapters[chapterIndexNow]?.title ?? formatDuration(saved?.currentTime ?? 0),
+  );
+
+  /** Labels, not a bare stack of values: "zh / 1274 章" read as noise. */
   const facts = $derived(
     [
-      meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
-      meta?.publisher ?? '',
-      meta?.publishedYear ?? '',
-      meta?.language ?? '',
-      chapters.length > 0 ? t('book.chapterCount', { count: chapters.length }) : '',
-      files.length > 0 ? t('book.fileCount', { count: files.length }) : '',
-    ].filter(Boolean),
+      meta?.narratorName ? { label: t('meta.narrators'), value: meta.narratorName } : null,
+      meta?.publisher ? { label: t('meta.publisher'), value: meta.publisher } : null,
+      meta?.publishedYear ? { label: t('meta.year'), value: meta.publishedYear } : null,
+      meta?.language ? { label: t('meta.language'), value: meta.language } : null,
+      formatLength(item?.media?.duration ?? 0)
+        ? { label: t('player.duration'), value: formatLength(item?.media?.duration ?? 0) }
+        : null,
+      chapters.length > 0
+        ? { label: t('book.chapters'), value: t('book.chapterCount', { count: chapters.length }) }
+        : null,
+      files.length > 0
+        ? { label: t('book.files'), value: t('book.fileCount', { count: files.length }) }
+        : null,
+    ].filter((entry): entry is { label: string; value: string } => entry !== null),
   );
 
   function play(from?: number): void {
@@ -251,15 +271,24 @@
 
         {#if fraction > 0}
           <div class="resume">
+            <div class="resume__head">
+              <span class="t-label">{t('book.nowAt')}</span>
+              {#if chapters.length > 0}
+                <span class="t-small t-tertiary t-num">
+                  {t('book.chapterOf', { index: chapterIndexNow + 1, total: chapters.length })}
+                </span>
+              {/if}
+            </div>
+            <span class="resume__chapter truncate" title={currentChapterTitle}>
+              {currentChapterTitle}
+            </span>
             <div class="resume__bar" aria-hidden="true">
               <span style:width="{fraction * 100}%"></span>
             </div>
-            <span class="t-small t-tertiary t-num">
-              {t('book.progress', {
-                done: formatLength((item.media?.duration ?? 0) * fraction),
-                total: formatLength(item.media?.duration ?? 0),
-              })}
-            </span>
+            <div class="resume__foot t-num">
+              <span>{t('book.listened')} {formatLength((item.media?.duration ?? 0) * fraction)}</span>
+              <span>{Math.round(fraction * 100)}%</span>
+            </div>
           </div>
         {/if}
 
@@ -293,8 +322,9 @@
 
         {#if facts.length > 0}
           <dl class="facts">
-            {#each facts as fact (fact)}
-              <dd class="t-small t-tertiary">{fact}</dd>
+            {#each facts as fact (fact.label)}
+              <dt class="t-small t-tertiary">{fact.label}</dt>
+              <dd class="t-small truncate">{fact.value}</dd>
             {/each}
           </dl>
         {/if}
@@ -541,12 +571,28 @@
   .resume {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-top: calc(var(--gap-inline) * -1);
+    gap: 6px;
+    padding: var(--gap-row);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent-line);
+    background: var(--accent-soft);
+  }
+
+  .resume__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--gap-inline);
+  }
+
+  .resume__chapter {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
   }
 
   .resume__bar {
-    height: 3px;
+    height: 4px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
     overflow: hidden;
@@ -558,17 +604,29 @@
     background: var(--accent);
   }
 
-  .facts {
+  .resume__foot {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    justify-content: space-between;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 5px var(--gap-inline);
     margin-top: var(--gap-inline);
     padding-top: var(--gap-row);
     border-top: 1px solid var(--hairline);
   }
 
+  .facts dt {
+    margin: 0;
+  }
+
   .facts dd {
     margin: 0;
+    color: var(--text-secondary);
   }
 
   .detail__main {
@@ -644,7 +702,21 @@
     color: var(--text-tertiary);
   }
 
+  /* Two stacked sticky rows: the tab strip and the chapter range stay visible
+     while a 1000-chapter list scrolls underneath. */
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    align-self: flex-start;
+    padding: 5px 0;
+    background: var(--canvas);
+  }
+
   .range {
+    position: sticky;
+    top: 40px;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: space-between;

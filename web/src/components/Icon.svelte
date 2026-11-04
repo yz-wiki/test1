@@ -27,7 +27,19 @@
     | 'download'
     | 'server'
     | 'list'
-    | 'dots';
+    | 'dots'
+    | 'home'
+    | 'layers'
+    | 'user'
+    | 'mic'
+    | 'grid'
+    | 'rows'
+    | 'sliders'
+    | 'globe'
+    | 'palette'
+    | 'activity'
+    | 'minus'
+    | 'trash';
 
   let { name, size = 16, filled = false }: {
     name: IconName;
@@ -108,6 +120,43 @@
     <rect x="2.4" y="3" width="11.2" height="4" rx="1.2" />
     <rect x="2.4" y="9" width="11.2" height="4" rx="1.2" />
     <path d="M4.8 5h.01M4.8 11h.01" />
+  {:else if name === 'home'}
+    <path d="M2.6 7.1L8 2.8l5.4 4.3v6.1H9.9V9.6H6.1v3.6H2.6z" />
+  {:else if name === 'layers'}
+    <path d="M8 2.4l5.6 2.9L8 8.2 2.4 5.3z" />
+    <path d="M2.4 8l5.6 2.9L13.6 8M2.4 10.7l5.6 2.9 5.6-2.9" />
+  {:else if name === 'user'}
+    <circle cx="8" cy="5.6" r="2.4" />
+    <path d="M3.2 13.2c0-2.5 2.1-4.2 4.8-4.2s4.8 1.7 4.8 4.2" />
+  {:else if name === 'mic'}
+    <rect x="6.1" y="2.3" width="3.8" height="7" rx="1.9" />
+    <path d="M4.3 7.8a3.7 3.7 0 007.4 0M8 11.5v2.2M5.8 13.7h4.4" />
+  {:else if name === 'grid'}
+    <rect x="2.6" y="2.6" width="4.6" height="4.6" rx="0.8" />
+    <rect x="8.8" y="2.6" width="4.6" height="4.6" rx="0.8" />
+    <rect x="2.6" y="8.8" width="4.6" height="4.6" rx="0.8" />
+    <rect x="8.8" y="8.8" width="4.6" height="4.6" rx="0.8" />
+  {:else if name === 'rows'}
+    <path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8" />
+  {:else if name === 'sliders'}
+    <path d="M3 4.6h10M3 8h10M3 11.4h10" />
+    <circle cx="6" cy="4.6" r="1.3" fill="var(--surface)" />
+    <circle cx="10" cy="8" r="1.3" fill="var(--surface)" />
+    <circle cx="7" cy="11.4" r="1.3" fill="var(--surface)" />
+  {:else if name === 'globe'}
+    <circle cx="8" cy="8" r="5.4" />
+    <path d="M2.6 8h10.8M8 2.6c1.5 1.5 2.2 3.3 2.2 5.4S9.5 12.4 8 13.4C6.5 12.4 5.8 10.1 5.8 8S6.5 4.1 8 2.6z" />
+  {:else if name === 'palette'}
+    <path d="M8 2.4a5.6 5.6 0 000 11.2c1 0 1.4-.7 1.4-1.4 0-1 .8-1.6 1.7-1.6h1.1A2.4 2.4 0 0014.6 8 5.6 5.6 0 008 2.4z" />
+    <circle cx="5.4" cy="7.4" r="0.8" fill="currentColor" stroke="none" />
+    <circle cx="8" cy="5.2" r="0.8" fill="currentColor" stroke="none" />
+    <circle cx="10.8" cy="6.6" r="0.8" fill="currentColor" stroke="none" />
+  {:else if name === 'activity'}
+    <path d="M2.2 8h3L7 4.2l2.2 7.6L11 8h2.8" />
+  {:else if name === 'minus'}
+    <path d="M3.4 8h9.2" />
+  {:else if name === 'trash'}
+    <path d="M3.4 4.6h9.2M6.2 4.6V3h3.6v1.6M4.6 4.6l.6 8.4h5.6l.6-8.4" />
   {:else if name === 'dots'}
     <circle cx="4" cy="8" r="1.1" fill="currentColor" stroke="none" />
     <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />

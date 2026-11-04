@@ -575,16 +575,28 @@
     opacity: 0.6;
   }
 
+  /* One centred tool strip instead of three loose clusters fighting the
+     transport buttons for alignment. */
   .transport__extras {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--gap-panel);
     flex-wrap: wrap;
+    margin-top: var(--gap-inline);
+    padding: var(--gap-inline) var(--gap-row);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
   }
 
-  /* Volume sits with the sleep timer on the right; speed owns the left. */
+  .transport__extras .extra + .extra {
+    padding-left: var(--gap-panel);
+    border-left: 1px solid var(--hairline);
+  }
+
   .volume-extra {
-    margin-left: auto;
+    margin-left: 0;
   }
 
   .extra {

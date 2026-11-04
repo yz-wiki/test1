@@ -99,5 +99,40 @@ export function itemFields(item: LibraryItem): string {
 }
 
 export function matchesQuery(item: LibraryItem, query: string): boolean {
-  return textMatches(itemFields(item), query);
+  return matchScore(item, query) > 0;
+}
+
+/**
+ * Ranked, multi-word search. Every word must hit something (AND), and a title
+ * hit outranks an author hit, which outranks a series or narrator hit. Prefix
+ * and exact matches score higher than a bare substring, so typing a few
+ * letters puts the book you meant at the top instead of somewhere in a list.
+ */
+export function matchScore(item: LibraryItem, query: string): number {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 1;
+
+  const meta = item.media?.metadata;
+  const fields: [string | undefined, number][] = [
+    [meta?.title, 10],
+    [meta?.authorName, 6],
+    [meta?.seriesName, 5],
+    [meta?.subtitle, 4],
+    [meta?.narratorName, 4],
+  ];
+
+  let total = 0;
+  for (const word of words) {
+    let best = 0;
+    for (const [text, weight] of fields) {
+      if (!text || !textMatches(text, word)) continue;
+      const lower = text.toLowerCase();
+      const quality = lower === word ? 2 : lower.startsWith(word) ? 1.5 : 1;
+      best = Math.max(best, weight * quality);
+    }
+    // One word with no hit anywhere disqualifies the item.
+    if (best === 0) return 0;
+    total += best;
+  }
+  return total;
 }

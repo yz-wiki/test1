@@ -2,12 +2,70 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.9.0 (2026-11-04) — preview
+## 2.10.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
+### Fixed — the server screen was gone
+
+`MeResponse` had no `type` field and bootstrap stored only `{id, username}`, so
+`session.user?.type` was always undefined and the conditional that renders the
+server entry hid it. Uploads, libraries, users, tasks and backups all became
+unreachable. The entry now shows whenever the role is unknown or privileged,
+and the merged account pane has a second, explicit shortcut to it.
+
 ### Shell and navigation
+
+- The rail is grouped (Browse / Views / Libraries / System), carries a small
+  library-and-progress stat card, and no longer produces a horizontal
+  scrollbar. Folded state is a 56px icon rail; long library names ellipsise.
+- **Home / Books / Series / Authors / Narrators are real navigation.** They live
+  in the sidebar and, mirrored, in a centred high-contrast switcher on the
+  library page. Selecting one changes the heading, the count and the content.
+
+### Library
+
+- The toolbar is three columns: library name and total on the left, a centred
+  search in the middle, sort / grid-list / cover size / refresh on the right.
+  Search shows how many titles matched.
+- **Grid or list**, and cover size adjustable in 20px steps (112–280px),
+  remembered between launches. List rows show the chapter you are on, a
+  progress bar, the percentage and the runtime.
+- **Search is ranked**: multiple words are AND-ed, title hits outrank author /
+  series / narrator hits, prefix and exact matches outrank bare substrings,
+  and results are ordered by that score. Pinyin and initials still work.
+- Continue cards show the chapter, a progress percentage and open the player.
+
+### Book screen
+
+- "Already listened" is a card showing **the chapter you are on**, its ordinal
+  out of the total, the bar and the percentage — not `— / —`.
+- Metadata facts are labelled (narrator / publisher / year / language /
+  length / chapters / files) instead of a bare stack of values.
+- The chapter tab strip and the range picker are sticky while a 1000-chapter
+  list scrolls beneath them.
+
+### Player and bottom bar
+
+- **The bottom bar has volume** (mute button, slider, transient percentage),
+  playback speed, sleep timer, open-player and the chapter menu.
+- The player's speed / volume / sleep controls are one centred tool strip
+  instead of three loose clusters.
+
+### Settings, logs and themes
+
+- **Panes merged**: Appearance + Language → Display; Account + Server → Account
+  & server. Old saved pane names are migrated on open.
+- **New Logs pane**: two live streams (application events and every command
+  sent to the server), with level filter, text filter, freeze, auto-scroll,
+  clear, copy, export and a shortcut to the on-disk log directory.
+- **Porcelain**, a ninth light theme.
+- **Custom theme editor**: pick a base theme, edit seven colour tokens visually
+  or type raw CSS, preview instantly, reset any time. Custom themes inherit the
+  base for every untouched token.
+
+### Shell and navigation (2.9.0)
 
 - **The sidebar folds** to a 58px icon rail (button at its top, remembered
   between launches), so the library gets the width on small screens.
@@ -219,7 +277,65 @@ Reported from the 1.5.0 build.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
 
+### Fixed — the server screen was gone
+
+`MeResponse` had no `type` field and bootstrap stored only `{id, username}`, so
+`session.user?.type` was always undefined and the conditional that renders the
+server entry hid it. Uploads, libraries, users, tasks and backups all became
+unreachable. The entry now shows whenever the role is unknown or privileged,
+and the merged account pane has a second, explicit shortcut to it.
+
 ### Shell and navigation
+
+- The rail is grouped (Browse / Views / Libraries / System), carries a small
+  library-and-progress stat card, and no longer produces a horizontal
+  scrollbar. Folded state is a 56px icon rail; long library names ellipsise.
+- **Home / Books / Series / Authors / Narrators are real navigation.** They live
+  in the sidebar and, mirrored, in a centred high-contrast switcher on the
+  library page. Selecting one changes the heading, the count and the content.
+
+### Library
+
+- The toolbar is three columns: library name and total on the left, a centred
+  search in the middle, sort / grid-list / cover size / refresh on the right.
+  Search shows how many titles matched.
+- **Grid or list**, and cover size adjustable in 20px steps (112–280px),
+  remembered between launches. List rows show the chapter you are on, a
+  progress bar, the percentage and the runtime.
+- **Search is ranked**: multiple words are AND-ed, title hits outrank author /
+  series / narrator hits, prefix and exact matches outrank bare substrings,
+  and results are ordered by that score. Pinyin and initials still work.
+- Continue cards show the chapter, a progress percentage and open the player.
+
+### Book screen
+
+- "Already listened" is a card showing **the chapter you are on**, its ordinal
+  out of the total, the bar and the percentage — not `— / —`.
+- Metadata facts are labelled (narrator / publisher / year / language /
+  length / chapters / files) instead of a bare stack of values.
+- The chapter tab strip and the range picker are sticky while a 1000-chapter
+  list scrolls beneath them.
+
+### Player and bottom bar
+
+- **The bottom bar has volume** (mute button, slider, transient percentage),
+  playback speed, sleep timer, open-player and the chapter menu.
+- The player's speed / volume / sleep controls are one centred tool strip
+  instead of three loose clusters.
+
+### Settings, logs and themes
+
+- **Panes merged**: Appearance + Language → Display; Account + Server → Account
+  & server. Old saved pane names are migrated on open.
+- **New Logs pane**: two live streams (application events and every command
+  sent to the server), with level filter, text filter, freeze, auto-scroll,
+  clear, copy, export and a shortcut to the on-disk log directory.
+- **Porcelain**, a ninth light theme.
+- **Custom theme editor**: pick a base theme, edit seven colour tokens visually
+  or type raw CSS, preview instantly, reset any time. Custom themes inherit the
+  base for every untouched token.
+
+### Shell and navigation (2.9.0)
 
 - **The sidebar folds** to a 58px icon rail (button at its top, remembered
   between launches), so the library gets the width on small screens.

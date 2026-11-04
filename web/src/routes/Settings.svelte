@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { getVersion } from '@tauri-apps/api/app';
   import { open } from '@tauri-apps/plugin-dialog';
-  import { ACCENTS, SCALES, session, ui, type ThemeId } from '../lib/state.svelte';
+  import { ACCENTS, CUSTOM_VARS, SCALES, THEMES, session, ui, type ThemeId } from '../lib/state.svelte';
   import { sync } from '../lib/sync.svelte';
   import {
     LOCALES,
@@ -27,29 +27,25 @@
   } from '../lib/ipc';
   import EqPanel from '../components/EqPanel.svelte';
   import Icon from '../components/Icon.svelte';
+import LogsPanel from '../components/LogsPanel.svelte';
 
-  type Section =
-    | 'appearance'
-    | 'language'
-    | 'playback'
-    | 'storage'
-    | 'keyboard'
-    | 'account'
-    | 'server'
-    | 'about';
+  /** Appearance + language are one concern (Display); account + server are
+   *  one concern (Account & server). Fewer panes, less hunting. */
+  type Section = 'display' | 'playback' | 'storage' | 'keyboard' | 'account' | 'logs' | 'about';
 
-  type NavIcon = 'settings' | 'library' | 'headphones' | 'download' | 'clock' | 'book' | 'server';
+  type NavIcon = 'settings' | 'library' | 'headphones' | 'download' | 'clock' | 'book' | 'server' | 'activity' | 'palette' | 'globe';
 
   const SECTIONS: { id: Section; key: TranslationKey; desc: TranslationKey; icon: NavIcon }[] = [
-    { id: 'appearance', key: 'settings.section.appearance', desc: 'settings.desc.appearance', icon: 'settings' },
-    { id: 'language', key: 'settings.section.language', desc: 'settings.desc.language', icon: 'library' },
+    { id: 'display', key: 'settings.section.display', desc: 'settings.desc.display', icon: 'palette' },
     { id: 'playback', key: 'settings.section.playback', desc: 'settings.desc.playback', icon: 'headphones' },
     { id: 'storage', key: 'settings.section.storage', desc: 'settings.desc.storage', icon: 'download' },
     { id: 'keyboard', key: 'settings.section.keyboard', desc: 'settings.desc.keyboard', icon: 'clock' },
     { id: 'account', key: 'settings.section.account', desc: 'settings.desc.account', icon: 'book' },
-    { id: 'server', key: 'settings.section.server', desc: 'settings.desc.server', icon: 'server' },
+    { id: 'logs', key: 'settings.section.logs', desc: 'settings.desc.logs', icon: 'activity' },
     { id: 'about', key: 'settings.section.about', desc: 'settings.desc.about', icon: 'settings' },
   ];
+
+  const BASE_THEMES = THEMES.filter(id => id !== 'custom');
 
   const current = $derived(SECTIONS.find(entry => entry.id === section) ?? SECTIONS[0]);
 
@@ -60,7 +56,9 @@
     nord: 'theme.nord',
     paper: 'theme.paper',
     daylight: 'theme.daylight',
+    porcelain: 'theme.porcelain',
     sepia: 'theme.sepia',
+    custom: 'theme.custom',
   };
 
   /** Preview swatch: canvas, surface, accent. */
@@ -71,7 +69,9 @@
     nord: ['#2e3440', '#434c5e', '#88c0d0'],
     paper: ['#f4f3f6', '#ffffff', '#6b57e8'],
     daylight: ['#ffffff', '#eef2f8', '#2563eb'],
+    porcelain: ['#eef1f6', '#fdfdfe', '#3358c9'],
     sepia: ['#f3ece0', '#fffaf3', '#a05f2c'],
+    custom: ['#f5f7fb', '#ffffff', '#3b6ef5'],
   };
 
   const SHORTCUTS: { keys: string; key: TranslationKey }[] = [
@@ -84,7 +84,20 @@
     { keys: 'Ctrl + ,', key: 'keys.settings' },
   ];
 
-  let section = $state<Section>((ui.settingsSection as Section) ?? 'appearance');
+  function initialSection(): Section {
+    const raw = ui.settingsSection as string;
+    if (raw === 'appearance' || raw === 'language') return 'display';
+    if (raw === 'server') return 'account';
+    const allowed: Section[] = ['display', 'playback', 'storage', 'keyboard', 'account', 'logs', 'about'];
+    return allowed.includes(raw as Section) ? (raw as Section) : 'display';
+  }
+
+  let section = $state<Section>(initialSection());
+
+  /** A colour input only accepts #rrggbb; anything else falls back safely. */
+  function asHex(value: string): string {
+    return /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#888888';
+  }
 
   // Remember the pane so the account chip and Ctrl+, land where they were.
   $effect(() => {
@@ -192,7 +205,7 @@
       <p class="t-small form-error" role="alert">{error}</p>
     {/if}
 
-    {#if section === 'appearance'}
+    {#if section === 'display'}
       <section class="card">
         <div class="card__head">
           <span class="t-label">{t('settings.theme')}</span>
@@ -297,7 +310,6 @@
           </div>
         </div>
       </section>
-    {:else if section === 'language'}
       <section class="card">
         <div class="card__body">
           <div class="setting">
@@ -319,6 +331,71 @@
           </div>
         </div>
       </section>
+    {#if ui.theme === 'custom'}
+      <section class="card custom">
+        <div class="card__head"><span class="t-label">{t('theme.editor')}</span></div>
+        <div class="card__body">
+          <p class="t-small t-tertiary custom__hint">{t('theme.editorHint')}</p>
+
+          <div class="setting">
+            <div class="setting__main">
+              <span class="setting__label">{t('theme.base')}</span>
+              <span class="setting__hint">{t('settings.theme')}</span>
+            </div>
+            <div class="setting__control">
+              <select
+                class="select custom__select"
+                value={ui.customBase}
+                onchange={event => ui.setCustomBase(event.currentTarget.value as ThemeId)}
+              >
+                {#each BASE_THEMES as id (id)}
+                  <option value={id}>{t(THEME_KEYS[id])}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div class="custom__grid">
+            {#each CUSTOM_VARS as entry (entry.key)}
+              <label class="custom__var">
+                <span class="t-small">{t(entry.label)}</span>
+                <span class="custom__picker">
+                  <input
+                    type="color"
+                    value={asHex(ui.customVars[entry.key] ?? '#888888')}
+                    aria-label={t(entry.label)}
+                    oninput={event => ui.setCustomVar(entry.key, event.currentTarget.value)}
+                  />
+                  <input
+                    class="input input--sm"
+                    value={ui.customVars[entry.key] ?? ''}
+                    spellcheck="false"
+                    oninput={event => ui.setCustomVar(entry.key, event.currentTarget.value)}
+                  />
+                </span>
+              </label>
+            {/each}
+          </div>
+
+          <label class="field custom__css">
+            <span class="field__label">{t('theme.css')}</span>
+            <textarea
+              class="textarea"
+              rows="5"
+              spellcheck="false"
+              value={ui.customCss}
+              oninput={event => ui.setCustomCss(event.currentTarget.value)}
+            ></textarea>
+            <span class="t-small t-tertiary">{t('theme.cssHint')}</span>
+          </label>
+
+          <button class="btn btn--quiet btn--sm" onclick={() => ui.resetCustom()}>
+            {t('theme.reset')}
+          </button>
+        </div>
+      </section>
+    {/if}
+
     {:else if section === 'playback'}
       <section class="card">
         <div class="card__body">
@@ -413,24 +490,19 @@
             </div>
           </div>
 
-          <div class="setting">
-            <div class="setting__main">
-              <span class="setting__label">{t('sync.socket')}</span>
-              <span class="setting__hint">
-                <span class="dot" class:on={sync.socket === 'connected'} class:pending={sync.socket === 'connecting'}></span>
-                {sync.socket === 'connected'
-                  ? t('sync.connected')
-                  : sync.socket === 'connecting'
-                    ? t('sync.connecting')
-                    : t('sync.offline')}
-              </span>
+          {#if session.canManageServer}
+            <div class="setting">
+              <div class="setting__main">
+                <span class="setting__label">{t('settings.openServer')}</span>
+                <span class="setting__hint">{t('settings.openServerHint')}</span>
+              </div>
+              <div class="setting__control">
+                <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'admin')}>
+                  {t('settings.open')}
+                </button>
+              </div>
             </div>
-            <div class="setting__control">
-              <button class="btn btn--quiet btn--sm" onclick={() => (section = 'server')}>
-                {t('settings.open')}
-              </button>
-            </div>
-          </div>
+          {/if}
 
           <div class="setting">
             <div class="setting__main">
@@ -445,7 +517,6 @@
           </div>
         </div>
       </section>
-    {:else if section === 'server'}
       <section class="card">
         <div class="card__body">
           <div class="setting">
@@ -514,21 +585,10 @@
             </div>
           </div>
 
-          {#if session.user?.type === 'root' || session.user?.type === 'admin'}
-            <div class="setting">
-              <div class="setting__main">
-                <span class="setting__label">{t('admin.title')}</span>
-                <span class="setting__hint">{t('settings.adminHint')}</span>
-              </div>
-              <div class="setting__control">
-                <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'admin')}>
-                  {t('settings.open')}
-                </button>
-              </div>
-            </div>
-          {/if}
         </div>
       </section>
+    {:else if section === 'logs'}
+      <LogsPanel />
     {:else}
       <section class="card">
         <div class="card__body">
@@ -575,6 +635,64 @@
 
   .settings__title {
     padding: 0 var(--gap-inline) var(--gap-row);
+  }
+
+  .custom__hint {
+    margin-bottom: var(--gap-row);
+  }
+
+  .custom__select {
+    width: auto;
+    min-width: 130px;
+    height: var(--control-sm);
+    font-size: var(--text-xs);
+  }
+
+  .custom__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: var(--gap-row);
+    padding: var(--gap-row) 0;
+  }
+
+  .custom__var {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--text-secondary);
+  }
+
+  .custom__picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .custom__picker input[type='color'] {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    padding: 2px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+
+  .custom__picker .input--sm {
+    width: 100%;
+    min-width: 0;
+    font-family: ui-monospace, Consolas, monospace;
+  }
+
+  .custom__css {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .custom__css .textarea {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: var(--text-xs);
   }
 
   .pane__head {

@@ -19,6 +19,7 @@ import {
   type MediaProgress,
   type User,
 } from './ipc';
+import type { TranslationKey } from './i18n.svelte';
 
 const KEY_SERVER = 'skald.serverUrl';
 const KEY_LIBRARY = 'skald.libraryId';
@@ -54,7 +55,7 @@ class SessionStore {
     // this the sidebar showed "Unknown" and the admin entry stayed hidden.
     try {
       const me = await getMe(this.serverUrl);
-      this.user = { id: me.id, username: me.username };
+      this.user = { id: me.id, username: me.username, type: me.type };
     } catch (reason) {
       // A *dead* token must not be treated as a live session — that is what left
       // every screen showing "Not authenticated" with no way back to sign-in.
@@ -114,6 +115,15 @@ class SessionStore {
     this.signOut();
   }
 
+  /**
+   * An unknown role must NOT hide the server screen. ABS sometimes omits
+   * `type` from /api/me, and hiding the entry made uploads and server tools
+   * disappear entirely for root users.
+   */
+  readonly canManageServer = $derived(
+    !this.user?.type || this.user.type === 'root' || this.user.type === 'admin',
+  );
+
   /** Forget the session locally; the caller clears the stored token first. */
   signOut(): void {
     this.user = null;
@@ -169,7 +179,7 @@ class LibraryStore {
   }
 }
 
-export const THEMES = ['graphite', 'slate', 'midnight', 'nord', 'paper', 'daylight', 'sepia'] as const;
+export const THEMES = ['graphite', 'slate', 'midnight', 'nord', 'paper', 'daylight', 'porcelain', 'sepia', 'custom'] as const;
 export type ThemeId = (typeof THEMES)[number];
 
 /** Accent swatches: the first one is each theme's own accent. */
@@ -191,8 +201,47 @@ function stored<T extends string>(key: string, allowed: readonly T[], fallback: 
   return value && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
+export const CUSTOM_VARS: { key: string; label: TranslationKey }[] = [
+  { key: '--canvas', label: 'theme.var.canvas' },
+  { key: '--surface', label: 'theme.var.surface' },
+  { key: '--surface-raised', label: 'theme.var.raised' },
+  { key: '--text', label: 'theme.var.text' },
+  { key: '--text-secondary', label: 'theme.var.secondary' },
+  { key: '--accent', label: 'theme.var.accent' },
+  { key: '--hairline', label: 'theme.var.hairline' },
+];
+
+export const CUSTOM_DEFAULT: Record<string, string> = {
+  '--canvas': '#f5f7fb',
+  '--surface': '#ffffff',
+  '--surface-raised': '#eaf0fa',
+  '--text': '#121826',
+  '--text-secondary': '#4c5566',
+  '--accent': '#3b6ef5',
+  '--hairline': '#dbe2ec',
+};
+
+function loadCustomVars(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem('skald.customVars');
+    return raw ? { ...CUSTOM_DEFAULT, ...(JSON.parse(raw) as Record<string, string>) } : { ...CUSTOM_DEFAULT };
+  } catch {
+    return { ...CUSTOM_DEFAULT };
+  }
+}
+
 class UiStore {
   theme = $state<ThemeId>(stored('skald.theme', THEMES, 'graphite'));
+  /** Custom theme inherits a built-in base and overrides tokens on top. */
+  customBase = $state<ThemeId>(stored('skald.customBase', THEMES, 'daylight'));
+  customVars = $state<Record<string, string>>(loadCustomVars());
+  customCss = $state(localStorage.getItem('skald.customCss') ?? '');
+  /** The library view is shared between the sidebar and the page switcher. */
+  libraryView = $state<'home' | 'books' | 'series' | 'authors' | 'narrators'>('home');
+  libraryLayout = $state<'grid' | 'list'>(
+    localStorage.getItem('skald.libraryLayout') === 'list' ? 'list' : 'grid',
+  );
+  tileSize = $state(Number(localStorage.getItem('skald.tileSize')) || 148);
   /** null = use the theme's own accent. */
   accent = $state<string | null>(localStorage.getItem('skald.accent'));
   scale = $state<number>(Number(localStorage.getItem('skald.scale')) || 1);
@@ -206,15 +255,56 @@ class UiStore {
   /** Bumped when something asks the library search box for focus. */
   focusSearch = $state(0);
   /** Which settings pane to open; set when the account chip is clicked. */
-  settingsSection = $state('appearance');
+  settingsSection = $state('display');
   /** Collapsed to an icon rail; remembered across launches. */
   sidebarCompact = $state(localStorage.getItem('skald.sidebarCompact') === 'true');
 
   constructor() {
     this.applyTheme();
+    this.applyCustom();
     this.applyAccent();
     this.applyScale();
     this.applyMotion();
+  }
+
+  setLibraryView(view: 'home' | 'books' | 'series' | 'authors' | 'narrators'): void {
+    this.libraryView = view;
+  }
+
+  setLibraryLayout(layout: 'grid' | 'list'): void {
+    this.libraryLayout = layout;
+    localStorage.setItem('skald.libraryLayout', layout);
+  }
+
+  setTileSize(size: number): void {
+    this.tileSize = Math.min(280, Math.max(112, Math.round(size)));
+    localStorage.setItem('skald.tileSize', String(this.tileSize));
+  }
+
+  setCustomBase(base: ThemeId): void {
+    this.customBase = base === 'custom' ? 'daylight' : base;
+    localStorage.setItem('skald.customBase', this.customBase);
+    this.applyTheme();
+  }
+
+  setCustomVar(key: string, value: string): void {
+    this.customVars = { ...this.customVars, [key]: value };
+    localStorage.setItem('skald.customVars', JSON.stringify(this.customVars));
+    this.applyCustom();
+  }
+
+  setCustomCss(css: string): void {
+    this.customCss = css;
+    localStorage.setItem('skald.customCss', css);
+    this.applyCustom();
+  }
+
+  resetCustom(): void {
+    this.customVars = { ...CUSTOM_DEFAULT };
+    this.customCss = '';
+    localStorage.setItem('skald.customVars', JSON.stringify(this.customVars));
+    localStorage.removeItem('skald.customCss');
+    this.applyCustom();
   }
 
   setTheme(theme: ThemeId): void {
@@ -253,7 +343,26 @@ class UiStore {
   }
 
   private applyTheme(): void {
-    document.documentElement.dataset.theme = this.theme;
+    const root = document.documentElement;
+    // A custom theme keeps a built-in base for every token the editor does not
+    // touch, then overrides the visible ones through html.custom.
+    root.dataset.theme = this.theme === 'custom' ? this.customBase : this.theme;
+    root.classList.toggle('custom', this.theme === 'custom');
+  }
+
+  private applyCustom(): void {
+    let el = document.getElementById('skald-custom') as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'skald-custom';
+      document.head.appendChild(el);
+    }
+    const lines: string[] = ['html.custom {'];
+    for (const [key, value] of Object.entries(this.customVars)) {
+      lines.push('  ' + key + ': ' + value + ';');
+    }
+    lines.push('}', this.customCss);
+    el.textContent = lines.join(String.fromCharCode(10));
   }
 
   /**
