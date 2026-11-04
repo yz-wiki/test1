@@ -79,6 +79,7 @@
   const facts = $derived(
     [
       meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
+      meta?.publisher ?? '',
       meta?.publishedYear ?? '',
       meta?.language ?? '',
       chapters.length > 0 ? t('book.chapterCount', { count: chapters.length }) : '',
@@ -139,7 +140,7 @@
     if (!item || !session.serverUrl) return;
     saving = true;
     error = null;
-    const series = parseSeries(form.series);
+    const seriesValue = parseSeries(form.series);
     try {
       await updateMedia(session.serverUrl, item.id, {
         metadata: {
@@ -150,7 +151,7 @@
             .map(name => ({ name: name.trim() }))
             .filter(author => author.name),
           narrators: form.narrators.split(',').map(name => name.trim()).filter(Boolean),
-          series: series ? [series] : [],
+          series: seriesValue ? [seriesValue] : [],
           publisher: form.publisher.trim(),
           publishedYear: form.year.trim(),
           language: form.language.trim(),
@@ -178,7 +179,8 @@
     }
   }
 
-  function size(bytes: number | undefined): string {    if (!bytes) return '';
+  function size(bytes: number | undefined): string {
+    if (!bytes) return '';
     const mb = bytes / 1048576;
     return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
   }
@@ -186,31 +188,27 @@
 
 {#if item}
   <div class="page scroll-y">
-    <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'library')}>
-      <Icon name="chevron-left" size={14} />
-      {t('book.back')}
-    </button>
+    <div class="topbar">
+      <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'library')}>
+        <Icon name="chevron-left" size={14} />
+        {t('book.back')}
+      </button>
+      {#if loading}
+        <span class="t-small t-tertiary">{t('book.loading')}</span>
+      {/if}
+    </div>
 
-    <header class="head">
-      <div class="head__cover">
-        <Cover itemId={item.id} size={420} radius="var(--radius-md)" title={meta?.title ?? ''} />
-      </div>
-
-      <div class="head__text">
-        {#if series}
-          <span class="t-label">{series}</span>
-        {/if}
-        <h1 class="t-title clamp-2">{meta?.title ?? item.id}</h1>
-        {#if meta?.subtitle}
-          <p class="t-secondary clamp-2">{meta.subtitle}</p>
-        {/if}
-        <p class="t-secondary truncate">{meta?.authorName ?? ''}</p>
-
-        <div class="facts">
-          {#each facts as fact (fact)}
-            <span class="t-small t-tertiary">{fact}</span>
-          {/each}
+    <div class="detail">
+      <!-- Left: the object itself, plus everything you can do to it. -->
+      <aside class="detail__side">
+        <div class="side__cover">
+          <Cover itemId={item.id} size={480} radius="var(--radius-md)" title={meta?.title ?? ''} />
         </div>
+
+        <button class="btn btn--primary btn--block" onclick={() => play()} disabled={player.loading}>
+          <Icon name="play" size={15} />
+          {fraction > 0 ? t('book.continue') : t('book.start')}
+        </button>
 
         {#if fraction > 0}
           <div class="resume">
@@ -226,156 +224,166 @@
           </div>
         {/if}
 
-        <div class="actions">
-          <button class="btn btn--primary" onclick={() => play()} disabled={player.loading}>
-            <Icon name="play" size={15} />
-            {fraction > 0 ? t('book.continue') : t('book.start')}
-          </button>
+        <div class="side__actions">
           {#if fraction > 0}
-            <button class="btn btn--quiet" onclick={() => play(0)}>{t('book.restart')}</button>
+            <button class="btn btn--quiet btn--block" onclick={() => play(0)}>{t('book.restart')}</button>
           {/if}
-          <button class="btn btn--quiet" onclick={() => (editing ? (editing = false) : openEditor())}>
-            {t('book.edit')}
-          </button>
-          <button class="btn btn--quiet" onclick={() => void toggleFinished()}>
+          <button
+            class="btn btn--quiet btn--block"
+            onclick={() => (editing ? (editing = false) : openEditor())}
+          >{t('book.edit')}</button>
+          <button class="btn btn--quiet btn--block" onclick={() => void toggleFinished()}>
             {isFinished ? t('book.markUnfinished') : t('book.markFinished')}
           </button>
 
           {#if transfer}
-            <button class="btn btn--quiet" disabled>
+            <button class="btn btn--quiet btn--block" disabled>
               {t('downloads.downloading', { pct: transferPct })}
             </button>
           {:else if download}
-            <button class="btn btn--quiet" disabled>
+            <button class="btn btn--quiet btn--block" disabled>
               <Icon name="check" size={14} />
               {t('downloads.downloaded')}
             </button>
           {:else}
-            <button
-              class="btn btn--quiet"
-              onclick={() => void startDownload()}
-            >
+            <button class="btn btn--quiet btn--block" onclick={() => void startDownload()}>
               <Icon name="download" size={14} />
               {t('downloads.download')}
             </button>
           {/if}
         </div>
 
+        {#if facts.length > 0}
+          <dl class="facts">
+            {#each facts as fact (fact)}
+              <dd class="t-small t-tertiary">{fact}</dd>
+            {/each}
+          </dl>
+        {/if}
+
         {#if error}
           <p class="t-small form-error" role="alert">{error}</p>
         {/if}
-      </div>
-    </header>
+      </aside>
 
-    {#if editing}
-      <section class="block editor">
-        <div class="editor__grid">
-          <label class="field"><span class="field__label">{t('meta.title')}</span>
-            <input class="input" bind:value={form.title} /></label>
-          <label class="field"><span class="field__label">{t('meta.subtitle')}</span>
-            <input class="input" bind:value={form.subtitle} /></label>
-          <label class="field"><span class="field__label">{t('meta.authors')}</span>
-            <input class="input" bind:value={form.authors} placeholder={t('meta.commaHint')} /></label>
-          <label class="field"><span class="field__label">{t('meta.narrators')}</span>
-            <input class="input" bind:value={form.narrators} placeholder={t('meta.commaHint')} /></label>
-          <label class="field"><span class="field__label">{t('meta.series')}</span>
-            <input class="input" bind:value={form.series} placeholder="名称 #3" /></label>
-          <label class="field"><span class="field__label">{t('meta.publisher')}</span>
-            <input class="input" bind:value={form.publisher} /></label>
-          <label class="field"><span class="field__label">{t('meta.year')}</span>
-            <input class="input" bind:value={form.year} /></label>
-          <label class="field"><span class="field__label">{t('meta.language')}</span>
-            <input class="input" bind:value={form.language} /></label>
-          <label class="field"><span class="field__label">{t('meta.genres')}</span>
-            <input class="input" bind:value={form.genres} placeholder={t('meta.commaHint')} /></label>
-          <label class="field"><span class="field__label">{t('meta.tags')}</span>
-            <input class="input" bind:value={form.tags} placeholder={t('meta.commaHint')} /></label>
-        </div>
-        <label class="field">
-          <span class="field__label">{t('meta.description')}</span>
-          <textarea class="textarea" rows="6" bind:value={form.description}></textarea>
-        </label>
-        <div class="editor__actions">
-          <button class="btn btn--primary btn--sm" disabled={saving} onclick={() => void saveMetadata()}>
-            {saving ? t('meta.saving') : t('meta.save')}
-          </button>
-          <button class="btn btn--quiet btn--sm" onclick={() => (editing = false)}>{t('common.cancel')}</button>
-        </div>
-      </section>
-    {/if}
-
-    {#if meta?.description || (meta?.genres?.length ?? 0) > 0}
-      <section class="block">
-        <p class="t-body selectable" class:clamped={!expanded}>
-          {meta?.description ?? t('book.noDescription')}
-        </p>
-        {#if meta?.description && meta.description.length > 320}
-          <button class="btn btn--quiet btn--sm" onclick={() => (expanded = !expanded)}>
-            {expanded ? t('book.less') : t('book.more')}
-          </button>
+      <!-- Right: everything you read. -->
+      <section class="detail__main">
+        {#if series}
+          <span class="t-label">{series}</span>
         {/if}
-        {#if meta?.genres?.length}
-          <div class="chips">
-            {#each meta.genres as genre (genre)}
-              <span class="chip">{genre}</span>
-            {/each}
-          </div>
+        <h1 class="t-title">{meta?.title ?? item.id}</h1>
+        {#if meta?.subtitle}
+          <p class="t-subhead t-secondary">{meta.subtitle}</p>
         {/if}
-      </section>
-    {/if}
+        <p class="t-md t-secondary">{meta?.authorName ?? ''}</p>
 
-    <section class="block">
-      <div class="segmented block__tabs">
-        <button
-          class="segmented__item"
-          aria-pressed={tab === 'chapters'}
-          onclick={() => (tab = 'chapters')}
-        >{t('book.chapters')}</button>
-        <button
-          class="segmented__item"
-          aria-pressed={tab === 'files'}
-          onclick={() => (tab = 'files')}
-        >{t('book.files')}</button>
-      </div>
+        {#if editing}
+          <section class="editor">
+            <div class="editor__grid">
+              <label class="field"><span class="field__label">{t('meta.title')}</span>
+                <input class="input" bind:value={form.title} /></label>
+              <label class="field"><span class="field__label">{t('meta.subtitle')}</span>
+                <input class="input" bind:value={form.subtitle} /></label>
+              <label class="field"><span class="field__label">{t('meta.authors')}</span>
+                <input class="input" bind:value={form.authors} placeholder={t('meta.commaHint')} /></label>
+              <label class="field"><span class="field__label">{t('meta.narrators')}</span>
+                <input class="input" bind:value={form.narrators} placeholder={t('meta.commaHint')} /></label>
+              <label class="field"><span class="field__label">{t('meta.series')}</span>
+                <input class="input" bind:value={form.series} placeholder="名称 #3" /></label>
+              <label class="field"><span class="field__label">{t('meta.publisher')}</span>
+                <input class="input" bind:value={form.publisher} /></label>
+              <label class="field"><span class="field__label">{t('meta.year')}</span>
+                <input class="input" bind:value={form.year} /></label>
+              <label class="field"><span class="field__label">{t('meta.language')}</span>
+                <input class="input" bind:value={form.language} /></label>
+              <label class="field"><span class="field__label">{t('meta.genres')}</span>
+                <input class="input" bind:value={form.genres} placeholder={t('meta.commaHint')} /></label>
+              <label class="field"><span class="field__label">{t('meta.tags')}</span>
+                <input class="input" bind:value={form.tags} placeholder={t('meta.commaHint')} /></label>
+            </div>
+            <label class="field">
+              <span class="field__label">{t('meta.description')}</span>
+              <textarea class="textarea" rows="6" bind:value={form.description}></textarea>
+            </label>
+            <div class="editor__actions">
+              <button class="btn btn--primary btn--sm" disabled={saving} onclick={() => void saveMetadata()}>
+                {saving ? t('meta.saving') : t('meta.save')}
+              </button>
+              <button class="btn btn--quiet btn--sm" onclick={() => (editing = false)}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </section>
+        {:else}
+          <p class="t-body selectable description" class:clamped={!expanded}>
+            {meta?.description || t('book.noDescription')}
+          </p>
+          {#if meta?.description && meta.description.length > 320}
+            <button class="btn btn--quiet btn--sm align-start" onclick={() => (expanded = !expanded)}>
+              {expanded ? t('book.less') : t('book.more')}
+            </button>
+          {/if}
+          {#if meta?.genres?.length}
+            <div class="chips">
+              {#each meta.genres as genre (genre)}
+                <span class="chip">{genre}</span>
+              {/each}
+            </div>
+          {/if}
+        {/if}
 
-      {#if tab === 'chapters'}
-        {#if chapters.length === 0}
-          <p class="t-small t-tertiary">{t('player.noChapters')}</p>
+        <div class="segmented tabs">
+          <button
+            class="segmented__item"
+            aria-pressed={tab === 'chapters'}
+            onclick={() => (tab = 'chapters')}
+          >{t('book.chapters')}</button>
+          <button
+            class="segmented__item"
+            aria-pressed={tab === 'files'}
+            onclick={() => (tab = 'files')}
+          >{t('book.files')}</button>
+        </div>
+
+        {#if tab === 'chapters'}
+          {#if chapters.length === 0}
+            <p class="t-small t-tertiary">{t('player.noChapters')}</p>
+          {:else}
+            <ul class="rows">
+              {#each chapters as chapter, index (index)}
+                <li>
+                  <button class="row" onclick={() => play(chapter.start)}>
+                    <span class="row__index t-num">{index + 1}</span>
+                    <span class="row__body">
+                      <span class="truncate row__title">{chapter.title}</span>
+                      <span class="t-small t-num t-tertiary">
+                        {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        {:else if files.length === 0}
+          <p class="t-small t-tertiary">{t('common.unknown')}</p>
         {:else}
           <ul class="rows">
-            {#each chapters as chapter, index (index)}
+            {#each files as file (file.ino)}
               <li>
-                <button class="row" onclick={() => play(chapter.start)}>
-                  <span class="row__index t-num">{index + 1}</span>
+                <div class="row row--static">
+                  <span class="row__index"><Icon name="book" size={14} /></span>
                   <span class="row__body">
-                    <span class="truncate row__title">{chapter.title}</span>
-                    <span class="t-small t-num t-tertiary">
-                      {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
-                    </span>
+                    <span class="truncate row__title">{file.metadata?.filename ?? file.ino}</span>
+                    <span class="t-small t-tertiary t-num">{size(file.metadata?.size)}</span>
                   </span>
-                </button>
+                </div>
               </li>
             {/each}
           </ul>
         {/if}
-      {:else if files.length === 0}
-        <p class="t-small t-tertiary">{t('common.unknown')}</p>
-      {:else}
-        <ul class="rows">
-          {#each files as file (file.ino)}
-            <li>
-              <div class="row row--static">
-                <span class="row__index"><Icon name="book" size={14} /></span>
-                <span class="row__body">
-                  <span class="truncate row__title">{file.metadata?.filename ?? file.ino}</span>
-                  <span class="t-small t-tertiary t-num">{size(file.metadata?.size)}</span>
-                </span>
-              </div>
-            </li>
-          {/each}
-        </ul>
-      {/if}
-    </section>
+      </section>
+    </div>
   </div>
 {:else if loading}
   <div class="page">
@@ -390,56 +398,60 @@
 
 <style>
   .page {
+    position: relative;
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
     display: flex;
     flex-direction: column;
-    gap: var(--gap-block);
+    gap: var(--gap-row);
   }
 
-  /* In a scrolling flex column, children default to flex-shrink:1 and get
-     squeezed to a sliver once the content is taller than the viewport. */
   .page > * {
     flex: 0 0 auto;
   }
 
-  .head {
+  .topbar {
     display: flex;
-    gap: var(--gap-section);
-    align-items: flex-start;
+    align-items: center;
+    gap: var(--gap-row);
   }
 
-  .head__cover {
-    width: 200px;
-    height: 200px;
-    flex: 0 0 200px;
+  .detail {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: var(--gap-section);
+    align-items: start;
+  }
+
+  /* The cover and the buttons stay put while the description scrolls. */
+  .detail__side {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-row);
+  }
+
+  .side__cover {
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-2);
   }
 
-  .head__text {
+  .side__actions {
     display: flex;
     flex-direction: column;
-    gap: var(--gap-tight);
-    min-width: 0;
-    max-width: 760px;
-  }
-
-  .facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap-row);
-    margin-top: var(--gap-hair);
+    gap: var(--gap-inline);
   }
 
   .resume {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-top: var(--gap-inline);
-    max-width: 360px;
+    margin-top: calc(var(--gap-inline) * -1);
   }
 
   .resume__bar {
@@ -455,36 +467,48 @@
     background: var(--accent);
   }
 
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap-inline);
-    margin-top: var(--gap-row);
-  }
-
-  .block {
+  .facts {
     display: flex;
     flex-direction: column;
-    gap: var(--gap-row);
-    max-width: 900px;
+    gap: 2px;
+    margin-top: var(--gap-inline);
+    padding-top: var(--gap-row);
+    border-top: 1px solid var(--hairline);
   }
 
-  .block__tabs {
-    align-self: flex-start;
+  .facts dd {
+    margin: 0;
+  }
+
+  .detail__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-tight);
+    min-width: 0;
+    max-width: 820px;
+  }
+
+  .description {
+    margin-top: var(--gap-row);
   }
 
   .clamped {
     display: -webkit-box;
-    -webkit-line-clamp: 6;
-    line-clamp: 6;
+    -webkit-line-clamp: 8;
+    line-clamp: 8;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .align-start {
+    align-self: flex-start;
   }
 
   .chips {
     display: flex;
     flex-wrap: wrap;
     gap: var(--gap-tight);
+    margin-top: var(--gap-inline);
   }
 
   .chip {
@@ -496,11 +520,17 @@
     color: var(--text-secondary);
   }
 
+  .tabs {
+    align-self: flex-start;
+    margin-top: var(--gap-block);
+  }
+
   .rows {
     display: flex;
     flex-direction: column;
     gap: 1px;
     list-style: none;
+    margin-top: var(--gap-row);
   }
 
   .row {
@@ -523,7 +553,7 @@
   }
 
   .row__index {
-    flex: 0 0 28px;
+    flex: 0 0 32px;
     color: var(--text-tertiary);
     font-size: var(--text-xs);
   }
@@ -541,11 +571,11 @@
     color: var(--text);
   }
 
-  .form-error {
-    color: var(--danger);
-  }
-
   .editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-row);
+    margin-top: var(--gap-row);
     padding: var(--gap-panel);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
@@ -554,12 +584,16 @@
 
   .editor__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
     gap: var(--gap-row);
   }
 
   .editor__actions {
     display: flex;
     gap: var(--gap-inline);
+  }
+
+  .form-error {
+    color: var(--danger);
   }
 </style>

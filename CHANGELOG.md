@@ -2,12 +2,31 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.7.0 (2026-11-04) — preview
+## 2.8.0 (2026-11-04) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
 ### Fixed
+
+- **Every screen said "Not authenticated: no token stored".** When the server
+  rejected the refresh token, Rust cleared the credential and emitted
+  `auth-expired` — which the rebuild never listened for. The UI stayed "signed
+  in" with a dead token, so the library, the book page, the server screen and
+  every cover silently failed. The shell now listens for that event *and* for
+  the same error coming back from any command, and drops to the sign-in screen
+  with an explanation. The book page's empty chapter list and missing covers
+  were this same failure, not a chapter bug.
+- **The book screen is a two-column layout.** Cover, play button and facts on
+  the left (sticky), everything you read — series, title, description, chapters,
+  files, the metadata editor — on the right. Before, the page was one column
+  that pushed the title off the top of the viewport.
+- **The progress bar reads better**: 6px and rounded in the player, growing to
+  8px on hover, 3px and quiet in the bar, chapter ticks in the canvas colour.
+- **Volume moved** next to the sleep timer on the right; speed keeps the left.
+- **The upload form** got proper spacing, a dashed file area and a separated
+  action row; the server's lists now say when the server returned nothing
+  instead of rendering a blank page.
 
 - **The player's bar measures the chapter, not the book.** On a 189-hour title
   the playhead moved a pixel an hour. The large bar is now the current chapter
@@ -159,6 +178,25 @@ Reported from the 1.5.0 build.
   chapters. (`lib/trackStep.ts`)
 
 ### Fixed
+
+- **Every screen said "Not authenticated: no token stored".** When the server
+  rejected the refresh token, Rust cleared the credential and emitted
+  `auth-expired` — which the rebuild never listened for. The UI stayed "signed
+  in" with a dead token, so the library, the book page, the server screen and
+  every cover silently failed. The shell now listens for that event *and* for
+  the same error coming back from any command, and drops to the sign-in screen
+  with an explanation. The book page's empty chapter list and missing covers
+  were this same failure, not a chapter bug.
+- **The book screen is a two-column layout.** Cover, play button and facts on
+  the left (sticky), everything you read — series, title, description, chapters,
+  files, the metadata editor — on the right. Before, the page was one column
+  that pushed the title off the top of the viewport.
+- **The progress bar reads better**: 6px and rounded in the player, growing to
+  8px on hover, 3px and quiet in the bar, chapter ticks in the canvas colour.
+- **Volume moved** next to the sleep timer on the right; speed keeps the left.
+- **The upload form** got proper spacing, a dashed file area and a separated
+  action row; the server's lists now say when the server returned nothing
+  instead of rendering a blank page.
 - **The seek bar rendered as a 72px purple slab.** `Waveform` used its `height`
   prop for the *bar thickness* while the Player passes 72 for a comfortable
   click target. The component now separates hit area from track: a 4px capsule

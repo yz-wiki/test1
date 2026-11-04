@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { listen } from '@tauri-apps/api/event';
   import { progress, session, ui } from './lib/state.svelte';
   import { player } from './lib/player.svelte';
   import { downloads } from './lib/downloads.svelte';
   import { sync } from './lib/sync.svelte';
   import { installShortcuts } from './lib/shortcuts';
+  import { AUTH_LOST } from './lib/ipc';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
   import Book from './routes/Book.svelte';
@@ -19,6 +21,7 @@
   let booting = $state(true);
   let uninstallShortcuts: (() => void) | null = null;
   let uninstallMenu: (() => void) | null = null;
+  let uninstallAuth: (() => void) | null = null;
 
   onMount(async () => {
     uninstallShortcuts = installShortcuts();
@@ -38,6 +41,13 @@
     void player.attach();
     void downloads.attach();
     void sync.attach();
+
+    // A dead credential used to leave every screen blank with a red line of
+    // Rust text. Go back to sign-in instead, and say why.
+    const onAuthLost = () => session.expire();
+    window.addEventListener(AUTH_LOST, onAuthLost);
+    void listen('auth-expired', () => session.expire());
+    uninstallAuth = () => window.removeEventListener(AUTH_LOST, onAuthLost);
     try {
       await session.bootstrap();
     } finally {
@@ -50,6 +60,8 @@
     uninstallShortcuts = null;
     uninstallMenu?.();
     uninstallMenu = null;
+    uninstallAuth?.();
+    uninstallAuth = null;
   });
 
   // Listening progress belongs to the server, not to a screen: load it once the

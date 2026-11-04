@@ -235,6 +235,9 @@
     {#if loading}
       <p class="t-small t-tertiary">{t('admin.loading')}</p>
     {:else if tab === 'libraries'}
+      {#if libraries.length === 0}
+        <p class="t-small t-tertiary">{t('admin.empty')}</p>
+      {/if}
       <ul class="rows">
         {#each libraries as library (library.id)}
           <li class="row">
@@ -332,6 +335,9 @@
         </div>
       </section>
     {:else if tab === 'users'}
+      {#if users.length === 0}
+        <p class="t-small t-tertiary">{t('admin.empty')}</p>
+      {/if}
       <ul class="rows">
         {#each users as user (user.id)}
           <li class="row">
@@ -511,20 +517,23 @@
   }
 
   .upload {
-    max-width: 720px;
+    max-width: 760px;
   }
 
   .upload__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--gap-row);
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: var(--gap-panel);
   }
 
   .upload__files {
     display: flex;
     align-items: center;
-    gap: var(--gap-inline);
-    margin-top: var(--gap-row);
+    gap: var(--gap-row);
+    margin-top: var(--gap-block);
+    padding: var(--gap-row);
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--radius-sm);
   }
 
   .upload__progress {
@@ -552,7 +561,9 @@
     display: flex;
     align-items: center;
     gap: var(--gap-row);
-    margin-top: var(--gap-row);
+    margin-top: var(--gap-block);
+    padding-top: var(--gap-row);
+    border-top: 1px solid var(--hairline);
   }
 
   .form-error {

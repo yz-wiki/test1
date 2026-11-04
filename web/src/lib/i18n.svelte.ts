@@ -38,6 +38,7 @@ const en = {
   'login.errKey': 'An API key is required.',
   'login.errName': 'A username is required.',
   'login.errPass': 'A password is required.',
+  'auth.expired': 'Your session expired. Sign in again to keep listening.',
 
   'library.search': 'Search titles…',
   'library.empty': 'This library is empty.',
@@ -199,6 +200,7 @@ const en = {
   'admin.backupLocation': 'Backup folder',
   'admin.noBackups': 'The server has no backups yet.',
   'admin.loading': 'Loading…',
+  'admin.empty': 'Nothing to show — the server returned an empty list.',
 
   'player.play': 'Play',
   'player.pause': 'Pause',
@@ -312,6 +314,7 @@ const zh: Dict = {
   'login.errKey': '请填写 API 密钥。',
   'login.errName': '请填写用户名。',
   'login.errPass': '请填写密码。',
+  'auth.expired': '登录状态已过期，请重新登录后继续收听。',
 
   'library.search': '搜索书名…',
   'library.empty': '此书库为空。',
@@ -473,6 +476,7 @@ const zh: Dict = {
   'admin.backupLocation': '备份目录',
   'admin.noBackups': '服务器还没有备份。',
   'admin.loading': '加载中…',
+  'admin.empty': '暂无内容，服务器返回了空列表。',
 
   'player.play': '播放',
   'player.pause': '暂停',

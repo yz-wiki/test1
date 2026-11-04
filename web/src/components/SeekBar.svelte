@@ -116,10 +116,16 @@
     height: 3px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
+    transition: height var(--dur-1) var(--ease);
   }
 
   .seek--lg .seek__track {
-    height: 4px;
+    height: 6px;
+  }
+
+  .seek--lg:hover .seek__track,
+  .seek--lg.dragging .seek__track {
+    height: 8px;
   }
 
   .seek__fill {
@@ -139,7 +145,7 @@
     width: 1px;
     margin-left: -0.5px;
     background: var(--canvas);
-    opacity: 0.85;
+    opacity: 0.9;
     pointer-events: none;
   }
 
@@ -156,9 +162,9 @@
   }
 
   .seek--lg .seek__thumb {
-    width: 13px;
-    height: 13px;
-    margin-left: -6.5px;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
   }
 
   .seek:hover .seek__thumb,

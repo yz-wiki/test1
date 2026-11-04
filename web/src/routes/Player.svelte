@@ -238,9 +238,9 @@
               </div>
             </div>
 
-            <div class="extra">
-              <span class="t-label"><Icon name="volume" size={14} /> {t('player.volume')}</span>
+            <div class="extra extra--sleep volume-extra">
               <div class="volume-wrap">
+                <span class="t-label"><Icon name="volume" size={14} /></span>
                 <input
                   class="volume"
                   type="range"
@@ -530,9 +530,13 @@
   .transport__extras {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-block);
+    gap: var(--gap-panel);
     flex-wrap: wrap;
+  }
+
+  /* Volume sits with the sleep timer on the right; speed owns the left. */
+  .volume-extra {
+    margin-left: auto;
   }
 
   .extra {
@@ -549,7 +553,7 @@
   }
 
   .volume {
-    width: 120px;
+    width: 96px;
     accent-color: var(--accent);
   }
 

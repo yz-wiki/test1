@@ -31,6 +31,8 @@ class SessionStore {
   activeLibraryId = $state<string | null>(null);
   loading = $state(false);
   error = $state<string | null>(null);
+  /** Set when the session died on us, so the sign-in screen can say why. */
+  authNotice = $state<string | null>(null);
 
   readonly activeLibrary = $derived(
     this.libraries.find(library => library.id === this.activeLibraryId) ?? this.libraries[0] ?? null,
@@ -53,8 +55,15 @@ class SessionStore {
     try {
       const me = await getMe(this.serverUrl);
       this.user = { id: me.id, username: me.username };
-    } catch {
-      // A dead token fails later on the first real request; do not block boot.
+    } catch (reason) {
+      // A *dead* token must not be treated as a live session — that is what left
+      // every screen showing "Not authenticated" with no way back to sign-in.
+      const message = (reason as Error).message;
+      if (/not authenticated|no token|expired/i.test(message)) {
+        this.expire();
+        return;
+      }
+      // Anything else (server down, timeout) still deserves a shell to browse.
     }
 
     this.authenticated = true;
@@ -92,10 +101,17 @@ class SessionStore {
   }
 
   private applyAuth(serverUrl: string, user: User): void {
+    this.authNotice = null;
     this.serverUrl = serverUrl;
     this.user = user;
     this.authenticated = true;
     localStorage.setItem(KEY_SERVER, serverUrl);
+  }
+
+  /** The server rejected our credential: drop to sign-in and say so. */
+  expire(): void {
+    this.authNotice = 'auth.expired';
+    this.signOut();
   }
 
   /** Forget the session locally; the caller clears the stored token first. */
@@ -126,6 +142,8 @@ class LibraryStore {
   items = $state<LibraryItem[]>([]);
   loading = $state(false);
   error = $state<string | null>(null);
+  /** Set when the session died on us, so the sign-in screen can say why. */
+  authNotice = $state<string | null>(null);
   private loadedFor = '';
 
   async load(serverUrl: string, libraryId: string | null, force = false): Promise<void> {

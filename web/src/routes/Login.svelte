@@ -107,6 +107,10 @@
         </label>
       {/if}
 
+      {#if session.authNotice}
+        <div class="login__error" role="alert">{t('auth.expired')}</div>
+      {/if}
+
       {#if error}
         <div class="login__error" role="alert">{error}</div>
       {/if}

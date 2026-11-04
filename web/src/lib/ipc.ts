@@ -15,11 +15,24 @@ export class IpcError extends Error {
   }
 }
 
+/** Fired when the session is gone, so the shell can drop back to sign-in. */
+export const AUTH_LOST = 'skald:auth-lost';
+
+function looksLikeDeadSession(message: string): boolean {
+  return /not authenticated|no token stored|session has expired/i.test(message);
+}
+
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
     return await invoke<T>(command, args);
   } catch (error) {
-    throw new IpcError(command, typeof error === 'string' ? error : String(error));
+    const message = typeof error === 'string' ? error : String(error);
+    // One dead-session error means every later call fails the same way, and the
+    // screens would sit there empty. Tell the shell once.
+    if (looksLikeDeadSession(message)) {
+      window.dispatchEvent(new CustomEvent(AUTH_LOST, { detail: message }));
+    }
+    throw new IpcError(command, message);
   }
 }
 
