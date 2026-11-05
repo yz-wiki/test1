@@ -6,12 +6,12 @@
 #   2) 推送 v* 标签(push tags)时自动构建全部产物(用于发版)。
 #
 # 产物:
-#   * NSIS 安装器  Xuting_<version>_x64-setup.exe  (Windows 11/10 安装包)
-#   * MSI 安装器   Xuting_<version>_x64_en-US.msi   (需要时)
+#   * NSIS 安装器  ADSplayer_<version>_x64-setup.exe  (Windows 11/10 安装包)
+#   * MSI 安装器   ADSplayer_<version>_x64_en-US.msi   (需要时)
 #   * 便携版       Skald_<version>_portable_win-x64.zip
 #
-# 2.18.0 起展示名为「叙听 / Xuting」：安装器文件名由 tauri.conf.json 的
-# productName 决定，所以变成 Xuting_<version>_…；便携版 zip 由
+# 2.19.0 起展示名为「ADSplayer」：安装器文件名由 tauri.conf.json 的
+# productName 决定，所以变成 ADSplayer_<version>_…；便携版 zip 由
 # scripts/package-portable.ps1 固定拼名，刻意保留 Skald_ 前缀，避免既有
 # 下载脚本回归。bundle id / exe 名 / localStorage key 全部保持不变。
 #

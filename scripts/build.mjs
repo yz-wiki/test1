@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Xuting (formerly Skald) — interactive multi-target build orchestrator.
+ * ADSplayer (formerly Xuting / Skald) — interactive multi-target build orchestrator.
  *
  * Why this exists: `tauri build` can only be told "these bundle formats" via a
  * CLI flag that differs per platform, and the portable (green) Windows build is
@@ -95,7 +95,7 @@ function parseArgs(argv) {
 
 function usage() {
   log(`
-${paint(c.bold, 'Xuting build')}
+${paint(c.bold, 'ADSplayer build')}
 
   node scripts/build.mjs [options]
 
@@ -249,7 +249,7 @@ async function main() {
   if (options.help) { usage(); return; }
 
   if (!IS_WINDOWS && !IS_LINUX) {
-    die(`unsupported host platform: ${process.platform}. Xuting builds on Windows and Linux.`);
+    die(`unsupported host platform: ${process.platform}. ADSplayer builds on Windows and Linux.`);
   }
 
   let selections = resolveSelection(options);
@@ -262,7 +262,7 @@ async function main() {
   const version = await readVersion();
 
   log('');
-  log(paint(c.bold, `Xuting ${version} — ${process.platform}-${process.arch}`));
+  log(paint(c.bold, `ADSplayer ${version} — ${process.platform}-${process.arch}`));
   log(paint(c.dim, `targets: ${selections.map(t => t.id).join(', ')}`));
 
   const bundleTargets = selections.filter(t => t.kind === 'bundle').map(t => t.id);

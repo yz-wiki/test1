@@ -351,12 +351,20 @@
         </div>
 
         {#if facts.length > 0}
-          <dl class="facts">
-            {#each facts as fact (fact.label)}
-              <dt class="t-small t-tertiary">{fact.label}</dt>
-              <dd class="t-small truncate">{fact.value}</dd>
-            {/each}
-          </dl>
+          <!-- File metadata is a footer, not another action group: it sits at
+               the bottom of the rail and adapts to the window height. -->
+          <div class="facts-wrap">
+            <div class="facts__head t-label">
+              <Icon name="list" size={13} />
+              {t('book.fileInfo')}
+            </div>
+            <dl class="facts">
+              {#each facts as fact (fact.label)}
+                <dt class="t-small t-tertiary">{fact.label}</dt>
+                <dd class="t-small t-num truncate">{fact.value}</dd>
+              {/each}
+            </dl>
+          </div>
         {/if}
 
         {#if error}
@@ -601,6 +609,9 @@
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
+    /* A rail that is at least most of the viewport leaves room for the file
+       metadata to be a real footer instead of floating after the buttons. */
+    min-height: min(78vh, 720px);
   }
 
   .side__cover {
@@ -617,6 +628,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
+  }
+
+  /* The last action spans the row rather than dangling in a half-empty cell. */
+  .side__actions > :global(.btn:last-child):nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   /* Saved state uses the accent, like every other "on" control in the app. */
@@ -700,22 +716,39 @@
     white-space: nowrap;
   }
 
-  .facts {
-    display: grid;
-    grid-template-columns: 74px minmax(0, 1fr);
-    gap: 5px var(--gap-inline);
-    margin-top: var(--gap-inline);
+  .facts-wrap {
+    margin-top: auto;
     padding-top: var(--gap-row);
     border-top: 1px solid var(--hairline);
   }
 
+  .facts__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--gap-inline);
+    color: var(--text-tertiary);
+  }
+
+  /* Label left, value right-aligned: a two-column spec sheet, not a run of
+     loose text. Tabular values keep the row edges straight. */
+  .facts {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 7px var(--gap-inline);
+  }
+
   .facts dt {
     margin: 0;
+    white-space: nowrap;
   }
 
   .facts dd {
     margin: 0;
+    text-align: right;
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
   }
 
   .detail__main {

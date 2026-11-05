@@ -92,6 +92,9 @@
       {/each}
     {/if}
     <div class="seek__thumb" style:left="{shown * 100}%"></div>
+    {#if dragging}
+      <div class="seek__bubble t-num" style:left="{shown * 100}%">{Math.round(shown * 100)}%</div>
+    {/if}
   </div>
 </div>
 
@@ -113,9 +116,9 @@
   .seek__track {
     position: relative;
     width: 100%;
-    height: 3px;
+    height: 4px;
     border-radius: var(--radius-pill);
-    background: var(--surface-inset);
+    background: var(--hairline);
     transition: height var(--dur-1) var(--ease);
   }
 
@@ -135,6 +138,9 @@
     left: 0;
     border-radius: inherit;
     background: var(--accent);
+    /* The played segment glows, so the eye lands on the boundary even when
+       the surrounding UI is busy. */
+    box-shadow: 0 0 10px 1px var(--accent-line);
   }
 
   .seek--lg .seek__fill {
@@ -154,38 +160,56 @@
     pointer-events: none;
   }
 
+  /* The playhead is ALWAYS visible. It used to be scale(0) on the small bar,
+     which is why "where am I" needed a second glance. White ring + accent
+     core + halo keeps it legible on every theme and against the played fill. */
   .seek__thumb {
     position: absolute;
     top: 50%;
-    width: 11px;
-    height: 11px;
-    margin-left: -5.5px;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
     border-radius: 50%;
     background: var(--accent);
-    transform: translateY(-50%) scale(0);
-    transition: transform var(--dur-1) var(--ease);
-  }
-
-  /* The main bar always shows where you are, not only on hover. */
-  .seek--lg .seek__thumb {
-    width: 16px;
-    height: 16px;
-    margin-left: -8px;
-    background: var(--surface-overlay);
-    border: 3px solid var(--accent);
-    box-shadow: 0 1px 5px rgb(0 0 0 / 0.24);
+    border: 2px solid var(--surface-overlay);
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 1px 5px rgb(0 0 0 / 0.24);
     transform: translateY(-50%) scale(1);
+    transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+    pointer-events: none;
   }
 
-  .seek--lg:hover .seek__thumb,
-  .seek--lg.dragging .seek__thumb {
-    transform: translateY(-50%) scale(1.16);
+  .seek--lg .seek__thumb {
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    border-width: 3px;
   }
 
   .seek:hover .seek__thumb,
-  .seek:focus-visible .seek__thumb,
+  .seek:focus-visible .seek__thumb {
+    transform: translateY(-50%) scale(1.12);
+  }
+
   .seek.dragging .seek__thumb {
-    transform: translateY(-50%) scale(1);
+    transform: translateY(-50%) scale(1.28);
+    box-shadow: 0 0 0 7px var(--accent-soft), 0 2px 8px rgb(0 0 0 / 0.3);
+  }
+
+  /* A percentage follows the drag so fine seeking does not require reading
+     the small time labels at the ends of the track. */
+  .seek__bubble {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-semibold);
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: var(--shadow-2);
   }
 
   .seek:focus-visible {

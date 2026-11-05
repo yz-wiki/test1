@@ -15,17 +15,15 @@
   } from '../lib/i18n.svelte';
   import Dropdown from '../components/Dropdown.svelte';
   import {
-    getAudioDevices,
     getCacheDir,
     getDownloadsDir,
     logout,
     openLogDir,
     revealPath,
-    setAudioDevice,
     setCacheDir,
     setDownloadsDir,
-    type AudioDevice,
   } from '../lib/ipc';
+  import { audioDevices } from '../lib/audioDevice.svelte';
   import EqPanel from '../components/EqPanel.svelte';
   import Icon from '../components/Icon.svelte';
 import LogsPanel from '../components/LogsPanel.svelte';
@@ -104,8 +102,6 @@ import LogsPanel from '../components/LogsPanel.svelte';
   $effect(() => {
     ui.settingsSection = section;
   });
-  let devices = $state<AudioDevice[]>([]);
-  let deviceId = $state('');
   let downloadsDir = $state('');
   let cacheDir = $state('');
   let version = $state('');
@@ -119,25 +115,16 @@ import LogsPanel from '../components/LogsPanel.svelte';
       version = '—';
     }
     try {
-      [devices, downloadsDir, cacheDir] = await Promise.all([
-        getAudioDevices(),
+      [downloadsDir, cacheDir] = await Promise.all([
         getDownloadsDir(),
         getCacheDir(),
       ]);
+      void audioDevices.refresh();
     } catch {
       // Devices are optional: a machine with no enumerable output still plays.
     }
     void sync.refresh(session.serverUrl);
   });
-
-  async function chooseDevice(id: string): Promise<void> {
-    deviceId = id;
-    try {
-      await setAudioDevice(id);
-    } catch (reason) {
-      error = (reason as Error).message;
-    }
-  }
 
   async function pickFolder(which: 'downloads' | 'cache'): Promise<void> {
     const chosen = await open({
@@ -449,13 +436,33 @@ import LogsPanel from '../components/LogsPanel.svelte';
             </div>
             <div class="setting__control">
               <Dropdown
-                value={deviceId}
+                value={audioDevices.current}
                 options={[
                   { value: '', label: t('settings.audioDefault') },
-                  ...devices.map(device => ({ value: device.id, label: device.name })),
+                  ...audioDevices.options.filter(option => option.value !== ''),
                 ]}
-                onSelect={next => void chooseDevice(next)}
+                onSelect={next => void audioDevices.choose(next)}
                 label={t('settings.audio')}
+                variant="field"
+              />
+            </div>
+          </div>
+
+          <div class="setting">
+            <div class="setting__main">
+              <span class="setting__label">{t('settings.defaultLayout')}</span>
+              <span class="setting__hint">{t('settings.defaultLayoutHint')} · {t('library.layout.hint')}</span>
+            </div>
+            <div class="setting__control">
+              <Dropdown
+                value={ui.libraryLayout}
+                options={[
+                  { value: 'grid', label: t('library.layout.grid') },
+                  { value: 'compact', label: t('library.layout.compact') },
+                  { value: 'list', label: t('library.layout.list') },
+                ]}
+                onSelect={next => ui.setLibraryLayout(next as 'grid' | 'compact' | 'list')}
+                label={t('settings.defaultLayout')}
                 variant="field"
               />
             </div>

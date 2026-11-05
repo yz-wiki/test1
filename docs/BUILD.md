@@ -1,13 +1,14 @@
-# Building 叙听 · Xuting
+# Building ADSplayer
 
-> The display name changed in 2.18.0. NSIS/MSI installer names follow
-> `productName` and are now `Xuting_<version>_…`; the portable ZIP
+> The display name is **ADSplayer** since 2.19.0 (previously 叙听 / Xuting).
+> NSIS/MSI installer names follow `productName` and are now
+> `ADSplayer_<version>_…`; the portable ZIP
 > (`Skald_<version>_…`) is assembled by `package-portable.ps1` and deliberately
 > keeps the old prefix. The bundle id (`com.skald.app`), the executable
 > (`skald.exe`) and all localStorage keys are unchanged so an upgrade keeps the
 > sign-in state and every saved setting.
 
-Xuting ships five package formats across two platforms. `scripts/build.mjs` is the
+ADSplayer ships five package formats across two platforms. `scripts/build.mjs` is the
 single entry point: it decides which Tauri invocation is needed, stages the
 portable layout when asked, and reports exactly where every artifact landed.
 
@@ -32,8 +33,8 @@ node scripts/build.mjs --help
 | Target | Platform | Output | Notes |
 |---|---|---|---|
 | `portable` | Windows | `dist/Skald_<version>_portable_win-x64.zip` | Green build: unzip anywhere writable and run `Skald.exe`. No registry, no uninstaller. Do **not** unpack into `Program Files` — the app writes next to itself on first launch (VLC `plugins.dat`). |
-| `nsis` | Windows | `src-tauri/target/release/bundle/nsis/Xuting_<version>_x64-setup.exe` | Recommended installer for end users. Per-machine install, custom hooks in `src-tauri/windows/hooks.nsh`. Name follows `productName`. |
-| `msi` | Windows | `src-tauri/target/release/bundle/msi/Xuting_<version>_x64_en-US.msi` | For GPO / Intune / enterprise deployment. WiX toolchain downloads on first build. Name follows `productName`. |
+| `nsis` | Windows | `src-tauri/target/release/bundle/nsis/ADSplayer_<version>_x64-setup.exe` | Recommended installer for end users. Per-machine install, custom hooks in `src-tauri/windows/hooks.nsh`. Name follows `productName`. |
+| `msi` | Windows | `src-tauri/target/release/bundle/msi/ADSplayer_<version>_x64_en-US.msi` | For GPO / Intune / enterprise deployment. WiX toolchain downloads on first build. Name follows `productName`. |
 | `appimage` | Linux | `src-tauri/target/release/bundle/appimage/` | Single executable file, no install. Requires FUSE 2 on the target. |
 | `deb` | Linux | `src-tauri/target/release/bundle/deb/` | Debian, Ubuntu, Mint, Pop!_OS. Declares WebKitGTK 4.1, GTK 3, LibVLC and libsecret as dependencies. |
 | `rpm` | Linux | `src-tauri/target/release/bundle/rpm/` | Fedora, RHEL, openSUSE. |
@@ -62,7 +63,7 @@ Common to both platforms:
 | `src-tauri/bin/` | `ffprobe.exe` (metadata + chapters), `tone.exe` (metadata writes) |
 
 `build.rs` copies both trees next to the binary, which is what makes the portable
-zip self-contained. Building while Xuting is running fails with an OS "file in
+zip self-contained. Building while ADSplayer is running fails with an OS "file in
 use" error — close the app first.
 
 ### Linux (Arch / CachyOS reference host)
@@ -132,7 +133,7 @@ environment Tauri expects before a production release.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `file in use` during `build.rs` | Xuting is running and the DLLs are locked | Close the app, rebuild |
+| `file in use` during `build.rs` | ADSplayer is running and the DLLs are locked | Close the app, rebuild |
 | MSI build fails on a fresh machine | WiX toolset not yet cached | Run once with network access; Tauri downloads it |
 | `libwebkit2gtk-4.1` not found | Wrong WebKitGTK major version | Install the 4.1 package, not 4.0 |
 | AppImage refuses to start | FUSE 2 missing | Install `libfuse2`, or run with `--appimage-extract-and-run` |

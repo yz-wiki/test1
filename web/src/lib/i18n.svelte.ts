@@ -33,9 +33,9 @@ const LOCALE_PREFIX: Record<Locale, string> = {
 };
 
 const en = {
-  'app.name': 'Xuting',
+  'app.name': 'ADSplayer',
   'app.tagline': 'An audiobook player for Audiobookshelf',
-  'app.former': 'formerly Skald',
+  'app.former': 'formerly Xuting',
   'brand.localOnly': 'Local',
   'art.setCover': 'Set cover…',
   'art.setAuthorArt': 'Set author image…',
@@ -288,7 +288,7 @@ const en = {
   'settings.signOut': 'Sign out',
   'settings.signOutHint': 'Clears the saved token on this computer.',
   'settings.logs': 'Logs',
-  'settings.logsHint': 'Where Xuting writes its diagnostic log.',
+  'settings.logsHint': 'Where ADSplayer writes its diagnostic log.',
   'settings.open': 'Open',
   'settings.adminHint': 'Libraries, users, tasks and backups.',
   'keys.playPause': 'Play / pause',
@@ -499,14 +499,31 @@ const en = {
   'common.offline': 'Offline',
   'common.minutes': '{count} min',
   'common.hours': '{count} h',
+
+  // ── 2.19 · layout density, device switching, server log tab ────────────
+  'library.layout.compact': 'Small cards',
+  'library.layout.hint': 'Card style applies to books, series and authors',
+  'settings.defaultLayout': 'Default layout',
+  'settings.defaultLayoutHint': 'Used everywhere books are listed',
+  'admin.serverLogs': 'Server logs',
+  'admin.serverLogsHint': 'Requests and responses between this app and the server',
+  'player.device': 'Output device',
+  'player.noDevices': 'Only the system default output is available',
+  'player.belowChapter': 'This chapter',
+  'player.belowBook': 'Whole book',
+  'player.belowMarks': 'Bookmarks',
+  'player.noMarks': 'No bookmarks yet',
+  'player.nextChapterGo': 'Next chapter',
+  'player.bookListened': 'Listened',
+  'book.fileInfo': 'File details',
 } as const;
 
 type Dict = Record<keyof typeof en, string>;
 
 const zh: Dict = {
-  'app.name': '叙听',
+  'app.name': 'ADSplayer',
   'app.tagline': '为 Audiobookshelf 而生的有声书播放器',
-  'app.former': '原名 Skald',
+  'app.former': '原名 叙听 / Xuting',
   'brand.localOnly': '本地',
   'art.setCover': '设置封面…',
   'art.setAuthorArt': '设置作者图片…',
@@ -759,7 +776,7 @@ const zh: Dict = {
   'settings.signOut': '退出登录',
   'settings.signOutHint': '清除这台电脑上保存的令牌。',
   'settings.logs': '日志',
-  'settings.logsHint': '叙听的诊断日志所在位置。',
+  'settings.logsHint': 'ADSplayer 的诊断日志所在位置。',
   'settings.open': '打开',
   'settings.adminHint': '书库、用户、任务与备份。',
   'keys.playPause': '播放 / 暂停',
@@ -970,6 +987,22 @@ const zh: Dict = {
   'common.offline': '离线',
   'common.minutes': '{count} 分钟',
   'common.hours': '{count} 小时',
+
+  'library.layout.compact': '小方块',
+  'library.layout.hint': '卡片样式同时作用于书籍、系列与作者',
+  'settings.defaultLayout': '默认布局',
+  'settings.defaultLayoutHint': '所有书籍列表都使用这个布局',
+  'admin.serverLogs': '服务器日志',
+  'admin.serverLogsHint': '本应用与服务器之间的请求与响应',
+  'player.device': '播放设备',
+  'player.noDevices': '当前只有系统默认输出可用',
+  'player.belowChapter': '本章',
+  'player.belowBook': '全书',
+  'player.belowMarks': '书签',
+  'player.noMarks': '暂无书签',
+  'player.nextChapterGo': '下一章',
+  'player.bookListened': '已听',
+  'book.fileInfo': '文件信息',
 };
 
 export type TranslationKey = keyof typeof en;

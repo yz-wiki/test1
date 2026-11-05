@@ -274,7 +274,10 @@
   let gridTop = $state(0);
 
   const isList = $derived(ui.libraryLayout === 'list');
-  const windowed = $derived(!isList && visible.length > THRESHOLD);
+  const isCompact = $derived(ui.libraryLayout === 'compact');
+  /** Virtualisation belongs to the cover grid only; small cards are cheap
+      enough to render in one pass and need no absolute-position slice. */
+  const windowed = $derived(!isList && !isCompact && visible.length > THRESHOLD);
   const minW = 148;
 
   $effect(() => {
@@ -500,13 +503,19 @@
 
     <span class="toolbar__sep"></span>
 
-    <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.grid')}>
+    <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.hint')}>
       <button
         class="segmented__item"
-        aria-pressed={!isList}
+        aria-pressed={!isList && !isCompact}
         title={t('library.layout.grid')}
         onclick={() => ui.setLibraryLayout('grid')}
       ><Icon name="grid" size={14} /></button>
+      <button
+        class="segmented__item"
+        aria-pressed={isCompact}
+        title={t('library.layout.compact')}
+        onclick={() => ui.setLibraryLayout('compact')}
+      ><Icon name="blocks" size={14} /></button>
       <button
         class="segmented__item"
         aria-pressed={isList}
@@ -595,8 +604,13 @@
                   {#each recent.slice(1, 6) as item (item.id)}
                     {@const fraction = progress.fraction(item.id)}
                     <HoverCard>
-                      {#snippet children()}
-                        <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
+                      {#snippet children(isOpen)}
+                        <button
+                          class="queue__row hl"
+                          class:selected={isOpen}
+                          onclick={() => resume(item)}
+                          oncontextmenu={event => openMenu(event, item)}
+                        >
                           <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
                           <span class="queue__text">
                             <span class="truncate">{title(item)}</span>
@@ -661,7 +675,11 @@
           </div>
 
           {#if homeTab === 'books'}
-            <div class="home-grid" class:home-grid--list={isList}>
+            <div
+              class="home-grid"
+              class:home-grid--list={isList}
+              class:home-grid--compact={isCompact}
+            >
               {#each homeBooks as item (item.id)}
                 {@const fraction = progress.fraction(item.id)}
                 <button
@@ -696,7 +714,11 @@
                  one and the same list in its grid / list layout. Author and
                  series cards address local artwork by NAME, which is the only
                  stable key ABS gives us for them. -->
-            <div class="home-groups" class:home-groups--list={isList}>
+            <div
+              class="home-groups"
+              class:home-groups--list={isList}
+              class:home-groups--compact={isCompact}
+            >
               {#each homeGroups as entry (entry.name)}
                 {@const kind: ArtKind = homeTab === 'authors' ? 'author' : homeTab === 'series' ? 'series' : 'book'}
                 <button
@@ -806,7 +828,11 @@
         <!-- One tree, two shapes. The old build swapped two different DOM
              branches, so a layout click looked like it did nothing whenever
              the two branches happened to render similar cards. -->
-        <div class="groups" class:groups--list={isList}>
+        <div
+          class="groups"
+          class:groups--list={isList}
+          class:groups--compact={isCompact}
+        >
           {#each groups as entry (entry.name)}
             <button class="group" onclick={() => (group = entry.name)}>
               <span class="group__cover">
@@ -834,13 +860,39 @@
         <span class="empty__title">{t('library.empty')}</span>
         <span class="empty__body">{t('library.emptyHint')}</span>
       </div>
+    {:else if isCompact}
+      <!-- The small-square card used by the author/series shelves, offered for
+           books as well. Same items, same sort/filter, third density only. -->
+      <div class="mini-grid">
+        {#each visible as item (item.id)}
+          {@const fraction = progress.fraction(item.id)}
+          <button
+            class="mini-card hl"
+            aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
+            onclick={() => open(item)}
+            oncontextmenu={event => openMenu(event, item)}
+          >
+            <span class="mini-card__cover">
+              <Cover itemId={item.id} size={96} title={title(item)} />
+            </span>
+            <span class="mini-card__text">
+              <span class="truncate mini-card__title">{title(item)}</span>
+              <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
+            </span>
+            {#if fraction > 0}
+              <span class="mini-card__pct t-num t-small">{Math.round(fraction * 100)}%</span>
+            {/if}
+            <Icon name="chevron-right" size={12} />
+          </button>
+        {/each}
+      </div>
     {:else if isList}
       <div class="list">
         {#each visible as item (item.id)}
           {@const fraction = progress.fraction(item.id)}
           {@const chapter = currentChapter(item)}
           <button
-            class="list__row"
+            class="list__row hl"
             aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
             onclick={() => open(item)}
             oncontextmenu={event => openMenu(event, item)}
@@ -1217,10 +1269,8 @@
     text-align: left;
   }
 
-  .queue__row:hover {
-    background: var(--surface-raised);
-  }
-
+  /* Hover / selected come from the shared `.hl` vocabulary now, so the
+     highlighted row and the open hover card read as one state. */
   .queue__cover {
     width: 32px;
     height: 32px;
@@ -1300,6 +1350,107 @@
     right: 6px;
     color: var(--accent);
     border-color: var(--accent-line);
+  }
+
+  /* ── Compact / small-square layout ───────────────────────────────────
+     The author shelf cards, offered for books too. One DOM tree per view,
+     one extra density — never a second collection of items. */
+  .mini-grid,
+  .home-grid--compact,
+  .home-groups--compact,
+  .groups--compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: 6px;
+    align-content: start;
+  }
+
+  .mini-card,
+  .home-grid--compact .tile,
+  .home-groups--compact .home-group,
+  .groups--compact .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    text-align: left;
+    color: var(--text-secondary);
+  }
+
+  .mini-card:hover,
+  .home-grid--compact .tile:hover,
+  .home-groups--compact .home-group:hover,
+  .groups--compact .group:hover {
+    background: var(--surface-raised);
+  }
+
+  .mini-card[aria-current='true'] {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+
+  /* Three distinct states, shared with the log and chapter lists:
+     plain hover is neutral, the open hover card is "selected" (outlined),
+     the playing row is "current" (accent edge). */
+  .queue__row.selected {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-line);
+  }
+
+  .mini-card:focus-visible,
+  .queue__row:focus-visible,
+  .list__row:focus-visible {
+    outline: 2px solid var(--accent-line);
+    outline-offset: -2px;
+  }
+
+  .mini-card__cover,
+  .home-grid--compact .tile > :global(.cover),
+  .home-groups--compact .home-group__cover,
+  .groups--compact .group__cover {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .mini-card__text,
+  .home-grid--compact .tile__body,
+  .home-groups--compact .home-group__text,
+  .groups--compact .group__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .mini-card__title,
+  .home-grid--compact .tile__title,
+  .home-groups--compact .home-group__text > span:first-child,
+  .groups--compact .group__name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .mini-card__pct {
+    flex: 0 0 auto;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .home-grid--compact .tile__badge,
+  .home-grid--compact .tile__local,
+  .home-groups--compact .home-group__share,
+  .groups--compact .group__share {
+    display: none;
   }
 
   .home-grid--list {

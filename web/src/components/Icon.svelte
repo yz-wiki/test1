@@ -40,7 +40,9 @@
     | 'activity'
     | 'minus'
     | 'trash'
-    | 'star';
+    | 'star'
+    | 'blocks'
+    | 'device';
 
   let { name, size = 16, filled = false }: {
     name: IconName;
@@ -139,6 +141,17 @@
     <rect x="8.8" y="2.6" width="4.6" height="4.6" rx="0.8" />
     <rect x="2.6" y="8.8" width="4.6" height="4.6" rx="0.8" />
     <rect x="8.8" y="8.8" width="4.6" height="4.6" rx="0.8" />
+  {:else if name === 'blocks'}
+    <rect x="2.4" y="2.4" width="4.6" height="2.6" rx="0.6" />
+    <rect x="9" y="2.4" width="4.6" height="2.6" rx="0.6" />
+    <rect x="2.4" y="6.7" width="4.6" height="2.6" rx="0.6" />
+    <rect x="9" y="6.7" width="4.6" height="2.6" rx="0.6" />
+    <rect x="2.4" y="11" width="4.6" height="2.6" rx="0.6" />
+    <rect x="9" y="11" width="4.6" height="2.6" rx="0.6" />
+  {:else if name === 'device'}
+    <rect x="3.2" y="2.4" width="9.6" height="7.2" rx="1.2" />
+    <circle cx="8" cy="6" r="2.1" />
+    <path d="M5.4 11.8h5.2M8 9.6v2.2" />
   {:else if name === 'rows'}
     <path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8" />
   {:else if name === 'sliders'}

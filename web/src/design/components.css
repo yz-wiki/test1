@@ -210,10 +210,78 @@
   color: var(--text);
 }
 
-/* Global volume and cover-size sliders. Scoped to these classes so the
-   equaliser's band sliders keep their own geometry. */
+/* ── Highlight system ────────────────────────────────────────────────────
+   One vocabulary for every selectable row: hover is neutral, "current" is
+   the accent with a permanent edge, "selected" is a temporary outline.
+   Pages used to invent their own shade for each of these, which is why the
+   same list looked hovered in one screenshot and selected in another. */
+.hl {
+  position: relative;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.hl:hover {
+  background: var(--surface-raised);
+}
+
+.hl:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: -2px;
+}
+
+.hl[aria-current='true'] {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.hl[aria-current='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.hl[aria-current='true']:hover {
+  background: var(--accent-soft);
+}
+
+.hl.selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.hl.selected:hover {
+  background: var(--accent-soft);
+}
+
+/* Severity is a second, independent axis: the whole row tints, not just a
+   small badge, so a WARN/ERROR is visible while scrolling at speed. */
+.hl-level-debug { box-shadow: inset 2px 0 0 var(--hairline-strong); }
+.hl-level-info  { box-shadow: inset 2px 0 0 var(--accent-line); }
+.hl-level-warn  { background: rgb(234 160 40 / 0.08); box-shadow: inset 2px 0 0 var(--warning); }
+.hl-level-error { background: rgb(220 60 60 / 0.10); box-shadow: inset 2px 0 0 var(--danger); }
+.hl-level-warn:hover  { background: rgb(234 160 40 / 0.14); }
+.hl-level-error:hover { background: rgb(220 60 60 / 0.16); }
+
+/* Volume: a taller track, a bigger thumb with a white ring and a soft halo.
+   The reference is the iOS / Liquid Glass volume bar — one thumb you can
+   actually see, plus quick actions (mute + device) beside it — rather than
+   Apple Music's hairline, which is easy to confuse with the seek track.
+   Cover-size and EQ sliders keep their own thin geometry. */
 .bar__slider,
-.volume,
+.volume {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
 .sizer__range {
   -webkit-appearance: none;
   appearance: none;
@@ -223,7 +291,18 @@
 }
 
 .bar__slider::-webkit-slider-runnable-track,
-.volume::-webkit-slider-runnable-track,
+.volume::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--fill, 50%),
+    var(--surface-inset) var(--fill, 50%),
+    var(--surface-inset) 100%
+  );
+}
+
 .sizer__range::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: var(--radius-pill);
@@ -237,7 +316,26 @@
 }
 
 .bar__slider::-webkit-slider-thumb,
-.volume::-webkit-slider-thumb,
+.volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface-overlay);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 6px rgb(0 0 0 / 0.22);
+  transition: transform var(--dur-1) var(--ease);
+}
+
+.bar__slider:hover::-webkit-slider-thumb,
+.volume:hover::-webkit-slider-thumb,
+.bar__slider:active::-webkit-slider-thumb,
+.volume:active::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+
 .sizer__range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -259,7 +357,7 @@
 .bar__slider:focus-visible::-webkit-slider-thumb,
 .volume:focus-visible::-webkit-slider-thumb,
 .sizer__range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 0 0 1px var(--accent);
 }
 
 /* Search field with a leading glyph. */

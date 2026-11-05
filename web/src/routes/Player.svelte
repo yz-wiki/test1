@@ -8,6 +8,7 @@
   import SeekBar from '../components/SeekBar.svelte';
   import ProgressLine from '../components/ProgressLine.svelte';
   import Dropdown from '../components/Dropdown.svelte';
+  import DevicePicker from '../components/DevicePicker.svelte';
 
   /** The blurb lives beside the cover and folds; it is not a tab. */
   let tab = $state<'chapters' | 'bookmarks'>('chapters');
@@ -155,6 +156,13 @@
     const name = player.chapter?.title ?? '';
     return `${index + 1} / ${chapters.length}${name ? ` · ${name}` : ''}`;
   });
+
+  /** "12 / 189" for the lower chapter panel — a number, not a sentence. */
+  const chapterIndexLabel = $derived(
+    chapters.length > 0
+      ? `${Math.max(player.chapterIndex, 0) + 1} / ${chapters.length}`
+      : '—',
+  );
 
   const description = $derived(
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
@@ -339,10 +347,12 @@
                 aria-label={t('player.volume')}
                 oninput={event => onVolumeInput(Number(event.currentTarget.value))}
               />
-              <span class="volume__value t-num" class:shown={volumeActive}>
+              <span class="volume__value t-num" class:active={volumeActive}>
                 {Math.round(player.volume * 100)}%
               </span>
             </div>
+
+            <DevicePicker placement="down" showLabel />
 
             </div>
           </div>
@@ -381,8 +391,74 @@
             </div>
           {/if}
 
-
         </div>
+
+        <!-- The lower half used to be empty canvas. Three compact panels turn
+             it into information the listener actually needs: where this
+             chapter ends, how far the whole book has come, and the shortcuts
+             back to marked moments. Nothing here duplicates the docked
+             chapter list on the right. -->
+        <section class="below" aria-label={t('player.belowBook')}>
+          <div class="below__card">
+            <span class="below__label t-label">{t('player.belowChapter')}</span>
+            <span class="below__big t-num">{chapterIndexLabel}</span>
+            <span class="below__sub truncate">{player.chapter?.title ?? player.title}</span>
+            <div class="below__bar" aria-hidden="true">
+              <span style:width="{Math.round(chapterFraction * 100)}%"></span>
+            </div>
+            <div class="below__pair t-small t-num t-tertiary">
+              <span>{formatDuration(chapterPos)}</span>
+              <span>{formatDuration(chapterLength || player.duration)}</span>
+            </div>
+            {#if player.canStepForward}
+              <button class="btn btn--quiet btn--sm below__action" onclick={() => void player.step(1)}>
+                {t('player.nextChapterGo')}
+                <Icon name="chevron-right" size={12} />
+              </button>
+            {/if}
+          </div>
+
+          <div class="below__card">
+            <span class="below__label t-label">{t('player.belowBook')}</span>
+            <span class="below__big t-num">{Math.round(player.progress * 100)}%</span>
+            <span class="below__sub truncate">{player.showTitle}</span>
+            <div class="below__bar" aria-hidden="true">
+              <span style:width="{Math.round(player.progress * 100)}%"></span>
+            </div>
+            <div class="below__facts">
+              <div><span class="t-small t-tertiary">{t('player.bookListened')}</span><span class="t-num">{formatDuration(player.position)}</span></div>
+              <div><span class="t-small t-tertiary">{t('player.bookLeft')}</span><span class="t-num">{formatDuration(Math.max(player.duration - player.position, 0))}</span></div>
+              <div><span class="t-small t-tertiary">{t('player.bookTotal')}</span><span class="t-num">{formatDuration(player.duration)}</span></div>
+              <div><span class="t-small t-tertiary">{t('player.chapters')}</span><span class="t-num">{chapters.length}</span></div>
+            </div>
+          </div>
+
+          <div class="below__card below__card--marks">
+            <span class="below__label t-label">{t('player.belowMarks')}</span>
+            {#if marks.length === 0}
+              <p class="below__empty t-small t-tertiary">{t('player.noMarks')}</p>
+            {:else}
+              <div class="below__marks scroll-y">
+                {#each marks.slice(-4).reverse() as mark (mark.time + mark.title)}
+                  <button class="below__mark hl" onclick={() => void player.seek(mark.time)}>
+                    <span class="below__mark-dot" aria-hidden="true"></span>
+                    <span class="truncate">{mark.title}</span>
+                    <span class="t-num t-small t-tertiary">{formatDuration(mark.time)}</span>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+            <div class="below__add">
+              <input
+                class="input input--sm"
+                bind:value={markLabel}
+                placeholder={t('bookmark.placeholder')}
+                onkeydown={event => { if (event.key === 'Enter') void addMark(); }}
+              />
+              <button class="btn btn--sm" onclick={() => void addMark()}>{t('bookmark.add')}</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <aside class="side">
@@ -408,7 +484,7 @@
             <div class="chapter-list scroll-y">
               {#each player.queue as entry, index (entry.id)}
                 <button
-                  class="chapter"
+                  class="chapter hl"
                   aria-current={entry.id === player.episode?.id ? 'true' : undefined}
                   onclick={() => void player.open(item!, entry, player.queue, undefined, false)}
                 >
@@ -458,7 +534,7 @@
                 {@const chapter = row.chapter}
                 {@const index = row.index}
                 <button
-                  class="chapter"
+                  class="chapter hl"
                   data-chapter={index}
                   aria-current={index === player.chapterIndex ? 'true' : undefined}
                   onclick={() => void player.seek(chapter.start)}
@@ -502,7 +578,7 @@
             {:else}
               <div class="chapter-list scroll-y">
                 {#each marks as mark (mark.time + mark.title)}
-                  <button class="chapter" onclick={() => void player.seek(mark.time)}>
+                  <button class="chapter hl" onclick={() => void player.seek(mark.time)}>
                     <span class="chapter__flag" aria-hidden="true"></span>
                     <span class="chapter__body">
                       <span class="truncate chapter__title">{mark.title}</span>
@@ -611,10 +687,7 @@
       gap: 4px;
     }
     .transport__volume .volume {
-      width: 52px;
-    }
-    .transport__volume .volume__value {
-      display: none;
+      width: 84px;
     }
   }
 
@@ -664,6 +737,148 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  /* ── Lower information band ────────────────────────────────────────────
+     The stage used to end after the transport, leaving half a window empty.
+     These panels grow with the available height instead of being pinned to
+     the top, and use the page surface (no standalone white card/border). */
+  .below {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gap-inline);
+    width: min(720px, 100%);
+    margin-inline: auto;
+    flex: 1 1 auto;
+    min-height: 168px;
+    margin-top: var(--gap-section);
+  }
+
+  .below__card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--gap-row);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  .below__label {
+    color: var(--text-tertiary);
+  }
+
+  .below__big {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  .below__sub {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+
+  .below__bar {
+    height: 5px;
+    margin-top: auto;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .below__bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-line);
+  }
+
+  .below__pair {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .below__action {
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  .below__facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px var(--gap-inline);
+    margin-top: 2px;
+  }
+
+  .below__facts > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .below__facts .t-num {
+    font-size: var(--text-xs);
+    color: var(--text);
+    font-weight: var(--weight-medium);
+  }
+
+  .below__empty {
+    margin: var(--gap-row) 0;
+  }
+
+  .below__marks {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+    max-height: 108px;
+    overflow-y: auto;
+  }
+
+  .below__mark {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 3px 5px;
+    text-align: left;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+
+  .below__mark-dot {
+    width: 5px;
+    height: 5px;
+    flex: 0 0 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .below__add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+
+  .below__add .input {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  @media (max-width: 980px) {
+    .below {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-height: 0;
+    }
+    .below__card--marks {
+      grid-column: 1 / -1;
+    }
   }
 
   .book-bar {
@@ -751,19 +966,20 @@
   }
 
   .volume {
-    width: 88px;
+    width: 128px;
   }
 
   .volume__value {
     min-width: 38px;
     font-size: var(--text-xs);
     color: var(--text-secondary);
-    opacity: 0;
-    transition: opacity var(--dur-2) var(--ease);
+    font-variant-numeric: tabular-nums;
+    transition: color var(--dur-1) var(--ease);
   }
 
-  .volume__value.shown {
-    opacity: 1;
+  .volume__value.active {
+    color: var(--accent);
+    font-weight: var(--weight-semibold);
   }
 
   .extra--sleep {
@@ -862,14 +1078,10 @@
     contain-intrinsic-size: auto 44px;
   }
 
-  .chapter:hover {
-    background: var(--surface-raised);
-  }
-
+  /* Hover and current come from the shared `.hl` layer, identical to the
+     bottom-bar chapter list, the queue and the log viewer. */
   .chapter[aria-current='true'] {
-    background: var(--accent-soft);
     color: var(--text);
-    box-shadow: inset 2px 0 0 var(--accent);
   }
 
   .chapter[aria-current='true'] .chapter__index {

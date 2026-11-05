@@ -23,8 +23,9 @@
   import { t, type TranslationKey } from '../lib/i18n.svelte';
   import Dropdown from '../components/Dropdown.svelte';
   import Icon from '../components/Icon.svelte';
+  import LogsPanel from '../components/LogsPanel.svelte';
 
-  type Tab = 'libraries' | 'upload' | 'users' | 'tasks' | 'backups';
+  type Tab = 'libraries' | 'upload' | 'users' | 'tasks' | 'backups' | 'serverLogs';
 
   const TABS: { id: Tab; key: TranslationKey }[] = [
     { id: 'libraries', key: 'admin.libraries' },
@@ -32,6 +33,7 @@
     { id: 'users', key: 'admin.users' },
     { id: 'tasks', key: 'admin.tasks' },
     { id: 'backups', key: 'admin.backups' },
+    { id: 'serverLogs', key: 'admin.serverLogs' },
   ];
 
   const ROLES: Record<string, TranslationKey> = {
@@ -530,6 +532,8 @@
           {/each}
         </ul>
       {/if}
+    {:else if tab === 'serverLogs'}
+      <LogsPanel scope="server" embedded />
     {:else}
       <div class="backup-head">
         <span class="t-small t-tertiary truncate">

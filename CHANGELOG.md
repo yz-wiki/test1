@@ -1,6 +1,76 @@
 # Changelog
 
-Notable user-facing changes to 叙听 / Xuting. Dates are the build cut dates.
+Notable user-facing changes to ADSplayer. Dates are the build cut dates.
+
+## 2.19.0 (2026-11-05) — density, one highlight language, one device state
+
+Still the 2.14 shape. This pass fixes three balance problems (empty left /
+crowded right in the bar, an empty lower half on the player, and a different
+"highlight" on every page) rather than redesigning any screen.
+
+### Bar and sliders
+
+- **Bar density.** Chapter count and whole-book percent are facts about what
+  is playing; they moved into the left track next to the cover. The right
+  track now holds controls only. Both tracks read evenly at 1280–1920 px.
+- **Playhead.** The small seek bar's thumb used to be `scale(0)` until hover.
+  It is always visible now: 14 px (18 px on the player), white ring, accent
+  core and a soft halo; the played fill glows and a percentage bubble follows
+  a drag. Progress is readable without a second glance.
+- **Volume.** Reference was the iOS/Liquid-Glass volume panel (one large
+  thumb, quick actions beside it) rather than Apple Music's hairline. Track
+  3 → 6 px, thumb 11 → 16 px with halo, bar 84 → 132 px, player 88 → 128 px,
+  and the percentage is always shown. Mute and output-device switching sit
+  next to it. EQ / cover-size sliders keep their thin geometry.
+
+### Quick output-device switching
+
+- `audioDevice.svelte.ts` is the single state (device list + chosen id,
+  persisted as `skald.audioDevice`). The bottom bar, the expanded player and
+  Settings all write it, so they can never disagree. `set_audio_device` is a
+  no-op before LibVLC exists; `refresh()` reapplies the saved choice.
+- ABS has no client-output concept, so this is intentionally per install.
+
+### Player and book detail
+
+- The empty lower half of the player is now three surface-toned panels:
+  this chapter (progress + next chapter), whole book (elapsed / left / total /
+  chapter count) and recent bookmarks with an inline add field. Panels grow
+  with the available height instead of pinning everything to the top.
+- Book detail: file metadata is now a titled, right-aligned spec sheet pinned
+  to the bottom of the side rail (`margin-top: auto`, viewport-relative
+  height); the last odd action button spans the row instead of dangling.
+
+### Logs
+
+- The server page has its own **Server logs** tab. `LogsPanel` accepts a
+  `scope` so the embedded copy hides its own tab bar and stays on that stream.
+- Severity is now a whole-row property: DEBUG a hairline edge, INFO an accent
+  edge, WARN/ERROR a tinted row with their own edge, and INFO/WARN/ERROR
+  badges are filled. Source type gained a `network` colour.
+
+### Layout and highlight system
+
+- A shared `.hl` layer defines hover (neutral), current (accent edge) and
+  selected (accent outline). Queue rows, list rows, chapter rows, log rows and
+  popover items all use it; the open hover card marks its row `selected`, so
+  "hovered" and "being inspected" are visibly different.
+- **Third layout: small cards.** The compact square card used by author /
+  series shelves is now available for books, on the home shelf and in the
+  library. One data set, one sort/filter, three densities — no third tree.
+  Also selectable under Settings → Playback as the default layout.
+- Hover cards measure their real height and clamp to the viewport instead of
+  assuming 240 px.
+
+### Brand
+
+- Display name is **ADSplayer** everywhere (titlebar, boot screen, window and
+  HTML title, About, README, docs, build output). `productName` is ASCII
+  `ADSplayer`, so installer names are `ADSplayer_2.19.0_…`. The existing mark
+  (an open page folding into a sound wave) is kept — it carries no text.
+- `com.skald.app`, `skald.exe`, the portable ZIP prefix, localStorage keys,
+  IPC events and log filenames are unchanged so upgrades keep sign-in state
+  and settings.
 
 ## 2.18.0 (2026-11-05) — one shape per concept, one identity
 

@@ -14,14 +14,26 @@
   import Dropdown from './Dropdown.svelte';
   import Icon from './Icon.svelte';
 
+  /** `scope` pins the panel to one stream and hides its own tabs, so the
+      server page can embed it without two competing tab bars. */
+  let { scope = undefined, embedded = false }: {
+    scope?: 'app' | 'server';
+    embedded?: boolean;
+  } = $props();
+
+  $effect(() => {
+    if (scope) logs.scope = scope;
+  });
+
   /** Selecting a line reveals its untruncated message and metadata. */
   let selected = $state<number | null>(null);
 
   /** Content type, separate from severity: a DEBUG from the socket and a
       DEBUG from the router are not the same kind of event. */
-  type LogKind = 'sync' | 'ui' | 'media' | 'other';
+  type LogKind = 'sync' | 'ui' | 'media' | 'network' | 'other';
   function kindOf(source: string): LogKind {
     const name = source.toLowerCase();
+    if (/(http|request|fetch|upload|api|response)/.test(name)) return 'network';
     if (/(sync|socket|auth|token|server)/.test(name)) return 'sync';
     if (/(route|ui|window|settings|app)/.test(name)) return 'ui';
     if (/(player|play|audio|download|cover|library|book|media)/.test(name)) return 'media';
@@ -74,7 +86,8 @@
   }
 </script>
 
-<div class="logs">
+<div class="logs" class:embedded>
+  {#if !scope}
   <div class="logs__tabs">
     <button
       class="logs__tab"
@@ -100,6 +113,7 @@
       {logs.frozen ? t('logs.frozen') : t('logs.live')}
     </span>
   </div>
+  {/if}
 
   <div class="logs__tools">
     <Dropdown
@@ -134,7 +148,9 @@
     </button>
   </div>
 
-  <p class="logs__hint t-small t-tertiary">{t('logs.hint')} · {t('logs.detailHint')}</p>
+  <p class="logs__hint t-small t-tertiary">
+    {embedded ? t('admin.serverLogsHint') : t('logs.hint')} · {t('logs.detailHint')}
+  </p>
 
   <div class="logs__list scroll-y" bind:this={listEl}>
     {#if logs.visible.length === 0}
@@ -143,7 +159,7 @@
       {#each logs.visible as entry (entry.id)}
         <div class="line-wrap">
           <button
-            class="line level-{entry.level}"
+            class="line hl hl-level-{entry.level} level-{entry.level}"
             class:selected={selected === entry.id}
             aria-expanded={selected === entry.id}
             onclick={() => (selected = selected === entry.id ? null : entry.id)}
@@ -304,11 +320,8 @@
     color: var(--text-secondary);
   }
 
-  .line:hover,
-  .line.selected {
-    background: var(--surface);
-  }
-
+  /* Hover / selected / severity backgrounds all come from the shared `.hl`
+     layer now; only the message colour stays scoped to this component. */
   .line__time {
     color: var(--text-tertiary);
   }
@@ -355,6 +368,23 @@
   .line__dot.kind-sync { background: var(--positive); }
   .line__dot.kind-ui { background: var(--accent); }
   .line__dot.kind-media { background: var(--warning); }
+  .line__dot.kind-network { background: var(--info, var(--accent)); }
+
+  /* The badge is filled for the levels that matter; DEBUG stays a quiet
+     outline, so a wall of DEBUG rows does not compete with one ERROR. */
+  .line.level-info .line__level,
+  .line.level-warn .line__level,
+  .line.level-error .line__level {
+    border: none;
+    color: var(--on-accent);
+  }
+  .line.level-info .line__level { background: var(--accent); }
+  .line.level-warn .line__level { background: var(--warning); }
+  .line.level-error .line__level { background: var(--danger); }
+
+  .logs.embedded .logs__list {
+    height: min(58vh, 560px);
+  }
 
   .line-detail {
     display: flex;

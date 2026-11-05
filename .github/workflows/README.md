@@ -16,10 +16,10 @@
 
 每个成功/失败的运行,页面上方 **Summary** 里都有 artifact:
 
-- `skald-installers-<run>` → `Xuting_<version>_x64-setup.exe`(NSIS)与 `Xuting_<version>_x64_en-US.msi`
+- `skald-installers-<run>` → `ADSplayer_<version>_x64-setup.exe`(NSIS)与 `ADSplayer_<version>_x64_en-US.msi`
 - `skald-portable-<run>` → `Skald_<version>_portable_win-x64.zip`(绿色免安装版；文件名前缀刻意保留)
 
-> 2.18.0 起安装器名随 `productName` 变成 `Xuting_…`，便携版 zip 仍叫 `Skald_…`。
+> 2.19.0 起安装器名随 `productName` 变成 `ADSplayer_…`，便携版 zip 仍叫 `Skald_…`。
 - `skald-build-logs-<run>` → 每阶段完整日志(即使失败也会上传),用来定位云编译错误
 
 > 日志目录叫 `gha-logs`(不带前导点):以 `.` 开头的目录会被 upload-artifact

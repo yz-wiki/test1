@@ -1,12 +1,13 @@
-# 叙听 · Xuting
+# ADSplayer
 
-> Formerly **Skald**. The display name is `叙听` in Chinese and `Xuting` in
-> English; the bundle id, binary name and local storage keys deliberately stay
-> `skald` so an upgrade keeps the sign-in state and every saved setting.
+> Formerly **叙听 / Xuting** (and originally **Skald**). The display name is
+> `ADSplayer` in every language. The bundle id, binary name, artifact prefix
+> and local storage keys deliberately stay `skald` so an upgrade keeps the
+> sign-in state and every saved setting.
 
 A native Windows and Linux desktop client for [Audiobookshelf](https://www.audiobookshelf.org/), and a standalone server-free audiobook and podcast player.
 
-Xuting connects to your Audiobookshelf server for streaming, offline playback, library browsing, live progress sync, and server management for admins. It can also build and play local libraries straight from folders on your disk with no server at all, and subscribe to podcasts by RSS. You can access both your local files and your server libraries in a single, unified switcher. 
+ADSplayer connects to your Audiobookshelf server for streaming, offline playback, library browsing, live progress sync, and server management for admins. It can also build and play local libraries straight from folders on your disk with no server at all, and subscribe to podcasts by RSS. You can access both your local files and your server libraries in a single, unified switcher. 
 
 Built with **Tauri 2 + React 19 + TypeScript + Rust**, with audio handled natively by **LibVLC**. The user interface follows a bespoke design language called *Onyx*.
 
@@ -96,7 +97,7 @@ The biggest release since 1.0, with work spread across multiple libraries, acces
 
 ## Building from Source
 
-Xuting standardizes on **pnpm**.
+ADSplayer standardizes on **pnpm**.
 
 ### Prerequisites
 
@@ -132,14 +133,14 @@ Packaging details, prerequisites per platform and troubleshooting live in
 [`docs/BUILD.md`](docs/BUILD.md). Internationalisation conventions live in
 [`docs/I18N.md`](docs/I18N.md).
 
-> **Note:** The `build.rs` script copies the VLC DLLs at build time and will fail with an OS "file in use" error if Xuting is already running. Make sure to close the app before running `cargo` or `tauri build`.
+> **Note:** The `build.rs` script copies the VLC DLLs at build time and will fail with an OS "file in use" error if ADSplayer is already running. Make sure to close the app before running `cargo` or `tauri build`.
 
 ---
 
 ## License
 
-Xuting is licensed under the **GNU General Public License v3.0**. See the [`LICENSE`](LICENSE) file for details.
+ADSplayer is licensed under the **GNU General Public License v3.0**. See the [`LICENSE`](LICENSE) file for details.
 
 ## Acknowledgements & Trademarks
 
-Xuting is an unofficial, third-party client. It is not affiliated with, sponsored by, or endorsed by the Audiobookshelf project. "Audiobookshelf" is the name of that separate project, and it is used here only to describe compatibility in accordance with their [third-party app guidelines](https://audiobookshelf.org/docs/faq/app/). Xuting uses its own name and icon, and it does not use the Audiobookshelf logo.
+ADSplayer is an unofficial, third-party client. It is not affiliated with, sponsored by, or endorsed by the Audiobookshelf project. "Audiobookshelf" is the name of that separate project, and it is used here only to describe compatibility in accordance with their [third-party app guidelines](https://audiobookshelf.org/docs/faq/app/). ADSplayer uses its own name and icon, and it does not use the Audiobookshelf logo.

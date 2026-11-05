@@ -11,12 +11,11 @@
  * in turn is the only place these strings are surfaced.
  */
 export const BRAND = {
-  /** Display name for Chinese locales. */
-  name: '叙听',
-  /** Display name for other locales. */
-  latin: 'Xuting',
+  /** Single display name, used in every locale. */
+  name: 'ADSplayer',
+  latin: 'ADSplayer',
   /** Kept for diagnostics and the "formerly" line in About. */
-  former: 'Skald',
+  former: 'Xuting (formerly Skald)',
   /** Technical identifier — do not change. */
   id: 'skald',
   /** One-line description of what the mark depicts. */

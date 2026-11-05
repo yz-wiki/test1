@@ -238,8 +238,14 @@ class UiStore {
   customCss = $state(localStorage.getItem('skald.customCss') ?? '');
   /** The library view is shared between the sidebar and the page switcher. */
   libraryView = $state<'home' | 'books' | 'series' | 'authors' | 'narrators'>('home');
-  libraryLayout = $state<'grid' | 'list'>(
-    localStorage.getItem('skald.libraryLayout') === 'list' ? 'list' : 'grid',
+  /** Three densities over one data set, not three collections of cards.
+      `compact` is the small-square card used by the author/series shelves,
+      offered for books too so a 1 000-title library stays scannable. */
+  libraryLayout = $state<'grid' | 'compact' | 'list'>(
+    (() => {
+      const saved = localStorage.getItem('skald.libraryLayout');
+      return saved === 'list' || saved === 'compact' ? saved : 'grid';
+    })(),
   );
   tileSize = $state(Number(localStorage.getItem('skald.tileSize')) || 148);
   /** null = use the theme's own accent. */
@@ -280,7 +286,7 @@ class UiStore {
     this.libraryView = view;
   }
 
-  setLibraryLayout(layout: 'grid' | 'list'): void {
+  setLibraryLayout(layout: 'grid' | 'compact' | 'list'): void {
     this.libraryLayout = layout;
     localStorage.setItem('skald.libraryLayout', layout);
   }

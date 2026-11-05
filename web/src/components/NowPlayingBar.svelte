@@ -17,6 +17,7 @@
   import Icon from './Icon.svelte';
   import Dropdown from './Dropdown.svelte';
   import SeekBar from './SeekBar.svelte';
+  import DevicePicker from './DevicePicker.svelte';
 
   const item = $derived(player.item);
   const chapters = $derived(player.chapters);
@@ -165,81 +166,26 @@
     </div>
 
     <div class="bar__row">
-      <button class="bar__meta" onclick={() => player.expand()} title={t('player.expand')}>
-        <div class="bar__cover">
-          <Cover itemId={item.id} size={96} title={player.showTitle} />
-        </div>
-        <div class="bar__text">
-          <span class="truncate bar__title">{player.title}</span>
-          {#if flash}
-            <span class="truncate t-small bar__started">{t('player.started')}</span>
-          {:else}
-            <span class="truncate t-small t-tertiary">{player.subtitle}</span>
-          {/if}
-        </div>
-      </button>
-
-      <div class="bar__transport">
-        <button
-          type="button"
-          class="icon-btn icon-btn--sm"
-          aria-label={t('player.prevChapter')}
-          title={t('player.prevChapter')}
-          onclick={() => void player.step(-1)}
-          disabled={!player.canStepBack}
-        >
-          <Icon name="skip-back" />
+      <!-- LEFT: facts. Chapter and whole-book progress belong with "what is
+           playing", not in the control cluster. Moving them here fills the
+           empty left track and takes ~200px of pressure off the right one. -->
+      <div class="bar__left">
+        <button class="bar__meta hl" onclick={() => player.expand()} title={t('player.expand')}>
+          <div class="bar__cover">
+            <Cover itemId={item.id} size={96} title={player.showTitle} />
+          </div>
+          <div class="bar__text">
+            <span class="truncate bar__title">{player.title}</span>
+            {#if flash}
+              <span class="truncate t-small bar__started">{t('player.started')}</span>
+            {:else}
+              <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+            {/if}
+          </div>
         </button>
-
-        <button
-          type="button"
-          class="bar__play"
-          aria-label={player.playing ? t('player.pause') : t('player.play')}
-          title={player.playing ? t('player.pause') : t('player.play')}
-          onclick={() => void player.toggle()}
-          disabled={player.loading}
-        >
-          <Icon name={player.playing ? 'pause' : 'play'} size={16} />
-        </button>
-
-        <button
-          type="button"
-          class="icon-btn icon-btn--sm"
-          aria-label={t('player.nextChapter')}
-          title={t('player.nextChapter')}
-          onclick={() => void player.step(1)}
-          disabled={!player.canStepForward}
-        >
-          <Icon name="skip-forward" />
-        </button>
-      </div>
-
-      <div class="bar__right">
-        <div class="bar__volume">
-          <button
-            type="button"
-            class="icon-btn icon-btn--sm"
-            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-            onclick={toggleMute}
-          ><Icon name="volume" size={14} /></button>
-          <input
-            class="bar__slider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.02"
-            value={player.volume}
-            style="--fill: {player.volume * 100}%"
-            aria-label={t('player.volume')}
-            oninput={event => onVolume(Number(event.currentTarget.value))}
-          />
-          <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
-        </div>
-
-        <span class="bar__sep"></span>
 
         {#if entries.length > 0}
+          <span class="bar__sep"></span>
           <div class="bar__anchored" bind:this={jumpEl}>
             <button
               type="button"
@@ -278,7 +224,7 @@
                   {#each shown as entry (entry.key)}
                     <button
                       type="button"
-                      class="jump__item"
+                      class="jump__item hl"
                       data-current={entry.current ? 'true' : undefined}
                       aria-current={entry.current ? 'true' : undefined}
                       onclick={() => {
@@ -311,6 +257,71 @@
             </span>
           {/if}
         {/if}
+      </div>
+
+      <div class="bar__transport">
+        <button
+          type="button"
+          class="icon-btn icon-btn--sm"
+          aria-label={t('player.prevChapter')}
+          title={t('player.prevChapter')}
+          onclick={() => void player.step(-1)}
+          disabled={!player.canStepBack}
+        >
+          <Icon name="skip-back" />
+        </button>
+
+        <button
+          type="button"
+          class="bar__play"
+          aria-label={player.playing ? t('player.pause') : t('player.play')}
+          title={player.playing ? t('player.pause') : t('player.play')}
+          onclick={() => void player.toggle()}
+          disabled={player.loading}
+        >
+          <Icon name={player.playing ? 'pause' : 'play'} size={16} />
+        </button>
+
+        <button
+          type="button"
+          class="icon-btn icon-btn--sm"
+          aria-label={t('player.nextChapter')}
+          title={t('player.nextChapter')}
+          onclick={() => void player.step(1)}
+          disabled={!player.canStepForward}
+        >
+          <Icon name="skip-forward" />
+        </button>
+      </div>
+
+      <!-- RIGHT: controls only. Volume + device form one "quick actions"
+           group, matching how system volume panels pair mute and output. -->
+      <div class="bar__right">
+        <div class="bar__volume">
+          <button
+            type="button"
+            class="icon-btn icon-btn--sm"
+            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            onclick={toggleMute}
+          ><Icon name="volume" size={14} /></button>
+          <input
+            class="bar__slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={player.volume}
+            style="--fill: {player.volume * 100}%"
+            aria-label={t('player.volume')}
+            oninput={event => onVolume(Number(event.currentTarget.value))}
+          />
+          <span class="bar__pct t-num" class:active={volumeActive}>{Math.round(player.volume * 100)}%</span>
+        </div>
+
+        <DevicePicker placement="up" />
+
+        <span class="bar__sep"></span>
 
         <Dropdown
           value={String(player.rate)}
@@ -332,15 +343,15 @@
           ><Icon name="clock" size={14} /></button>
           {#if sleepOpen}
             <div class="bar__pop" role="menu">
-              <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('off'); sleepOpen = false; }}>
+              <button type="button" class="bar__pop-item hl" onclick={() => { player.setSleep('off'); sleepOpen = false; }}>
                 {t('sleep.off')}
               </button>
               {#each SLEEPS as minutes (minutes)}
-                <button type="button" class="bar__pop-item" onclick={() => { player.setSleep(minutes); sleepOpen = false; }}>
+                <button type="button" class="bar__pop-item hl" onclick={() => { player.setSleep(minutes); sleepOpen = false; }}>
                   {t('sleep.minutes', { count: minutes })}
                 </button>
               {/each}
-              <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('chapter'); sleepOpen = false; }}>
+              <button type="button" class="bar__pop-item hl" onclick={() => { player.setSleep('chapter'); sleepOpen = false; }}>
                 {t('sleep.chapter')}
               </button>
             </div>
@@ -399,8 +410,28 @@
     text-align: left;
   }
 
-  .bar__meta:hover {
-    background: var(--surface-raised);
+  /* Left track: facts. It used to hold only the 40px cover + title, leaving
+     half the window empty while six controls fought over the right track. */
+  .bar__left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    justify-self: start;
+    overflow: hidden;
+  }
+
+  .bar__left .bar__meta {
+    flex: 0 1 auto;
+  }
+
+  .bar__left .bar__anchored {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .bar__left .bar__chip {
+    max-width: 100%;
   }
 
   .bar__cover {
@@ -501,7 +532,7 @@
     align-items: center;
     justify-content: flex-end;
     justify-self: end;
-    gap: 2px;
+    gap: 3px;
     min-width: 0;
   }
 
@@ -583,16 +614,24 @@
     padding-right: 2px;
   }
 
+  /* Longer and always labelled: a 84px hairline with a hidden number was
+     hard to find and harder to set precisely. */
   .bar__slider {
-    width: 84px;
+    width: 132px;
   }
 
   .bar__pct {
-    min-width: 28px;
+    min-width: 30px;
     text-align: right;
     font-size: var(--text-2xs);
     font-variant-numeric: tabular-nums;
     color: var(--text-tertiary);
+    transition: color var(--dur-1) var(--ease);
+  }
+
+  .bar__pct.active {
+    color: var(--accent);
+    font-weight: var(--weight-semibold);
   }
 
   .bar__pop-anchor {
@@ -685,13 +724,9 @@
     contain-intrinsic-size: auto 32px;
   }
 
-  .jump__item:hover {
-    background: var(--surface-raised);
-    color: var(--text);
-  }
-
+  /* Hover/current backgrounds come from the shared `.hl` vocabulary, so a
+     chapter row, a queue row and a log row all mean the same thing. */
   .jump__item[aria-current='true'] {
-    background: var(--accent-soft);
     color: var(--accent);
     font-weight: var(--weight-medium);
   }
@@ -725,7 +760,7 @@
 
   @media (max-width: 1160px) {
     .bar__slider {
-      width: 56px;
+      width: 92px;
     }
     .bar__chip-title {
       display: none;
@@ -736,7 +771,21 @@
   }
 
   @media (max-width: 1040px) {
-    .bar__volume {
+    /* Keep the volume reachable; give up its number and some length first. */
+    .bar__slider {
+      width: 68px;
+    }
+    .bar__pct {
+      display: none;
+    }
+    .bar__left .bar__chip {
+      max-width: 132px;
+    }
+  }
+
+  @media (max-width: 880px) {
+    .bar__left .bar__anchored,
+    .bar__left .bar__sep {
       display: none;
     }
   }

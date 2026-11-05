@@ -19,12 +19,14 @@
     children,
     pop,
     width = 292,
-  }: { children: Snippet; pop: Snippet; width?: number } = $props();
+  }: { children: Snippet<[boolean]>; pop: Snippet; width?: number } = $props();
 
   let host = $state<HTMLElement | null>(null);
+  let popEl = $state<HTMLElement | null>(null);
   let open = $state(false);
   let x = $state(0);
   let y = $state(0);
+  let anchorTop = $state(0);
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   function place(): void {
@@ -33,9 +35,19 @@
     const gap = 10;
     const toRight = rect.right + gap + width <= window.innerWidth - 8;
     x = toRight ? rect.right + gap : Math.max(8, rect.left - width - gap);
-    // Roughly 220 px of content; clamp so the card never leaves the window.
-    y = Math.min(Math.max(8, rect.top - 12), Math.max(8, window.innerHeight - 240));
+    anchorTop = rect.top;
+    y = Math.max(8, rect.top - 12);
   }
+
+  /** The card used to assume a fixed 240px height, which clipped longer
+      descriptions. Measure the real box once it exists and clamp against the
+      viewport instead. */
+  $effect(() => {
+    if (!open || !popEl) return;
+    const height = popEl.offsetHeight;
+    const maxY = Math.max(8, window.innerHeight - height - 8);
+    y = Math.min(Math.max(8, anchorTop - 12), maxY);
+  });
 
   function enter(): void {
     if (timer) clearTimeout(timer);
@@ -60,11 +72,18 @@
   onfocusin={enter}
   onfocusout={leave}
 >
-  {@render children()}
+  {@render children(open)}
 </div>
 
 {#if open}
-  <div class="hovercard__pop" style:left="{x}px" style:top="{y}px" style:width="{width}px" role="tooltip">
+  <div
+    class="hovercard__pop"
+    bind:this={popEl}
+    style:left="{x}px"
+    style:top="{y}px"
+    style:width="{width}px"
+    role="tooltip"
+  >
     {@render pop()}
   </div>
 {/if}
@@ -87,6 +106,9 @@
     box-shadow: var(--shadow-3);
     color: var(--text);
     pointer-events: none;
+    /* Adapt to content height, but never grow past the window. */
+    max-height: min(72vh, 520px);
+    overflow: hidden;
     animation: hover-in var(--dur-2) var(--ease);
   }
 
