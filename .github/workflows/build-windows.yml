@@ -242,12 +242,19 @@ jobs:
           }
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\package-portable.ps1') 2>&1 |
               Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\10-portable.log"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           # Playback-only variant: omits ffprobe/tone (~150 MB uncompressed).
           # The app degrades gracefully when those helpers are absent.
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\package-portable.ps1') -Core 2>&1 |
               Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\10-portable-core.log"
-          exit $LASTEXITCODE
+          # `& script.ps1` does not set $LASTEXITCODE on success - checking it
+          # here used to end the step before the core package was built. Assert
+          # on the actual files instead so a missing ZIP fails the run.
+          $zips = @(Get-ChildItem 'dist' -File -Filter 'ADSplayer_*.zip')
+          if ($zips.Count -lt 2) {
+            Write-Host "::error::expected full + core portable ZIPs, found $($zips.Count): $($zips.Name -join ', ')"
+            exit 1
+          }
+          $zips | ForEach-Object { Write-Host ("  packaged {0} ({1:N1} MB)" -f $_.Name, ($_.Length / 1MB)) }
 
       - name: 11 · 产物清单与 SHA256
         if: always()
