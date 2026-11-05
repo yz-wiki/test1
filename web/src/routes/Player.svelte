@@ -11,9 +11,6 @@
 
   /** The blurb lives beside the cover and folds; it is not a tab. */
   let tab = $state<'chapters' | 'bookmarks'>('chapters');
-  let descOpen = $state(false);
-  /** The chapter rail is closed by default: listening is the job, browsing is secondary. */
-  let sideOpen = $state(false);
   let sleepOpen = $state(false);
   /** Shows the percentage only while the volume slider is in use. */
   let volumeActive = $state(false);
@@ -93,19 +90,26 @@
   });
 
   /**
-   * A 1 274-chapter book does not need pagination — it needs a list you can
-   * scroll and type into. The range `<select>` was a second navigation model
-   * bolted onto the first one: you had to know which hundred your chapter was
-   * in before you could look for it. The rows are cheap to skip when they are
-   * off screen (`content-visibility`), so one continuous list is enough.
+   * A 1 274-chapter book wants one list you can scroll and type into, not a
+   * range picker that makes you guess which hundred your chapter lives in.
+   * `content-visibility: auto` keeps off-screen rows out of layout.
    */
   let chapterQuery = $state('');
-  const filteredChapters = $derived.by(() => {
+  const shownChapters = $derived.by(() => {
     const query = chapterQuery.trim().toLowerCase();
-    const rows = chapters.map((chapter, index) => ({ chapter, index }));
-    if (!query) return rows;
-    return rows.filter(row => row.chapter.title.toLowerCase().includes(query));
+    return chapters
+      .map((chapter, index) => ({ chapter, index }))
+      .filter(row => !query || row.chapter.title.toLowerCase().includes(query));
   });
+
+  function jumpToCurrent(): void {
+    const index = Math.max(player.chapterIndex, 0);
+    chapterQuery = '';
+    requestAnimationFrame(() => {
+      listEl?.querySelector<HTMLElement>(`[data-chapter="${index}"]`)
+        ?.scrollIntoView({ block: 'center' });
+    });
+  }
 
   /** Which chapter a bookmark falls in — the list says "1:12:30 · 第 12 集"
    *  instead of a bare timestamp the listener cannot place. */
@@ -156,16 +160,20 @@
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
   );
 
-  /** The drawer line: which chapter, out of how many. */
-  const drawerLabel = $derived.by(() => {
-    if (isEpisode) return `${player.queue.length} ${t('player.chapters')}`;
-    if (chapters.length === 0) {
-      return player.chaptersLoading ? t('player.loadingChapters') : t('player.noChapters');
-    }
-    const index = Math.max(player.chapterIndex, 0);
-    const now = t('player.chapterNow', { index: index + 1, total: chapters.length });
-    return player.chapter?.title ? `${now} · ${player.chapter.title}` : now;
-  });
+  const facts = $derived(
+    isEpisode
+      ? [
+          player.showTitle,
+          player.episode?.publishedAt
+            ? new Date(player.episode.publishedAt).toLocaleDateString()
+            : '',
+        ].filter(Boolean)
+      : [
+          meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
+          meta?.publisher ? `${t('player.publisher')} · ${meta.publisher}` : '',
+          meta?.publishedYear ? `${t('player.year')} · ${meta.publishedYear}` : '',
+        ].filter(Boolean),
+  );
 </script>
 
 {#if item}
@@ -182,21 +190,30 @@
 
     <div class="player__body">
       <section class="stage">
-        <div class="stage__cover">
-          <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
-        </div>
+        <div class="stage__head">
+          <div class="stage__cover">
+            <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
+          </div>
 
-        <div class="stage__info">
-          <h1 class="stage__title clamp-2">{player.title}</h1>
-          <p class="t-small t-tertiary truncate">
-            {[
-              isEpisode ? player.showTitle : meta?.authorName,
-              meta?.narratorName,
-              formatDuration(player.duration),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
+          <div class="stage__info">
+            <h1 class="t-title clamp-2">{player.title}</h1>
+            <p class="t-secondary truncate">{isEpisode ? player.showTitle : (meta?.authorName ?? '')}</p>
+            {#if facts.length > 0}
+              <p class="t-small t-tertiary truncate">{facts.join('  ·  ')}</p>
+            {/if}
+
+            {#if description}
+              <p class="stage__desc">{description}</p>
+            {/if}
+
+            {#if meta?.genres?.length}
+              <div class="stage__genres">
+                {#each meta.genres as genre (genre)}
+                  <span class="chip">{genre}</span>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <div class="transport">
@@ -282,28 +299,26 @@
             onSeek={seekChapter}
             disabled={player.duration <= 0}
           />
-          <div class="transport__times t-num t-small">
-            <span class="transport__time">{formatDuration(chapterPos)}</span>
+          <div class="transport__times t-num t-small t-tertiary">
+            <span class="transport__t">{formatDuration(chapterPos)}</span>
             {#if chapterLine}
               <span class="transport__chapter truncate">{chapterLine}</span>
             {/if}
-            <span class="transport__time transport__time--total">
+            <span class="transport__t">
               {formatDuration(chapterLength || player.duration)}
             </span>
           </div>
 
           {#if !isEpisode && chapters.length > 1}
             <div class="book-bar">
-              <span class="book-bar__tag t-small t-tertiary t-num">
-                {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
-              </span>
+              <span class="book-bar__tag t-small t-tertiary">{t('player.wholeBook')}</span>
               <ProgressLine
                 value={player.progress}
-                label={t('player.wholeBook')}
+                label={t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
                 marks={bookmarkFractions}
               />
-              <span class="book-bar__pct t-small t-num t-tertiary">
-                {t('player.bookTotal', { time: formatDuration(player.duration) })}
+              <span class="book-bar__pct t-small t-num t-secondary">
+                {Math.round(player.progress * 100)}%
               </span>
             </div>
           {/if}
@@ -364,40 +379,11 @@
                 </div>
               {/if}
             </div>
-
-            <span class="tools__divider"></span>
-
-            <button class="btn btn--quiet btn--sm" onclick={() => void addMark()}>
-              <Icon name="plus" size={13} /> {t('bookmark.add')}
-            </button>
-
-            {#if description}
-              <button
-                class="btn btn--quiet btn--sm"
-                aria-expanded={descOpen}
-                onclick={() => (descOpen = !descOpen)}
-              >
-                {descOpen ? t('player.descLess') : t('player.descMore')}
-              </button>
-            {/if}
           </div>
-
-          {#if descOpen && description}
-            <div class="stage__desc-wrap">
-              <p class="stage__desc selectable">{description}</p>
-              {#if meta?.genres?.length}
-                <div class="stage__genres">
-                  {#each meta.genres as genre (genre)}
-                    <span class="chip">{genre}</span>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/if}
         </div>
       </section>
 
-      <aside class="side" class:open={sideOpen}>
+      <aside class="side">
         {#if !isEpisode}
           <div class="side__tabs">
             <div class="segmented">
@@ -439,17 +425,24 @@
               {/if}
             </div>
           {:else}
-          {#if chapters.length > 60}
-            <div class="chapter-range">
+          {#if chapters.length > 1}
+            <div class="chapter-tools">
               <span class="t-small t-tertiary t-num">
                 {t('player.chapterCount', { count: chapters.length })}
               </span>
-              <input
-                class="input chapter-range__search"
-                bind:value={chapterQuery}
-                placeholder={t('player.chapterSearch')}
-                spellcheck="false"
-              />
+              <div class="chapter-tools__right">
+                {#if chapters.length > 60}
+                  <input
+                    class="input chapter-search"
+                    bind:value={chapterQuery}
+                    placeholder={t('player.chapterSearch')}
+                    spellcheck="false"
+                  />
+                {/if}
+                <button class="btn btn--quiet btn--sm" onclick={jumpToCurrent}>
+                  {t('book.jumpToCurrent')}
+                </button>
+              </div>
             </div>
           {/if}
 
@@ -458,29 +451,27 @@
               <p class="t-small t-tertiary" style="padding: var(--gap-row)">
                 {player.chaptersLoading ? t('player.loadingChapters') : t('player.noChapters')}
               </p>
-            {:else if filteredChapters.length === 0}
-              <p class="t-small t-tertiary" style="padding: var(--gap-row)">
-                {t('library.empty')}
-              </p>
             {:else}
-              {#each filteredChapters as row (row.chapter.start)}
+              {#each shownChapters as row (row.chapter.start)}
+                {@const chapter = row.chapter}
+                {@const index = row.index}
                 <button
                   class="chapter"
-                  data-chapter={row.index}
-                  aria-current={row.index === player.chapterIndex ? 'true' : undefined}
-                  onclick={() => void player.seek(row.chapter.start)}
+                  data-chapter={index}
+                  aria-current={index === player.chapterIndex ? 'true' : undefined}
+                  onclick={() => void player.seek(chapter.start)}
                 >
-                  <span class="chapter__index t-num">{row.index + 1}</span>
+                  <span class="chapter__index t-num">{index + 1}</span>
                   <span class="chapter__body">
-                    <span class="truncate chapter__title">{row.chapter.title}</span>
+                    <span class="truncate chapter__title">{chapter.title}</span>
                     <span class="t-small t-num t-tertiary">
-                      {formatDuration(row.chapter.start)} · {formatDuration(row.chapter.end - row.chapter.start)}
+                      {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
                     </span>
                   </span>
-                  {#if flaggedChapters.has(row.index)}
+                  {#if flaggedChapters.has(index)}
                     <span class="chapter__flag" aria-hidden="true" title={t('player.bookmarks')}></span>
                   {/if}
-                  {#if row.index === player.chapterIndex}
+                  {#if index === player.chapterIndex}
                     <span class="chapter__dot" aria-hidden="true"></span>
                   {/if}
                 </button>
@@ -525,34 +516,6 @@
         {/if}
       </aside>
     </div>
-
-    <!-- One line at the foot of the page: what is playing where, and the way
-         into the list. The rail itself stays closed until asked. -->
-    <div class="drawer">
-      <button class="drawer__info" aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}>
-        <Icon name="layers" size={13} />
-        <span class="truncate">{drawerLabel}</span>
-        <Icon name="chevron-down" size={12} />
-      </button>
-      <div class="drawer__tabs">
-        <button
-          class="drawer__tab"
-          aria-pressed={sideOpen && tab === 'chapters'}
-          onclick={() => {
-            tab = 'chapters';
-            sideOpen = true;
-          }}
-        >{t('player.chapters')}</button>
-        <button
-          class="drawer__tab"
-          aria-pressed={sideOpen && tab === 'bookmarks'}
-          onclick={() => {
-            tab = 'bookmarks';
-            sideOpen = true;
-          }}
-        >{t('player.bookmarks')}{#if marks.length > 0}<span class="t-num"> {marks.length}</span>{/if}</button>
-      </div>
-    </div>
   </div>
 {/if}
 
@@ -576,32 +539,37 @@
   }
 
   .player__body {
-    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--gap-section);
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
   }
 
-  /* One vertical axis: cover, title, chapter, progress, controls. The eye
-     stops moving sideways, and the empty lower-left corner is gone. */
   .stage {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: var(--gap-block);
     min-width: 0;
-    min-height: 0;
-    padding-block: var(--gap-row);
     overflow-y: auto;
   }
 
+  /* Cover and blurb share one band: the description is context for the title,
+     not a separate document worth a tab of its own. */
+  .stage__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--gap-section);
+    width: 100%;
+    max-width: 620px;
+  }
+
   .stage__cover {
-    width: min(208px, 26vh);
+    width: min(228px, 32vh);
     aspect-ratio: 1;
-    flex: 0 0 auto;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-3);
@@ -610,31 +578,22 @@
   .stage__info {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 3px;
+    gap: var(--gap-hair);
     min-width: 0;
-    max-width: 560px;
-    text-align: center;
+    padding-top: var(--gap-inline);
   }
 
-  .stage__title {
-    font-size: var(--text-xl);
-    font-weight: var(--weight-semibold);
-    line-height: 1.25;
-  }
-
-  .stage__desc-wrap {
-    width: min(560px, 100%);
-    padding: var(--gap-row);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline);
-    background: var(--surface);
-  }
-
+  /* Fixed share of the viewport, not a fold/unfold button: the blurb always
+     occupies the same space, and long text scrolls inside that space. */
   .stage__desc {
+    margin-top: var(--gap-inline);
+    max-height: 30vh;
+    padding-right: 4px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     color: var(--text-secondary);
     font-size: var(--text-sm);
-    line-height: 1.7;
+    line-height: 1.6;
   }
 
   .stage__genres {
@@ -644,47 +603,30 @@
     margin-top: var(--gap-inline);
   }
 
+  @media (max-width: 900px) {
+    .stage__head {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: center;
+      text-align: center;
+    }
+
+  }
+
   .transport {
     width: min(560px, 100%);
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--gap-hair);
   }
 
-  /* Order, not DOM order: progress reads first, then the transport, then the
-     tools. Keeping the buttons together in the DOM preserves tab order. */
-  .transport > :global(.seek) {
-    order: 1;
-  }
-
-  .transport__times {
-    order: 2;
-  }
-
-  .book-bar {
-    order: 3;
-  }
-
-  .transport__top {
-    order: 4;
-  }
-
-  .transport__extras {
-    order: 5;
-  }
-
-  .stage__desc-wrap {
-    order: 6;
-  }
-
-  /* Controls sit below the progress, with volume sharing their row. */
+  /* Controls sit above the progress now, with volume sharing their row. */
   .transport__top {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 58px;
-    margin-top: var(--gap-block);
+    margin-bottom: var(--gap-inline);
   }
 
   .transport__volume {
@@ -713,11 +655,23 @@
     text-align: right;
   }
 
+  /* 10.5 px at 42% was unreadable. Both endpoints are now 12 px, tabular,
+     and at full secondary strength; the middle line names the chapter. */
   .transport__times {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: var(--gap-row);
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+
+  .transport__t {
+    flex: 0 0 auto;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
   }
 
   .transport__chapter {
@@ -726,20 +680,6 @@
     color: var(--text);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
-  }
-
-  /* Same rule as the bar: the playhead and the endpoint are the only two times,
-     both tabular and legible, and neither of them is a countdown. */
-  .transport__time {
-    flex: 0 0 auto;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-medium);
-    font-variant-numeric: tabular-nums;
-    color: var(--text-secondary);
-  }
-
-  .transport__time--total {
-    color: var(--text-tertiary);
   }
 
   .transport__buttons {
@@ -858,92 +798,13 @@
     color: var(--accent);
   }
 
-  /* Closed by default: zero width, no border, nothing to accidentally click.
-     Opening is a deliberate act from the drawer at the foot of the page. */
   .side {
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
-    width: 0;
-    min-width: 0;
     min-height: 0;
-    padding-left: 0;
-    overflow: hidden;
-    border-left: 1px solid transparent;
-    opacity: 0;
-    transition: width var(--dur-2) var(--ease), opacity var(--dur-1) var(--ease);
-  }
-
-  .side.open {
-    width: 320px;
+    border-left: 1px solid var(--hairline);
     padding-left: var(--gap-block);
-    margin-left: var(--gap-section);
-    border-left-color: var(--hairline);
-    opacity: 1;
-  }
-
-  @media (max-width: 980px) {
-    .side.open {
-      position: absolute;
-      inset: 0 0 0 auto;
-      z-index: 20;
-      width: min(340px, 86vw);
-      background: var(--surface);
-      box-shadow: var(--shadow-3);
-    }
-  }
-
-  .drawer {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    padding: 5px var(--gap-block);
-    border-top: 1px solid var(--hairline);
-    background: var(--surface);
-  }
-
-  .drawer__info {
-    display: flex;
-    flex: 1 1 auto;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    padding: 5px 8px;
-    border-radius: var(--radius-xs);
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-    text-align: left;
-  }
-
-  .drawer__info:hover {
-    background: var(--surface-raised);
-    color: var(--text);
-  }
-
-  .drawer__info[aria-expanded='true'] :global(svg:last-child) {
-    transform: rotate(180deg);
-  }
-
-  .drawer__tabs {
-    display: flex;
-    flex: 0 0 auto;
-    gap: 2px;
-    padding: 2px;
-    border-radius: var(--radius-pill);
-    background: var(--surface-inset);
-  }
-
-  .drawer__tab {
-    padding: 4px 12px;
-    border-radius: var(--radius-pill);
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-  }
-
-  .drawer__tab[aria-pressed='true'] {
-    background: var(--surface);
-    color: var(--text);
-    font-weight: var(--weight-medium);
   }
 
   .side__tabs .segmented {
@@ -954,7 +815,7 @@
     flex: 1 1 0;
   }
 
-  .chapter-range {
+  .chapter-tools {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -962,8 +823,15 @@
     padding-bottom: var(--gap-inline);
   }
 
-  .chapter-range__search {
-    width: 140px;
+  .chapter-tools__right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .chapter-search {
+    width: 116px;
     height: var(--control-sm);
     font-size: var(--text-xs);
   }
@@ -976,8 +844,6 @@
     gap: 2px;
   }
 
-  /* One continuous list of up to a few thousand rows: the engine skips the
-     off-screen ones, so no paging control is needed. */
   .chapter {
     display: flex;
     align-items: center;

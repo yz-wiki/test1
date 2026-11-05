@@ -2,6 +2,47 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 2.17.0 (2026-11-05) — back to the 2.14 shape
+
+2.16 redesigned whole screens when only parts of them were wrong. This release
+restores the 2.14 layout as the base and keeps only the fixes that were asked
+for explicitly.
+
+### Player screen: 2.14's two columns again
+
+Cover and book information sit side by side in one band, the transport sits
+below them, and the chapter/bookmark list stays docked on the right. The
+centred, single-axis stage with the large empty area and the bottom drawer is
+gone.
+
+Only these parts changed on top of 2.14:
+
+- The blurb no longer folds. It owns a fixed share of the viewport (`30vh`)
+  and scrolls inside it when the text is longer.
+- The chapter range picker is gone. One continuous list, a filter field past
+  60 chapters, a jump-to-current button, and `content-visibility: auto` for
+  the off-screen rows.
+- Speed is a Dropdown instead of a segmented row.
+- The time row shows elapsed and chapter length (tabular, 12 px, secondary
+  strength) instead of a countdown.
+
+### Transport bar: progress above, controls centred below
+
+2.14's two-row shape is back. A full-width chapter track with elapsed and
+length at its ends sits on the first row. The second row is a three-track
+grid: book identity on the left, the play cluster on the window's centre line,
+tools on the right. The 2.16 information model stays: no remaining-time
+counters, the chapter count is the chapter-list button, speed opens upwards.
+
+### Home: the left column stays put
+
+The page no longer scrolls as a whole. The continue-listening card is pinned,
+owns the full height of the window, and only scrolls inside itself if the
+queue outgrows it, so resizing the window leaves no blank space beneath it.
+The shelf on the right scrolls on its own. The 书籍 / 系列 / 作者 / 播讲者
+switch now sits on the centre line of that column, with 查看全部 still at the
+right edge. Below 1080 px both columns stack and the page scrolls again.
+
 ## 2.16.0 (2026-11-05) — preview
 
 The transport bar stops saying the same thing four times, and the app grows one

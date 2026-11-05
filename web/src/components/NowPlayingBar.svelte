@@ -147,21 +147,38 @@
 
 {#if item}
   <div class="bar" class:flash>
-    <button class="bar__meta" onclick={() => player.expand()} title={t('player.expand')}>
-      <div class="bar__cover">
-        <Cover itemId={item.id} size={96} title={player.showTitle} />
-      </div>
-      <div class="bar__text">
-        <span class="truncate bar__title">{player.title}</span>
-        {#if flash}
-          <span class="truncate t-small bar__started">{t('player.started')}</span>
-        {:else}
-          <span class="truncate t-small t-tertiary">{player.subtitle}</span>
-        {/if}
-      </div>
-    </button>
+    <div class="bar__seek">
+      <span class="bar__t t-num">{formatDuration(chapterPos)}</span>
+      <SeekBar
+        value={chapterFraction}
+        size="sm"
+        label={t('player.progressOf', {
+          done: formatDuration(chapterPos),
+          total: formatDuration(chapterLength || player.duration),
+        })}
+        onSeek={seekChapter}
+        disabled={player.duration <= 0}
+      />
+      <span class="bar__t bar__t--total t-num">
+        {formatDuration(chapterLength || player.duration)}
+      </span>
+    </div>
 
-    <div class="bar__center">
+    <div class="bar__row">
+      <button class="bar__meta" onclick={() => player.expand()} title={t('player.expand')}>
+        <div class="bar__cover">
+          <Cover itemId={item.id} size={96} title={player.showTitle} />
+        </div>
+        <div class="bar__text">
+          <span class="truncate bar__title">{player.title}</span>
+          {#if flash}
+            <span class="truncate t-small bar__started">{t('player.started')}</span>
+          {:else}
+            <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+          {/if}
+        </div>
+      </button>
+
       <div class="bar__transport">
         <button
           type="button"
@@ -197,176 +214,167 @@
         </button>
       </div>
 
-      <div class="bar__seek">
-        <span class="bar__t t-num">{formatDuration(chapterPos)}</span>
-        <SeekBar
-          value={chapterFraction}
-          size="sm"
-          label={t('player.progressOf', {
-            done: formatDuration(chapterPos),
-            total: formatDuration(chapterLength || player.duration),
-          })}
-          onSeek={seekChapter}
-          disabled={player.duration <= 0}
-        />
-        <span class="bar__t bar__t--total t-num">
-          {formatDuration(chapterLength || player.duration)}
-        </span>
-      </div>
-    </div>
+      <div class="bar__right">
+        {#if entries.length > 0}
+          <div class="bar__anchored" bind:this={jumpEl}>
+            <button
+              type="button"
+              class="bar__chip"
+              aria-haspopup="dialog"
+              aria-expanded={jumpOpen}
+              title={player.chapter?.title ?? ''}
+              onclick={() => {
+                jumpOpen = !jumpOpen;
+                jumpQuery = '';
+              }}
+            >
+              <span class="bar__chip-text t-num">{jumpLabel}</span>
+              <span class="bar__chip-caret"><Icon name="chevron-down" size={11} /></span>
+            </button>
 
-    <div class="bar__right">
-      {#if entries.length > 0}
-        <div class="bar__anchored" bind:this={jumpEl}>
+            {#if jumpOpen}
+              <div class="jump" role="dialog" aria-label={t('player.chapters')}>
+                <div class="jump__head">
+                  <span class="t-label">
+                    {player.kind === 'episode' ? t('podcast.episodes', { count: entries.length }) : t('player.chapters')}
+                  </span>
+                  {#if searchable}
+                    <input
+                      class="input jump__search"
+                      bind:value={jumpQuery}
+                      placeholder={t('player.chapterSearch')}
+                      spellcheck="false"
+                    />
+                  {/if}
+                </div>
+                <div class="jump__list" bind:this={jumpList}>
+                  {#each shown as entry (entry.key)}
+                    <button
+                      type="button"
+                      class="jump__item"
+                      data-current={entry.current ? 'true' : undefined}
+                      aria-current={entry.current ? 'true' : undefined}
+                      onclick={() => {
+                        entry.jump();
+                        jumpOpen = false;
+                      }}
+                    >
+                      <span class="jump__n t-num">{entry.n}</span>
+                      <span class="truncate jump__title">{entry.title}</span>
+                      <span class="t-num t-small t-tertiary">{formatDuration(entry.at)}</span>
+                    </button>
+                  {/each}
+                  {#if shown.length === 0}
+                    <p class="jump__empty t-small t-tertiary">{t('player.noChapters')}</p>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+          </div>
+
+          {#if player.kind === 'book'}
+            <span
+              class="bar__book t-num"
+              title={t('player.progressOf', {
+                done: formatDuration(player.position),
+                total: formatDuration(player.duration),
+              })}
+            >
+              {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+            </span>
+          {/if}
+        {/if}
+
+        <span class="bar__sep"></span>
+
+        <div class="bar__volume">
           <button
             type="button"
-            class="bar__chip"
-            aria-haspopup="dialog"
-            aria-expanded={jumpOpen}
-            title={player.chapter?.title ?? ''}
-            onclick={() => {
-              jumpOpen = !jumpOpen;
-              jumpQuery = '';
-            }}
-          >
-            <span class="bar__chip-text t-num">{jumpLabel}</span>
-            <span class="bar__chip-caret"><Icon name="chevron-down" size={11} /></span>
-          </button>
+            class="icon-btn icon-btn--sm"
+            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            onclick={toggleMute}
+          ><Icon name="volume" size={14} /></button>
+          <input
+            class="bar__slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={player.volume}
+            style="--fill: {player.volume * 100}%"
+            aria-label={t('player.volume')}
+            oninput={event => onVolume(Number(event.currentTarget.value))}
+          />
+          <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
+        </div>
 
-          {#if jumpOpen}
-            <div class="jump" role="dialog" aria-label={t('player.chapters')}>
-              <div class="jump__head">
-                <span class="t-label">
-                  {player.kind === 'episode' ? t('podcast.episodes', { count: entries.length }) : t('player.chapters')}
-                </span>
-                {#if searchable}
-                  <input
-                    class="input jump__search"
-                    bind:value={jumpQuery}
-                    placeholder={t('player.chapterSearch')}
-                    spellcheck="false"
-                  />
-                {/if}
-              </div>
-              <div class="jump__list" bind:this={jumpList}>
-                {#each shown as entry (entry.key)}
-                  <button
-                    type="button"
-                    class="jump__item"
-                    data-current={entry.current ? 'true' : undefined}
-                    aria-current={entry.current ? 'true' : undefined}
-                    onclick={() => {
-                      entry.jump();
-                      jumpOpen = false;
-                    }}
-                  >
-                    <span class="jump__n t-num">{entry.n}</span>
-                    <span class="truncate jump__title">{entry.title}</span>
-                    <span class="t-num t-small t-tertiary">{formatDuration(entry.at)}</span>
-                  </button>
-                {/each}
-                {#if shown.length === 0}
-                  <p class="jump__empty t-small t-tertiary">{t('player.noChapters')}</p>
-                {/if}
-              </div>
+        <Dropdown
+          value={String(player.rate)}
+          options={RATES.map(rate => ({ value: rate, label: `${rate}×` }))}
+          onSelect={next => void player.setRate(Number(next))}
+          label={t('player.speed')}
+          placement="up"
+        />
+
+        <div class="bar__pop-anchor">
+          <button
+            type="button"
+            class="icon-btn icon-btn--sm"
+            class:active={sleepOpen || player.sleepMode !== 'off'}
+            aria-label={t('player.sleepShort')}
+            title={t('player.sleepShort')}
+            aria-expanded={sleepOpen}
+            onclick={() => (sleepOpen = !sleepOpen)}
+          ><Icon name="clock" size={14} /></button>
+          {#if sleepOpen}
+            <div class="bar__pop" role="menu">
+              <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('off'); sleepOpen = false; }}>
+                {t('sleep.off')}
+              </button>
+              {#each SLEEPS as minutes (minutes)}
+                <button type="button" class="bar__pop-item" onclick={() => { player.setSleep(minutes); sleepOpen = false; }}>
+                  {t('sleep.minutes', { count: minutes })}
+                </button>
+              {/each}
+              <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('chapter'); sleepOpen = false; }}>
+                {t('sleep.chapter')}
+              </button>
             </div>
           {/if}
         </div>
 
-        {#if player.kind === 'book'}
-          <span
-            class="bar__book t-num"
-            title={t('player.progressOf', {
-              done: formatDuration(player.position),
-              total: formatDuration(player.duration),
-            })}
-          >
-            {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
-          </span>
-        {/if}
-      {/if}
-
-      <span class="bar__sep"></span>
-
-      <div class="bar__volume">
         <button
           type="button"
           class="icon-btn icon-btn--sm"
-          aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-          title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-          onclick={toggleMute}
-        ><Icon name="volume" size={14} /></button>
-        <input
-          class="bar__slider"
-          type="range"
-          min="0"
-          max="1"
-          step="0.02"
-          value={player.volume}
-          style="--fill: {player.volume * 100}%"
-          aria-label={t('player.volume')}
-          oninput={event => onVolume(Number(event.currentTarget.value))}
-        />
-        <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
+          aria-label={t('player.openPlayer')}
+          title={t('player.openPlayer')}
+          onclick={() => player.expand()}
+        ><Icon name="expand" size={14} /></button>
       </div>
-
-      <Dropdown
-        value={String(player.rate)}
-        options={RATES.map(rate => ({ value: rate, label: `${rate}×` }))}
-        onSelect={next => void player.setRate(Number(next))}
-        label={t('player.speed')}
-        placement="up"
-      />
-
-      <div class="bar__pop-anchor">
-        <button
-          type="button"
-          class="icon-btn icon-btn--sm"
-          class:active={sleepOpen || player.sleepMode !== 'off'}
-          aria-label={t('player.sleepShort')}
-          title={t('player.sleepShort')}
-          aria-expanded={sleepOpen}
-          onclick={() => (sleepOpen = !sleepOpen)}
-        ><Icon name="clock" size={14} /></button>
-        {#if sleepOpen}
-          <div class="bar__pop" role="menu">
-            <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('off'); sleepOpen = false; }}>
-              {t('sleep.off')}
-            </button>
-            {#each SLEEPS as minutes (minutes)}
-              <button type="button" class="bar__pop-item" onclick={() => { player.setSleep(minutes); sleepOpen = false; }}>
-                {t('sleep.minutes', { count: minutes })}
-              </button>
-            {/each}
-            <button type="button" class="bar__pop-item" onclick={() => { player.setSleep('chapter'); sleepOpen = false; }}>
-              {t('sleep.chapter')}
-            </button>
-          </div>
-        {/if}
-      </div>
-
-      <button
-        type="button"
-        class="icon-btn icon-btn--sm"
-        aria-label={t('player.openPlayer')}
-        title={t('player.openPlayer')}
-        onclick={() => player.expand()}
-      ><Icon name="expand" size={14} /></button>
     </div>
+
   </div>
 {/if}
 
 <style>
+  /* 2.14's shape: one full-width chapter track above, one centred control
+     row below. The play cluster sits on the window's centre line because the
+     two outer grid columns are equal and may not grow past their share. */
   .bar {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    height: 72px;
     flex: 0 0 auto;
     border-top: 1px solid var(--hairline);
     background: var(--surface);
-    padding-inline: var(--gap-block);
+    padding: 7px var(--gap-block) 0;
     transition: background-color var(--dur-2) var(--ease);
+  }
+
+  .bar__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--gap-row);
+    height: 56px;
   }
 
   /* Starting a title in place: the bar lights up instead of the screen moving. */
@@ -380,8 +388,8 @@
     display: flex;
     align-items: center;
     gap: var(--gap-inline);
-    flex: 0 1 232px;
-    min-width: 132px;
+    min-width: 0;
+    justify-self: start;
     padding: 4px;
     margin-left: -4px;
     border-radius: var(--radius-sm);
@@ -421,19 +429,11 @@
 
   /* ── 2. Where am I ───────────────────────────────────────────────────── */
 
-  .bar__center {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
   .bar__transport {
     display: flex;
     align-items: center;
     gap: 2px;
-    flex: 0 0 auto;
+    justify-self: center;
   }
 
   .bar__play {
@@ -465,8 +465,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1 1 auto;
-    min-width: 120px;
+    min-width: 0;
+    padding-bottom: 2px;
   }
 
   .bar__seek :global(.seek) {
@@ -497,8 +497,9 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    justify-self: end;
     gap: 2px;
-    flex: 0 0 auto;
+    min-width: 0;
   }
 
   .bar__anchored {
@@ -708,7 +709,7 @@
       width: 44px;
     }
     .bar__meta {
-      flex-basis: 190px;
+      max-width: 190px;
     }
   }
 

@@ -449,7 +449,7 @@
   </div>
 </div>
 
-<div class="page scroll-y" bind:this={scroller} onscroll={onScroll}>
+<div class="page scroll-y" class:page--home={isHome} bind:this={scroller} onscroll={onScroll}>
   {#if library.error}
     <div class="empty">
       <span class="empty__title">{t('library.error')}</span>
@@ -534,6 +534,7 @@
 
         <section class="home__main">
           <div class="home__bar">
+            <span class="home__spacer" aria-hidden="true"></span>
             <div class="home-tabs" role="group" aria-label={t('home.categories')}>
               {#each homeTabs as entry (entry.id)}
                 <button
@@ -775,15 +776,30 @@
     display: grid;
     grid-template-columns: clamp(264px, 25%, 336px) minmax(0, 1fr);
     gap: var(--gap-section);
-    align-items: start;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
     padding: var(--gap-block) var(--gap-block) var(--gap-panel);
   }
 
+  /* The left column owns the full height of the window. Resizing no longer
+     leaves a blank gap under the history card; if the queue grows past the
+     space, the card scrolls inside itself instead of pushing the page. */
   .home__side {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    min-height: 0;
   }
 
   .home__panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: var(--gap-row);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
@@ -803,14 +819,37 @@
     flex-direction: column;
     gap: var(--gap-block);
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
   }
 
+  /* Three grid tracks: an empty one, the switch on the centre line, and
+     "view all" at the right edge. Two equal 1fr tracks keep the switch
+     centred no matter how wide the shelf gets. */
   .home__bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
     gap: var(--gap-row);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-bottom: var(--gap-inline);
+    background: var(--canvas);
+  }
+
+  .home__spacer {
+    min-width: 0;
+  }
+
+  .home__bar :global(.home-tabs) {
+    justify-self: center;
+  }
+
+  .home__all {
+    justify-self: end;
   }
 
   .home-tabs {
@@ -846,10 +885,6 @@
   .home-tabs__count {
     font-size: var(--text-2xs);
     opacity: 0.72;
-  }
-
-  .home__all {
-    flex: 0 0 auto;
   }
 
   .hero {
@@ -966,8 +1001,21 @@
   /* Below this the two columns cannot both stay readable, so the history card
      moves above the switch instead of being crushed to 200 px. */
   @media (max-width: 1080px) {
+    /* One column: give scrolling back to the page, so neither panel is
+       squeezed into half a viewport. */
+    .page.page--home {
+      display: block;
+      overflow-y: auto;
+      padding: var(--gap-block);
+    }
     .home {
       grid-template-columns: minmax(0, 1fr);
+      overflow: visible;
+      padding: 0;
+    }
+    .home__panel,
+    .home__main {
+      overflow: visible;
     }
   }
 
@@ -1077,6 +1125,15 @@
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
+  }
+
+  /* Home is its own viewport: the page must not scroll, or the history card
+     on the left drifts away while the shelf on the right is being read. */
+  .page.page--home {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
   }
 
   /* Title on the left, view switch on the right. Centred stacking made a
