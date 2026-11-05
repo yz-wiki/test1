@@ -117,25 +117,66 @@ jobs:
 
       # 这是一个音频播放器:视频输出、视频滤镜、可视化、字幕渲染、流输出都进不了
       # 任何一条播放路径,但它们在 VLC plugins 里占了安装包的大头。
+      # VLC 3 在 Windows 上把大部分模块平铺在 plugins\ 根目录、少数在子目录,
+      # 两种形状都要裁;另外缓存的 target\release\plugins 会与本次裁剪结果合并,
+      # 必须先清掉,否则旧插件会原样留在包里。
       - name: 6.5 · 裁剪 LibVLC 视频插件
         if: ${{ env.TRIM_VLC != 'false' }}
         run: |
           $plugins = Join-Path $env:GITHUB_WORKSPACE 'src-tauri\vlc-dist\plugins'
           if (-not (Test-Path $plugins)) { Write-Host 'no plugins tree; skipped'; exit 0 }
-          $drop = @('3d','access_output','gui','notify','services_discovery','spu',
-                    'stream_output','text_renderer','video_channel_mixer',
-                    'video_filter','video_output','visualization')
+
+          $stale = Join-Path $env:GITHUB_WORKSPACE 'src-tauri\target\release\plugins'
+          if (Test-Path $stale) {
+            $n = @(Get-ChildItem $stale -Recurse -File).Count
+            Remove-Item $stale -Recurse -Force
+            Write-Host "dropped cached release\plugins ($n files) so the trimmed tree is what gets bundled"
+          }
+
+          $dropDirs = @('3d','access_output','d3d11','d3d9','gui','mux','notify',
+                        'services_discovery','spu','stream_out','text_renderer',
+                        'video_channel_mixer','video_filter','video_output',
+                        'video_chroma','video_splitter','visualization')
+          $dropFlat = @(
+            'libx265_plugin.dll','libx26410b_plugin.dll','libx264_plugin.dll',
+            'libaom_plugin.dll','libvpx_plugin.dll','libdav1d_plugin.dll',
+            'libswscale_plugin.dll','libd3d11va_plugin.dll','libdxva2_plugin.dll',
+            'libdirect3d11_filters_plugin.dll','libdirect3d9_filters_plugin.dll',
+            'libscreen_plugin.dll','libvnc_plugin.dll','libwall_plugin.dll',
+            'libpanoramix_plugin.dll','libtheora_plugin.dll','libschroedinger_plugin.dll',
+            'libdiracsys_plugin.dll','librawvideo_plugin.dll','librawvid_plugin.dll',
+            'libyuvp_plugin.dll','libgrey_yuv_plugin.dll','libmjpeg_plugin.dll',
+            'libi420_rgb_plugin.dll','libi420_rgb_mmx_plugin.dll','libi420_rgb_sse2_plugin.dll',
+            'libi420_yuy2_plugin.dll','libi420_yuy2_mmx_plugin.dll','libi420_yuy2_sse2_plugin.dll',
+            'libi422_i420_plugin.dll','libi422_yuy2_plugin.dll','libi422_yuy2_mmx_plugin.dll',
+            'libi422_yuy2_sse2_plugin.dll','libyuy2_i420_plugin.dll','libyuy2_i422_plugin.dll',
+            'libi420_10_p010_plugin.dll','libi420_nv12_plugin.dll',
+            'libcvdsub_plugin.dll','libdvbsub_plugin.dll','libspudec_plugin.dll',
+            'libsvcdsub_plugin.dll','libvobsub_plugin.dll','libcdg_plugin.dll',
+            'libkate_plugin.dll','libfluidsynth_plugin.dll'
+          )
+
           $before = @(Get-ChildItem $plugins -Recurse -File)
           $bytes0 = ($before | Measure-Object Length -Sum).Sum
-          foreach ($d in $drop) {
+          foreach ($d in $dropDirs) {
             $p = Join-Path $plugins $d
             if (Test-Path $p) { Remove-Item $p -Recurse -Force }
           }
+          $removed = 0
+          foreach ($f in $dropFlat) {
+            $p = Join-Path $plugins $f
+            if (Test-Path $p) { Remove-Item $p -Force; $removed++ }
+          }
           $after = @(Get-ChildItem $plugins -Recurse -File)
           $bytes1 = ($after | Measure-Object Length -Sum).Sum
-          Write-Host ("trimmed VLC plugins: {0} -> {1} files, {2:N1} -> {3:N1} MB" -f `
-            $before.Count, $after.Count, ($bytes0 / 1MB), ($bytes1 / 1MB))
-          if ($after.Count -lt 20) { Write-Host '::error::too many plugins removed'; exit 1 }
+          Write-Host ("trimmed VLC plugins: {0} -> {1} files ({2} flat dlls, {3} dirs), {4:N1} -> {5:N1} MB" -f `
+            $before.Count, $after.Count, $removed, $dropDirs.Count, ($bytes0 / 1MB), ($bytes1 / 1MB))
+          foreach ($keep in @('libavcodec_plugin.dll','libmpg123_plugin.dll','libfaad_plugin.dll',
+                              'libflac_plugin.dll','libvorbis_plugin.dll','libopus_plugin.dll',
+                              'libmp4_plugin.dll','libfilesystem_plugin.dll')) {
+            if (-not (Test-Path (Join-Path $plugins $keep))) { Write-Host "::error::$keep missing after trim"; exit 1 }
+          }
+          if ($after.Count -lt 150) { Write-Host '::error::too many plugins removed'; exit 1 }
 
       - name: 7 · 仓库校验套件(可选,run_verify=true 时)
         if: ${{ inputs.run_verify == true }}
