@@ -2,6 +2,49 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 2.14.0 (2026-11-05) — preview
+
+The player screen, the transport bar and the home page now share one model of
+progress and one idea of where a click lands. Front end only — no Rust change.
+
+### Playback starts where you are
+
+`player.open()` hard-coded `expanded = true`, so every way of starting a title
+— the continue card, a chapter row, "开始收听" on the detail page — pushed the
+full player screen. `open()` now takes `present`, and browse surfaces pass
+false: playback starts, the page stays, and the bar is the receipt (it flashes
+green for 1.4 s and reads 已开始播放). The full player is reached from the bar,
+its expand arrow, or the 正在播放 rail entry. Entering **book** detail pages is
+unchanged.
+
+### One progress, three scales
+
+- **Transport bar**: the draggable track is the chapter. It was the whole book,
+  with every chapter boundary drawn on it — 1771 ticks of noise on a long title.
+- **Player**: the 2px whole-book line is read-only and carries bookmark
+  diamonds. `chapterMarks` is gone.
+- **Lists and cards**: percentage only.
+
+### Player screen
+
+- The description moved beside the cover — three lines, expandable — and the
+  详情 tab is gone. The side rail is chapters and bookmarks only.
+- Bookmarks appear in three places with one shape: a flag on the chapter row, a
+  diamond on the book line, and "note · time · chapter" in the tab.
+- Podcasts list their episodes in the player again; removing the detail tab
+  would otherwise have left them with an empty chapter panel.
+
+### Home
+
+- The four category cards are replaced by one segmented row that switches the
+  content in place instead of navigating away.
+- Recently added is sorted by `addedAt`, newest first, collapsed to one card per
+  series with "共 N 卷 · 3 天前". It was an unsorted `items.slice(0, 10)`.
+- Cover size is four stops (紧凑 / 标准 / 宽松 / 大图) with a "标准 · 5 列"
+  readout; Ctrl+wheel steps through the same stops.
+- The sidebar's manual collapse toggle is gone; it folds to an icon rail below
+  1040px on its own.
+
 ## 2.13.0 (2026-11-05) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,

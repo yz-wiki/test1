@@ -256,8 +256,6 @@ class UiStore {
   focusSearch = $state(0);
   /** Which settings pane to open; set when the account chip is clicked. */
   settingsSection = $state('display');
-  /** Collapsed to an icon rail; remembered across launches. */
-  sidebarCompact = $state(localStorage.getItem('skald.sidebarCompact') === 'true');
 
   constructor() {
     this.applyTheme();
@@ -330,11 +328,6 @@ class UiStore {
     this.reduceMotion = on;
     localStorage.setItem('skald.reduceMotion', String(on));
     this.applyMotion();
-  }
-
-  toggleSidebar(): void {
-    this.sidebarCompact = !this.sidebarCompact;
-    localStorage.setItem('skald.sidebarCompact', String(this.sidebarCompact));
   }
 
   setCloseToTray(on: boolean): void {

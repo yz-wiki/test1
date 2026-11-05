@@ -22,7 +22,21 @@
   ];
 
   const subtitle = $derived(session.activeLibrary?.name ?? t('app.name'));
-  const compact = $derived(ui.sidebarCompact);
+
+  /**
+   * The rail folds on its own when the window gets narrow. A manual toggle was
+   * a second, silent mode that made "why is my sidebar a strip of icons?"
+   * depend on a click made three sessions ago.
+   */
+  let narrow = $state(false);
+  $effect(() => {
+    const query = window.matchMedia('(max-width: 1040px)');
+    const apply = () => (narrow = query.matches);
+    apply();
+    query.addEventListener('change', apply);
+    return () => query.removeEventListener('change', apply);
+  });
+  const compact = $derived(narrow);
   const isBrowsing = $derived(
     ui.route === 'library' || ui.route === 'book' || ui.route === 'podcast',
   );
@@ -44,17 +58,6 @@
 
 <div class="shell">
   <nav class="rail" class:compact aria-label={t('nav.section.browse')}>
-    <div class="rail__top">
-      <button
-        class="rail__toggle"
-        aria-label={compact ? t('nav.expand') : t('nav.collapse')}
-        title={compact ? t('nav.expand') : t('nav.collapse')}
-        onclick={() => ui.toggleSidebar()}
-      >
-        <Icon name={compact ? 'chevron-right' : 'chevron-left'} size={13} />
-      </button>
-    </div>
-
     <div class="rail__group">
       <span class="rail__label t-label">{t('nav.section.browse')}</span>
       <button
@@ -218,30 +221,6 @@
     align-items: center;
     padding-inline: 6px;
     gap: var(--gap-inline);
-  }
-
-  .rail__top {
-    display: flex;
-    justify-content: flex-end;
-    min-width: 0;
-  }
-
-  .rail.compact .rail__top {
-    justify-content: center;
-  }
-
-  .rail__toggle {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: var(--radius-xs);
-    color: var(--text-tertiary);
-  }
-
-  .rail__toggle:hover {
-    background: var(--surface-raised);
-    color: var(--text);
   }
 
   .rail__group {

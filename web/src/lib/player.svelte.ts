@@ -113,6 +113,12 @@ class PlayerStore {
   expanded = $state(false);
   /** A list item has no chapter table; this is true until the full item arrives. */
   chaptersLoading = $state(false);
+  /**
+   * Bumped when playback starts *without* opening the full screen. The bar
+   * listens for it so a title that begins behind the shelf still announces
+   * itself — the 2.12 lesson was that a silent start reads as "nothing happened".
+   */
+  announcedAt = $state(0);
 
   sleepMode = $state<SleepMode>('off');
   sleepRemaining = $state(0);
@@ -213,18 +219,23 @@ class PlayerStore {
   }
 
   /** Start a book, or an episode of a podcast. Re-opening what is already
-   *  loaded toggles it, so clicking a title is never destructive. */
+   *  loaded toggles it, so clicking a title is never destructive.
+   *
+   *  `present` decides whether starting pushes the full player screen. Browsing
+   *  surfaces pass false and leave the listener where they were; the bar is the
+   *  receipt that it started. */
   async open(
     item: LibraryItem,
     episode?: Episode | null,
     queue?: Episode[],
     startAt?: number,
+    present = true,
   ): Promise<void> {
     if (!startAt && this.isCurrent(item, episode)) {
       // "Continue listening" must never pause a title that is already playing.
-      // Only resume when paused, and always open the player.
+      // Only resume when paused, and only take over the screen when asked to.
       if (!this.playing) await this.toggle();
-      this.expanded = true;
+      if (present) this.expanded = true;
       return;
     }
 
@@ -255,12 +266,12 @@ class PlayerStore {
       if (this.volume !== 1) await setVolumeCommand(Math.round(this.volume * 100));
       await playAudio();
       this.playing = true;
-      this.expanded = true;
+      if (present) this.expanded = true;
     } catch (error) {
       // A downloaded book still plays with no network at all: LibVLC reads the
       // local file and the listening is queued for the server instead.
       const local = downloads.forItem(item.id);
-      if (local && !episode && (await this.tryLocal(local.filePath, item.id, saved?.lastUpdate))) {
+      if (local && !episode && (await this.tryLocal(local.filePath, item.id, saved?.lastUpdate, present))) {
         return;
       }
       this.error = (error as Error).message;
@@ -275,6 +286,7 @@ class PlayerStore {
     filePath: string,
     itemId: string,
     serverLastUpdate?: number,
+    present = true,
   ): Promise<boolean> {
     try {
       await playLocalFile(
@@ -293,7 +305,7 @@ class PlayerStore {
       );
       this.sessionId = null;
       this.playing = true;
-      this.expanded = true;
+      if (present) this.expanded = true;
       this.error = null;
       return true;
     } catch {
@@ -439,6 +451,12 @@ class PlayerStore {
 
   expand(): void {
     if (this.item) this.expanded = true;
+  }
+
+  /** Tell the bar that something started, so it can flash instead of the
+   *  screen changing under the listener's finger. */
+  pulse(): void {
+    this.announcedAt = Date.now();
   }
 
   clearError(): void {

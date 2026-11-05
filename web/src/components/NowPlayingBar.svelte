@@ -9,13 +9,28 @@
   const item = $derived(player.item);
   const chapters = $derived(player.chapters);
 
-  const marks = $derived(
-    player.duration > 0
-      ? chapters
-          .map(chapter => chapter.start / player.duration)
-          .filter(fraction => fraction > 0.002 && fraction < 0.998)
-      : [],
+  /**
+   * The bar's one draggable track measures the *chapter*, not the book.
+   * A 189-hour title moves a whole-book playhead by one pixel an hour, and the
+   * thousand-tick chapter ruler on top of it read as a dashed line rather than
+   * as information.
+   */
+  const chapterLength = $derived(player.chapter ? player.chapter.end - player.chapter.start : 0);
+  const chapterPos = $derived(
+    player.chapter ? Math.max(player.position - player.chapter.start, 0) : player.position,
   );
+  const chapterFraction = $derived(
+    chapterLength > 0 ? Math.min(Math.max(chapterPos / chapterLength, 0), 1) : player.progress,
+  );
+
+  function seekChapter(fraction: number): void {
+    const chapter = player.chapter;
+    if (!chapter || chapterLength <= 0) {
+      void player.seekFraction(fraction);
+      return;
+    }
+    void player.seek(chapter.start + fraction * chapterLength);
+  }
 
   let menuOpen = $state(false);
   let menuEl = $state<HTMLDivElement | null>(null);
@@ -23,6 +38,17 @@
   let volumeActive = $state(false);
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
   let lastVolume = $state(1);
+
+  /** A start that happened behind the shelf still has to be visible. */
+  let flash = $state(false);
+  let flashTimer: ReturnType<typeof setTimeout> | null = null;
+  $effect(() => {
+    const at = player.announcedAt;
+    if (!at) return;
+    flash = true;
+    if (flashTimer) clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => (flash = false), 1400);
+  });
 
   const RATES = [0.8, 1, 1.25, 1.5, 1.75, 2];
   const SLEEPS = [15, 30, 45, 60] as const;
@@ -52,7 +78,7 @@
           title: episode.title,
           at: episode.duration ?? 0,
           current: episode.id === player.episode?.id,
-          jump: () => void player.open(item!, episode, player.queue),
+          jump: () => void player.open(item!, episode, player.queue, undefined, false),
         }))
       : chapters.map((chapter, index) => ({
           key: `c${index}`,
@@ -86,17 +112,16 @@
 </script>
 
 {#if item}
-  <div class="bar">
+  <div class="bar" class:flash>
     <SeekBar
-      value={player.progress}
+      value={chapterFraction}
       size="sm"
       label={t('player.progressOf', {
-        done: formatDuration(player.position),
-        total: formatDuration(player.duration),
+        done: formatDuration(chapterPos),
+        total: formatDuration(chapterLength || player.duration),
       })}
-      onSeek={fraction => void player.seekFraction(fraction)}
+      onSeek={seekChapter}
       disabled={player.duration <= 0}
-      {marks}
     />
 
     <div class="bar__row">
@@ -110,7 +135,11 @@
         </div>
         <div class="bar__text">
           <span class="truncate bar__title">{player.title}</span>
-          <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+          {#if flash}
+            <span class="truncate t-small bar__started">{t('player.started')}</span>
+          {:else}
+            <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+          {/if}
         </div>
       </button>
 
@@ -149,7 +178,7 @@
       <div class="bar__right">
         <span class="t-num t-small t-tertiary bar__time">
           {#if player.kind === 'book' && player.chapters.length > 0}
-            {formatDuration(Math.max(player.position - (player.chapter?.start ?? 0), 0))}
+            {formatDuration(chapterPos)}
             <span class="bar__dot">·</span>
             {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: player.chapters.length })}
             <span class="bar__dot">·</span>
@@ -276,6 +305,17 @@
     border-top: 1px solid var(--hairline);
     background: var(--surface);
     padding-inline: var(--gap-block);
+    transition: background-color var(--dur-2) var(--ease);
+  }
+
+  /* Starting a title in place: the bar lights up instead of the screen moving. */
+  .bar.flash {
+    background: var(--accent-soft);
+  }
+
+  .bar__started {
+    color: var(--accent);
+    font-weight: var(--weight-medium);
   }
 
   .bar__row {

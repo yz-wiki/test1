@@ -6,8 +6,11 @@
   import Cover from '../components/Cover.svelte';
   import Icon from '../components/Icon.svelte';
   import SeekBar from '../components/SeekBar.svelte';
+  import ProgressLine from '../components/ProgressLine.svelte';
 
-  let tab = $state<'chapters' | 'bookmarks' | 'details'>('chapters');
+  /** The blurb lives beside the cover and folds; it is not a tab. */
+  let tab = $state<'chapters' | 'bookmarks'>('chapters');
+  let descOpen = $state(false);
   let sleepOpen = $state(false);
   /** Shows the percentage only while the volume slider is in use. */
   let volumeActive = $state(false);
@@ -65,7 +68,26 @@
   const chapters = $derived(player.chapters);
   const marks = $derived(item ? progress.bookmarksFor(item.id) : []);
   const isEpisode = $derived(player.kind === 'episode');
-  const shownTab = $derived(isEpisode ? 'details' : tab);
+  const shownTab = $derived(isEpisode ? 'chapters' : tab);
+
+  /**
+   * Bookmarks belong on the whole-book line, not on the chapter track: their
+   * times are book-wide, so drawing them over a chapter-scale rail would place
+   * a mark for chapter 12 somewhere in the middle of chapter 37.
+   */
+  const bookmarkFractions = $derived(
+    player.duration > 0 ? marks.map(mark => mark.time / player.duration) : [],
+  );
+
+  /** Chapters that hold a bookmark, so the list can flag them in place. */
+  const flaggedChapters = $derived.by(() => {
+    const set = new Set<number>();
+    for (const mark of marks) {
+      const index = chapters.findIndex(chapter => mark.time >= chapter.start && mark.time < chapter.end);
+      if (index >= 0) set.add(index);
+    }
+    return set;
+  });
 
   /** Thousands of chapters cannot all be mounted; show one range at a time. */
   const CHUNK = 100;
@@ -74,6 +96,12 @@
   const shownChapters = $derived(
     chapters.slice(chapterPage * CHUNK, (chapterPage + 1) * CHUNK),
   );
+
+  /** Which chapter a bookmark falls in — the list says "1:12:30 · 第 12 集"
+   *  instead of a bare timestamp the listener cannot place. */
+  function chapterOfMark(time: number): string {
+    return chapters.find(chapter => time >= chapter.start && time < chapter.end)?.title ?? '';
+  }
 
   // Follow the playhead: when a new title opens or the chapter changes, put it
   // in view instead of leaving the list at chapter 1.
@@ -89,14 +117,6 @@
     const row = listEl.querySelector<HTMLElement>(`[data-chapter="${index}"]`);
     row?.scrollIntoView({ block: 'center' });
   });
-
-  const chapterMarks = $derived(
-    player.duration > 0
-      ? chapters
-          .map(chapter => chapter.start / player.duration)
-          .filter(fraction => fraction > 0.002 && fraction < 0.998)
-      : [],
-  );
 
   /** The transport's main bar measures the current chapter, not the book: a
    *  189-hour title otherwise moves its playhead by one pixel an hour. */
@@ -126,8 +146,6 @@
     const name = player.chapter?.title ?? '';
     return `${index + 1} / ${chapters.length}${name ? ` · ${name}` : ''}`;
   });
-
-  const chapterTitleNow = $derived(player.chapter?.title ?? '');
 
   const description = $derived(
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
@@ -163,16 +181,33 @@
 
     <div class="player__body">
       <section class="stage">
-        <div class="stage__cover">
-          <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
-        </div>
+        <div class="stage__head">
+          <div class="stage__cover">
+            <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
+          </div>
 
-        <div class="stage__titles">
-          <h1 class="t-title clamp-2">{player.title}</h1>
-          <p class="t-secondary truncate">{isEpisode ? player.showTitle : (meta?.authorName ?? '')}</p>
-          {#if facts.length > 0}
-            <p class="t-small t-tertiary truncate">{facts.join('  ·  ')}</p>
-          {/if}
+          <div class="stage__info">
+            <h1 class="t-title clamp-2">{player.title}</h1>
+            <p class="t-secondary truncate">{isEpisode ? player.showTitle : (meta?.authorName ?? '')}</p>
+            {#if facts.length > 0}
+              <p class="t-small t-tertiary truncate">{facts.join('  ·  ')}</p>
+            {/if}
+
+            {#if description}
+              <p class="stage__desc" class:open={descOpen}>{description}</p>
+              <button class="stage__more" onclick={() => (descOpen = !descOpen)}>
+                {descOpen ? t('player.descLess') : t('player.descMore')}
+              </button>
+            {/if}
+
+            {#if meta?.genres?.length}
+              <div class="stage__genres">
+                {#each meta.genres as genre (genre)}
+                  <span class="chip">{genre}</span>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
 
         <div class="transport">
@@ -270,26 +305,15 @@
 
           {#if !isEpisode && chapters.length > 1}
             <div class="book-bar">
-              <SeekBar
+              <span class="book-bar__tag t-small t-tertiary">{t('player.wholeBook')}</span>
+              <ProgressLine
                 value={player.progress}
-                size="sm"
-                label={t('player.wholeBook')}
-                onSeek={fraction => void player.seekFraction(fraction)}
-                marks={chapterMarks}
+                label={t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+                marks={bookmarkFractions}
               />
-              <div class="book-bar__legend t-small t-tertiary t-num">
-                <span>{formatDuration(player.position)}</span>
-                <span class="book-bar__label">
-                  {#if !isEpisode && chapters.length > 0}
-                    {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: chapters.length })}
-                    · {chapterTitleNow}
-                    · {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
-                  {:else}
-                    {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
-                  {/if}
-                </span>
-                <span>−{formatDuration(Math.max(player.duration - player.position, 0))}</span>
-              </div>
+              <span class="book-bar__pct t-small t-num t-secondary">
+                {Math.round(player.progress * 100)}%
+              </span>
             </div>
           {/if}
 
@@ -368,17 +392,35 @@
                 class="segmented__item"
                 aria-pressed={tab === 'bookmarks'}
                 onclick={() => (tab = 'bookmarks')}
-              >{t('player.bookmarks')}</button>
-              <button
-                class="segmented__item"
-                aria-pressed={tab === 'details'}
-                onclick={() => (tab = 'details')}
-              >{t('player.details')}</button>
+              >{t('player.bookmarks')}{#if marks.length > 0}<span class="segmented__count t-num">{marks.length}</span>{/if}</button>
             </div>
           </div>
         {/if}
 
         {#if shownTab === 'chapters'}
+          {#if isEpisode}
+            <div class="chapter-list scroll-y">
+              {#each player.queue as entry, index (entry.id)}
+                <button
+                  class="chapter"
+                  aria-current={entry.id === player.episode?.id ? 'true' : undefined}
+                  onclick={() => void player.open(item!, entry, player.queue, undefined, false)}
+                >
+                  <span class="chapter__index t-num">{entry.index ?? player.queue.length - index}</span>
+                  <span class="chapter__body">
+                    <span class="truncate chapter__title">{entry.title}</span>
+                    <span class="t-small t-num t-tertiary">{formatDuration(entry.duration ?? 0)}</span>
+                  </span>
+                  {#if entry.id === player.episode?.id}
+                    <span class="chapter__dot" aria-hidden="true"></span>
+                  {/if}
+                </button>
+              {/each}
+              {#if player.queue.length === 0}
+                <p class="t-small t-tertiary" style="padding: var(--gap-row)">{t('podcast.empty')}</p>
+              {/if}
+            </div>
+          {:else}
           {#if chapters.length > CHUNK}
             <div class="chapter-range">
               <span class="t-small t-tertiary t-num">
@@ -423,6 +465,9 @@
                       {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
                     </span>
                   </span>
+                  {#if flaggedChapters.has(index)}
+                    <span class="chapter__flag" aria-hidden="true" title={t('player.bookmarks')}></span>
+                  {/if}
                   {#if index === player.chapterIndex}
                     <span class="chapter__dot" aria-hidden="true"></span>
                   {/if}
@@ -430,6 +475,7 @@
               {/each}
             {/if}
           </div>
+          {/if}
         {:else if shownTab === 'bookmarks'}
           <div class="bookmarks">
             <div class="mark-add">
@@ -452,26 +498,14 @@
               <div class="chapter-list scroll-y">
                 {#each marks as mark (mark.time + mark.title)}
                   <button class="chapter" onclick={() => void player.seek(mark.time)}>
-                    <span class="chapter__index t-num">{formatDuration(mark.time)}</span>
+                    <span class="chapter__flag" aria-hidden="true"></span>
                     <span class="chapter__body">
                       <span class="truncate chapter__title">{mark.title}</span>
+                      <span class="t-small t-num t-tertiary">
+                        {formatDuration(mark.time)}{#if chapterOfMark(mark.time)} · {chapterOfMark(mark.time)}{/if}
+                      </span>
                     </span>
                   </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {:else}
-          <div class="details scroll-y">
-            {#if description}
-              <p class="t-body selectable">{description}</p>
-            {:else}
-              <p class="t-small t-tertiary">{t('common.unknown')}</p>
-            {/if}
-            {#if meta?.genres?.length}
-              <div class="details__genres">
-                {#each meta.genres as genre (genre)}
-                  <span class="chip">{genre}</span>
                 {/each}
               </div>
             {/if}
@@ -519,21 +553,75 @@
     overflow-y: auto;
   }
 
+  /* Cover and blurb share one band: the description is context for the title,
+     not a separate document worth a tab of its own. */
+  .stage__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--gap-section);
+    width: 100%;
+    max-width: 620px;
+  }
+
   .stage__cover {
-    width: min(320px, 42vh);
+    width: min(228px, 32vh);
     aspect-ratio: 1;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-3);
   }
 
-  .stage__titles {
+  .stage__info {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: var(--gap-hair);
-    text-align: center;
-    max-width: 560px;
+    min-width: 0;
+    padding-top: var(--gap-inline);
+  }
+
+  .stage__desc {
+    margin-top: var(--gap-inline);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .stage__desc.open {
+    display: block;
+    max-height: 168px;
+    overflow-y: auto;
+    -webkit-line-clamp: unset;
+  }
+
+  .stage__more {
+    align-self: flex-start;
+    margin-top: 2px;
+    color: var(--accent);
+    font-size: var(--text-xs);
+  }
+
+  .stage__genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-tight);
+    margin-top: var(--gap-inline);
+  }
+
+  @media (max-width: 900px) {
+    .stage__head {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: center;
+      text-align: center;
+    }
+
+    .stage__more {
+      align-self: center;
+    }
   }
 
   .transport {
@@ -561,8 +649,22 @@
     gap: 6px;
   }
 
-  .book-bar :global(.seek__fill) {
-    opacity: 0.55;
+  .book-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    margin-top: var(--gap-inline);
+  }
+
+  .book-bar__tag {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .book-bar__pct {
+    flex: 0 0 auto;
+    min-width: 30px;
+    text-align: right;
   }
 
   .transport__times {
@@ -577,26 +679,6 @@
     text-align: center;
     color: var(--text);
     font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-  }
-
-  .book-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: var(--gap-inline);
-    opacity: 0.85;
-  }
-
-  .book-bar__legend {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--text-2xs);
-  }
-
-  .book-bar__label {
-    letter-spacing: 0.02em;
-    color: var(--text-secondary);
     font-weight: var(--weight-medium);
   }
 
@@ -800,12 +882,24 @@
     flex: 0 0 auto;
   }
 
-  .details {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-row);
+  /* A bookmark sits in the chapter list as a flag, so "where did I mark this"
+     is answerable without opening the bookmarks tab. */
+  .chapter__flag {
+    width: 7px;
+    height: 9px;
+    flex: 0 0 auto;
+    background: var(--accent);
+    opacity: 0.8;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 70%, 0 100%);
+  }
+
+  .segmented__count {
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    font-size: var(--text-2xs);
+    color: var(--text-secondary);
   }
 
   .bookmarks {
@@ -823,12 +917,6 @@
 
   .mark-add .input {
     flex: 1 1 auto;
-  }
-
-  .details__genres {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap-tight);
   }
 
   .chip {
