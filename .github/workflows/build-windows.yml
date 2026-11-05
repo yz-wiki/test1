@@ -220,6 +220,12 @@ jobs:
         if: ${{ env.BUNDLES == 'all' || env.BUNDLES == 'portable' }}
         run: |
           New-Item -ItemType Directory -Force "$env:GITHUB_WORKSPACE\gha-logs" | Out-Null
+          $p = Join-Path $env:GITHUB_WORKSPACE 'src-tauri\target\release\plugins'
+          if (Test-Path $p) {
+            $flat = @(Get-ChildItem $p -File -Filter '*.dll').Count
+            $nested = @(Get-ChildItem $p -Directory | ForEach-Object { Get-ChildItem $_.FullName -File -Filter '*.dll' }).Count
+            Write-Host "release\plugins layout: $flat flat dlls, $nested nested dlls"
+          }
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\package-portable.ps1') 2>&1 |
               Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\10-portable.log"
           exit $LASTEXITCODE

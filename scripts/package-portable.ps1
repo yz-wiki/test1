@@ -68,6 +68,21 @@ if (Test-Path $cacheGen) { Copy-Item $cacheGen (Join-Path $stage 'vlc-cache-gen.
 
 Copy-Item (Join-Path $ReleaseDir 'plugins') (Join-Path $stage 'plugins') -Recurse -Force
 
+# VLC on Windows loads modules from the flat plugins\ folder; depending on how
+# the runtime was staged the same DLLs can also sit in category subfolders.
+# Both layouts resolve, so keeping both merely doubles the package.
+$stagePlugins = Join-Path $stage 'plugins'
+$flatNames = @{}
+foreach ($f in @(Get-ChildItem -Path $stagePlugins -File -Filter '*.dll')) { $flatNames[$f.Name] = $true }
+$dup = 0
+foreach ($dir in @(Get-ChildItem -Path $stagePlugins -Directory)) {
+    foreach ($f in @(Get-ChildItem -Path $dir.FullName -File -Filter '*.dll')) {
+        if ($flatNames.ContainsKey($f.Name)) { Remove-Item $f.FullName -Force; $dup++ }
+    }
+}
+$dirCount = @(Get-ChildItem -Path $stagePlugins -Recurse -File -Filter '*.dll').Count
+Write-Host ("plugins: {0} duplicate copies dropped, {1} dlls shipped" -f $dup, $dirCount)
+
 $pluginDlls = @(Get-ChildItem -Path (Join-Path $stage 'plugins') -Recurse -File -Filter '*.dll').Count
 if ($pluginDlls -eq 0) { Die 'plugins tree staged with no DLLs' }
 
