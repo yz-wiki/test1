@@ -31,6 +31,17 @@ fn configure_windows_runtime() {
 
     let vlc_dist = PathBuf::from(&manifest_dir).join("vlc-dist");
     if vlc_dist.exists() {
+        // Partial-overwrite is not enough: a module removed from vlc-dist (or
+        // filtered out by the release workflow) would survive in an existing
+        // output tree and be shipped. With a warm target cache that produced
+        // two copies of every plugin — one from the previous layout, one from
+        // the current one.
+        let dst_plugins = binary_dir.join("plugins");
+        if dst_plugins.exists() {
+            std::fs::remove_dir_all(&dst_plugins).unwrap_or_else(|e| {
+                panic!("clear {} failed: {e}", dst_plugins.display())
+            });
+        }
         copy_dir_all(&vlc_dist, &binary_dir);
         println!("cargo:rerun-if-changed={}", vlc_dist.display());
     }
