@@ -1,9 +1,11 @@
 # Building 叙听 · Xuting
 
-> The display name changed in 2.18.0. Artifact filenames (`Skald_<version>_…`),
-> the bundle id (`com.skald.app`) and the executable (`skald.exe`) deliberately
-> keep the old technical prefix so existing download scripts and installed
-> settings keep working. Only user-facing prose is renamed here.
+> The display name changed in 2.18.0. NSIS/MSI installer names follow
+> `productName` and are now `Xuting_<version>_…`; the portable ZIP
+> (`Skald_<version>_…`) is assembled by `package-portable.ps1` and deliberately
+> keeps the old prefix. The bundle id (`com.skald.app`), the executable
+> (`skald.exe`) and all localStorage keys are unchanged so an upgrade keeps the
+> sign-in state and every saved setting.
 
 Xuting ships five package formats across two platforms. `scripts/build.mjs` is the
 single entry point: it decides which Tauri invocation is needed, stages the
@@ -30,8 +32,8 @@ node scripts/build.mjs --help
 | Target | Platform | Output | Notes |
 |---|---|---|---|
 | `portable` | Windows | `dist/Skald_<version>_portable_win-x64.zip` | Green build: unzip anywhere writable and run `Skald.exe`. No registry, no uninstaller. Do **not** unpack into `Program Files` — the app writes next to itself on first launch (VLC `plugins.dat`). |
-| `nsis` | Windows | `src-tauri/target/release/bundle/nsis/` | Recommended installer for end users. Per-machine install, custom hooks in `src-tauri/windows/hooks.nsh`. |
-| `msi` | Windows | `src-tauri/target/release/bundle/msi/` | For GPO / Intune / enterprise deployment. WiX toolchain downloads on first build. |
+| `nsis` | Windows | `src-tauri/target/release/bundle/nsis/Xuting_<version>_x64-setup.exe` | Recommended installer for end users. Per-machine install, custom hooks in `src-tauri/windows/hooks.nsh`. Name follows `productName`. |
+| `msi` | Windows | `src-tauri/target/release/bundle/msi/Xuting_<version>_x64_en-US.msi` | For GPO / Intune / enterprise deployment. WiX toolchain downloads on first build. Name follows `productName`. |
 | `appimage` | Linux | `src-tauri/target/release/bundle/appimage/` | Single executable file, no install. Requires FUSE 2 on the target. |
 | `deb` | Linux | `src-tauri/target/release/bundle/deb/` | Debian, Ubuntu, Mint, Pop!_OS. Declares WebKitGTK 4.1, GTK 3, LibVLC and libsecret as dependencies. |
 | `rpm` | Linux | `src-tauri/target/release/bundle/rpm/` | Fedora, RHEL, openSUSE. |
