@@ -164,19 +164,23 @@ jobs:
           }
           $removed = 0
           foreach ($f in $dropFlat) {
-            $p = Join-Path $plugins $f
-            if (Test-Path $p) { Remove-Item $p -Force; $removed++ }
+            foreach ($hit in @(Get-ChildItem $plugins -Recurse -File -Filter $f)) {
+              Remove-Item $hit.FullName -Force
+              $removed++
+            }
           }
           $after = @(Get-ChildItem $plugins -Recurse -File)
           $bytes1 = ($after | Measure-Object Length -Sum).Sum
-          Write-Host ("trimmed VLC plugins: {0} -> {1} files ({2} flat dlls, {3} dirs), {4:N1} -> {5:N1} MB" -f `
+          Write-Host ("trimmed VLC plugins: {0} -> {1} files ({2} module dlls, {3} dirs), {4:N1} -> {5:N1} MB" -f `
             $before.Count, $after.Count, $removed, $dropDirs.Count, ($bytes0 / 1MB), ($bytes1 / 1MB))
           foreach ($keep in @('libavcodec_plugin.dll','libmpg123_plugin.dll','libfaad_plugin.dll',
                               'libflac_plugin.dll','libvorbis_plugin.dll','libopus_plugin.dll',
                               'libmp4_plugin.dll','libfilesystem_plugin.dll')) {
-            if (-not (Test-Path (Join-Path $plugins $keep))) { Write-Host "::error::$keep missing after trim"; exit 1 }
+            if (-not (Get-ChildItem $plugins -Recurse -File -Filter $keep)) {
+              Write-Host "::error::$keep missing after trim"; exit 1
+            }
           }
-          if ($after.Count -lt 150) { Write-Host '::error::too many plugins removed'; exit 1 }
+          if ($after.Count -lt 120) { Write-Host '::error::too many plugins removed'; exit 1 }
 
       - name: 7 · 仓库校验套件(可选,run_verify=true 时)
         if: ${{ inputs.run_verify == true }}
