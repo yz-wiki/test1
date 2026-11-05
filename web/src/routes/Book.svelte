@@ -428,6 +428,19 @@
               {/each}
             </div>
           {/if}
+          <!-- Tags the server stores separately from genres. Audiobookshelf
+               often carries the same word in both, so anything already shown
+               above is skipped rather than repeated as a second chip. -->
+          {@const extraTags = (meta?.tags ?? []).filter(
+            tag => !(meta?.genres ?? []).includes(tag),
+          )}
+          {#if extraTags.length > 0}
+            <div class="chips chips--tags">
+              {#each extraTags as tag (tag)}
+                <span class="chip chip--tag">{tag}</span>
+              {/each}
+            </div>
+          {/if}
         {/if}
 
         <div class="chapter-head">
@@ -734,6 +747,15 @@
     flex-wrap: wrap;
     gap: var(--gap-tight);
     margin-top: var(--gap-inline);
+  }
+
+  .chips--tags {
+    margin-top: var(--gap-tight);
+  }
+
+  .chip--tag {
+    background: transparent;
+    color: var(--text-tertiary);
   }
 
   .chip {
