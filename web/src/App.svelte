@@ -8,6 +8,8 @@
   import { installShortcuts } from './lib/shortcuts';
   import { AUTH_LOST } from './lib/ipc';
   import { logs } from './lib/logs.svelte';
+  import { t } from './lib/i18n.svelte';
+  import BrandMark from './components/BrandMark.svelte';
   import Login from './routes/Login.svelte';
   import Library from './routes/Library.svelte';
   import Continue from './routes/Continue.svelte';
@@ -124,7 +126,8 @@
 
 {#if booting}
   <div class="boot">
-    <span class="t-label">Skald</span>
+    <BrandMark size={30} label={t('app.name')} />
+    <span class="t-label">{t('app.name')}</span>
   </div>
 {:else if !session.authenticated}
   <Login />

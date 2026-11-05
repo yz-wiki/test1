@@ -69,6 +69,20 @@
 
 <div class="shell">
   <nav class="rail" class:compact aria-label={t('nav.section.browse')}>
+    <!-- The pin lives HERE in both shapes: same row, same hierarchy, same
+         hit area. It used to sit at the foot of the icon column when folded,
+         so folding moved the control that unfolds it. -->
+    <div class="rail__head">
+      <button
+        class="rail__pin"
+        aria-label={compact ? t('nav.expand') : t('nav.collapse')}
+        title={compact ? t('nav.expand') : t('nav.collapse')}
+        onclick={compact ? expandRail : collapseRail}
+      >
+        <Icon name={compact ? 'chevron-right' : 'chevron-left'} size={13} />
+      </button>
+    </div>
+
     {#if compact}
       <div class="rail__icons">
         <button
@@ -145,17 +159,8 @@
         >
           <span class="nav-item__icon"><Icon name="settings" /></span>
         </button>
-
-        <button class="rail__pin" aria-label={t('nav.expand')} title={t('nav.expand')} onclick={expandRail}>
-          <Icon name="chevron-right" size={13} />
-        </button>
       </div>
     {:else}
-      <div class="rail__head">
-        <button class="rail__pin" aria-label={t('nav.collapse')} title={t('nav.collapse')} onclick={collapseRail}>
-          <Icon name="chevron-left" size={13} />
-        </button>
-      </div>
 
       <div class="rail__group">
         <span class="rail__label t-label">{t('nav.section.browse')}</span>
@@ -313,7 +318,13 @@
   .rail__head {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     width: 100%;
+    min-height: 24px;
+  }
+
+  .rail.compact .rail__head {
+    justify-content: center;
   }
 
   .rail__pin {

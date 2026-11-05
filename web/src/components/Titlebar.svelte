@@ -2,8 +2,11 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
+  import { BRAND } from '../lib/brand';
+  import { t } from '../lib/i18n.svelte';
+  import BrandMark from './BrandMark.svelte';
 
-  let { title = 'Skald', subtitle = '' }: { title?: string; subtitle?: string } = $props();
+  let { title = BRAND.name, subtitle = '' }: { title?: string; subtitle?: string } = $props();
 
   const win = getCurrentWindow();
 
@@ -23,7 +26,7 @@
   ondblclick={() => void win.toggleMaximize()}
 >
   <div class="titlebar__brand">
-    <span class="titlebar__mark">S</span>
+    <BrandMark size={22} label={t('app.name')} />
     <div class="titlebar__text">
       <span class="titlebar__title">{title}</span>
       {#if subtitle}
@@ -70,7 +73,7 @@
     <button
       class="winbtn winbtn--close"
       aria-label="Close"
-      title={ui.closeToTray ? 'Skald' : undefined}
+      title={ui.closeToTray ? t('app.name') : undefined}
       onclick={() => void (ui.closeToTray ? win.hide() : win.close())}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -130,18 +133,6 @@
     align-items: center;
     gap: var(--gap-inline);
     min-width: 0;
-  }
-
-  .titlebar__mark {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: var(--radius-xs);
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
   }
 
   .titlebar__text {

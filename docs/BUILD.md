@@ -1,6 +1,11 @@
-# Building Skald
+# Building 叙听 · Xuting
 
-Skald ships five package formats across two platforms. `scripts/build.mjs` is the
+> The display name changed in 2.18.0. Artifact filenames (`Skald_<version>_…`),
+> the bundle id (`com.skald.app`) and the executable (`skald.exe`) deliberately
+> keep the old technical prefix so existing download scripts and installed
+> settings keep working. Only user-facing prose is renamed here.
+
+Xuting ships five package formats across two platforms. `scripts/build.mjs` is the
 single entry point: it decides which Tauri invocation is needed, stages the
 portable layout when asked, and reports exactly where every artifact landed.
 
@@ -55,7 +60,7 @@ Common to both platforms:
 | `src-tauri/bin/` | `ffprobe.exe` (metadata + chapters), `tone.exe` (metadata writes) |
 
 `build.rs` copies both trees next to the binary, which is what makes the portable
-zip self-contained. Building while Skald is running fails with an OS "file in
+zip self-contained. Building while Xuting is running fails with an OS "file in
 use" error — close the app first.
 
 ### Linux (Arch / CachyOS reference host)
@@ -125,7 +130,7 @@ environment Tauri expects before a production release.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `file in use` during `build.rs` | Skald is running and the DLLs are locked | Close the app, rebuild |
+| `file in use` during `build.rs` | Xuting is running and the DLLs are locked | Close the app, rebuild |
 | MSI build fails on a fresh machine | WiX toolset not yet cached | Run once with network access; Tauri downloads it |
 | `libwebkit2gtk-4.1` not found | Wrong WebKitGTK major version | Install the 4.1 package, not 4.0 |
 | AppImage refuses to start | FUSE 2 missing | Install `libfuse2`, or run with `--appimage-extract-and-run` |

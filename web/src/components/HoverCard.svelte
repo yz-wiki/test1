@@ -1,0 +1,101 @@
+<script lang="ts">
+  /**
+   * One hover surface for the whole app.
+   *
+   * Native `title` tooltips are drawn by Windows: square, delayed ~1 s, and
+   * impossible to theme. In the continue-listening panel they also overlapped
+   * our own cover chip, which is exactly the double bubble in the screenshot.
+   * This uses the same overlay tokens as Dropdown / ContextMenu, opens with a
+   * short intent delay, and is `position: fixed` because the home panel is its
+   * own scroll container — an absolutely positioned popover would be clipped.
+   *
+   * Trade-off: it is anchored to the row, not to the pointer. Pointer-following
+   * cards jitter over a list and cover the row you are trying to click; a
+   * stable card beside the row stays readable and never eats the click.
+   */
+  import type { Snippet } from 'svelte';
+
+  let {
+    children,
+    pop,
+    width = 292,
+  }: { children: Snippet; pop: Snippet; width?: number } = $props();
+
+  let host = $state<HTMLElement | null>(null);
+  let open = $state(false);
+  let x = $state(0);
+  let y = $state(0);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  function place(): void {
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    const gap = 10;
+    const toRight = rect.right + gap + width <= window.innerWidth - 8;
+    x = toRight ? rect.right + gap : Math.max(8, rect.left - width - gap);
+    // Roughly 220 px of content; clamp so the card never leaves the window.
+    y = Math.min(Math.max(8, rect.top - 12), Math.max(8, window.innerHeight - 240));
+  }
+
+  function enter(): void {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      place();
+      open = true;
+    }, 140);
+  }
+
+  function leave(): void {
+    if (timer) clearTimeout(timer);
+    open = false;
+  }
+</script>
+
+<div
+  class="hovercard"
+  role="group"
+  bind:this={host}
+  onpointerenter={enter}
+  onpointerleave={leave}
+  onfocusin={enter}
+  onfocusout={leave}
+>
+  {@render children()}
+</div>
+
+{#if open}
+  <div class="hovercard__pop" style:left="{x}px" style:top="{y}px" style:width="{width}px" role="tooltip">
+    {@render pop()}
+  </div>
+{/if}
+
+<style>
+  /* Must generate a box: `display: contents` gives a zero rect, which makes
+     the placement maths anchor the card at the window's top-left corner. */
+  .hovercard {
+    display: block;
+    min-width: 0;
+  }
+
+  .hovercard__pop {
+    position: fixed;
+    z-index: 95;
+    padding: var(--gap-row);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-overlay);
+    box-shadow: var(--shadow-3);
+    color: var(--text);
+    pointer-events: none;
+    animation: hover-in var(--dur-2) var(--ease);
+  }
+
+  @keyframes hover-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hovercard__pop { animation: none; }
+  }
+</style>

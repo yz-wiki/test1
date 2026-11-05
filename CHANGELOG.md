@@ -1,6 +1,79 @@
 # Changelog
 
-Notable user-facing changes to Skald. Dates are the build cut dates.
+Notable user-facing changes to 叙听 / Xuting. Dates are the build cut dates.
+
+## 2.18.0 (2026-11-05) — one shape per concept, one identity
+
+The 2.14 layout remains the base. This pass is about removing duality: two
+layout trees that disagreed, two tooltip systems, two names for one deletion,
+and a brand whose mark no longer matched its name.
+
+### Fixed
+
+- **Home grid/list switch did nothing.** The home shelf had its own hard-coded
+  grid and never read `ui.libraryLayout`. It now uses the same state as the
+  library page, in one DOM tree with a modifier class. The books tab shows
+  **every book** (it was capped at 12) and honours filter/sort, so switching
+  layout no longer resets the order.
+- **Long bar grid vs long tag.** The full-width rows with a share bar and the
+  three-column compact cards are the *same grouped data* in list / grid mode.
+  No third component was added; the group cards gained the share bar, interval
+  striping and a local-art marker.
+- **Dead "Delete" entry.** ABS offers no safe delete-a-book action to a player.
+  The only real deletion is the local download, so the entry now appears only
+  when a download exists and is always clickable. Renamed to
+  `Remove local download` so it cannot be mistaken for a server operation.
+- **Fold pin moved when folding.** The pin was at the foot of the icon column
+  in the compact tree and at the top in the full tree. It is now one element
+  outside the shape switch, same row in both states.
+- **Standalone white box on the player.** Speed and sleep sat in a bordered
+  card below the transport. The card's border/background/radius are gone; the
+  tools moved up into the control row (speed left, sleep + volume right), whose
+  three equal tracks keep the play cluster on the window centre line.
+- **Server tab decoder error.** `Promise.all` rejected the whole admin screen
+  when `/api/tasks` or `/api/backups` had one unexpected field. Each endpoint
+  now resolves independently (`allSettled`), `Task.id` / `Backup.path` tolerate
+  missing values, and a bad task list degrades to an empty one with a log line.
+
+### Changed / improved
+
+- **Player:** transport widened 560 → 720 px (finer seeking), centred in the
+  expanded state; time row and whole-book bar given more space below the track;
+  volume joins the right wing instead of floating absolutely. Chapter rows get
+  an accent edge, right-aligned tabular indices and a stronger current title.
+- **Transport bar:** volume leads the right group, separated by a hairline;
+  longer slider, always-visible percentage. The chapter chip carries the
+  current chapter title plus its own accent marker, and no longer uses a
+  native `title` tooltip.
+- **Continue listening:** a self-drawn hover card (cover, author, chapter,
+  four-line blurb, progress) replaces the native OS tooltip. It is anchored to
+  the row with a 140 ms intent delay rather than following the pointer.
+- **Search:** unchanged ranked/pinyin matching, but matching author and series
+  names are now clickable group chips above the book results.
+- **Artwork:** local overrides for book covers, author portraits and series
+  art. ABS has no author id in our item payload and no series-image concept, so
+  these are per-install overrides — instant, reversible, never written to the
+  server. A hidden file input plus a 512 px WebP downscale is the shortest
+  setting path (no new Rust command, works in a portable install).
+- **Upload:** a prepared folder tree is split by subfolder into one book per
+  folder, with names inferred from the directory; a single-episode mode can
+  name a target series or book. ABS `/api/upload` always creates a new item, so
+  "attach" means setting its metadata — it cannot merge into an existing item.
+- **Logs:** severity is a badge, source type a colour dot, and selecting a line
+  reveals the untruncated message with a copy action.
+- **i18n:** language is a Dropdown driven by a locale registry; five more
+  locales are pre-registered and fall back to English per key, so a partial
+  translation is shippable.
+
+### Brand
+
+New name **叙听 / Xuting** and a new mark (an open page folding into a sound
+wave), applied to the titlebar, boot screen, window/HTML title, product name,
+README, changelog and the full icon set (PNG, ICO, ICNS, mobile trees).
+`com.skald.app`, `skald.exe`, localStorage keys, IPC event names, log file
+names and artifact file names are deliberately **unchanged** — renaming those
+would drop the sign-in state and all saved settings on upgrade, and make the
+installer treat this as a different application.
 
 ## 2.17.0 (2026-11-05) — back to the 2.14 shape
 

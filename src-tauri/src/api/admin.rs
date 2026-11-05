@@ -228,7 +228,16 @@ impl AbsClient {
             return Err(format!("get_backups failed: HTTP {}", resp.status()));
         }
 
-        resp.json::<BackupsResponse>().await.map_err(|e| e.to_string())
+        // A missing/unexpected field in one backup must not turn into a raw
+        // "error decoding response body" across every admin tab.
+        Ok(resp.json::<BackupsResponse>().await.unwrap_or_else(|e| {
+            eprintln!("get_backups: unreadable response, showing empty list: {e}");
+            BackupsResponse {
+                backups: Vec::new(),
+                backup_location: String::new(),
+                backup_path_env_set: false,
+            }
+        }))
     }
 
     /// POST /api/backups — create a backup now. ABS writes the archive before
@@ -309,7 +318,11 @@ impl AbsClient {
             return Err(format!("get_tasks failed: HTTP {}", resp.status()));
         }
 
-        resp.json::<TasksResponse>().await.map_err(|e| e.to_string())
+        // Tasks are informational; an empty list is a valid degraded state.
+        Ok(resp.json::<TasksResponse>().await.unwrap_or_else(|e| {
+            eprintln!("get_tasks: unreadable response, showing no tasks: {e}");
+            TasksResponse { tasks: Vec::new() }
+        }))
     }
 
     /// GET /api/logger-data — the current day's recent log entries (admin only).

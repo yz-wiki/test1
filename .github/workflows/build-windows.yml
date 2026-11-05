@@ -10,6 +10,10 @@
 #   * MSI 安装器   Skald_<version>_x64_en-US.msi    (需要时)
 #   * 便携版       Skald_<version>_portable_win-x64.zip
 #
+# 2.18.0 起展示名为「叙听 / Xuting」，但产物文件名仍沿用 Skald_ 前缀：
+# 这是刻意保留的技术标识（与 bundle id / exe 名 / 下载脚本一致），
+# 改名会破坏既有用户的升级链与自动化下载脚本。
+#
 # 日志与排错设计(便于在云编译日志里定位错误):
 #   * 每个阶段都是独立 step,失败时 GitHub 直接高亮该 step;
 #   * 每步输出同时 Tee 到 gha-logs/<阶段>.log,并作为 artifact 上传

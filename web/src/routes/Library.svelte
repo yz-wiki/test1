@@ -2,7 +2,7 @@
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { playItem } from '../lib/playFlow';
-  import { matchScore, preloadPinyin } from '../lib/search';
+  import { matchScore, preloadPinyin, textMatches } from '../lib/search';
   import { reading } from '../lib/reading.svelte';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
@@ -13,6 +13,8 @@
   import Cover from '../components/Cover.svelte';
   import LibrarySwitcher from '../components/LibrarySwitcher.svelte';
   import Dropdown from '../components/Dropdown.svelte';
+  import HoverCard from '../components/HoverCard.svelte';
+  import { artwork, type ArtKind } from '../lib/artwork.svelte';
   import type { IconName } from '../components/Icon.svelte';
 
   // Reload whenever the active library or server changes.
@@ -150,15 +152,67 @@
   });
 
   /**
-   * Newest first, one card per book. The previous version collapsed rows by
-   * `seriesName`, but Audiobookshelf leaves that field empty — or fills it per
-   * volume — so a 12-volume series came out as 12 cards each claiming "共 1 卷".
-   * A plain reverse-chronological shelf is honest; the series name goes into
-   * the meta line only when the server really provides one.
+   * The home shelf shows EVERY book, not a 12-item teaser. It honours the same
+   * filter/sort state as the library page, so switching to list layout keeps
+   * the ordering instead of silently resetting to "recently added".
    */
-  const recentAdded = $derived.by(() =>
-    [...library.items].sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0)).slice(0, 12),
+  const homeBooks = $derived.by(() => {
+    let list = [...library.items];
+    if (filter === 'finished') {
+      list = list.filter(item => progress.for(item.id)?.isFinished === true);
+    } else if (filter === 'unfinished') {
+      list = list.filter(item => progress.for(item.id)?.isFinished !== true);
+    }
+    if (sort === 'title') list.sort((a, b) => title(a).localeCompare(title(b), 'zh-CN'));
+    else if (sort === 'author') list.sort((a, b) => author(a).localeCompare(author(b), 'zh-CN'));
+    else if (sort === 'progress') list.sort((a, b) => progress.fraction(b.id) - progress.fraction(a.id));
+    else list.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
+    return list;
+  });
+
+  /** Largest home group, so the list shape can draw a comparable share bar. */
+  const maxHomeGroupSize = $derived(
+    homeGroups.reduce((max, entry) => Math.max(max, entry.items.length), 1),
   );
+
+  /**
+   * Search keeps its existing ranked/pinyin matching. Only the presentation
+   * changes: matching author and series names become clickable group chips
+   * above the book results, so a query that names a person or a series does
+   * not force the user to read through a flat list of covers.
+   */
+  const matchedNames = $derived.by(() => {
+    const q = query.trim();
+    if (!q) return { authors: [] as string[], series: [] as string[] };
+    const authors = new Set<string>();
+    const series = new Set<string>();
+    for (const item of library.items) {
+      const name = item.media?.metadata?.authorName?.trim();
+      const groupName = seriesOf(item);
+      if (name && textMatches(name, q)) authors.add(name);
+      if (groupName && textMatches(groupName, q)) series.add(groupName);
+    }
+    return { authors: [...authors].slice(0, 10), series: [...series].slice(0, 10) };
+  });
+
+  function goToGroup(view: View, name: string): void {
+    query = '';
+    setView(view);
+    group = name;
+  }
+
+  /** Local artwork is a client-side override; feedback stays in this page. */
+  let artNotice = $state<string | null>(null);
+  let artTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function pickArtwork(kind: ArtKind, id: string): Promise<void> {
+    const result = await artwork.choose(kind, id);
+    const message = result === 'ok' ? t('art.saved') : result === 'error' ? t('art.failed') : null;
+    if (!message) return;
+    artNotice = message;
+    if (artTimer) clearTimeout(artTimer);
+    artTimer = setTimeout(() => (artNotice = null), 2200);
+  }
 
   /** Series name for an item, preferring the newer `series[]` array ABS sends. */
   function seriesOf(item: (typeof library.items)[number]): string {
@@ -330,13 +384,10 @@
           disabled: busy,
           action: () => void beginDownload(item, title(item), author(item), true),
         },
-        {
-          id: 'remove',
-          label: t('downloads.remove'),
-          danger: true,
-          disabled: !downloaded,
-          action: () => void downloads.remove(item.id),
-        },
+        // A permanently greyed-out "Delete" read as a broken button. ABS has
+        // no safe "delete this book" action for a player, so the only real
+        // deletion here is the local download — and it is simply absent when
+        // there is nothing downloaded, rather than shown disabled.
         {
           id: 'finished',
           label: finished ? t('menu.markUnfinished') : t('menu.markFinished'),
@@ -344,7 +395,35 @@
           action: () => void markFinished(item, !finished),
         },
       );
+      if (downloaded) {
+        items.push({
+          id: 'remove',
+          label: t('menu.removeLocal'),
+          danger: true,
+          action: () => void downloads.remove(item.id),
+        });
+      }
     }
+
+    const authorName = item.media?.metadata?.authorName?.trim() ?? '';
+    const seriesName = seriesOf(item);
+    const artItems: MenuItem[] = [
+      { id: 'artCover', label: t('art.setCover'), separatorBefore: true,
+        action: () => void pickArtwork('book', item.id) },
+    ];
+    if (authorName) {
+      artItems.push({ id: 'artAuthor', label: t('art.setAuthorArt'),
+        action: () => void pickArtwork('author', authorName) });
+    }
+    if (seriesName) {
+      artItems.push({ id: 'artSeries', label: t('art.setSeriesArt'),
+        action: () => void pickArtwork('series', seriesName) });
+    }
+    if (artwork.has('book', item.id)) {
+      artItems.push({ id: 'artRestore', label: t('art.restore'),
+        action: () => artwork.clear('book', item.id) });
+    }
+    items.push(...artItems);
 
     items.push({
       id: 'copy',
@@ -515,14 +594,43 @@
                 <div class="queue">
                   {#each recent.slice(1, 6) as item (item.id)}
                     {@const fraction = progress.fraction(item.id)}
-                    <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
-                      <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
-                      <span class="queue__text">
-                        <span class="truncate">{title(item)}</span>
-                        <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
-                      </span>
-                      <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
-                    </button>
+                    <HoverCard>
+                      {#snippet children()}
+                        <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
+                          <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
+                          <span class="queue__text">
+                            <span class="truncate">{title(item)}</span>
+                            <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
+                          </span>
+                          <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
+                        </button>
+                      {/snippet}
+                      {#snippet pop()}
+                        <div class="hover-info">
+                          <div class="hover-info__head">
+                            <span class="hover-info__cover"><Cover itemId={item.id} size={120} title={title(item)} /></span>
+                            <span class="hover-info__id">
+                              <strong class="truncate">{title(item)}</strong>
+                              <span class="t-small t-tertiary truncate">{author(item)}</span>
+                            </span>
+                          </div>
+                          {#if currentChapter(item)}
+                            <p class="hover-info__line">
+                              <span class="hover-info__key">{t('continue.hoverChapter')}</span>
+                              <span class="truncate">{currentChapter(item)}</span>
+                            </p>
+                          {/if}
+                          {#if item.media?.metadata?.description}
+                            <p class="hover-info__desc">{item.media.metadata.description}</p>
+                          {/if}
+                          <div class="hover-info__foot t-num t-small t-tertiary">
+                            <span>{formatLength((item.media?.duration ?? 0) * fraction)} / {formatLength(item.media?.duration ?? 0)}</span>
+                            <span>{Math.round(fraction * 100)}%</span>
+                          </div>
+                          <span class="hover-info__bar" aria-hidden="true"><span style:width="{fraction * 100}%"></span></span>
+                        </div>
+                      {/snippet}
+                    </HoverCard>
                   {/each}
                 </div>
               {/if}
@@ -553,33 +661,63 @@
           </div>
 
           {#if homeTab === 'books'}
-            <div class="home-grid">
-              {#each recentAdded as item (item.id)}
+            <div class="home-grid" class:home-grid--list={isList}>
+              {#each homeBooks as item (item.id)}
+                {@const fraction = progress.fraction(item.id)}
                 <button
                   class="tile"
                   onclick={() => open(item)}
                   oncontextmenu={event => openMenu(event, item)}
                 >
                   <Cover itemId={item.id} size={320} title={title(item)} />
-                  <span class="tile__title">{title(item)}</span>
-                  <span class="tile__meta">
-                    {[seriesOf(item), ago(item.addedAt)].filter(Boolean).join(' · ') || author(item)}
+                  <span class="tile__body">
+                    <span class="tile__title">{title(item)}</span>
+                    <span class="tile__meta">
+                      {[seriesOf(item), author(item), ago(item.addedAt)].filter(Boolean).join(' · ')}
+                    </span>
+                    <span class="tile__extra t-small t-tertiary truncate">
+                      {[currentChapter(item), item.media?.metadata?.narratorName, formatLength(item.media?.duration ?? 0)]
+                        .filter(Boolean).join(' · ')}
+                    </span>
                   </span>
+                  {#if fraction > 0}
+                    <span class="tile__badge t-num" class:done={progress.for(item.id)?.isFinished}>
+                      {Math.round(fraction * 100)}%
+                    </span>
+                  {/if}
+                  {#if artwork.has('book', item.id)}
+                    <span class="tile__local">{t('brand.localOnly')}</span>
+                  {/if}
                 </button>
               {/each}
             </div>
           {:else}
-            <div class="home-groups">
+            <!-- The "long bar grid" and the "long tag" in the screenshots are
+                 one and the same list in its grid / list layout. Author and
+                 series cards address local artwork by NAME, which is the only
+                 stable key ABS gives us for them. -->
+            <div class="home-groups" class:home-groups--list={isList}>
               {#each homeGroups as entry (entry.name)}
+                {@const kind: ArtKind = homeTab === 'authors' ? 'author' : homeTab === 'series' ? 'series' : 'book'}
                 <button
                   class="home-group"
                   onclick={() => {
                     setView(homeTab);
                     group = entry.name;
                   }}
+                  oncontextmenu={event => menu.show(event, [
+                    {
+                      id: 'artGroup',
+                      label: kind === 'author' ? t('art.setAuthorArt') : kind === 'series' ? t('art.setSeriesArt') : t('art.setCover'),
+                      action: () => void pickArtwork(kind, entry.name),
+                    },
+                    ...(artwork.has(kind, entry.name)
+                      ? [{ id: 'artGroupRestore', label: t('art.restore'), action: () => artwork.clear(kind, entry.name) }]
+                      : []),
+                  ])}
                 >
                   <span class="home-group__cover">
-                    <Cover itemId={entry.items[0].id} size={96} title={entry.name} />
+                    <Cover itemId={entry.items[0].id} size={96} title={entry.name} artKind={kind} artId={entry.name} />
                   </span>
                   <span class="home-group__text">
                     <span class="truncate">{entry.name}</span>
@@ -587,6 +725,12 @@
                       {t('library.count', { count: entry.items.length })}
                     </span>
                   </span>
+                  <span class="home-group__share" aria-hidden="true">
+                    <span style:width="{Math.round((entry.items.length / maxHomeGroupSize) * 100)}%"></span>
+                  </span>
+                  {#if artwork.has(kind, entry.name)}
+                    <span class="home-group__local">{t('brand.localOnly')}</span>
+                  {/if}
                   <Icon name="chevron-right" size={13} />
                 </button>
               {/each}
@@ -616,6 +760,34 @@
         {/each}
       </div>
     </div>
+
+    {#if query.trim() && !group}
+      <div class="search-groups">
+        <div class="search-groups__row">
+          <span class="search-groups__label t-label">{t('search.groupAuthors')}</span>
+          {#each matchedNames.authors as name (name)}
+            <button class="search-groups__chip" onclick={() => goToGroup('authors', name)}>{name}</button>
+          {/each}
+          {#if matchedNames.authors.length === 0}
+            <span class="t-small t-tertiary">{t('search.noAuthor')}</span>
+          {/if}
+        </div>
+        <div class="search-groups__row">
+          <span class="search-groups__label t-label">{t('search.groupSeries')}</span>
+          {#each matchedNames.series as name (name)}
+            <button class="search-groups__chip" onclick={() => goToGroup('series', name)}>{name}</button>
+          {/each}
+          {#if matchedNames.series.length === 0}
+            <span class="t-small t-tertiary">{t('search.noSeries')}</span>
+          {/if}
+        </div>
+        <p class="search-groups__hint t-small t-tertiary">{t('search.groupHint')}</p>
+      </div>
+      <div class="search-groups__head t-label">
+        {t('search.groupBooks')}
+        <span class="t-num">{t('home.showing', { count: visible.length })}</span>
+      </div>
+    {/if}
 
     {#if group}
       <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
@@ -725,6 +897,10 @@
   {/if}
     {/if}
 </div>
+
+{#if artNotice}
+  <div class="art-toast t-small" role="status">{artNotice}</div>
+{/if}
 
 <style>
   .toolbar {
@@ -1077,6 +1253,296 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: var(--gap-block) var(--gap-panel);
+  }
+
+  /* One tree, two declared shapes. The toolbar's grid/list switch used to be
+     ignored here because the home shelf had its own hard-coded grid — which is
+     exactly why clicking it looked broken. */
+  .home-grid .tile {
+    position: relative;
+  }
+
+  .tile__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .tile__extra {
+    display: none;
+  }
+
+  /* Independent marker: progress and a locally-set cover never masquerade as
+     part of the title, and keep the same tint in both layouts. */
+  .tile__badge,
+  .tile__local {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-2xs);
+    background: var(--surface-overlay);
+    border: 1px solid var(--hairline-strong);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-1);
+  }
+
+  .tile__badge.done {
+    color: var(--positive);
+    border-color: var(--positive);
+  }
+
+  .tile__local {
+    top: auto;
+    bottom: 6px;
+    right: 6px;
+    color: var(--accent);
+    border-color: var(--accent-line);
+  }
+
+  .home-grid--list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .home-grid--list .tile {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: var(--gap-inline) var(--gap-row);
+    border-radius: var(--radius-sm);
+    text-align: left;
+  }
+
+  .home-grid--list .tile:nth-child(even) {
+    background: var(--surface);
+  }
+
+  .home-grid--list .tile:hover {
+    background: var(--surface-raised);
+  }
+
+  .home-grid--list .tile > :global(.cover) {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .home-grid--list .tile__body {
+    flex: 1 1 auto;
+  }
+
+  .home-grid--list .tile__extra {
+    display: block;
+  }
+
+  .home-grid--list .tile__badge,
+  .home-grid--list .tile__local {
+    position: static;
+    flex: 0 0 auto;
+    box-shadow: none;
+  }
+
+  /* Group cards: three-column compact cards in grid mode, full-width rows
+     with a share bar in list mode. No third component, no duplicated data. */
+  .home-group__share {
+    display: none;
+    width: 112px;
+    height: 3px;
+    flex: 0 0 112px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .home-group__share > span {
+    display: block;
+    height: 100%;
+    background: var(--positive);
+  }
+
+  .home-group__local {
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-2xs);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .home-groups--list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .home-groups--list .home-group {
+    padding: var(--gap-inline) var(--gap-row);
+    border: 0;
+    border-bottom: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: transparent;
+  }
+
+  .home-groups--list .home-group:nth-child(odd) {
+    background: var(--surface);
+  }
+
+  .home-groups--list .home-group:hover {
+    background: var(--accent-soft);
+  }
+
+  .home-groups--list .home-group__share {
+    display: block;
+  }
+
+  /* ── Search results: grouped chips above the unchanged book shelf ───────── */
+  .search-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-inline);
+    padding: var(--gap-row);
+    margin-bottom: var(--gap-block);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+
+  .search-groups__row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .search-groups__label {
+    flex: 0 0 56px;
+    color: var(--text-tertiary);
+  }
+
+  .search-groups__chip {
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--text-xs);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .search-groups__chip:hover {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .search-groups__hint {
+    margin: 0;
+  }
+
+  .search-groups__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gap-inline);
+    padding-bottom: var(--gap-inline);
+    margin-bottom: var(--gap-row);
+    border-bottom: 1px solid var(--hairline);
+    color: var(--text-secondary);
+  }
+
+  .search-groups__head .t-num {
+    color: var(--text-tertiary);
+  }
+
+  /* ── Continue-listening hover card ─────────────────────────────────────── */
+  .hover-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-inline);
+    font-size: var(--text-xs);
+  }
+
+  .hover-info__head {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+  }
+
+  .hover-info__cover {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .hover-info__id {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .hover-info__line {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+    min-width: 0;
+    color: var(--text-secondary);
+  }
+
+  .hover-info__key {
+    flex: 0 0 auto;
+    color: var(--accent);
+  }
+
+  .hover-info__desc {
+    margin: 0;
+    max-height: 96px;
+    overflow: hidden;
+    line-height: 1.55;
+    color: var(--text-tertiary);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+
+  .hover-info__foot {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .hover-info__bar {
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .hover-info__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .art-toast {
+    position: fixed;
+    right: var(--gap-block);
+    bottom: 92px;
+    z-index: 96;
+    padding: var(--gap-inline) var(--gap-row);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-overlay);
+    box-shadow: var(--shadow-3);
+    color: var(--text);
   }
 
   .toolbar__right {

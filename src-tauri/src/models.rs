@@ -935,6 +935,9 @@ pub struct BackupsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Task {
+    /// Some ABS builds omit `id` for transient tasks; the UI only uses it as a
+    /// key, so an empty string is preferable to failing the whole response.
+    #[serde(default)]
     pub id: String,
     #[serde(default)]
     pub action: String,

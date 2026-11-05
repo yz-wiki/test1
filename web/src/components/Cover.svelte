@@ -2,15 +2,29 @@
   import { convertFileSrc } from '@tauri-apps/api/core';
   import { invoke } from '@tauri-apps/api/core';
   import { session } from '../lib/state.svelte';
+  import { artwork, type ArtKind } from '../lib/artwork.svelte';
 
-  let { itemId, size = 320, radius, title = '' }: {
+  let {
+    itemId,
+    size = 320,
+    radius,
+    title = '',
+    /** Group cards address artwork by author / series name, not by book id. */
+    artKind = 'book',
+    artId = '',
+  }: {
     itemId: string;
     size?: number;
     radius?: string;
     /** Shown when there is no cover: a title's own first character beats a
      *  random slice of the id, which made empty covers read as noise. */
     title?: string;
+    artKind?: ArtKind;
+    artId?: string;
   } = $props();
+
+  /** Local overrides win over the server cover and need no network at all. */
+  const custom = $derived(artwork.get(artKind, artId || itemId));
 
   let src = $state<string | null>(null);
   let failed = $state(false);
@@ -43,7 +57,9 @@
 </script>
 
 <div class="cover" style:border-radius={radius}>
-  {#if src && !failed}
+  {#if custom}
+    <img src={custom} alt="" loading="lazy" />
+  {:else if src && !failed}
     <img {src} alt="" loading="lazy" onerror={() => (failed = true)} />
   {:else}
     <div class="cover__fallback">

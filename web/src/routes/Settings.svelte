@@ -334,15 +334,17 @@ import LogsPanel from '../components/LogsPanel.svelte';
               <span class="setting__hint">{t('settings.languageHint')}</span>
             </div>
             <div class="setting__control">
-              <div class="segmented">
-                {#each LOCALES as locale (locale)}
-                  <button
-                    class="segmented__item"
-                    aria-pressed={getLocale() === locale}
-                    onclick={() => setLocale(locale as Locale)}
-                  >{LOCALE_LABEL[locale]}</button>
-                {/each}
-              </div>
+              <!-- Options come from the locale registry, so adding a language
+                   later is one data row, not another button in a row that
+                   stops fitting at four entries. -->
+              <Dropdown
+                value={getLocale()}
+                options={LOCALES.map(locale => ({ value: locale, label: LOCALE_LABEL[locale] }))}
+                onSelect={next => setLocale(next as Locale)}
+                label={t('settings.language')}
+                variant="field"
+                width="152px"
+              />
             </div>
           </div>
         </div>
@@ -660,7 +662,7 @@ import LogsPanel from '../components/LogsPanel.svelte';
           <div class="setting">
             <div class="setting__main">
               <span class="setting__label">{t('settings.version')}</span>
-              <span class="setting__hint">Skald {version}</span>
+              <span class="setting__hint">{t('app.name')} {version} · {t('app.former')}</span>
             </div>
           </div>
           <div class="setting">

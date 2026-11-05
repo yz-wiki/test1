@@ -215,6 +215,30 @@
       </div>
 
       <div class="bar__right">
+        <div class="bar__volume">
+          <button
+            type="button"
+            class="icon-btn icon-btn--sm"
+            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+            onclick={toggleMute}
+          ><Icon name="volume" size={14} /></button>
+          <input
+            class="bar__slider"
+            type="range"
+            min="0"
+            max="1"
+            step="0.02"
+            value={player.volume}
+            style="--fill: {player.volume * 100}%"
+            aria-label={t('player.volume')}
+            oninput={event => onVolume(Number(event.currentTarget.value))}
+          />
+          <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
+        </div>
+
+        <span class="bar__sep"></span>
+
         {#if entries.length > 0}
           <div class="bar__anchored" bind:this={jumpEl}>
             <button
@@ -222,13 +246,16 @@
               class="bar__chip"
               aria-haspopup="dialog"
               aria-expanded={jumpOpen}
-              title={player.chapter?.title ?? ''}
               onclick={() => {
                 jumpOpen = !jumpOpen;
                 jumpQuery = '';
               }}
             >
+              <span class="bar__chip-mark" aria-hidden="true"></span>
               <span class="bar__chip-text t-num">{jumpLabel}</span>
+              {#if player.chapter?.title}
+                <span class="bar__chip-title truncate">{player.chapter.title}</span>
+              {/if}
               <span class="bar__chip-caret"><Icon name="chevron-down" size={11} /></span>
             </button>
 
@@ -284,30 +311,6 @@
             </span>
           {/if}
         {/if}
-
-        <span class="bar__sep"></span>
-
-        <div class="bar__volume">
-          <button
-            type="button"
-            class="icon-btn icon-btn--sm"
-            aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-            title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-            onclick={toggleMute}
-          ><Icon name="volume" size={14} /></button>
-          <input
-            class="bar__slider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.02"
-            value={player.volume}
-            style="--fill: {player.volume * 100}%"
-            aria-label={t('player.volume')}
-            oninput={event => onVolume(Number(event.currentTarget.value))}
-          />
-          <span class="bar__pct t-num" class:shown={volumeActive}>{Math.round(player.volume * 100)}%</span>
-        </div>
 
         <Dropdown
           value={String(player.rate)}
@@ -510,9 +513,10 @@
   .bar__chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    max-width: 320px;
     height: var(--control-sm);
-    padding: 0 6px 0 9px;
+    padding: 0 6px 0 8px;
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     font-size: var(--text-xs);
@@ -525,6 +529,22 @@
   .bar__chip[aria-expanded='true'] {
     background: var(--surface-raised);
     color: var(--text);
+  }
+
+  /* A separate marker, not another number: the eye finds the chapter control
+     without reading "第 X / Y 章" every time. */
+  .bar__chip-mark {
+    width: 3px;
+    height: 12px;
+    flex: 0 0 3px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+  }
+
+  .bar__chip-title {
+    max-width: 12ch;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
   }
 
   .bar__chip-caret {
@@ -554,26 +574,25 @@
     background: var(--hairline);
   }
 
+  /* Volume is a control, not a chapter fact: it leads the right group and is
+     separated from the chapter/percentage facts by the hairline. */
   .bar__volume {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+    padding-right: 2px;
   }
 
   .bar__slider {
-    width: 64px;
+    width: 84px;
   }
 
   .bar__pct {
-    min-width: 30px;
+    min-width: 28px;
+    text-align: right;
     font-size: var(--text-2xs);
+    font-variant-numeric: tabular-nums;
     color: var(--text-tertiary);
-    opacity: 0;
-    transition: opacity var(--dur-2) var(--ease);
-  }
-
-  .bar__pct.shown {
-    opacity: 1;
   }
 
   .bar__pop-anchor {
@@ -706,7 +725,10 @@
 
   @media (max-width: 1160px) {
     .bar__slider {
-      width: 44px;
+      width: 56px;
+    }
+    .bar__chip-title {
+      display: none;
     }
     .bar__meta {
       max-width: 190px;

@@ -14,6 +14,20 @@
   import Dropdown from './Dropdown.svelte';
   import Icon from './Icon.svelte';
 
+  /** Selecting a line reveals its untruncated message and metadata. */
+  let selected = $state<number | null>(null);
+
+  /** Content type, separate from severity: a DEBUG from the socket and a
+      DEBUG from the router are not the same kind of event. */
+  type LogKind = 'sync' | 'ui' | 'media' | 'other';
+  function kindOf(source: string): LogKind {
+    const name = source.toLowerCase();
+    if (/(sync|socket|auth|token|server)/.test(name)) return 'sync';
+    if (/(route|ui|window|settings|app)/.test(name)) return 'ui';
+    if (/(player|play|audio|download|cover|library|book|media)/.test(name)) return 'media';
+    return 'other';
+  }
+
   let listEl = $state<HTMLDivElement | null>(null);
   let notice = $state<string | null>(null);
   let noticeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -120,18 +134,42 @@
     </button>
   </div>
 
-  <p class="logs__hint t-small t-tertiary">{t('logs.hint')}</p>
+  <p class="logs__hint t-small t-tertiary">{t('logs.hint')} · {t('logs.detailHint')}</p>
 
   <div class="logs__list scroll-y" bind:this={listEl}>
     {#if logs.visible.length === 0}
       <p class="logs__empty t-small t-tertiary">{t('logs.empty')}</p>
     {:else}
       {#each logs.visible as entry (entry.id)}
-        <div class="line level-{entry.level}">
-          <span class="line__time t-num">{formatLogTime(entry.at)}</span>
-          <span class="line__level">{entry.level.toUpperCase()}</span>
-          <span class="line__source">{entry.source}</span>
-          <span class="line__message">{entry.message}</span>
+        <div class="line-wrap">
+          <button
+            class="line level-{entry.level}"
+            class:selected={selected === entry.id}
+            aria-expanded={selected === entry.id}
+            onclick={() => (selected = selected === entry.id ? null : entry.id)}
+          >
+            <span class="line__time t-num">{formatLogTime(entry.at)}</span>
+            <span class="line__level">{entry.level.toUpperCase()}</span>
+            <span class="line__source">
+              <span class="line__dot kind-{kindOf(entry.source)}" aria-hidden="true"></span>
+              <span class="truncate">{entry.source}</span>
+            </span>
+            <span class="line__message truncate">{entry.message}</span>
+          </button>
+          {#if selected === entry.id}
+            <div class="line-detail">
+              <div class="line-detail__meta t-small t-tertiary t-num">
+                <span>{formatLogTime(entry.at)}</span>
+                <span>{t('logs.fullMessage')}</span>
+                <span>{t('logs.source')}: {entry.source}</span>
+              </div>
+              <pre class="line-detail__body">{entry.message}</pre>
+              <button
+                class="btn btn--quiet btn--sm"
+                onclick={() => void navigator.clipboard.writeText(entry.message)}
+              >{t('logs.copy')}</button>
+            </div>
+          {/if}
         </div>
       {/each}
     {/if}
@@ -259,12 +297,15 @@
     display: grid;
     grid-template-columns: 86px 46px 132px minmax(0, 1fr);
     gap: 8px;
-    padding: 1px 4px;
+    width: 100%;
+    padding: 2px 4px;
     border-radius: 2px;
+    text-align: left;
     color: var(--text-secondary);
   }
 
-  .line:hover {
+  .line:hover,
+  .line.selected {
     background: var(--surface);
   }
 
@@ -272,30 +313,78 @@
     color: var(--text-tertiary);
   }
 
+  /* Severity is now a badge, not a word in the same colour as everything
+     else; source gets a second, independent colour axis for its type. */
   .line__level {
+    display: inline-grid;
+    place-items: center;
+    height: 15px;
+    margin-top: 1px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-xs);
+    font-size: 9px;
     font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
     color: var(--text-tertiary);
   }
 
-  .line.level-warn .line__level,
-  .line.level-warn .line__message {
-    color: var(--warning);
-  }
+  .line.level-info .line__level { color: var(--accent); }
+  .line.level-warn .line__level { color: var(--warning); }
+  .line.level-error .line__level { color: var(--danger); }
+  .line.level-debug .line__level { opacity: 0.5; }
 
-  .line.level-error .line__level,
-  .line.level-error .line__message {
-    color: var(--danger);
-  }
-
-  .line.level-debug .line__level {
-    opacity: 0.55;
-  }
+  .line.level-warn .line__message { color: var(--warning); }
+  .line.level-error .line__message { color: var(--danger); }
 
   .line__source {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
     color: var(--text-tertiary);
+  }
+
+  .line__dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+  }
+
+  .line__dot.kind-sync { background: var(--positive); }
+  .line__dot.kind-ui { background: var(--accent); }
+  .line__dot.kind-media { background: var(--warning); }
+
+  .line-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 2px 4px var(--gap-inline) 90px;
+    padding: var(--gap-inline);
+    border-left: 2px solid var(--accent-line);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--surface);
+  }
+
+  .line-detail__meta {
+    display: flex;
+    gap: var(--gap-panel);
+    flex-wrap: wrap;
+  }
+
+  .line-detail__body {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: var(--text-xs);
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .line-detail .btn {
+    align-self: flex-start;
   }
 
   .line__message {

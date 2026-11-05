@@ -218,6 +218,17 @@
 
         <div class="transport">
           <div class="transport__top">
+            <div class="transport__wing">
+              <Dropdown
+                value={String(player.rate)}
+                options={RATES.map(rate => ({ value: String(rate), label: `${rate}×` }))}
+                onSelect={next => void player.setRate(Number(next))}
+                label={t('player.speed')}
+                variant="field"
+                width="76px"
+              />
+            </div>
+
             <div class="transport__buttons">
               <button
                 class="icon-btn"
@@ -264,78 +275,7 @@
               </button>
             </div>
 
-            <div class="transport__volume">
-              <button
-                class="icon-btn icon-btn--sm"
-                aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-                title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
-                onclick={toggleMute}
-              ><Icon name="volume" size={14} /></button>
-              <input
-                class="volume"
-                type="range"
-                min="0"
-                max="1"
-                step="0.02"
-                value={player.volume}
-                style="--fill: {player.volume * 100}%"
-
-                aria-label={t('player.volume')}
-                oninput={event => onVolumeInput(Number(event.currentTarget.value))}
-              />
-              <span class="volume__value t-num" class:shown={volumeActive}>
-                {Math.round(player.volume * 100)}%
-              </span>
-            </div>
-          </div>
-
-          <SeekBar
-            value={chapterFraction}
-            size="lg"
-            label={t('player.progressOf', {
-              done: formatDuration(chapterPos),
-              total: formatDuration(chapterLength || player.duration),
-            })}
-            onSeek={seekChapter}
-            disabled={player.duration <= 0}
-          />
-          <div class="transport__times t-num t-small t-tertiary">
-            <span class="transport__t">{formatDuration(chapterPos)}</span>
-            {#if chapterLine}
-              <span class="transport__chapter truncate">{chapterLine}</span>
-            {/if}
-            <span class="transport__t">
-              {formatDuration(chapterLength || player.duration)}
-            </span>
-          </div>
-
-          {#if !isEpisode && chapters.length > 1}
-            <div class="book-bar">
-              <span class="book-bar__tag t-small t-tertiary">{t('player.wholeBook')}</span>
-              <ProgressLine
-                value={player.progress}
-                label={t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
-                marks={bookmarkFractions}
-              />
-              <span class="book-bar__pct t-small t-num t-secondary">
-                {Math.round(player.progress * 100)}%
-              </span>
-            </div>
-          {/if}
-
-
-          <div class="transport__extras">
-            <span class="t-label tools__label">{t('player.speed')}</span>
-            <Dropdown
-              value={String(player.rate)}
-              options={RATES.map(rate => ({ value: String(rate), label: `${rate}×` }))}
-              onSelect={next => void player.setRate(Number(next))}
-              label={t('player.speed')}
-              variant="field"
-            />
-
-            <span class="tools__divider"></span>
-
+            <div class="transport__wing transport__wing--right">
             <div class="extra extra--sleep">
               <button
                 class="btn btn--quiet btn--sm"
@@ -379,7 +319,69 @@
                 </div>
               {/if}
             </div>
+
+            <div class="transport__volume">
+              <button
+                class="icon-btn icon-btn--sm"
+                aria-label={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+                title={player.volume > 0 ? t('player.mute') : t('player.unmute')}
+                onclick={toggleMute}
+              ><Icon name="volume" size={14} /></button>
+              <input
+                class="volume"
+                type="range"
+                min="0"
+                max="1"
+                step="0.02"
+                value={player.volume}
+                style="--fill: {player.volume * 100}%"
+
+                aria-label={t('player.volume')}
+                oninput={event => onVolumeInput(Number(event.currentTarget.value))}
+              />
+              <span class="volume__value t-num" class:shown={volumeActive}>
+                {Math.round(player.volume * 100)}%
+              </span>
+            </div>
+
+            </div>
           </div>
+
+          <SeekBar
+            value={chapterFraction}
+            size="lg"
+            label={t('player.progressOf', {
+              done: formatDuration(chapterPos),
+              total: formatDuration(chapterLength || player.duration),
+            })}
+            onSeek={seekChapter}
+            disabled={player.duration <= 0}
+          />
+          <div class="transport__times t-num t-small t-tertiary">
+            <span class="transport__t">{formatDuration(chapterPos)}</span>
+            {#if chapterLine}
+              <span class="transport__chapter truncate">{chapterLine}</span>
+            {/if}
+            <span class="transport__t">
+              {formatDuration(chapterLength || player.duration)}
+            </span>
+          </div>
+
+          {#if !isEpisode && chapters.length > 1}
+            <div class="book-bar">
+              <span class="book-bar__tag t-small t-tertiary">{t('player.wholeBook')}</span>
+              <ProgressLine
+                value={player.progress}
+                label={t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+                marks={bookmarkFractions}
+              />
+              <span class="book-bar__pct t-small t-num t-secondary">
+                {Math.round(player.progress * 100)}%
+              </span>
+            </div>
+          {/if}
+
+
         </div>
       </section>
 
@@ -603,6 +605,19 @@
     margin-top: var(--gap-inline);
   }
 
+  @media (max-width: 980px) {
+    /* Keep the play cluster centred when the side panel becomes an overlay. */
+    .transport__top {
+      gap: 4px;
+    }
+    .transport__volume .volume {
+      width: 52px;
+    }
+    .transport__volume .volume__value {
+      display: none;
+    }
+  }
+
   @media (max-width: 900px) {
     .stage__head {
       grid-template-columns: minmax(0, 1fr);
@@ -612,26 +627,40 @@
 
   }
 
+  /* Expanded player is centred on the window axis; the longer track also makes
+     a 17-minute chapter adjustable at a useful granularity. */
   .transport {
-    width: min(560px, 100%);
+    width: min(720px, 100%);
+    margin-inline: auto;
     display: flex;
     flex-direction: column;
     gap: var(--gap-hair);
   }
 
-  /* Controls sit above the progress now, with volume sharing their row. */
+  /* Three tracks: speed on the left, the play cluster on the centre line,
+     sleep + volume on the right. Tools no longer sit in their own bordered
+     card at the bottom of the stage. */
   .transport__top {
-    position: relative;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: center;
+    gap: var(--gap-inline);
     min-height: 58px;
     margin-bottom: var(--gap-inline);
   }
 
+  .transport__wing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .transport__wing--right {
+    justify-content: flex-end;
+  }
+
   .transport__volume {
-    position: absolute;
-    right: 0;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -641,7 +670,7 @@
     display: flex;
     align-items: center;
     gap: var(--gap-inline);
-    margin-top: var(--gap-inline);
+    margin-top: var(--gap-row);
   }
 
   .book-bar__tag {
@@ -662,6 +691,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: var(--gap-row);
+    margin-top: 6px;
     font-size: var(--text-xs);
     color: var(--text-secondary);
   }
@@ -713,21 +743,6 @@
     opacity: 0.6;
   }
 
-  /* One centred tool strip instead of three loose clusters fighting the
-     transport buttons for alignment. */
-  .transport__extras {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--gap-panel);
-    flex-wrap: wrap;
-    margin-top: var(--gap-inline);
-    padding: var(--gap-inline) var(--gap-row);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--hairline);
-    background: var(--surface);
-  }
-
   .extra {
     display: flex;
     align-items: center;
@@ -737,17 +752,6 @@
 
   .volume {
     width: 88px;
-  }
-
-  .tools__label {
-    color: var(--text-tertiary);
-    white-space: nowrap;
-  }
-
-  .tools__divider {
-    width: 1px;
-    height: 18px;
-    background: var(--hairline);
   }
 
   .volume__value {
@@ -821,6 +825,8 @@
     justify-content: space-between;
     gap: var(--gap-inline);
     padding-bottom: var(--gap-inline);
+    margin-bottom: var(--gap-inline);
+    border-bottom: 1px solid var(--hairline);
   }
 
   .chapter-tools__right {
@@ -863,12 +869,25 @@
   .chapter[aria-current='true'] {
     background: var(--accent-soft);
     color: var(--text);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  .chapter[aria-current='true'] .chapter__index {
+    color: var(--accent);
+    font-weight: var(--weight-semibold);
   }
 
   .chapter__index {
-    flex: 0 0 24px;
+    flex: 0 0 30px;
     color: var(--text-tertiary);
     font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .chapter__title {
+    font-size: var(--text-sm);
+    color: var(--text);
   }
 
   .chapter__body {
@@ -877,10 +896,6 @@
     gap: 1px;
     min-width: 0;
     flex: 1 1 auto;
-  }
-
-  .chapter__title {
-    font-size: var(--text-sm);
   }
 
   .chapter__dot {

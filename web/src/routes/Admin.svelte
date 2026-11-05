@@ -58,6 +58,13 @@
   let upAuthor = $state('');
   let upSeries = $state('');
   let upFiles = $state<string[]>([]);
+  type UploadMode = 'single' | 'split' | 'episode';
+  let upMode = $state<UploadMode>('single');
+  /** Single-episode mode: ABS only creates a new item on upload, so "attach"
+      means naming a series (or a book) in that item's metadata. */
+  let upTarget = $state<'book' | 'series'>('series');
+  let upTargetName = $state('');
+  let upRoot = $state('');
   let upBusy = $state(false);
   let upNotice = $state<string | null>(null);
   let upProgress = $state<UploadProgress | null>(null);
@@ -67,6 +74,29 @@
   const upFolders = $derived(
     bookLibraries.find(entry => entry.id === upLibrary)?.folders ?? [],
   );
+
+  function dirname(path: string): string {
+    return path.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? '';
+  }
+
+  /**
+   * A prepared folder tree (作者/系列/书名/01.mp3) is grouped by the file's
+   * parent directory: one subfolder becomes one book, and the folder name is
+   * the title. Without this, `resolveUploadFiles` flattens every track into a
+   * single 1 000-chapter item.
+   */
+  const upBatches = $derived.by(() => {
+    if (upMode !== 'split') return [] as { name: string; paths: string[] }[];
+    const map = new Map<string, string[]>();
+    for (const file of upFiles) {
+      const parts = file.replace(/\\/g, '/').split('/').filter(Boolean);
+      const name = parts.length >= 2 ? parts[parts.length - 2] : '_';
+      const bucket = map.get(name);
+      if (bucket) bucket.push(file);
+      else map.set(name, [file]);
+    }
+    return [...map.entries()].map(([name, paths]) => ({ name, paths }));
+  });
 
   onMount(() => {
     let disposed = false;
@@ -104,9 +134,15 @@
     try {
       const files = await resolveUploadFiles([chosen]);
       upFiles = files.map(file => file.path);
-      if (upTitle.trim() === '') {
-        upTitle = chosen.split(/[\\/]/).filter(Boolean).pop() ?? '';
-      }
+      upRoot = chosen;
+      const rootName = chosen.split(/[\\/]/).filter(Boolean).pop() ?? '';
+      if (upTitle.trim() === '') upTitle = rootName;
+      if (upSeries.trim() === '') upSeries = rootName;
+      // A tree with several subfolders is a batch of books, not one book.
+      const parents = new Set(
+        upFiles.map(file => file.replace(/\\/g, '/').split('/').filter(Boolean).slice(-2, -1)[0]),
+      );
+      if (parents.size > 1) upMode = 'split';
     } catch (reason) {
       error = (reason as Error).message;
     }
@@ -131,18 +167,37 @@
     upBusy = true;
     error = null;
     try {
-      await uploadMedia(
-        session.serverUrl,
-        crypto.randomUUID(),
-        upLibrary,
-        upFolder,
-        upTitle.trim() || t('common.unknown'),
-        upAuthor.trim(),
-        upSeries.trim(),
-        upFiles,
-      );
+      if (upMode === 'split' && upBatches.length > 0) {
+        for (const batch of upBatches) {
+          await uploadMedia(
+            session.serverUrl,
+            crypto.randomUUID(),
+            upLibrary,
+            upFolder,
+            batch.name,
+            upAuthor.trim(),
+            upSeries.trim() || (upRoot ? dirname(upRoot) : ''),
+            batch.paths,
+          );
+        }
+        upNotice = t('upload.groups', { count: upBatches.length });
+      } else {
+        const target = upTargetName.trim();
+        await uploadMedia(
+          session.serverUrl,
+          crypto.randomUUID(),
+          upLibrary,
+          upFolder,
+          upTarget === 'book' && target ? target : upTitle.trim() || t('common.unknown'),
+          upAuthor.trim(),
+          upTarget === 'series' && target ? target : upSeries.trim(),
+          upFiles,
+        );
+      }
       upFiles = [];
       upTitle = '';
+      upTargetName = '';
+      upRoot = '';
       await load();
     } catch (reason) {
       error = (reason as Error).message;
@@ -164,17 +219,27 @@
     loading = true;
     error = null;
     try {
-      const [libs, people, taskList, backupList] = await Promise.all([
+      // Four independent server endpoints. A shape change in /api/tasks used
+      // to reject the whole Promise.all and paint a bare decoder error across
+      // the 书库 tab, even though the libraries had loaded fine.
+      const [libs, people, taskList, backupList] = await Promise.allSettled([
         getLibrariesFull(session.serverUrl),
         getAllUsers(session.serverUrl),
         getTasks(session.serverUrl),
         getBackups(session.serverUrl),
       ]);
-      libraries = libs;
-      users = people;
-      tasks = taskList.tasks ?? [];
-      backups = backupList.backups ?? [];
-      backupLocation = backupList.backupLocation ?? '';
+      let failures = 0;
+      if (libs.status === 'fulfilled') libraries = libs.value;
+      else failures += 1;
+      if (people.status === 'fulfilled') users = people.value;
+      else failures += 1;
+      if (taskList.status === 'fulfilled') tasks = taskList.value.tasks ?? [];
+      else failures += 1;
+      if (backupList.status === 'fulfilled') {
+        backups = backupList.value.backups ?? [];
+        backupLocation = backupList.value.backupLocation ?? '';
+      } else failures += 1;
+      if (failures > 0) error = t('admin.partial');
     } catch (reason) {
       error = (reason as Error).message;
     } finally {
@@ -333,7 +398,51 @@
               <span class="field__label">{t('upload.series')}</span>
               <input class="input" bind:value={upSeries} />
             </label>
+
+            <label class="field">
+              <span class="field__label">{t('upload.structureMode')}</span>
+              <Dropdown
+                value={upMode}
+                options={[
+                  { value: 'single', label: t('upload.mode.single') },
+                  { value: 'split', label: t('upload.mode.split') },
+                  { value: 'episode', label: t('upload.mode.episode') },
+                ]}
+                onSelect={next => (upMode = next as UploadMode)}
+                label={t('upload.structureMode')}
+                variant="field"
+                align="start"
+              />
+            </label>
+
+            {#if upMode === 'episode'}
+              <label class="field">
+                <span class="field__label">{t('upload.target')}</span>
+                <Dropdown
+                  value={upTarget}
+                  options={[
+                    { value: 'book', label: t('upload.targetBook') },
+                    { value: 'series', label: t('upload.targetSeries') },
+                  ]}
+                  onSelect={next => (upTarget = next as 'book' | 'series')}
+                  label={t('upload.target')}
+                  variant="field"
+                  align="start"
+                />
+              </label>
+              <label class="field">
+                <span class="field__label">{upTarget === 'book' ? t('upload.targetBook') : t('upload.targetSeries')}</span>
+                <input class="input" bind:value={upTargetName} />
+              </label>
+            {/if}
           </div>
+
+          <p class="upload__hint t-small t-tertiary">{t('upload.mode.hint')}</p>
+          {#if upBatches.length > 1}
+            <p class="upload__detected t-small">
+              {t('upload.detected')} · {t('upload.groups', { count: upBatches.length })}
+            </p>
+          {/if}
 
           <div class="upload__files">
             <button class="btn btn--quiet btn--sm" onclick={() => void pickFolder()}>
@@ -561,6 +670,14 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: var(--gap-panel);
+  }
+
+  .upload__hint {
+    margin: 0;
+  }
+
+  .upload__detected {
+    color: var(--accent);
   }
 
   .upload__files {

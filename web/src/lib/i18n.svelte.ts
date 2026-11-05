@@ -7,16 +7,72 @@
  *
  * Follows the system language on first run, then remembers the choice.
  */
-export const LOCALES = ['en', 'zh-CN'] as const;
+/**
+ * A locale is now a registry entry, not a branch in a function. Adding a
+ * language means adding one row here and (optionally) a dictionary below:
+ * any missing key falls back to English, so a half-translated locale is safe
+ * to ship and the whole UI never renders a raw key.
+ */
+export const LOCALES = ['en', 'zh-CN', 'ja-JP', 'ko-KR', 'de-DE', 'fr-FR', 'es-ES'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const LOCALE_LABEL: Record<Locale, string> = {
   en: 'English',
   'zh-CN': '简体中文',
+  'ja-JP': '日本語',
+  'ko-KR': '한국어',
+  'de-DE': 'Deutsch',
+  'fr-FR': 'Français',
+  'es-ES': 'Español',
+};
+
+/** Prefix used to follow the OS language on first run. */
+const LOCALE_PREFIX: Record<Locale, string> = {
+  en: 'en', 'zh-CN': 'zh', 'ja-JP': 'ja', 'ko-KR': 'ko',
+  'de-DE': 'de', 'fr-FR': 'fr', 'es-ES': 'es',
 };
 
 const en = {
-  'app.name': 'Skald',
+  'app.name': 'Xuting',
+  'app.tagline': 'An audiobook player for Audiobookshelf',
+  'app.former': 'formerly Skald',
+  'brand.localOnly': 'Local',
+  'art.setCover': 'Set cover…',
+  'art.setAuthorArt': 'Set author image…',
+  'art.setSeriesArt': 'Set series image…',
+  'art.restore': 'Restore server artwork',
+  'art.saved': 'Artwork updated on this device',
+  'art.failed': 'Could not read the image, or local storage is full',
+  'search.groupAuthors': 'Authors',
+  'search.groupBooks': 'Books',
+  'search.groupSeries': 'Series',
+  'search.groupHint': 'Matches are grouped by author, book and series.',
+  'search.noAuthor': 'No matching authors',
+  'search.noSeries': 'No matching series',
+  'menu.removeLocal': 'Remove local download',
+  'menu.removeLocalHint': 'Not downloaded',
+  'menu.artwork': 'Artwork',
+  'logs.type.debug': 'Debug',
+  'logs.type.info': 'Info',
+  'logs.type.warn': 'Warning',
+  'logs.type.error': 'Error',
+  'logs.detailHint': 'Select a line to read its full message',
+  'logs.fullMessage': 'Full message',
+  'logs.source': 'Source',
+  'upload.structureMode': 'Folder layout',
+  'upload.mode.single': 'One book',
+  'upload.mode.split': 'One book per subfolder',
+  'upload.mode.episode': 'Single episode',
+  'upload.mode.hint': 'A prepared folder tree becomes one book per subfolder; names fill in the metadata.',
+  'upload.target': 'Attach to',
+  'upload.targetBook': 'Book',
+  'upload.targetSeries': 'Series',
+  'upload.detected': 'Filled from folder names',
+  'upload.groups': '{count} books detected',
+  'admin.partial': 'Some server data could not be loaded',
+  'home.allBooks': 'All books',
+  'home.showing': '{count} books',
+  'continue.hoverChapter': 'Now at',
 
   'nav.library': 'Library',
   'home.recentAdded': 'Recently added',
@@ -232,7 +288,7 @@ const en = {
   'settings.signOut': 'Sign out',
   'settings.signOutHint': 'Clears the saved token on this computer.',
   'settings.logs': 'Logs',
-  'settings.logsHint': 'Where Skald writes its diagnostic log.',
+  'settings.logsHint': 'Where Xuting writes its diagnostic log.',
   'settings.open': 'Open',
   'settings.adminHint': 'Libraries, users, tasks and backups.',
   'keys.playPause': 'Play / pause',
@@ -448,7 +504,46 @@ const en = {
 type Dict = Record<keyof typeof en, string>;
 
 const zh: Dict = {
-  'app.name': 'Skald',
+  'app.name': '叙听',
+  'app.tagline': '为 Audiobookshelf 而生的有声书播放器',
+  'app.former': '原名 Skald',
+  'brand.localOnly': '本地',
+  'art.setCover': '设置封面…',
+  'art.setAuthorArt': '设置作者图片…',
+  'art.setSeriesArt': '设置系列图片…',
+  'art.restore': '恢复服务器图片',
+  'art.saved': '图片已在本机更新',
+  'art.failed': '图片读取失败，或本地存储空间不足',
+  'search.groupAuthors': '作者',
+  'search.groupBooks': '书籍',
+  'search.groupSeries': '系列',
+  'search.groupHint': '匹配结果按作者、书籍、系列分组。',
+  'search.noAuthor': '没有匹配的作者',
+  'search.noSeries': '没有匹配的系列',
+  'menu.removeLocal': '删除本地下载',
+  'menu.removeLocalHint': '未下载',
+  'menu.artwork': '图片',
+  'logs.type.debug': '调试',
+  'logs.type.info': '信息',
+  'logs.type.warn': '警告',
+  'logs.type.error': '错误',
+  'logs.detailHint': '点击任意一行查看完整内容',
+  'logs.fullMessage': '完整内容',
+  'logs.source': '来源',
+  'upload.structureMode': '文件夹结构',
+  'upload.mode.single': '整本书',
+  'upload.mode.split': '每个子文件夹一本书',
+  'upload.mode.episode': '单集',
+  'upload.mode.hint': '已整理好的目录树会按子文件夹拆成多本书，目录名自动填入元数据。',
+  'upload.target': '归属',
+  'upload.targetBook': '书籍',
+  'upload.targetSeries': '系列',
+  'upload.detected': '已从目录名推断',
+  'upload.groups': '识别到 {count} 本书',
+  'admin.partial': '部分服务器数据加载失败',
+  'home.allBooks': '全部书籍',
+  'home.showing': '共 {count} 本',
+  'continue.hoverChapter': '当前章节',
 
   'nav.library': '书库',
   'home.recentAdded': '最近添加',
@@ -664,7 +759,7 @@ const zh: Dict = {
   'settings.signOut': '退出登录',
   'settings.signOutHint': '清除这台电脑上保存的令牌。',
   'settings.logs': '日志',
-  'settings.logsHint': 'Skald 的诊断日志所在位置。',
+  'settings.logsHint': '叙听的诊断日志所在位置。',
   'settings.open': '打开',
   'settings.adminHint': '书库、用户、任务与备份。',
   'keys.playPause': '播放 / 暂停',
@@ -879,14 +974,16 @@ const zh: Dict = {
 
 export type TranslationKey = keyof typeof en;
 
-const DICTS: Record<Locale, Dict> = { en, 'zh-CN': zh };
+const DICTS: Partial<Record<Locale, Dict>> = { en, 'zh-CN': zh };
 
 const KEY_LOCALE = 'skald.locale';
 
 function normalize(tag: string | undefined): Locale {
   const lower = (tag ?? '').toLowerCase();
-  if (lower.startsWith('zh')) return 'zh-CN';
-  return en === DICTS.en ? 'en' : 'en';
+  const hit = (Object.keys(LOCALE_PREFIX) as Locale[]).find(
+    id => lower.startsWith(LOCALE_PREFIX[id]),
+  );
+  return hit ?? 'en';
 }
 
 function initialLocale(): Locale {
@@ -911,8 +1008,8 @@ export function setLocale(next: Locale): void {
 }
 
 export function t(key: TranslationKey, vars?: Record<string, string | number>): string {
-  const dict = DICTS[locale] ?? DICTS.en;
-  let out = dict[key] ?? DICTS.en[key] ?? key;
+  const dict = DICTS[locale] ?? en;
+  let out = dict[key] ?? en[key] ?? key;
   if (vars) {
     for (const [name, value] of Object.entries(vars)) {
       out = out.replaceAll(`{${name}}`, String(value));
