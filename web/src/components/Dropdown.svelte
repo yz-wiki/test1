@@ -21,6 +21,8 @@
     /** `ghost` sits in a toolbar, `field` looks like an input. */
     variant = 'ghost',
     align = 'end',
+    /** The bar lives at the bottom of the window, so its menus open upwards. */
+    placement = 'down',
     width = '',
     disabled = false,
   }: {
@@ -30,6 +32,7 @@
     label?: string;
     variant?: 'ghost' | 'field';
     align?: 'start' | 'end';
+    placement?: 'down' | 'up';
     width?: string;
     disabled?: boolean;
   } = $props();
@@ -89,7 +92,13 @@
   </button>
 
   {#if open}
-    <div class="drop__menu" class:start={align === 'start'} role="listbox" style:width={width || undefined}>
+    <div
+      class="drop__menu"
+      class:start={align === 'start'}
+      class:up={placement === 'up'}
+      role="listbox"
+      style:width={width || undefined}
+    >
       {#each rows as row (row.value)}
         <button
           type="button"
@@ -189,6 +198,11 @@
   .drop__menu.start {
     right: auto;
     left: 0;
+  }
+
+  .drop__menu.up {
+    top: auto;
+    bottom: calc(100% + 6px);
   }
 
   .drop__item {

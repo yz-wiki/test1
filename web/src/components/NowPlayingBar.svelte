@@ -315,6 +315,7 @@
         options={RATES.map(rate => ({ value: rate, label: `${rate}×` }))}
         onSelect={next => void player.setRate(Number(next))}
         label={t('player.speed')}
+        placement="up"
       />
 
       <div class="bar__pop-anchor">
