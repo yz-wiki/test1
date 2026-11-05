@@ -130,7 +130,7 @@ impl AbsClient {
             // without touching sessions opened by phones or web clients.
             "deviceInfo": {
                 "deviceId": device_id,
-                "clientName": "Skald",
+                "clientName": "ADSplayer",
                 "clientVersion": env!("CARGO_PKG_VERSION"),
             },
             "mediaPlayer": "vlc",

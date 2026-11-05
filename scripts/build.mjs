@@ -223,8 +223,10 @@ async function reportArtifacts(version, selections) {
   const bdir = bundleDir();
 
   if (selections.some(t => t.kind === 'portable')) {
-    const zip = path.join(ROOT, 'dist', `Skald_${version}_portable_win-x64.zip`);
+    const zip = path.join(ROOT, 'dist', `ADSplayer_${version}_portable_win-x64.zip`);
     results.push({ target: 'portable', path: zip, found: await exists(zip) });
+    const core = path.join(ROOT, 'dist', `ADSplayer_${version}_portable_core_win-x64.zip`);
+    results.push({ target: 'portable-core', path: core, found: await exists(core) });
   }
   const bundleMap = { nsis: 'nsis', msi: 'msi', appimage: 'appimage', deb: 'deb', rpm: 'rpm' };
   for (const selection of selections.filter(t => t.kind === 'bundle')) {
@@ -283,6 +285,8 @@ async function main() {
       }
       await run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/package-portable.ps1'],
         'Packaging portable zip');
+      await run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/package-portable.ps1', '-Core'],
+        'Packaging playback-only core zip');
     }
   } catch (error) {
     die(error instanceof Error ? error.message : String(error));

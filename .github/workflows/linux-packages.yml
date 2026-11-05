@@ -113,7 +113,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skald-linux-packages-logs-${{ github.run_id }}
+          name: adsplayer-linux-packages-logs-${{ github.run_id }}
           path: gha-logs
           if-no-files-found: ignore
           retention-days: 14
@@ -122,7 +122,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skald-linux-deb-${{ github.run_id }}
+          name: adsplayer-linux-deb-${{ github.run_id }}
           path: src-tauri/target/release/bundle/deb/*.deb
           if-no-files-found: ignore
           retention-days: 14
@@ -131,7 +131,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skald-linux-rpm-${{ github.run_id }}
+          name: adsplayer-linux-rpm-${{ github.run_id }}
           path: src-tauri/target/release/bundle/rpm/*.rpm
           if-no-files-found: ignore
           retention-days: 14

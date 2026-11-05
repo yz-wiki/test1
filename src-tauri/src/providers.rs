@@ -55,7 +55,7 @@ pub(crate) fn strip_html(s: &str) -> String {
 
 fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
-        .user_agent("Skald/0.1 (local library metadata)")
+        .user_agent("ADSplayer/0.1 (local library metadata)")
         // Bounded timeouts — a wedged metadata provider must fail the match
         // flow predictably, not hang it (see api::bounded_client).
         .connect_timeout(std::time::Duration::from_secs(10))

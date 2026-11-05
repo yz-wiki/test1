@@ -1,9 +1,11 @@
 # ADSplayer
 
-> Formerly **叙听 / Xuting** (and originally **Skald**). The display name is
-> `ADSplayer` in every language. The bundle id, binary name, artifact prefix
-> and local storage keys deliberately stay `skald` so an upgrade keeps the
-> sign-in state and every saved setting.
+> Formerly **叙听 / Xuting** (and originally **Skald**). Since 2.19.1 every
+> user-visible name is **ADSplayer**: window title, tray, installers, portable
+> ZIPs, the bundled executable and the ABS session name. The bundle id
+> (`com.skald.app`), on-disk data directory, log file, localStorage keys and IPC
+> event names deliberately stay `skald` so an upgrade keeps the sign-in state
+> and every saved setting.
 
 A native Windows and Linux desktop client for [Audiobookshelf](https://www.audiobookshelf.org/), and a standalone server-free audiobook and podcast player.
 

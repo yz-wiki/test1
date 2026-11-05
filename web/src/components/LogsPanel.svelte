@@ -79,7 +79,7 @@
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `skald-${logs.scope}-${new Date().toISOString().slice(0, 10)}.log`;
+    anchor.download = `ADSplayer-${logs.scope}-${new Date().toISOString().slice(0, 10)}.log`;
     anchor.click();
     URL.revokeObjectURL(url);
     flash(t('logs.exported'));

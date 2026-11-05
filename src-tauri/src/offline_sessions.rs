@@ -464,11 +464,11 @@ pub fn remove_pending(downloads_dir: &Path, acked_ids: &[String]) -> Result<usiz
 pub fn device_info(device_id: &str) -> serde_json::Value {
     serde_json::json!({
         "deviceId": device_id,
-        "clientName": "Skald",
+        "clientName": "ADSplayer",
         "clientVersion": env!("CARGO_PKG_VERSION"),
-        // Reads as "Linux Skald Desktop" / "Windows Skald Desktop" in the UI.
+        // Reads as "Linux ADSplayer Desktop" / "Windows ADSplayer Desktop" in the UI.
         "manufacturer": os_label(),
-        "model": "Skald Desktop",
+        "model": "ADSplayer Desktop",
     })
 }
 

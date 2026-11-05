@@ -48,10 +48,10 @@
   </Resources>
 
   <Applications>
-    <!-- Executable matches the binary in target/release (cargo package name
-         "skald" -> skald.exe). EntryPoint=Windows.FullTrustApplication is the
-         full-trust desktop entry point. -->
-    <Application Id="Skald" Executable="skald.exe" EntryPoint="Windows.FullTrustApplication">
+    <!-- Executable matches the ADSplayer.exe staged by build-msix.ps1
+         (tauri.conf.json mainBinaryName). Id stays "Skald": it is part of the
+         MSIX package identity and must not change across upgrades. -->
+    <Application Id="Skald" Executable="ADSplayer.exe" EntryPoint="Windows.FullTrustApplication">
       <!-- BackgroundColor is the plate behind the Start tile (Onyx bg, on-brand).
            The taskbar / Alt-Tab / title-bar icon is instead rendered PLATE-FREE
            from the Square44x44Logo.targetsize-*_altform-unplated.png variants that

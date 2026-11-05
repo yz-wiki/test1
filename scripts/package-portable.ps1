@@ -1,24 +1,35 @@
 # package-portable.ps1
 #
-# Produces a portable (green / no-install) Windows ZIP of Skald from a finished
-# release build. Tauri has no built-in "zip" bundle target, but build.rs copies
-# the whole runnable runtime (LibVLC + helpers) next to the exe in
-# src-tauri\target\release, so that directory is already self-contained. This
-# script picks exactly the files that must travel together and zips them.
+# Produces a portable (green / no-install) Windows ZIP of ADSplayer from a
+# finished release build. Tauri has no built-in "zip" bundle target, but
+# build.rs copies the whole runnable runtime (LibVLC + helpers) next to the exe
+# in src-tauri\target\release, so that directory is already self-contained.
+# This script picks exactly the files that must travel together and zips them.
+#
+# Two flavours:
+#   default  full package: playback + local-library metadata helpers
+#   -Core    playback only: drops ffprobe.exe and tone.exe (~150 MB uncompressed).
+#            The app already degrades gracefully when those helpers are absent;
+#            local-library chapter reading and "Embed Metadata" write-back are
+#            unavailable until the two binaries are placed next to the exe.
 #
 # Run AFTER a release build, e.g.:
-#   pnpm tauri build --no-bundle        (exe + runtime land in target\release)
+#   pnpm tauri build --no-bundle
 #   powershell -File scripts/package-portable.ps1
+#   powershell -File scripts/package-portable.ps1 -Core
 #
-# Output:  dist\Skald_<version>_portable_win-x64.zip
-# (dist\ is already covered by the repository .gitignore.)
+# Output (dist\ is git-ignored):
+#   dist\ADSplayer_<version>_portable_win-x64.zip
+#   dist\ADSplayer_<version>_portable_core_win-x64.zip
 
 [CmdletBinding()]
 param(
-    # Directory that contains skald.exe and the runtime copied by build.rs.
+    # Directory that contains the main exe and the runtime copied by build.rs.
     [string]$ReleaseDir = '',
     # Where to write the finished zip (inside the repo; dist\ is git-ignored).
-    [string]$OutRoot = ''
+    [string]$OutRoot = '',
+    # Playback-only package: omit the ffprobe/tone metadata helpers.
+    [switch]$Core
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,8 +51,19 @@ $conf = Get-Content (Join-Path $root 'src-tauri\tauri.conf.json') -Raw
 if ($conf -notmatch '"version"\s*:\s*"([^"]+)"') { Die 'cannot read "version" from src-tauri\tauri.conf.json' }
 $version = $Matches[1]
 
-# Files that must sit next to Skald.exe for the app to run/play.
-$required = @('skald.exe', 'libvlc.dll', 'libvlccore.dll', 'ffprobe.exe', 'tone.exe')
+# tauri.conf.json sets mainBinaryName = ADSplayer, so a `tauri build` may have
+# renamed the cargo output. Older / plain `cargo build` trees still have
+# skald.exe. Accept both and always ship the user-facing name.
+$exeCandidates = @('ADSplayer.exe', 'skald.exe')
+$mainExe = $exeCandidates | Where-Object { Test-Path (Join-Path $ReleaseDir $_) } | Select-Object -First 1
+if (-not $mainExe) {
+    Die ("main executable not found in '$ReleaseDir' (looked for: " + ($exeCandidates -join ', ') + ')')
+}
+
+# Build the list explicitly: `$x = if (...) { @() }` yields $null in PowerShell,
+# and adding $null to an array would create a bogus entry for Join-Path later.
+$required = @('libvlc.dll', 'libvlccore.dll')
+if (-not $Core) { $required += @('ffprobe.exe', 'tone.exe') }
 $missing = @($required | Where-Object { -not (Test-Path (Join-Path $ReleaseDir $_)) })
 if ($missing.Count -gt 0) {
     Die ("release dir '$ReleaseDir' is missing: " + ($missing -join ', '))
@@ -50,15 +72,15 @@ if (-not (Test-Path (Join-Path $ReleaseDir 'plugins'))) {
     Die 'release dir is missing the plugins\ tree (LibVLC modules).'
 }
 
-$stage = Join-Path $OutRoot 'Skald_portable'
+$stageName = if ($Core) { 'ADSplayer_core' } else { 'ADSplayer_portable' }
+$stage = Join-Path $OutRoot $stageName
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
-Write-Host 'Copying runnable layout into staging folder...' -ForegroundColor Cyan
-# Rename the cargo binary to the user-facing product name (installer layout parity).
-Copy-Item (Join-Path $ReleaseDir 'skald.exe') (Join-Path $stage 'Skald.exe') -Force
-foreach ($f in @('libvlc.dll', 'libvlccore.dll', 'ffprobe.exe', 'tone.exe')) {
+Write-Host ("Copying runnable layout into staging folder ({0})..." -f $stageName) -ForegroundColor Cyan
+Copy-Item (Join-Path $ReleaseDir $mainExe) (Join-Path $stage 'ADSplayer.exe') -Force
+foreach ($f in $required) {
     Copy-Item (Join-Path $ReleaseDir $f) (Join-Path $stage $f) -Force
 }
 # vlc-cache-gen.exe is optional at runtime (lib.rs only uses it when present) but
@@ -83,22 +105,30 @@ foreach ($dir in @(Get-ChildItem -Path $stagePlugins -Directory)) {
 $dirCount = @(Get-ChildItem -Path $stagePlugins -Recurse -File -Filter '*.dll').Count
 Write-Host ("plugins: {0} duplicate copies dropped, {1} dlls shipped" -f $dup, $dirCount)
 
-$pluginDlls = @(Get-ChildItem -Path (Join-Path $stage 'plugins') -Recurse -File -Filter '*.dll').Count
+$pluginDlls = @(Get-ChildItem -Path $stagePlugins -Recurse -File -Filter '*.dll').Count
 if ($pluginDlls -eq 0) { Die 'plugins tree staged with no DLLs' }
 
 New-Item -ItemType Directory -Force -Path $OutRoot | Out-Null
-$zip = Join-Path $OutRoot ("Skald_{0}_portable_win-x64.zip" -f $version)
+$pattern = if ($Core) { 'ADSplayer_{0}_portable_core_win-x64.zip' } else { 'ADSplayer_{0}_portable_win-x64.zip' }
+$zip = Join-Path $OutRoot ($pattern -f $version)
 if (Test-Path $zip) { Remove-Item $zip -Force }
 
 Write-Host 'Creating ZIP (Compress-Archive)...' -ForegroundColor Cyan
-# Passing the folder itself keeps the top-level "Skald_portable" folder in the zip.
+# Passing the folder itself keeps the top-level stage folder in the zip.
 Compress-Archive -Path $stage -DestinationPath $zip -CompressionLevel Optimal -Force
 
+$stagedFiles = @(Get-ChildItem $stage -Recurse -File)
+$stagedBytes = ($stagedFiles | Measure-Object -Property Length -Sum).Sum
 Remove-Item $stage -Recurse -Force
 
 $sizeMB = (Get-Item $zip).Length / 1MB
 Write-Host "`nPortable package ready: $zip" -ForegroundColor Green
-Write-Host ("  size        : {0:N1} MB" -f $sizeMB)
-Write-Host ("  plugin DLLs : {0}" -f $pluginDlls)
-Write-Host '  run         : unzip anywhere writable (NOT Program Files) and start Skald.exe'
-Write-Host '  note        : WebView2 runtime must be installed on the machine (built into Win11).'
+Write-Host ("  uncompressed: {0:N1} MB across {1} files" -f ($stagedBytes / 1MB), $stagedFiles.Count)
+Write-Host ("  zip          : {0:N1} MB" -f $sizeMB)
+Write-Host ("  plugin DLLs  : {0}" -f $pluginDlls)
+Write-Host '  run          : unzip anywhere writable (NOT Program Files) and start ADSplayer.exe'
+if ($Core) {
+    Write-Host '  note         : CORE build - ffprobe/tone are absent. Local-library chapter' -ForegroundColor Yellow
+    Write-Host '                 reading and "Embed Metadata" write-back are unavailable.' -ForegroundColor Yellow
+}
+Write-Host '  note         : WebView2 runtime must be installed on the machine (built into Win11).'

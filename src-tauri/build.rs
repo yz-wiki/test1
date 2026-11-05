@@ -59,7 +59,7 @@ fn configure_windows_runtime() {
 // Copy failures FAIL THE BUILD with both paths in the message. A silently
 // missing DLL / VLC plugin / helper exe would otherwise surface much later as
 // a runtime failure in playback, probing, or tag writes on Windows. The common
-// cause is a running skald.exe locking libvlc.dll (OS error 32) — stop the app
+// cause is a running ADSplayer.exe locking libvlc.dll (OS error 32) — stop the app
 // and rebuild (AGENTS.md critical lesson 11).
 fn copy_dir_all(src: &Path, dst: &Path) {
     let read = std::fs::read_dir(src)

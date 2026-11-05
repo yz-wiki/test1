@@ -174,7 +174,7 @@ where
             Ok(()) => match prune(&entry.session_id) {
                 Ok(_) => {
                     resolved += 1;
-                    log::info!(target: "skald::sync", "resolved Skald-owned playback session session_id={}", entry.session_id);
+                    log::info!(target: "skald::sync", "resolved ADSplayer-owned playback session session_id={}", entry.session_id);
                 }
                 Err(error) => {
                     // The remote session is already closed. A local rewrite
@@ -183,7 +183,7 @@ where
                 }
             },
             Err(error) => {
-                log::warn!(target: "skald::sync", "Skald-owned session close deferred session_id={}: {error}", entry.session_id);
+                log::warn!(target: "skald::sync", "ADSplayer-owned session close deferred session_id={}: {error}", entry.session_id);
             }
         }
     }

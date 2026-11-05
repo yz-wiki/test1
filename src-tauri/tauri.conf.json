@@ -1,7 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ADSplayer",
-  "version": "2.19.0",
+  "mainBinaryName": "ADSplayer",
+  "version": "2.19.1",
   "identifier": "com.skald.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -22,6 +23,7 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "ADSplayer",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

@@ -38,7 +38,7 @@ pub async fn fetch_feed_text(url: &str) -> Result<String, String> {
     use futures_util::StreamExt;
     log::info!(target: "skald::metadata", "podcast feed fetch host={}", feed_host(url));
     let client = reqwest::Client::builder()
-        .user_agent("Skald/0.1 (local podcasts)")
+        .user_agent("ADSplayer/0.1 (local podcasts)")
         // Bounded timeouts so a wedged feed host fails predictably (see
         // api::bounded_client); the read timeout is per-chunk, not total.
         .connect_timeout(std::time::Duration::from_secs(10))
@@ -423,7 +423,7 @@ pub async fn download_enclosure<R: tauri::Runtime>(
     let tmp = dest.with_extension("part");
 
     let client = reqwest::Client::builder()
-        .user_agent("Skald/0.1 (local podcasts)")
+        .user_agent("ADSplayer/0.1 (local podcasts)")
         // Connect + per-chunk stall timeouts; safe for long episode downloads
         // because the read timeout resets on every received chunk.
         .connect_timeout(std::time::Duration::from_secs(10))
@@ -499,7 +499,7 @@ pub fn build_opml(feeds: &[(String, String)]) -> String {
     };
     let mut out = String::new();
     out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    out.push_str("<opml version=\"1.0\">\n  <head>\n    <title>Skald Podcast Subscriptions</title>\n  </head>\n  <body>\n");
+    out.push_str("<opml version=\"1.0\">\n  <head>\n    <title>ADSplayer Podcast Subscriptions</title>\n  </head>\n  <body>\n");
     for (title, url) in feeds {
         out.push_str(&format!(
             "    <outline type=\"rss\" text=\"{}\" title=\"{}\" xmlUrl=\"{}\" />\n",

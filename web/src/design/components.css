@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Skald — components
+   ADSplayer — components
    ───────────────────────────────────────────────────────────────────────────
    Every control in the app is one of these classes. Components render markup +
    a class name; they do not carry style attributes.

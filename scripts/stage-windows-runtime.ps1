@@ -18,6 +18,8 @@
 #   * tone    : latest (or pinned) Windows asset of github.com/sandreas/tone,
 #               resolved at run time through the GitHub API so asset names never
 #               need to be hard-coded.
+#   * UPX     : packs only ffprobe.exe. tone.exe is a .NET single-file bundle and
+#               MUST NOT be packed (UPX corrupts its bundle header).
 #
 # Every step prints what it is doing and exits non-zero with an actionable
 # message on failure, so CI logs pinpoint exactly which runtime file is missing.
@@ -33,6 +35,10 @@ param(
     [string]$FfmpegArchiveUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip',
     # tone release to fetch: 'latest' or an exact tag such as 'v0.2.4'.
     [string]$ToneRelease = 'latest',
+    # UPX release used to shrink the static ffprobe.exe before packaging.
+    [string]$UpxUrl = 'https://github.com/upx/upx/releases/download/v5.3.0/upx-5.3.0-win64.zip',
+    # Skip UPX entirely (debug / local builds).
+    [switch]$SkipCompress,
     # Re-download / re-copy even when a complete runtime is already staged.
     [switch]$Force
 )
@@ -261,6 +267,52 @@ try {
     }
     Copy-Item $toneSrc (Join-Path $binDir 'tone.exe') -Force
     Info ("copied tone.exe ({0:N1} MB)" -f ((Get-Item (Join-Path $binDir 'tone.exe')).Length / 1MB))
+
+    # --------------------------------------------- shrink ffprobe with UPX
+    # ffprobe.exe is a ~100 MB static FFmpeg build and by far the largest file
+    # in every package. UPX --best --lzma brings it down to ~27 MB. Two hard
+    # constraints found in a real pilot:
+    #   * it is built with Control Flow Guard, which UPX cannot pack without
+    #     --force (clearing the CFG flag is an accepted mitigation downgrade for
+    #     an offline child process that only reads local media files);
+    #   * tone.exe is a .NET single-file bundle - UPX corrupts its bundle header
+    #     ("Arithmetic overflow while reading bundle"), so it MUST stay as-is.
+    # Any failure degrades to the untouched binary instead of failing the build.
+    if (-not $SkipCompress) {
+        Step 'Compress ffprobe.exe with UPX'
+        $ffPath = Join-Path $binDir 'ffprobe.exe'
+        $backup = Join-Path $work 'ffprobe.unpacked.exe'
+        Copy-Item $ffPath $backup -Force
+        $ffBefore = (Get-Item $ffPath).Length
+        try {
+            $upxZip = Join-Path $work 'upx.zip'
+            $upxDir = Join-Path $work 'upx'
+            Info "Downloading $UpxUrl"
+            Invoke-WebRequest -Uri $UpxUrl -OutFile $upxZip -UseBasicParsing -TimeoutSec 180
+            Expand-Archive -Path $upxZip -DestinationPath $upxDir -Force
+            $upxExe = Get-ChildItem $upxDir -Recurse -File -Filter 'upx.exe' | Select-Object -First 1
+            if (-not $upxExe) { throw 'upx.exe not found inside the UPX archive' }
+            & $upxExe.FullName --force --best --lzma $ffPath 2>&1 | ForEach-Object { Info ($_ | Out-String).Trim() }
+            if ($LASTEXITCODE -ne 0) { throw "UPX exited with $LASTEXITCODE" }
+            & $upxExe.FullName -t $ffPath 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw 'UPX integrity test failed' }
+            $probeOut = @(& $ffPath -version 2>&1)
+            $firstLine = ($probeOut | Select-Object -First 1) -as [string]
+            if ($LASTEXITCODE -ne 0 -or -not ($firstLine -like 'ffprobe version*')) {
+                throw 'packed ffprobe failed to start'
+            }
+            $ffAfter = (Get-Item $ffPath).Length
+            Info ("ffprobe.exe {0:N1} -> {1:N1} MB ({2:N0}% of original); tone.exe left unpacked (.NET bundle)" -f `
+                ($ffBefore / 1MB), ($ffAfter / 1MB), (100 * $ffAfter / $ffBefore))
+        }
+        catch {
+            Copy-Item $backup $ffPath -Force
+            Write-Host "    WARNING: UPX step failed, shipping uncompressed ffprobe.exe: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Info 'UPX compression skipped (-SkipCompress)'
+    }
 
     # ------------------------------------------------------------- final check
     Step 'Verify staged runtime'

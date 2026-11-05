@@ -1,12 +1,14 @@
 # Building ADSplayer
 
-> The display name is **ADSplayer** since 2.19.0 (previously 叙听 / Xuting).
-> NSIS/MSI installer names follow `productName` and are now
-> `ADSplayer_<version>_…`; the portable ZIP
-> (`Skald_<version>_…`) is assembled by `package-portable.ps1` and deliberately
-> keeps the old prefix. The bundle id (`com.skald.app`), the executable
-> (`skald.exe`) and all localStorage keys are unchanged so an upgrade keeps the
-> sign-in state and every saved setting.
+> The display name is **ADSplayer** since 2.19.0 (previously 叙听 / Xuting);
+> since 2.19.1 every user-visible name matches it — installers, portable ZIPs,
+> the bundled executable and the WiX publisher. The bundle id (`com.skald.app`),
+> on-disk data directory (`%LOCALAPPDATA%\Skald\`), log file and all
+> localStorage keys are unchanged so an upgrade keeps the sign-in state and
+> every saved setting.
+>
+> `package-portable.ps1` produces two ZIPs: the full build and a `-Core`
+> playback-only build that omits `ffprobe.exe` / `tone.exe`.
 
 ADSplayer ships five package formats across two platforms. `scripts/build.mjs` is the
 single entry point: it decides which Tauri invocation is needed, stages the
@@ -32,7 +34,7 @@ node scripts/build.mjs --help
 
 | Target | Platform | Output | Notes |
 |---|---|---|---|
-| `portable` | Windows | `dist/Skald_<version>_portable_win-x64.zip` | Green build: unzip anywhere writable and run `Skald.exe`. No registry, no uninstaller. Do **not** unpack into `Program Files` — the app writes next to itself on first launch (VLC `plugins.dat`). |
+| `portable` | Windows | `dist/ADSplayer_<version>_portable[_core]_win-x64.zip` | Green build: unzip anywhere writable and run `ADSplayer.exe`. The optional `_core` build drops `ffprobe.exe`/`tone.exe` (local-library chapter reading and metadata write-back become unavailable). No registry, no uninstaller. Do **not** unpack into `Program Files` — the app writes next to itself on first launch (VLC `plugins.dat`). |
 | `nsis` | Windows | `src-tauri/target/release/bundle/nsis/ADSplayer_<version>_x64-setup.exe` | Recommended installer for end users. Per-machine install, custom hooks in `src-tauri/windows/hooks.nsh`. Name follows `productName`. |
 | `msi` | Windows | `src-tauri/target/release/bundle/msi/ADSplayer_<version>_x64_en-US.msi` | For GPO / Intune / enterprise deployment. WiX toolchain downloads on first build. Name follows `productName`. |
 | `appimage` | Linux | `src-tauri/target/release/bundle/appimage/` | Single executable file, no install. Requires FUSE 2 on the target. |
@@ -87,7 +89,8 @@ sudo pacman -S --needed base-devel rust nodejs pnpm webkit2gtk-4.1 \
    to the binary (Windows) or the plugins tree is bundled as a resource (Linux).
 4. **Bundling** — Tauri produces the requested installers.
 5. **Portable packaging** — `scripts/package-portable.ps1` copies exactly the
-   files that must travel together into `Skald_portable/` and zips it.
+   files that must travel together into `ADSplayer_portable/` (or
+   `ADSplayer_core/`) and zips it.
 
 Steps 1–4 are one `tauri build` invocation; step 5 is Windows-only and runs after.
 

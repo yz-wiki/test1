@@ -2,6 +2,71 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.1 (2026-11-06) — one name everywhere, a much smaller runtime
+
+### Every user-visible name is ADSplayer
+
+2.19.0 changed the display name but left the old name in the running app and
+in the portable package. This pass finishes the rename:
+
+- `tauri.conf.json` gains `mainBinaryName: ADSplayer` and
+  `bundle.publisher: ADSplayer`, so the executable and the MSI Manufacturer
+  match the installers instead of `skald.exe` / `skald`.
+- Window title, tray tooltip, tray "quit" item, ABS `clientName` / `model`,
+  podcast + metadata-provider User-Agents, exported OPML title and the log
+  export filename all say ADSplayer.
+- Portable ZIP, its top-level folder and the bundled exe are now
+  `ADSplayer_<version>_portable_win-x64.zip` / `ADSplayer_portable/` /
+  `ADSplayer.exe`. CI artifact prefixes are `adsplayer-*`.
+- `package-portable.ps1` accepts `ADSplayer.exe` or `skald.exe` from the
+  release tree, so both `tauri build` and plain `cargo build` still package.
+- Cargo crate version was `1.2.0` while the app shipped as 2.19.x, so ABS
+  displayed the wrong `clientVersion` in every session. It now tracks the
+  release version.
+
+Deliberately unchanged (stability identifiers): `com.skald.app`, the Cargo
+package name, `%LOCALAPPDATA%\Skald\` data roots, `skald.log`, localStorage
+keys and IPC event names. Changing any of those would discard the sign-in
+state, downloads, local catalog and saved settings on upgrade.
+
+### Package size
+
+An audit of the 2.19.0 portable build showed the playback chain is only about
+86 MiB unpacked; two metadata helpers owned 63.7% of the package:
+
+| 2.19.0 unpacked | MiB | share |
+|---|---:|---:|
+| `ffprobe.exe` (local-library probe + chapters) | 100.35 | 42.4% |
+| `tone.exe` (Embed Metadata writes) | 50.39 | 21.3% |
+| VLC `plugins/` | 66.57 | 28.1% |
+| exe + libvlc | 19.36 | 8.2% |
+
+- **UPX on `ffprobe.exe` only.** A real pilot of UPX 5.3.0
+  (`--force --best --lzma`) shrank it 100.35 → 26.64 MiB and it still starts
+  normally. `--force` is required because the FFmpeg build is compiled with
+  Control Flow Guard; packing clears that mitigation. `tone.exe` is a .NET
+  single-file bundle and UPX corrupts its bundle header, so it is left alone.
+  Any UPX failure restores the untouched binary instead of failing the build.
+- **Second VLC plugin trim.** Drops the remaining non-audio inputs/renderers
+  (SRT, libass, DCP, Blu-ray + its two jars, VBI, SID, GME, spatial audio,
+  DirectShow, DTV, SFTP, CDDA) — about 19 MiB. HTTPS, plain HTTP, local files
+  and all audio decoders stay; the eight-module guard is unchanged.
+- **New `core` portable build.** `package-portable.ps1 -Core` omits
+  `ffprobe.exe` and `tone.exe` entirely for users who only stream from an ABS
+  server. It is roughly 60 MiB smaller unpacked and 46 MiB smaller as a ZIP.
+  The app already degrades gracefully when those helpers are absent; local
+  library chapter reading and "Embed Metadata" write-back are unavailable in
+  that build. The full portable ZIP remains the default delivery.
+
+Measured compression behaviour worth remembering: UPX helps the unpacked size
+enormously (73.7 MiB) and the Deflate ZIP moderately (10.3 MiB), but the
+already-compact LZMA installers barely move (0.4 MiB) because packed data is
+high-entropy. Removing files, not packing them, is what shrinks installers.
+
+Known trade-offs: UPX-packed executables can trigger heuristic antivirus
+warnings, and the packed `ffprobe` no longer carries CFG. Neither affects
+playback, and both are bypassed by using the `core` build.
+
 ## 2.19.0 (2026-11-05) — density, one highlight language, one device state
 
 Still the 2.14 shape. This pass fixes three balance problems (empty left /

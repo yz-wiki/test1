@@ -277,7 +277,7 @@ pub fn run() {
                 "main",
                 tauri::WebviewUrl::App(std::path::PathBuf::default()),
             )
-            .title("Skald")
+            .title("ADSplayer")
             .inner_size(1280.0, 800.0)
             .min_inner_size(1024.0, 640.0)
             .decorations(false)
@@ -324,11 +324,11 @@ pub fn run() {
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
                 let show_item = MenuItem::with_id(app, "tray-show", "显示主窗口", true, None::<&str>)?;
-                let quit_item = MenuItem::with_id(app, "tray-quit", "退出 Skald", true, None::<&str>)?;
+                let quit_item = MenuItem::with_id(app, "tray-quit", "退出 ADSplayer", true, None::<&str>)?;
                 let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
 
                 let mut tray = TrayIconBuilder::with_id("skald-tray")
-                    .tooltip("Skald")
+                    .tooltip("ADSplayer")
                     .menu(&menu)
                     // Left-click restores the window instead of opening the menu;
                     // right-click still opens it on Windows.

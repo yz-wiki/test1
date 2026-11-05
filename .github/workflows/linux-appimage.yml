@@ -104,7 +104,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skald-linux-logs-${{ github.run_id }}
+          name: adsplayer-linux-logs-${{ github.run_id }}
           path: gha-logs
           if-no-files-found: ignore
           retention-days: 14
@@ -112,7 +112,7 @@ jobs:
       - name: 10 · 上传 AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: skald-linux-appimage-${{ github.run_id }}
+          name: adsplayer-linux-appimage-${{ github.run_id }}
           path: src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: ignore
           retention-days: 14
