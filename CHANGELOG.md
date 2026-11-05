@@ -43,6 +43,14 @@ The shelf on the right scrolls on its own. The 书籍 / 系列 / 作者 / 播讲
 switch now sits on the centre line of that column, with 查看全部 still at the
 right edge. Below 1080 px both columns stack and the page scrolls again.
 
+### Build
+
+`stage-windows-runtime.ps1` now retries the small FFmpeg essentials archive
+three times before reaching for the GPL mirror. One 503 on the primary URL had
+swapped a 100 MB `ffprobe.exe` for a 162 MB one, adding ~27 MB to the portable
+zip without any code change. An oversized probe is now called out in the build
+log.
+
 ## 2.16.0 (2026-11-05) — preview
 
 The transport bar stops saying the same thing four times, and the app grows one

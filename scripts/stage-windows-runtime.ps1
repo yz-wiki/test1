@@ -184,10 +184,13 @@ try {
     # ----------------------------------------------------------------- ffprobe
     Step 'Stage ffprobe.exe into src-tauri\bin'
     $ffzip = Join-Path $work 'ffmpeg.zip'
-    # gyan.dev sometimes answers 503 when busy. Both archives contain
-    # bin/ffprobe.exe, and the recursive lookup below does not care about the
-    # name of the top-level folder, so a second mirror is a safe fallback.
+    # gyan.dev sometimes answers 503 when busy. Retry that build first: the
+    # fallback GPL build's ffprobe.exe is ~162 MB against ~100 MB for the
+    # essentials one, and ffprobe is the single largest file in every package
+    # we ship. Only fall through to the mirror after the retries are spent.
     $ffUrls = @(
+        $FfmpegArchiveUrl,
+        $FfmpegArchiveUrl,
         $FfmpegArchiveUrl,
         'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip'
     )
@@ -203,6 +206,7 @@ try {
         }
         catch {
             Write-Host "    download failed: $($_.Exception.Message)" -ForegroundColor Yellow
+            Start-Sleep -Seconds 3
         }
     }
     if (-not $ffOk) { Die 'could not download an FFmpeg build from any mirror.' }
@@ -212,7 +216,11 @@ try {
     $ffprobe = Get-ChildItem -Path $ffx -Recurse -Filter 'ffprobe.exe' | Select-Object -First 1
     if (-not $ffprobe) { Die 'no ffprobe.exe inside the FFmpeg archive' }
     Copy-Item $ffprobe.FullName (Join-Path $binDir 'ffprobe.exe') -Force
-    Info ("copied ffprobe.exe ({0:N1} MB)" -f ($ffprobe.Length / 1MB))
+    $ffSize = $ffprobe.Length / 1MB
+    Info ("copied ffprobe.exe ({0:N1} MB)" -f $ffSize)
+    if ($ffSize -gt 130) {
+        Write-Host "    WARNING: oversized ffprobe - the large GPL mirror was used; expect a bigger installer" -ForegroundColor Yellow
+    }
 
     # -------------------------------------------------------------------- tone
     Step 'Stage tone.exe into src-tauri\bin'
