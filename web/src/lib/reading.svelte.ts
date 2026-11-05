@@ -28,6 +28,7 @@ class ReadingStore {
   details = $state<Record<string, LibraryItem>>({});
   private pending = new Set<string>();
   private failed = new Set<string>();
+  private inflight = new Map<string, Promise<LibraryItem | null>>();
 
   /** Fire-and-forget: a screen calls this for the ids it is showing. */
   async ensure(serverUrl: string, ids: string[]): Promise<void> {
@@ -49,6 +50,29 @@ class ReadingStore {
 
   detail(id: string): LibraryItem | null {
     return this.details[id] ?? null;
+  }
+
+  /** Fetch one full item, deduplicating concurrent callers. */
+  loadOne(serverUrl: string, id: string): Promise<LibraryItem | null> {
+    const cached = this.details[id];
+    if (cached) return Promise.resolve(cached);
+    const running = this.inflight.get(id);
+    if (running) return running;
+    if (!serverUrl || this.failed.has(id)) return Promise.resolve(null);
+
+    const task = fetchItem(serverUrl, id)
+      .then(item => {
+        this.details = { ...this.details, [id]: item };
+        this.inflight.delete(id);
+        return item;
+      })
+      .catch(() => {
+        this.failed.add(id);
+        this.inflight.delete(id);
+        return null;
+      });
+    this.inflight.set(id, task);
+    return task;
   }
 
   /** Uses the full item when available, the list item as a fallback. */

@@ -111,6 +111,8 @@ class PlayerStore {
 
   /** True while the full player screen is open; the bar hides then. */
   expanded = $state(false);
+  /** A list item has no chapter table; this is true until the full item arrives. */
+  chaptersLoading = $state(false);
 
   sleepMode = $state<SleepMode>('off');
   sleepRemaining = $state(0);
@@ -219,9 +221,9 @@ class PlayerStore {
     startAt?: number,
   ): Promise<void> {
     if (!startAt && this.isCurrent(item, episode)) {
-      await this.toggle();
-      // Clicking play on the title that is already in the bottom bar used to
-      // only toggle it in the background. A play action is also navigation.
+      // "Continue listening" must never pause a title that is already playing.
+      // Only resume when paused, and always open the player.
+      if (!this.playing) await this.toggle();
       this.expanded = true;
       return;
     }
@@ -421,6 +423,14 @@ class PlayerStore {
     this.clearSleep();
     this.playing = false;
     void pauseAudio().catch(() => {});
+  }
+
+  /** Replace the loaded item with its full version (chapters, files, series)
+   *  without touching position, rate or the running session. */
+  refreshItem(item: LibraryItem): void {
+    if (this.item?.id !== item.id) return;
+    this.item = item;
+    this.chaptersLoading = false;
   }
 
   collapse(): void {

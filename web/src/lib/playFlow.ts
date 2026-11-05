@@ -8,14 +8,34 @@
  * a local download.
  */
 import { player } from './player.svelte';
+import { reading } from './reading.svelte';
+import { session } from './state.svelte';
 import type { Episode, LibraryItem } from './ipc';
+
+function hasChapterData(item: LibraryItem): boolean {
+  return Boolean(item.media?.chapters?.length || item.media?.audioFiles?.length);
+}
 
 export async function playItem(
   item: LibraryItem,
   options: { episode?: Episode | null; queue?: Episode[]; startAt?: number } = {},
 ): Promise<void> {
-  await player.open(item, options.episode ?? null, options.queue, options.startAt);
+  // A shelf item carries no chapters. Prefer the full item already fetched for
+  // the continue shelf — otherwise the player opens with an empty chapter list
+  // and "no chapter markers" for the whole session.
+  const cached = reading.detail(item.id);
+  const source = cached && hasChapterData(cached) ? cached : item;
+
+  await player.open(source, options.episode ?? null, options.queue, options.startAt);
   // open() sets this on its success paths, but the "already current" early
   // return and any future fallback should still land on the player.
   player.expand();
+
+  if (!options.episode && !hasChapterData(source)) {
+    player.chaptersLoading = true;
+    void reading.loadOne(session.serverUrl, item.id).then(full => {
+      if (full) player.refreshItem(full);
+      else player.chaptersLoading = false;
+    });
+  }
 }

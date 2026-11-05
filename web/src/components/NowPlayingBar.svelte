@@ -148,7 +148,15 @@
 
       <div class="bar__right">
         <span class="t-num t-small t-tertiary bar__time">
-          {formatDuration(player.position)} / {formatDuration(player.duration)}
+          {#if player.kind === 'book' && player.chapters.length > 0}
+            {formatDuration(Math.max(player.position - (player.chapter?.start ?? 0), 0))}
+            <span class="bar__dot">·</span>
+            {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: player.chapters.length })}
+            <span class="bar__dot">·</span>
+            {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+          {:else}
+            {formatDuration(player.position)} / {formatDuration(player.duration)}
+          {/if}
         </span>
 
         <div class="bar__volume">
@@ -165,6 +173,8 @@
             max="1"
             step="0.02"
             value={player.volume}
+            style="--fill: {player.volume * 100}%"
+
             aria-label={t('player.volume')}
             oninput={event => onVolume(Number(event.currentTarget.value))}
           />
@@ -314,7 +324,11 @@
 
   .bar__slider {
     width: 68px;
-    accent-color: var(--accent);
+  }
+
+  .bar__dot {
+    margin-inline: 3px;
+    opacity: 0.55;
   }
 
   .bar__pct {

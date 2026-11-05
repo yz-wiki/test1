@@ -343,6 +343,7 @@ const en = {
   'player.wholeBook': 'Whole book',
   'player.collapse': 'Back to the library',
   'player.noChapters': 'This title has no chapter markers.',
+  'player.loadingChapters': 'Loading chapters…',
   'player.loading': 'Opening…',
   'player.narrator': 'Narrated by {name}',
   'player.publisher': 'Publisher',
@@ -403,6 +404,7 @@ const en = {
   'meta.commaHint': 'Comma separated',
 
   'menu.play': 'Play',
+  'menu.downloadTo': 'Download to…',
   'menu.details': 'Open details',
   'menu.copyTitle': 'Copy title',
   'menu.markFinished': 'Mark as finished',
@@ -747,6 +749,7 @@ const zh: Dict = {
   'player.wholeBook': '全书进度',
   'player.collapse': '返回书库',
   'player.noChapters': '这本书没有章节标记。',
+  'player.loadingChapters': '正在读取章节…',
   'player.loading': '正在打开…',
   'player.narrator': '朗读：{name}',
   'player.publisher': '出版方',
@@ -807,6 +810,7 @@ const zh: Dict = {
   'meta.commaHint': '用逗号分隔',
 
   'menu.play': '播放',
+  'menu.downloadTo': '下载到…',
   'menu.details': '查看详情',
   'menu.copyTitle': '复制书名',
   'menu.markFinished': '标记为已听完',

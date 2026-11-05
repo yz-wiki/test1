@@ -401,6 +401,7 @@
           {/if}
         {/if}
 
+        <div class="chapter-head">
         <div class="segmented tabs">
           <button
             class="segmented__item"
@@ -413,11 +414,7 @@
             onclick={() => (tab = 'files')}
           >{t('book.files')}</button>
         </div>
-
-        {#if tab === 'chapters'}
-          {#if chapters.length === 0}
-            <p class="t-small t-tertiary">{t('player.noChapters')}</p>
-          {:else}
+          {#if tab === 'chapters'}
             {#if chapters.length > PAGE}
               <div class="range">
                 <span class="t-small t-tertiary t-num">
@@ -453,6 +450,14 @@
               </div>
             {/if}
 
+          {/if}
+        </div>
+
+
+        {#if tab === 'chapters'}
+          {#if chapters.length === 0}
+            <p class="t-small t-tertiary">{t('player.noChapters')}</p>
+          {:else}
             <ul class="rows">
               {#each shownChapters as chapter, offset (chapter.start)}
                 {@const index = chapterPage * PAGE + offset}
@@ -531,10 +536,16 @@
     flex: 0 0 auto;
   }
 
+  /* The back row must never be scrolled under by the cover or chapter list. */
   .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 12;
     display: flex;
     align-items: center;
     gap: var(--gap-row);
+    padding: 6px 0;
+    background: var(--canvas);
   }
 
   .detail {
@@ -671,8 +682,7 @@
   }
 
   .tabs {
-    align-self: flex-start;
-    margin-top: var(--gap-block);
+    flex: 0 0 auto;
   }
 
   .rows {
@@ -703,30 +713,38 @@
     color: var(--text-tertiary);
   }
 
-  /* Two stacked sticky rows: the tab strip and the chapter range stay visible
-     while a 1000-chapter list scrolls underneath. */
-  .tabs {
+  /* One sticky row owns both the tabs and the range picker. Two independent
+     sticky elements used to stack at different offsets and overlap the list. */
+  .chapter-head {
     position: sticky;
-    top: 0;
-    z-index: 4;
-    align-self: flex-start;
-    padding: 5px 0;
+    top: 34px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    flex-wrap: wrap;
+    margin-top: var(--gap-row);
+    padding: 6px 0;
     background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
   }
 
   .range {
-    position: sticky;
-    top: 40px;
-    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--gap-row);
-    margin-top: var(--gap-row);
-    padding: var(--gap-inline) var(--gap-row);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    border: 1px solid var(--hairline);
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: auto;
+    padding: 2px 0;
+    background: transparent;
+    border: 0;
+  }
+
+  .range .select {
+    height: var(--control-sm);
+    font-size: var(--text-xs);
   }
 
   .range__jump {

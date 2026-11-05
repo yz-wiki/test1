@@ -2,12 +2,51 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
-## 2.12.0 (2026-11-04) — preview
+## 2.13.0 (2026-11-05) — preview
 
 A ground-up rebuild of the front end. The Rust core (playback, downloads, sync,
 offline cache — 21k lines, 205 commands) is unchanged; everything above it is new.
 
-### Fixed — clicking play did not open the player
+### Fixed — the persistent "no chapters after continue" problem
+
+`playItem()` passed the **library list item** to the player. ABS list items
+omit `media.chapters` and `media.audioFiles`, so `chapterSpans()` returned an
+empty array and the player showed "no chapter markers" for the whole session.
+The book detail screen worked because it uses `fetchItem`. Now `playItem()`
+prefers the full item from the reading cache, otherwise fetches it in the
+background and swaps it into the running player via `refreshItem()` — no
+restart, no lost position. The chapter list shows a loading state meanwhile.
+Also: clicking "continue" on a title that was already playing no longer pauses
+it; the early-return branch only resumes when paused.
+
+### Layout and controls
+
+- **Home is two columns**: the left ~30% is a continue panel (featured book
+  plus the in-progress queue), the right holds category cards and recent books.
+  It stacks to one column below 900px.
+- **Toolbar no longer overlaps**: the old 3-column grid squeezed the right-hand
+  selects into a single letter over the search box. It is flex now; the right
+  group never shrinks and the least important controls drop out on narrow
+  windows. The "188px" readout is replaced by a hairline slider.
+- **All selects** share one crisp chevron, hover and focus treatment; volume
+  and size sliders use a 3px track with a filled portion (equaliser sliders
+  are untouched).
+- **List layout now applies to grouped views** (series / authors / narrators),
+  and rows carry a third line with series and narrator plus a status pill.
+- **Bottom bar shows chapter progress**, chapter ordinal / total and the
+  whole-book percentage instead of a bare total-time pair.
+- Player speed and sleep timer are one unified tools strip.
+- Book screen: the back row is sticky above the content; chapter tabs and the
+  range picker share a single sticky row instead of two overlapping ones.
+
+### Downloads and uploads: keep the system picker
+
+A self-rendered file browser was evaluated and declined (see the analysis in
+the release note). Downloads no longer open a folder dialog on every click:
+the configured directory is used directly, with an explicit "Download to…"
+entry and Settings > Storage for changing it. Uploads keep the native picker.
+
+### Fixed — clicking play did not open the player (2.12.0)
 
 `player.open()` returns early when the clicked title is already the one in the
 bottom bar (`isCurrent → toggle()`), and the successful-start path that sets
@@ -345,7 +384,46 @@ Reported from the 1.5.0 build.
   On a podcast they walk episodes in that show's own order; on a book they walk
   chapters. (`lib/trackStep.ts`)
 
-### Fixed — clicking play did not open the player
+### Fixed — the persistent "no chapters after continue" problem
+
+`playItem()` passed the **library list item** to the player. ABS list items
+omit `media.chapters` and `media.audioFiles`, so `chapterSpans()` returned an
+empty array and the player showed "no chapter markers" for the whole session.
+The book detail screen worked because it uses `fetchItem`. Now `playItem()`
+prefers the full item from the reading cache, otherwise fetches it in the
+background and swaps it into the running player via `refreshItem()` — no
+restart, no lost position. The chapter list shows a loading state meanwhile.
+Also: clicking "continue" on a title that was already playing no longer pauses
+it; the early-return branch only resumes when paused.
+
+### Layout and controls
+
+- **Home is two columns**: the left ~30% is a continue panel (featured book
+  plus the in-progress queue), the right holds category cards and recent books.
+  It stacks to one column below 900px.
+- **Toolbar no longer overlaps**: the old 3-column grid squeezed the right-hand
+  selects into a single letter over the search box. It is flex now; the right
+  group never shrinks and the least important controls drop out on narrow
+  windows. The "188px" readout is replaced by a hairline slider.
+- **All selects** share one crisp chevron, hover and focus treatment; volume
+  and size sliders use a 3px track with a filled portion (equaliser sliders
+  are untouched).
+- **List layout now applies to grouped views** (series / authors / narrators),
+  and rows carry a third line with series and narrator plus a status pill.
+- **Bottom bar shows chapter progress**, chapter ordinal / total and the
+  whole-book percentage instead of a bare total-time pair.
+- Player speed and sleep timer are one unified tools strip.
+- Book screen: the back row is sticky above the content; chapter tabs and the
+  range picker share a single sticky row instead of two overlapping ones.
+
+### Downloads and uploads: keep the system picker
+
+A self-rendered file browser was evaluated and declined (see the analysis in
+the release note). Downloads no longer open a folder dialog on every click:
+the configured directory is used directly, with an explicit "Download to…"
+entry and Settings > Storage for changing it. Uploads keep the native picker.
+
+### Fixed — clicking play did not open the player (2.12.0)
 
 `player.open()` returns early when the clicked title is already the one in the
 bottom bar (`isCurrent → toggle()`), and the successful-start path that sets

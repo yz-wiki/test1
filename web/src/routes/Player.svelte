@@ -237,6 +237,8 @@
                 max="1"
                 step="0.02"
                 value={player.volume}
+                style="--fill: {player.volume * 100}%"
+
                 aria-label={t('player.volume')}
                 oninput={event => onVolumeInput(Number(event.currentTarget.value))}
               />
@@ -293,18 +295,18 @@
 
 
           <div class="transport__extras">
-            <div class="extra">
-              <span class="t-label">{t('player.speed')}</span>
-              <div class="segmented">
-                {#each RATES as rate (rate)}
-                  <button
-                    class="segmented__item"
-                    aria-pressed={player.rate === rate}
-                    onclick={() => void player.setRate(rate)}
-                  >{rate}×</button>
-                {/each}
-              </div>
+            <span class="t-label tools__label">{t('player.speed')}</span>
+            <div class="segmented">
+              {#each RATES as rate (rate)}
+                <button
+                  class="segmented__item"
+                  aria-pressed={player.rate === rate}
+                  onclick={() => void player.setRate(rate)}
+                >{rate}×</button>
+              {/each}
             </div>
+
+            <span class="tools__divider"></span>
 
             <div class="extra extra--sleep">
               <button
@@ -402,7 +404,9 @@
 
           <div class="chapter-list scroll-y" bind:this={listEl}>
             {#if chapters.length === 0}
-              <p class="t-small t-tertiary" style="padding: var(--gap-row)">{t('player.noChapters')}</p>
+              <p class="t-small t-tertiary" style="padding: var(--gap-row)">
+                {player.chaptersLoading ? t('player.loadingChapters') : t('player.noChapters')}
+              </p>
             {:else}
               {#each shownChapters as chapter, offset (chapter.start)}
                 {@const index = chapterPage * CHUNK + offset}
@@ -642,11 +646,6 @@
     background: var(--surface);
   }
 
-  .transport__extras .extra + .extra {
-    padding-left: var(--gap-panel);
-    border-left: 1px solid var(--hairline);
-  }
-
   .extra {
     display: flex;
     align-items: center;
@@ -655,8 +654,18 @@
   }
 
   .volume {
-    width: 96px;
-    accent-color: var(--accent);
+    width: 88px;
+  }
+
+  .tools__label {
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  .tools__divider {
+    width: 1px;
+    height: 18px;
+    background: var(--hairline);
   }
 
   .volume__value {
