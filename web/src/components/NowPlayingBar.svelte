@@ -113,17 +113,6 @@
 
 {#if item}
   <div class="bar" class:flash>
-    <SeekBar
-      value={chapterFraction}
-      size="sm"
-      label={t('player.progressOf', {
-        done: formatDuration(chapterPos),
-        total: formatDuration(chapterLength || player.duration),
-      })}
-      onSeek={seekChapter}
-      disabled={player.duration <= 0}
-    />
-
     <div class="bar__row">
       <button
         class="bar__meta"
@@ -143,7 +132,8 @@
         </div>
       </button>
 
-      <div class="bar__transport">
+      <div class="bar__center">
+        <div class="bar__transport">
         <button
           class="icon-btn icon-btn--sm"
           aria-label={t('player.prevChapter')}
@@ -173,20 +163,42 @@
         >
           <Icon name="skip-forward" />
         </button>
+        </div>
+
+        <div class="bar__seek">
+          <span class="bar__t t-num">{formatDuration(chapterPos)}</span>
+          <SeekBar
+            value={chapterFraction}
+            size="sm"
+            label={t('player.progressOf', {
+              done: formatDuration(chapterPos),
+              total: formatDuration(chapterLength || player.duration),
+            })}
+            onSeek={seekChapter}
+            disabled={player.duration <= 0}
+          />
+          <span class="bar__t t-num">
+            {t('player.chapterLeft', {
+              time: formatDuration(Math.max((chapterLength || player.duration) - chapterPos, 0)),
+            })}
+          </span>
+        </div>
       </div>
 
       <div class="bar__right">
-        <span class="t-num t-small t-tertiary bar__time">
+        <div class="bar__facts t-num">
           {#if player.kind === 'book' && player.chapters.length > 0}
-            {formatDuration(chapterPos)}
-            <span class="bar__dot">·</span>
-            {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: player.chapters.length })}
-            <span class="bar__dot">·</span>
-            {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+            <span class="bar__fact">
+              {t('player.chapterNow', { index: Math.max(player.chapterIndex, 0) + 1, total: player.chapters.length })}
+            </span>
+            <span class="bar__fact bar__fact--dim">
+              {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+              · {t('player.bookLeft', { time: formatDuration(Math.max(player.duration - player.position, 0)) })}
+            </span>
           {:else}
-            {formatDuration(player.position)} / {formatDuration(player.duration)}
+            <span class="bar__fact">{formatDuration(player.position)} / {formatDuration(player.duration)}</span>
           {/if}
-        </span>
+        </div>
 
         <div class="bar__volume">
           <button
@@ -321,18 +333,68 @@
   .bar__row {
     display: flex;
     align-items: center;
-    gap: var(--gap-panel);
-    height: 62px;
+    gap: var(--gap-row);
+    height: 72px;
   }
 
   .bar__meta {
     display: flex;
     align-items: center;
     gap: var(--gap-row);
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 0 1 240px;
+    min-width: 148px;
     text-align: left;
     border-radius: var(--radius-sm);
+  }
+
+  .bar__center {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    max-width: 620px;
+    margin-inline: auto;
+  }
+
+  .bar__seek {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .bar__seek :global(.seek) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .bar__t {
+    flex: 0 0 auto;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  .bar__facts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex: 0 0 auto;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .bar__fact {
+    font-size: var(--text-2xs);
+    color: var(--text-secondary);
+  }
+
+  .bar__fact--dim {
+    color: var(--text-tertiary);
   }
 
   .bar__cover {
@@ -364,11 +426,6 @@
 
   .bar__slider {
     width: 68px;
-  }
-
-  .bar__dot {
-    margin-inline: 3px;
-    opacity: 0.55;
   }
 
   .bar__pct {
@@ -464,10 +521,6 @@
     gap: 4px;
     flex: 1 1 0;
     min-width: 0;
-  }
-
-  .bar__time {
-    white-space: nowrap;
   }
 
   .bar__menu-anchor {

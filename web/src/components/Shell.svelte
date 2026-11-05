@@ -2,31 +2,23 @@
   import type { Snippet } from 'svelte';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
-  import { t, type TranslationKey } from '../lib/i18n.svelte';
+  import { t } from '../lib/i18n.svelte';
   import Titlebar from './Titlebar.svelte';
   import NowPlayingBar from './NowPlayingBar.svelte';
   import Icon from './Icon.svelte';
-  import type { IconName } from './Icon.svelte';
 
   let { children }: { children: Snippet } = $props();
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
   type Route = 'library' | 'continue' | 'downloads' | 'settings' | 'admin';
 
-  const VIEWS: { id: View; key: TranslationKey; icon: IconName }[] = [
-    { id: 'home', key: 'library.home', icon: 'home' },
-    { id: 'books', key: 'library.books', icon: 'book' },
-    { id: 'series', key: 'library.series', icon: 'layers' },
-    { id: 'authors', key: 'library.authors', icon: 'user' },
-    { id: 'narrators', key: 'library.narrators', icon: 'mic' },
-  ];
-
   const subtitle = $derived(session.activeLibrary?.name ?? t('app.name'));
 
   /**
-   * The rail folds on its own when the window gets narrow. A manual toggle was
-   * a second, silent mode that made "why is my sidebar a strip of icons?"
-   * depend on a click made three sessions ago.
+   * The rail has two shapes and only one of them is mounted at a time. The old
+   * version kept one tree and hid labels with CSS while animating `width`, so
+   * mid-transition the icons and group borders were still laid out for 226px
+   * and showed through — the "half folded" ghosting in the screenshots.
    */
   let narrow = $state(false);
   $effect(() => {
@@ -36,11 +28,14 @@
     query.addEventListener('change', apply);
     return () => query.removeEventListener('change', apply);
   });
-  const compact = $derived(narrow);
+
+  const compact = $derived(ui.railMode === 'closed' || (ui.railMode === 'auto' && narrow));
   const isBrowsing = $derived(
     ui.route === 'library' || ui.route === 'book' || ui.route === 'podcast',
   );
   const finishedCount = $derived(progress.rows.filter(row => row.isFinished).length);
+  const homeActive = $derived(isBrowsing && ui.libraryView === 'home' && !player.expanded);
+  const nowActive = $derived(player.expanded);
 
   function go(route: Route): void {
     player.collapse();
@@ -52,129 +47,212 @@
     ui.setLibraryView(view);
     ui.route = 'library';
   }
+
+  /** Entering a library should land on its books, not on the dashboard. */
+  function enterLibrary(id: string): void {
+    player.collapse();
+    session.selectLibrary(id);
+    if (ui.libraryView === 'home') ui.setLibraryView('books');
+    ui.route = 'library';
+  }
+
+  function collapseRail(): void {
+    ui.setRail('closed');
+  }
+
+  function expandRail(): void {
+    ui.setRail(narrow ? 'auto' : 'open');
+  }
 </script>
 
 <Titlebar title={t('app.name')} {subtitle} />
 
 <div class="shell">
   <nav class="rail" class:compact aria-label={t('nav.section.browse')}>
-    <div class="rail__group">
-      <span class="rail__label t-label">{t('nav.section.browse')}</span>
-      <button
-        class="nav-item"
-        aria-current={isBrowsing && ui.libraryView === 'home' && !player.expanded ? 'page' : undefined}
-        title={t('library.home')}
-        onclick={() => selectView('home')}
-      >
-        <span class="nav-item__icon"><Icon name="home" /></span>
-        <span class="nav-item__label">{t('library.home')}</span>
-      </button>
-
-      <button
-        class="nav-item"
-        aria-current={ui.route === 'continue' && !player.expanded ? 'page' : undefined}
-        title={t('nav.continue')}
-        onclick={() => go('continue')}
-      >
-        <span class="nav-item__icon"><Icon name="play" /></span>
-        <span class="nav-item__label">{t('nav.continue')}</span>
-      </button>
-
-      {#if player.item}
+    {#if compact}
+      <div class="rail__icons">
         <button
           class="nav-item"
-          aria-current={player.expanded ? 'page' : undefined}
-          title={t('nav.nowPlaying')}
-          onclick={() => player.expand()}
+          aria-current={homeActive ? 'page' : undefined}
+          title={t('library.home')}
+          onclick={() => selectView('home')}
         >
-          <span class="nav-item__icon"><Icon name="headphones" /></span>
-          <span class="nav-item__label">{t('nav.nowPlaying')}</span>
+          <span class="nav-item__icon"><Icon name="home" /></span>
         </button>
-      {/if}
-    </div>
 
-    <div class="rail__group">
-      <span class="rail__label t-label">{t('nav.section.views')}</span>
-      {#each VIEWS as entry (entry.id)}
         <button
           class="nav-item"
-          aria-current={ui.route === 'library' && ui.libraryView === entry.id && !player.expanded ? 'page' : undefined}
-          title={t(entry.key)}
-          onclick={() => selectView(entry.id)}
+          aria-current={ui.route === 'continue' && !player.expanded ? 'page' : undefined}
+          title={t('nav.continue')}
+          onclick={() => go('continue')}
         >
-          <span class="nav-item__icon"><Icon name={entry.icon} /></span>
-          <span class="nav-item__label">{t(entry.key)}</span>
+          <span class="nav-item__icon"><Icon name="play" /></span>
         </button>
-      {/each}
-    </div>
 
-    {#if session.libraries.length > 0}
-      <div class="rail__group">
-        <span class="rail__label t-label">{t('nav.section.libraries')}</span>
+        {#if player.item}
+          <button
+            class="nav-item"
+            aria-current={nowActive ? 'page' : undefined}
+            title={t('nav.nowPlaying')}
+            onclick={() => player.expand()}
+          >
+            <span class="nav-item__icon"><Icon name="headphones" /></span>
+          </button>
+        {/if}
+
+        <span class="rail__rule"></span>
+
         {#each session.libraries as lib (lib.id)}
           <button
             class="nav-item"
             aria-current={lib.id === session.activeLibraryId && isBrowsing && !player.expanded ? 'page' : undefined}
             title={lib.name}
-            onclick={() => {
-              player.collapse();
-              session.selectLibrary(lib.id);
-              ui.route = 'library';
-            }}
+            onclick={() => enterLibrary(lib.id)}
           >
             <span class="nav-item__icon">
               <Icon name={lib.mediaType === 'podcast' ? 'headphones' : 'library'} />
             </span>
-            <span class="nav-item__label">{lib.name}</span>
           </button>
         {/each}
+
+        <span class="rail__spacer"></span>
+
+        {#if session.canManageServer}
+          <button
+            class="nav-item"
+            aria-current={ui.route === 'admin' && !player.expanded ? 'page' : undefined}
+            title={t('nav.admin')}
+            onclick={() => go('admin')}
+          >
+            <span class="nav-item__icon"><Icon name="server" /></span>
+          </button>
+        {/if}
+
+        <button
+          class="nav-item"
+          aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
+          title={t('nav.downloads')}
+          onclick={() => go('downloads')}
+        >
+          <span class="nav-item__icon"><Icon name="download" /></span>
+        </button>
+
+        <button
+          class="nav-item"
+          aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
+          title={t('nav.settings')}
+          onclick={() => go('settings')}
+        >
+          <span class="nav-item__icon"><Icon name="settings" /></span>
+        </button>
+
+        <button class="rail__pin" aria-label={t('nav.expand')} title={t('nav.expand')} onclick={expandRail}>
+          <Icon name="chevron-right" size={13} />
+        </button>
       </div>
-    {/if}
+    {:else}
+      <div class="rail__head">
+        <button class="rail__pin" aria-label={t('nav.collapse')} title={t('nav.collapse')} onclick={collapseRail}>
+          <Icon name="chevron-left" size={13} />
+        </button>
+      </div>
 
-    <div class="rail__spacer"></div>
+      <div class="rail__group">
+        <span class="rail__label t-label">{t('nav.section.browse')}</span>
+        <button
+          class="nav-item"
+          aria-current={homeActive ? 'page' : undefined}
+          title={t('library.home')}
+          onclick={() => selectView('home')}
+        >
+          <span class="nav-item__icon"><Icon name="home" /></span>
+          <span class="nav-item__label">{t('library.home')}</span>
+        </button>
 
-    <!-- A little texture at the bottom: the rail is no longer a large blank. -->
-    {#if !compact}
+        <button
+          class="nav-item"
+          aria-current={ui.route === 'continue' && !player.expanded ? 'page' : undefined}
+          title={t('nav.continue')}
+          onclick={() => go('continue')}
+        >
+          <span class="nav-item__icon"><Icon name="play" /></span>
+          <span class="nav-item__label">{t('nav.continue')}</span>
+        </button>
+
+        {#if player.item}
+          <button
+            class="nav-item"
+            aria-current={nowActive ? 'page' : undefined}
+            title={t('nav.nowPlaying')}
+            onclick={() => player.expand()}
+          >
+            <span class="nav-item__icon"><Icon name="headphones" /></span>
+            <span class="nav-item__label">{t('nav.nowPlaying')}</span>
+          </button>
+        {/if}
+      </div>
+
+      {#if session.libraries.length > 0}
+        <div class="rail__group">
+          <span class="rail__label t-label">{t('nav.section.libraries')}</span>
+          {#each session.libraries as lib (lib.id)}
+            <button
+              class="nav-item"
+              aria-current={lib.id === session.activeLibraryId && isBrowsing && !player.expanded ? 'page' : undefined}
+              title={lib.name}
+              onclick={() => enterLibrary(lib.id)}
+            >
+              <span class="nav-item__icon">
+                <Icon name={lib.mediaType === 'podcast' ? 'headphones' : 'library'} />
+              </span>
+              <span class="nav-item__label">{lib.name}</span>
+            </button>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="rail__spacer"></div>
+
       <div class="rail__stats t-num">
         <span class="t-small">{t('library.total', { count: library.items.length })}</span>
         <span class="t-small t-tertiary">{t('book.listened')} {finishedCount}</span>
       </div>
-    {/if}
 
-    <div class="rail__group rail__group--foot">
-      <span class="rail__label t-label">{t('nav.section.system')}</span>
-      {#if session.canManageServer}
+      <div class="rail__group rail__group--foot">
+        <span class="rail__label t-label">{t('nav.section.system')}</span>
+        {#if session.canManageServer}
+          <button
+            class="nav-item"
+            aria-current={ui.route === 'admin' && !player.expanded ? 'page' : undefined}
+            title={t('nav.admin')}
+            onclick={() => go('admin')}
+          >
+            <span class="nav-item__icon"><Icon name="server" /></span>
+            <span class="nav-item__label">{t('nav.admin')}</span>
+          </button>
+        {/if}
+
         <button
           class="nav-item"
-          aria-current={ui.route === 'admin' && !player.expanded ? 'page' : undefined}
-          title={t('nav.admin')}
-          onclick={() => go('admin')}
+          aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
+          title={t('nav.downloads')}
+          onclick={() => go('downloads')}
         >
-          <span class="nav-item__icon"><Icon name="server" /></span>
-          <span class="nav-item__label">{t('nav.admin')}</span>
+          <span class="nav-item__icon"><Icon name="download" /></span>
+          <span class="nav-item__label">{t('nav.downloads')}</span>
         </button>
-      {/if}
 
-      <button
-        class="nav-item"
-        aria-current={ui.route === 'downloads' && !player.expanded ? 'page' : undefined}
-        title={t('nav.downloads')}
-        onclick={() => go('downloads')}
-      >
-        <span class="nav-item__icon"><Icon name="download" /></span>
-        <span class="nav-item__label">{t('nav.downloads')}</span>
-      </button>
-
-      <button
-        class="nav-item"
-        aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
-        title={t('nav.settings')}
-        onclick={() => go('settings')}
-      >
-        <span class="nav-item__icon"><Icon name="settings" /></span>
-        <span class="nav-item__label">{t('nav.settings')}</span>
-      </button>
-    </div>
+        <button
+          class="nav-item"
+          aria-current={ui.route === 'settings' && !player.expanded ? 'page' : undefined}
+          title={t('nav.settings')}
+          onclick={() => go('settings')}
+        >
+          <span class="nav-item__icon"><Icon name="settings" /></span>
+          <span class="nav-item__label">{t('nav.settings')}</span>
+        </button>
+      </div>
+    {/if}
   </nav>
 
   <div class="main-col">
@@ -208,19 +286,54 @@
     padding: var(--gap-inline) var(--gap-inline) var(--gap-block);
     border-right: 1px solid var(--hairline);
     background: var(--canvas);
-    /* No horizontal scrollbar: long library names must ellipsise instead. */
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-width: thin;
-    transition: width var(--dur-2) var(--ease), flex-basis var(--dur-2) var(--ease);
+    transition: width var(--dur-1) var(--ease), flex-basis var(--dur-1) var(--ease);
   }
 
   .rail.compact {
     width: 56px;
     flex-basis: 56px;
-    align-items: center;
     padding-inline: 6px;
-    gap: var(--gap-inline);
+    overflow: hidden;
+  }
+
+  .rail__head {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .rail__pin {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-xs);
+    color: var(--text-tertiary);
+  }
+
+  .rail__pin:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .rail__icons {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .rail__rule {
+    width: 22px;
+    height: 1px;
+    margin: var(--gap-inline) 0;
+    background: var(--hairline);
   }
 
   .rail__group {
@@ -248,19 +361,6 @@
     letter-spacing: 0.08em;
   }
 
-  .rail.compact .rail__label {
-    display: none;
-  }
-
-  .rail.compact .rail__group {
-    align-items: center;
-  }
-
-  .rail.compact .rail__group + .rail__group,
-  .rail.compact .rail__group--foot {
-    width: 38px;
-  }
-
   .rail__spacer {
     flex: 1 1 auto;
     min-height: var(--gap-block);
@@ -279,7 +379,8 @@
   }
 
   /* The global .nav-item lives in design/components.css. Only its rail-specific
-     geometry and the folded state are owned here. */
+     geometry is owned here; the folded shape is a separate tree, so no label
+     ever has to be hidden. */
   .rail :global(.nav-item__label) {
     min-width: 0;
     overflow: hidden;
@@ -292,14 +393,6 @@
     width: 38px;
     min-width: 38px;
     padding-inline: 0;
-  }
-
-  .rail.compact :global(.nav-item__label) {
-    display: none;
-  }
-
-  .rail.compact :global(.nav-item__icon) {
-    margin: 0;
   }
 
   .main-col {

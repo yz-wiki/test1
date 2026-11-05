@@ -12,7 +12,9 @@ edition = "2021"
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "skald_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Desktop-only build: `staticlib`/`cdylib` exist for iOS/Android and each one
+# adds a full extra link pass on Windows with no artifact we ship.
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -27,7 +29,7 @@ tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream", "multipart"] } # "stream" for download_item; "multipart" for cover upload
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "sync", "time", "fs", "io-util", "net"] }
 directories = "5"
 fs2 = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
@@ -65,13 +67,16 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 # across ID3v2 / MP4·M4B / Vorbis. The scanner's primary metadata source.
 lofty = "0.21"
 # symphonia: pure-Rust format probe / duration fallback when tags lack it.
-symphonia = { version = "0.5", features = ["all"] }
+# Only the containers this app can actually meet (m4b/mp3/flac/ogg/wav); "all"
+# also pulled in aiff/caf/adpcm/mkv/mp1/mp2 that no audiobook uses.
+symphonia = { version = "0.5", features = ["mp3", "aac", "isomp4", "flac", "ogg", "vorbis", "wav", "pcm"] }
 # walkdir: recursive directory traversal for the scanner.
 walkdir = "2"
 # notify: file-system watcher for the staging folder (Phase 7).
 notify = "6"
 # image: decode + resize embedded/sidecar cover art locally (no server resizer; Phase 8).
-image = "0.25"
+# Covers are jpeg/png; webp is kept because some scraper sidecars use it.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 # quick-xml: event-based RSS/Atom + OPML parsing for local podcasts. Chosen over
 # feed-rs for full control of the iTunes/podcast: namespaced tags ABS extracts
 # (Local Podcasts roadmap — see podcast_feed.rs).
@@ -95,3 +100,16 @@ tempfile = "3"
 # headers Skald sends against fixtures captured while verifying the ABS source.
 # Introduced by the Auth Token Refresh roadmap for the /auth/refresh contract.
 wiremock = "0.6"
+
+# ── Release profile ─────────────────────────────────────────────────────────
+# There was no profile block at all, so releases shipped with full symbols, no
+# LTO and unwind tables. `thin` LTO gives most of `fat` LTO's size win while
+# keeping the link step parallel; `codegen-units = 16` is the default and is
+# kept on purpose — 1 would shrink another ~5% but triple the link time.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+strip = "symbols"
+panic = "abort"
+incremental = false

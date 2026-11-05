@@ -81,13 +81,12 @@ jobs:
       - name: 2 · Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: 3 · cargo 依赖缓存(加速重复按需构建)
-        uses: actions/cache@v4
+      - name: 3 · Rust 依赖缓存(含已编译依赖,只跳过本仓库 crate)
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-${{ runner.os }}-${{ hashFiles('src-tauri/Cargo.lock') }}
+          workspaces: src-tauri -> target
+          cache-on-failure: true
+          key: ${{ runner.os }}-skald
 
       - name: 4 · pnpm 10 + Node.js 22
         uses: pnpm/action-setup@v4
@@ -115,6 +114,28 @@ jobs:
           & (Join-Path $env:GITHUB_WORKSPACE 'scripts\stage-windows-runtime.ps1') -VlcVersion $env:VLC_VERSION 2>&1 |
               Tee-Object -FilePath "$env:GITHUB_WORKSPACE\gha-logs\06-stage-runtime.log"
           exit $LASTEXITCODE
+
+      # 这是一个音频播放器:视频输出、视频滤镜、可视化、字幕渲染、流输出都进不了
+      # 任何一条播放路径,但它们在 VLC plugins 里占了安装包的大头。
+      - name: 6.5 · 裁剪 LibVLC 视频插件
+        if: ${{ env.TRIM_VLC != 'false' }}
+        run: |
+          $plugins = Join-Path $env:GITHUB_WORKSPACE 'src-tauri\vlc-dist\plugins'
+          if (-not (Test-Path $plugins)) { Write-Host 'no plugins tree; skipped'; exit 0 }
+          $drop = @('3d','access_output','gui','notify','services_discovery','spu',
+                    'stream_output','text_renderer','video_channel_mixer',
+                    'video_filter','video_output','visualization')
+          $before = @(Get-ChildItem $plugins -Recurse -File)
+          $bytes0 = ($before | Measure-Object Length -Sum).Sum
+          foreach ($d in $drop) {
+            $p = Join-Path $plugins $d
+            if (Test-Path $p) { Remove-Item $p -Recurse -Force }
+          }
+          $after = @(Get-ChildItem $plugins -Recurse -File)
+          $bytes1 = ($after | Measure-Object Length -Sum).Sum
+          Write-Host ("trimmed VLC plugins: {0} -> {1} files, {2:N1} -> {3:N1} MB" -f `
+            $before.Count, $after.Count, ($bytes0 / 1MB), ($bytes1 / 1MB))
+          if ($after.Count -lt 20) { Write-Host '::error::too many plugins removed'; exit 1 }
 
       - name: 7 · 仓库校验套件(可选,run_verify=true 时)
         if: ${{ inputs.run_verify == true }}

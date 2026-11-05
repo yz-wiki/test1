@@ -11,6 +11,8 @@
   /** The blurb lives beside the cover and folds; it is not a tab. */
   let tab = $state<'chapters' | 'bookmarks'>('chapters');
   let descOpen = $state(false);
+  /** The chapter rail is closed by default: listening is the job, browsing is secondary. */
+  let sideOpen = $state(false);
   let sleepOpen = $state(false);
   /** Shows the percentage only while the volume slider is in use. */
   let volumeActive = $state(false);
@@ -151,20 +153,16 @@
     isEpisode ? (player.episode?.description ?? '') : (meta?.description ?? ''),
   );
 
-  const facts = $derived(
-    isEpisode
-      ? [
-          player.showTitle,
-          player.episode?.publishedAt
-            ? new Date(player.episode.publishedAt).toLocaleDateString()
-            : '',
-        ].filter(Boolean)
-      : [
-          meta?.narratorName ? t('player.narrator', { name: meta.narratorName }) : '',
-          meta?.publisher ? `${t('player.publisher')} · ${meta.publisher}` : '',
-          meta?.publishedYear ? `${t('player.year')} · ${meta.publishedYear}` : '',
-        ].filter(Boolean),
-  );
+  /** The drawer line: which chapter, out of how many. */
+  const drawerLabel = $derived.by(() => {
+    if (isEpisode) return `${player.queue.length} ${t('player.chapters')}`;
+    if (chapters.length === 0) {
+      return player.chaptersLoading ? t('player.loadingChapters') : t('player.noChapters');
+    }
+    const index = Math.max(player.chapterIndex, 0);
+    const now = t('player.chapterNow', { index: index + 1, total: chapters.length });
+    return player.chapter?.title ? `${now} · ${player.chapter.title}` : now;
+  });
 </script>
 
 {#if item}
@@ -181,33 +179,21 @@
 
     <div class="player__body">
       <section class="stage">
-        <div class="stage__head">
-          <div class="stage__cover">
-            <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
-          </div>
+        <div class="stage__cover">
+          <Cover itemId={item.id} size={560} radius="var(--radius-lg)" title={player.showTitle} />
+        </div>
 
-          <div class="stage__info">
-            <h1 class="t-title clamp-2">{player.title}</h1>
-            <p class="t-secondary truncate">{isEpisode ? player.showTitle : (meta?.authorName ?? '')}</p>
-            {#if facts.length > 0}
-              <p class="t-small t-tertiary truncate">{facts.join('  ·  ')}</p>
-            {/if}
-
-            {#if description}
-              <p class="stage__desc" class:open={descOpen}>{description}</p>
-              <button class="stage__more" onclick={() => (descOpen = !descOpen)}>
-                {descOpen ? t('player.descLess') : t('player.descMore')}
-              </button>
-            {/if}
-
-            {#if meta?.genres?.length}
-              <div class="stage__genres">
-                {#each meta.genres as genre (genre)}
-                  <span class="chip">{genre}</span>
-                {/each}
-              </div>
-            {/if}
-          </div>
+        <div class="stage__info">
+          <h1 class="stage__title clamp-2">{player.title}</h1>
+          <p class="t-small t-tertiary truncate">
+            {[
+              isEpisode ? player.showTitle : meta?.authorName,
+              meta?.narratorName,
+              formatDuration(player.duration),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
         </div>
 
         <div class="transport">
@@ -299,20 +285,24 @@
               <span class="transport__chapter truncate">{chapterLine}</span>
             {/if}
             <span>
-              −{formatDuration(Math.max((chapterLength || player.duration) - chapterPos, 0))}
+              {t('player.chapterLeft', {
+                time: formatDuration(Math.max((chapterLength || player.duration) - chapterPos, 0)),
+              })}
             </span>
           </div>
 
           {#if !isEpisode && chapters.length > 1}
             <div class="book-bar">
-              <span class="book-bar__tag t-small t-tertiary">{t('player.wholeBook')}</span>
+              <span class="book-bar__tag t-small t-tertiary t-num">
+                {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+              </span>
               <ProgressLine
                 value={player.progress}
-                label={t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
+                label={t('player.wholeBook')}
                 marks={bookmarkFractions}
               />
-              <span class="book-bar__pct t-small t-num t-secondary">
-                {Math.round(player.progress * 100)}%
+              <span class="book-bar__pct t-small t-num t-tertiary">
+                {t('player.bookLeft', { time: formatDuration(Math.max(player.duration - player.position, 0)) })}
               </span>
             </div>
           {/if}
@@ -375,11 +365,40 @@
                 </div>
               {/if}
             </div>
+
+            <span class="tools__divider"></span>
+
+            <button class="btn btn--quiet btn--sm" onclick={() => void addMark()}>
+              <Icon name="plus" size={13} /> {t('bookmark.add')}
+            </button>
+
+            {#if description}
+              <button
+                class="btn btn--quiet btn--sm"
+                aria-expanded={descOpen}
+                onclick={() => (descOpen = !descOpen)}
+              >
+                {descOpen ? t('player.descLess') : t('player.descMore')}
+              </button>
+            {/if}
           </div>
+
+          {#if descOpen && description}
+            <div class="stage__desc-wrap">
+              <p class="stage__desc selectable">{description}</p>
+              {#if meta?.genres?.length}
+                <div class="stage__genres">
+                  {#each meta.genres as genre (genre)}
+                    <span class="chip">{genre}</span>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
         </div>
       </section>
 
-      <aside class="side">
+      <aside class="side" class:open={sideOpen}>
         {#if !isEpisode}
           <div class="side__tabs">
             <div class="segmented">
@@ -513,6 +532,34 @@
         {/if}
       </aside>
     </div>
+
+    <!-- One line at the foot of the page: what is playing where, and the way
+         into the list. The rail itself stays closed until asked. -->
+    <div class="drawer">
+      <button class="drawer__info" aria-expanded={sideOpen} onclick={() => (sideOpen = !sideOpen)}>
+        <Icon name="layers" size={13} />
+        <span class="truncate">{drawerLabel}</span>
+        <Icon name="chevron-down" size={12} />
+      </button>
+      <div class="drawer__tabs">
+        <button
+          class="drawer__tab"
+          aria-pressed={sideOpen && tab === 'chapters'}
+          onclick={() => {
+            tab = 'chapters';
+            sideOpen = true;
+          }}
+        >{t('player.chapters')}</button>
+        <button
+          class="drawer__tab"
+          aria-pressed={sideOpen && tab === 'bookmarks'}
+          onclick={() => {
+            tab = 'bookmarks';
+            sideOpen = true;
+          }}
+        >{t('player.bookmarks')}{#if marks.length > 0}<span class="t-num"> {marks.length}</span>{/if}</button>
+      </div>
+    </div>
   </div>
 {/if}
 
@@ -536,37 +583,32 @@
   }
 
   .player__body {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: var(--gap-section);
+    grid-template-columns: minmax(0, 1fr) auto;
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
   }
 
+  /* One vertical axis: cover, title, chapter, progress, controls. The eye
+     stops moving sideways, and the empty lower-left corner is gone. */
   .stage {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: var(--gap-block);
     min-width: 0;
+    min-height: 0;
+    padding-block: var(--gap-row);
     overflow-y: auto;
   }
 
-  /* Cover and blurb share one band: the description is context for the title,
-     not a separate document worth a tab of its own. */
-  .stage__head {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    gap: var(--gap-section);
-    width: 100%;
-    max-width: 620px;
-  }
-
   .stage__cover {
-    width: min(228px, 32vh);
+    width: min(208px, 26vh);
     aspect-ratio: 1;
+    flex: 0 0 auto;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-3);
@@ -575,34 +617,31 @@
   .stage__info {
     display: flex;
     flex-direction: column;
-    gap: var(--gap-hair);
+    align-items: center;
+    gap: 3px;
     min-width: 0;
-    padding-top: var(--gap-inline);
+    max-width: 560px;
+    text-align: center;
+  }
+
+  .stage__title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    line-height: 1.25;
+  }
+
+  .stage__desc-wrap {
+    width: min(560px, 100%);
+    padding: var(--gap-row);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
   }
 
   .stage__desc {
-    margin-top: var(--gap-inline);
     color: var(--text-secondary);
     font-size: var(--text-sm);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .stage__desc.open {
-    display: block;
-    max-height: 168px;
-    overflow-y: auto;
-    -webkit-line-clamp: unset;
-  }
-
-  .stage__more {
-    align-self: flex-start;
-    margin-top: 2px;
-    color: var(--accent);
-    font-size: var(--text-xs);
+    line-height: 1.7;
   }
 
   .stage__genres {
@@ -612,33 +651,47 @@
     margin-top: var(--gap-inline);
   }
 
-  @media (max-width: 900px) {
-    .stage__head {
-      grid-template-columns: minmax(0, 1fr);
-      justify-items: center;
-      text-align: center;
-    }
-
-    .stage__more {
-      align-self: center;
-    }
-  }
-
   .transport {
     width: min(560px, 100%);
     display: flex;
     flex-direction: column;
-    gap: var(--gap-hair);
+    gap: 2px;
   }
 
-  /* Controls sit above the progress now, with volume sharing their row. */
+  /* Order, not DOM order: progress reads first, then the transport, then the
+     tools. Keeping the buttons together in the DOM preserves tab order. */
+  .transport > :global(.seek) {
+    order: 1;
+  }
+
+  .transport__times {
+    order: 2;
+  }
+
+  .book-bar {
+    order: 3;
+  }
+
+  .transport__top {
+    order: 4;
+  }
+
+  .transport__extras {
+    order: 5;
+  }
+
+  .stage__desc-wrap {
+    order: 6;
+  }
+
+  /* Controls sit below the progress, with volume sharing their row. */
   .transport__top {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 58px;
-    margin-bottom: var(--gap-inline);
+    margin-top: var(--gap-block);
   }
 
   .transport__volume {
@@ -798,13 +851,92 @@
     color: var(--accent);
   }
 
+  /* Closed by default: zero width, no border, nothing to accidentally click.
+     Opening is a deliberate act from the drawer at the foot of the page. */
   .side {
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
+    width: 0;
+    min-width: 0;
     min-height: 0;
-    border-left: 1px solid var(--hairline);
+    padding-left: 0;
+    overflow: hidden;
+    border-left: 1px solid transparent;
+    opacity: 0;
+    transition: width var(--dur-2) var(--ease), opacity var(--dur-1) var(--ease);
+  }
+
+  .side.open {
+    width: 320px;
     padding-left: var(--gap-block);
+    margin-left: var(--gap-section);
+    border-left-color: var(--hairline);
+    opacity: 1;
+  }
+
+  @media (max-width: 980px) {
+    .side.open {
+      position: absolute;
+      inset: 0 0 0 auto;
+      z-index: 20;
+      width: min(340px, 86vw);
+      background: var(--surface);
+      box-shadow: var(--shadow-3);
+    }
+  }
+
+  .drawer {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: 5px var(--gap-block);
+    border-top: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+
+  .drawer__info {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 5px 8px;
+    border-radius: var(--radius-xs);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    text-align: left;
+  }
+
+  .drawer__info:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .drawer__info[aria-expanded='true'] :global(svg:last-child) {
+    transform: rotate(180deg);
+  }
+
+  .drawer__tabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+  }
+
+  .drawer__tab {
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+
+  .drawer__tab[aria-pressed='true'] {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: var(--weight-medium);
   }
 
   .side__tabs .segmented {

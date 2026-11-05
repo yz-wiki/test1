@@ -58,6 +58,8 @@ export interface MediaMetadata {
   narratorName?: string;
   seriesName?: string;
   seriesSequence?: string;
+  /** Audiobookshelf 2.6+ sends this array; `seriesName` is the legacy shape. */
+  series?: { name?: string; sequence?: string }[];
   description?: string;
   publisher?: string;
   publishedYear?: string;

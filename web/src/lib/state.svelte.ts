@@ -256,6 +256,17 @@ class UiStore {
   focusSearch = $state(0);
   /** Which settings pane to open; set when the account chip is clicked. */
   settingsSection = $state('display');
+  /**
+   * Rail width is a user decision with an "auto" default. A single boolean made
+   * the sidebar's shape depend on a click made three sessions ago; three states
+   * keep the narrow-window fold without losing a deliberate choice.
+   */
+  railMode = $state<'auto' | 'open' | 'closed'>(
+    (() => {
+      const saved = localStorage.getItem('skald.railMode');
+      return saved === 'open' || saved === 'closed' ? saved : 'auto';
+    })(),
+  );
 
   constructor() {
     this.applyTheme();
@@ -277,6 +288,11 @@ class UiStore {
   setTileSize(size: number): void {
     this.tileSize = Math.min(280, Math.max(112, Math.round(size)));
     localStorage.setItem('skald.tileSize', String(this.tileSize));
+  }
+
+  setRail(mode: 'auto' | 'open' | 'closed'): void {
+    this.railMode = mode;
+    localStorage.setItem('skald.railMode', mode);
   }
 
   setCustomBase(base: ThemeId): void {

@@ -2,6 +2,74 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 2.15.0 (2026-11-05) — preview
+
+Home stops being a second copy of the library, the player gets one vertical
+axis, and the sidebar can be folded on purpose. The build also stops shipping
+symbols and VLC's video stack.
+
+### Home is a shelf, not a browse pane
+
+The header title and the "书库共 41 本" line are gone — the rail already says
+where you are and how many books there are. The `书籍 / 系列 / 作者 / 播讲者`
+segmented control is gone from the home page entirely: those four views are a
+filter *inside* the library, so they now live only in the library page's own
+toolbar. Home reads top to bottom:
+
+1. **Continue listening** — one wide card with the chapter position, both time
+   scales, and the two actions.
+2. **Recently added** — reverse-chronological, one card per book, `author ·
+   3 天前`. The previous version collapsed by `seriesName` and produced twelve
+   cards all labelled "共 1 卷", because Audiobookshelf leaves that field empty
+   or per-volume.
+3. **Series in progress** — only appears when `seriesName` (or the newer
+   `series[]` array) really groups more than one volume.
+
+Card size is fixed at the standard stop; the four-step density picker and its
+`标准 · 5 列` readout are gone.
+
+### The rail folds on purpose, and cleanly
+
+- The duplicate `首页` entry is gone: `浏览` holds 首页 / 继续收听 / 正在播放,
+  the library section holds the libraries, `系统` holds server / downloads /
+  settings. Nothing is listed twice.
+- Folding is a three-state switch (`auto` / `open` / `closed`) remembered in
+  `localStorage`. `auto` folds below 1040 px.
+- The folded rail is a **separate tree**, not the wide tree with hidden labels.
+  Animating `width` on one tree was what produced the half-folded ghosting at
+  the left edge of the screenshots.
+
+### Player: one axis, one drawer
+
+- Cover, title, chapter, progress, transport and tools stack on a single
+  centred axis. The description is no longer a permanent right-hand panel; it
+  opens under the tools when asked.
+- The chapter rail is closed by default. A single line at the foot of the page
+  says `第 3 / 1274 章 · 0002-李火旺` and offers 章节 / 书签; opening it slides
+  the rail in (overlay below 980 px).
+- The whole-book scale is a 2 px read-only line with `全书 0.2%` on the left and
+  `剩 189 小时` on the right, instead of a second full transport.
+
+### Transport bar
+
+Three bands: title and chapter on the left, transport plus the chapter track in
+the middle with `10:49` and `本章剩余 3:17` at its ends, and on the right two
+fact lines (`第 3 / 1274 章`, `全书 0.2% · 剩 189 小时`) beside volume, speed,
+sleep, queue and expand. The track used to sit above the row, disconnected from
+everything, and the only time information was a single run-on string.
+
+### Smaller build, faster CI
+
+- `crate-type` is `["rlib"]` — `staticlib`/`cdylib` are mobile-only and each
+  costs a full extra link pass on Windows.
+- Added a `[profile.release]`: `lto = "thin"`, `strip = "symbols"`,
+  `panic = "abort"`. There was no profile block before, so releases shipped
+  unstripped.
+- Trimmed dependency features: `tokio` no longer uses `full`, `symphonia` keeps
+  only the containers audiobooks use, `image` only jpeg/png/webp.
+- CI removes VLC's video output/filter/visualization/subtitle plugins before
+  packaging, and caches compiled Rust dependencies with `rust-cache`.
+
 ## 2.14.0 (2026-11-05) — preview
 
 The player screen, the transport bar and the home page now share one model of

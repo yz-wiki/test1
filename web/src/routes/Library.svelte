@@ -42,24 +42,6 @@
   /** Home is a dashboard, not a 60-item grid with a shelf stapled on top. */
   const isHome = $derived(view === 'home' && !group && !query.trim());
 
-  function categoryCount(by: View): number {
-    return new Set(library.items.map(item => keyOf(item, by)).filter(Boolean)).size;
-  }
-
-  /**
-   * The home page switches category content in place. It used to be four big
-   * cards that navigated to a different view — a page jump to answer "what
-   * series do I have?". One segmented control owns the choice now, and the
-   * sidebar stays the way to leave the dashboard entirely.
-   */
-  let homeTab = $state<'books' | 'series' | 'authors' | 'narrators'>('books');
-
-  const homeTabs = $derived([
-    { id: 'books' as const, key: 'library.books' as TranslationKey, count: library.items.length },
-    { id: 'series' as const, key: 'library.series' as TranslationKey, count: categoryCount('series') },
-    { id: 'authors' as const, key: 'library.authors' as TranslationKey, count: categoryCount('authors') },
-    { id: 'narrators' as const, key: 'library.narrators' as TranslationKey, count: categoryCount('narrators') },
-  ]);
   const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
 
   function setView(next: View): void {
@@ -127,30 +109,41 @@
   });
 
   /**
-   * "Recently added" used to be `items.slice(0, 10)` — the server's order, with
-   * no sort at all, so a 40-volume series filled every slot and nothing new
-   * ever surfaced. Newest first, one card per series, and the card says how
-   * many volumes the series has.
+   * Newest first, one card per book. The previous version collapsed rows by
+   * `seriesName`, but Audiobookshelf leaves that field empty — or fills it per
+   * volume — so a 12-volume series came out as 12 cards each claiming "共 1 卷".
+   * A plain reverse-chronological shelf is honest; the series name goes into
+   * the meta line only when the server really provides one.
    */
-  const recentAdded = $derived.by(() => {
-    const sorted = [...library.items].sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0));
-    const seen = new Set<string>();
-    const rows: { item: (typeof library.items)[number]; series: string; volumes: number }[] = [];
-    for (const item of sorted) {
-      const series = item.media?.metadata?.seriesName?.trim() ?? '';
-      if (series) {
-        if (seen.has(series)) continue;
-        seen.add(series);
-        const volumes = sorted.filter(
-          entry => (entry.media?.metadata?.seriesName?.trim() ?? '') === series,
-        ).length;
-        rows.push({ item, series, volumes });
+  const recentAdded = $derived.by(() =>
+    [...library.items].sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0)).slice(0, 12),
+  );
+
+  /** Series name for an item, preferring the newer `series[]` array ABS sends. */
+  function seriesOf(item: (typeof library.items)[number]): string {
+    const meta = item.media?.metadata;
+    return meta?.series?.[0]?.name?.trim() || meta?.seriesName?.trim() || '';
+  }
+
+  /** Series already started — only worth a shelf when more than one volume. */
+  const readingSeries = $derived.by(() => {
+    const map = new Map<string, { name: string; volumes: number; heard: number; cover: string }>();
+    for (const item of library.items) {
+      const name = seriesOf(item);
+      if (!name) continue;
+      const entry = map.get(name);
+      const heard = progress.fraction(item.id) > 0 ? 1 : 0;
+      if (entry) {
+        entry.volumes += 1;
+        entry.heard += heard;
       } else {
-        rows.push({ item, series: '', volumes: 0 });
+        map.set(name, { name, volumes: 1, heard, cover: item.id });
       }
-      if (rows.length >= 12) break;
     }
-    return rows;
+    return [...map.values()]
+      .filter(entry => entry.volumes > 1 && entry.heard > 0)
+      .sort((a, b) => b.heard / b.volumes - a.heard / a.volumes)
+      .slice(0, 12);
   });
 
   /** "今天 / 3 天前" — the shelf reads better with a date than with a timestamp. */
@@ -164,23 +157,6 @@
     if (months < 12) return t('home.agoMonths', { count: months });
     return t('home.agoYears', { count: Math.floor(months / 12) });
   }
-
-  /** Groups for whichever category the right column is showing. */
-  const homeGroups = $derived.by(() => {
-    if (homeTab === 'books') return [];
-    const by = homeTab as View;
-    const map = new Map<string, typeof library.items>();
-    for (const item of library.items) {
-      const key = keyOf(item, by);
-      if (!key) continue;
-      const bucket = map.get(key);
-      if (bucket) bucket.push(item);
-      else map.set(key, [item]);
-    }
-    return [...map.entries()]
-      .map(([name, items]) => ({ name, items }))
-      .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
-  });
 
   const recent = $derived.by(() => {
     return progress.rows
@@ -225,35 +201,7 @@
 
   const isList = $derived(ui.libraryLayout === 'list');
   const windowed = $derived(!isList && visible.length > THRESHOLD);
-  const minW = $derived(ui.tileSize);
-
-  /**
-   * Four stops instead of one continuous range: a slider between 112 and 280
-   * has no meaningful intermediate values, and holding it never told you what
-   * you were about to get. Ctrl+wheel steps through the same stops.
-   */
-  const TILE_STEPS = [
-    { size: 112, key: 'library.tile.compact' as TranslationKey },
-    { size: 148, key: 'library.tile.standard' as TranslationKey },
-    { size: 184, key: 'library.tile.comfort' as TranslationKey },
-    { size: 220, key: 'library.tile.large' as TranslationKey },
-  ];
-
-  const currentStep = $derived.by(() => {
-    let best = TILE_STEPS[1];
-    for (const step of TILE_STEPS) {
-      if (Math.abs(step.size - ui.tileSize) < Math.abs(best.size - ui.tileSize)) best = step;
-    }
-    return best;
-  });
-
-  function onWheel(event: WheelEvent): void {
-    if (!event.ctrlKey || isList) return;
-    event.preventDefault();
-    const index = TILE_STEPS.findIndex(step => step.size === currentStep.size);
-    const next = TILE_STEPS[Math.min(Math.max(index + (event.deltaY > 0 ? -1 : 1), 0), TILE_STEPS.length - 1)];
-    if (next) ui.setTileSize(next.size);
-  }
+  const minW = 148;
 
   $effect(() => {
     const el = scroller;
@@ -456,22 +404,6 @@
       ><Icon name="rows" size={14} /></button>
     </div>
 
-    {#if !isList}
-      <div class="density" role="group" aria-label={t('library.tileSize')} title={t('library.tileSize')}>
-        {#each TILE_STEPS as step, index (step.size)}
-          <button
-            class="density__stop"
-            aria-pressed={currentStep.size === step.size}
-            title={t(step.key)}
-            onclick={() => ui.setTileSize(step.size)}
-          >
-            <span class="density__block" style:width="{7 + index * 2}px" style:height="{7 + index * 2}px"></span>
-          </button>
-        {/each}
-        <span class="density__hud t-num">{t(currentStep.key)} · {t('library.columns', { count: Math.max(columns, 1) })}</span>
-      </div>
-    {/if}
-
     <span class="toolbar__sep"></span>
 
     <button
@@ -485,7 +417,7 @@
   </div>
 </div>
 
-<div class="page scroll-y" bind:this={scroller} onscroll={onScroll} onwheel={onWheel}>
+<div class="page scroll-y" bind:this={scroller} onscroll={onScroll}>
   {#if library.error}
     <div class="empty">
       <span class="empty__title">{t('library.error')}</span>
@@ -502,142 +434,113 @@
     </div>
   {:else}
     {#if isHome}
-      <div class="home__head">
-        <div>
-          <h1 class="t-title">{t('library.home')}</h1>
-          <p class="t-small t-tertiary">{t('library.total', { count: library.items.length })}</p>
-        </div>
-      </div>
-
-      <div class="home__cols">
-        <aside class="home__left">
-          <section class="home__panel">
-            <div class="section__head">
-              <h2 class="t-label">{t('library.continue')}</h2>
+      <div class="home">
+        {#if recent.length > 0}
+          {@const top = recent[0]}
+          {@const chapter = reading.chapterAt(top, progress.for(top.id)?.currentTime ?? 0)}
+          {@const pct = Math.round(progress.fraction(top.id) * 100)}
+          <section class="now">
+            <div class="shelf__head">
+              <h2 class="t-label t-accent">{t('home.inProgress')}</h2>
               <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'continue')}>
                 {t('continue.viewAll')} <Icon name="chevron-right" size={12} />
               </button>
             </div>
 
-            {#if recent.length > 0}
-              {@const top = recent[0]}
-              {@const chapter = reading.chapterAt(top, progress.for(top.id)?.currentTime ?? 0)}
-              {@const pct = Math.round(progress.fraction(top.id) * 100)}
-              <div class="hero">
-                <div class="hero__top">
-                  <button class="hero__cover" onclick={() => open(top)} title={title(top)}>
-                    <Cover itemId={top.id} size={240} title={title(top)} />
-                  </button>
-                  <div class="hero__body">
-                    <span class="t-label t-accent">{t('home.inProgress')}</span>
-                    <h2 class="hero__title">{title(top)}</h2>
-                    <p class="t-small t-tertiary truncate">{author(top)}</p>
-                    {#if chapter}
-                      <p class="t-small truncate hero__chapter" title={chapter.title}>
-                        {t('continue.chapter', { index: chapter.index, total: chapter.total })} · {chapter.title}
-                      </p>
-                    {/if}
-                  </div>
-                </div>
-                <div class="hero__bar" aria-hidden="true"><span style:width="{pct}%"></span></div>
-                <div class="hero__foot t-num t-small t-tertiary">
+            <div class="now__card">
+              <button class="now__cover" onclick={() => open(top)} title={title(top)}>
+                <Cover itemId={top.id} size={280} title={title(top)} />
+              </button>
+              <div class="now__body">
+                <h3 class="now__title clamp-2">{title(top)}</h3>
+                <p class="t-small t-tertiary truncate">{author(top)}</p>
+                {#if chapter}
+                  <p class="t-small truncate now__chapter" title={chapter.title}>
+                    {t('continue.chapter', { index: chapter.index, total: chapter.total })} · {chapter.title}
+                  </p>
+                {/if}
+                <div class="now__bar" aria-hidden="true"><span style:width="{pct}%"></span></div>
+                <div class="now__foot t-num t-small t-tertiary">
                   <span>{formatLength((top.media?.duration ?? 0) * progress.fraction(top.id))} / {formatLength(top.media?.duration ?? 0)}</span>
-                  <span>{pct}%</span>
+                  <span>{t('player.bookProgress', { pct })}</span>
                 </div>
-                <div class="hero__actions">
+                <div class="now__actions">
                   <button class="btn btn--primary btn--sm" onclick={() => resume(top)}>
                     <Icon name="play" size={13} /> {t('home.resume')}
                   </button>
                   <button class="btn btn--quiet btn--sm" onclick={() => open(top)}>{t('home.details')}</button>
                 </div>
               </div>
+            </div>
 
-              {#if recent.length > 1}
-                <div class="queue">
-                  {#each recent.slice(1, 7) as item (item.id)}
-                    {@const fraction = progress.fraction(item.id)}
-                    <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
-                      <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
-                      <span class="queue__text">
-                        <span class="truncate">{title(item)}</span>
-                        <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
-                      </span>
-                      <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
-                    </button>
-                  {/each}
-                </div>
-              {/if}
-            {:else}
-              <p class="t-small t-tertiary home__empty">{t('continue.empty')}</p>
+            {#if recent.length > 1}
+              <div class="queue">
+                {#each recent.slice(1, 7) as item (item.id)}
+                  {@const fraction = progress.fraction(item.id)}
+                  <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
+                    <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
+                    <span class="queue__text">
+                      <span class="truncate">{title(item)}</span>
+                      <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
+                    </span>
+                    <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
+                  </button>
+                {/each}
+              </div>
             {/if}
           </section>
-        </aside>
+        {:else}
+          <p class="t-small t-tertiary home__empty">{t('continue.empty')}</p>
+        {/if}
 
-        <div class="home__right">
-          <section class="section">
-            <div class="home-tabs" role="group" aria-label={t('home.categories')}>
-              {#each homeTabs as entry (entry.id)}
+        <section class="shelf-block">
+          <div class="shelf__head">
+            <h2 class="t-label">{t('home.recentAdded')}</h2>
+            <button class="btn btn--quiet btn--sm" onclick={() => setView('books')}>
+              {t('home.viewAll')} <Icon name="chevron-right" size={12} />
+            </button>
+          </div>
+          <div class="home-grid">
+            {#each recentAdded as item (item.id)}
+              <button
+                class="tile"
+                onclick={() => open(item)}
+                oncontextmenu={event => openMenu(event, item)}
+              >
+                <Cover itemId={item.id} size={320} title={title(item)} />
+                <span class="tile__title">{title(item)}</span>
+                <span class="tile__meta">
+                  {[seriesOf(item), ago(item.addedAt)].filter(Boolean).join(' · ') || author(item)}
+                </span>
+              </button>
+            {/each}
+          </div>
+        </section>
+
+        {#if readingSeries.length > 0}
+          <section class="shelf-block">
+            <div class="shelf__head">
+              <h2 class="t-label">{t('home.readingSeries')}</h2>
+            </div>
+            <div class="home-grid">
+              {#each readingSeries as entry (entry.name)}
                 <button
-                  class="home-tabs__item"
-                  aria-pressed={homeTab === entry.id}
-                  onclick={() => (homeTab = entry.id)}
+                  class="tile"
+                  onclick={() => {
+                    setView('series');
+                    group = entry.name;
+                  }}
                 >
-                  {t(entry.key)}
-                  <span class="home-tabs__count t-num">{entry.count}</span>
+                  <Cover itemId={entry.cover} size={320} title={entry.name} />
+                  <span class="tile__title">{entry.name}</span>
+                  <span class="tile__meta t-accent">
+                    {t('home.seriesHeard', { total: entry.volumes, heard: entry.heard })}
+                  </span>
                 </button>
               {/each}
             </div>
-
-            {#if homeTab === 'books'}
-              <div class="home-grid">
-                {#each recentAdded as entry (entry.item.id)}
-                  <button
-                    class="tile"
-                    onclick={() => open(entry.item)}
-                    oncontextmenu={event => openMenu(event, entry.item)}
-                  >
-                    <Cover itemId={entry.item.id} size={200} title={title(entry.item)} />
-                    <span class="tile__title">{title(entry.item)}</span>
-                    <span class="tile__meta">
-                      {#if entry.series}
-                        {t('home.seriesVolumes', { count: entry.volumes })}
-                        {#if ago(entry.item.addedAt)}· {ago(entry.item.addedAt)}{/if}
-                      {:else}
-                        {author(entry.item) || formatLength(entry.item.media?.duration ?? 0)}
-                      {/if}
-                    </span>
-                  </button>
-                {/each}
-              </div>
-            {:else}
-              <div class="home-groups">
-                {#each homeGroups as entry (entry.name)}
-                  <button
-                    class="home-group"
-                    onclick={() => {
-                      ui.setLibraryView(homeTab);
-                      group = entry.name;
-                    }}
-                  >
-                    <span class="home-group__cover">
-                      <Cover itemId={entry.items[0].id} size={96} title={entry.name} />
-                    </span>
-                    <span class="home-group__text">
-                      <span class="truncate">{entry.name}</span>
-                      <span class="t-small t-tertiary t-num">
-                        {t('library.count', { count: entry.items.length })}
-                      </span>
-                    </span>
-                    <Icon name="chevron-right" size={13} />
-                  </button>
-                {/each}
-                {#if homeGroups.length === 0}
-                  <p class="t-small t-tertiary">{t('library.noGroups')}</p>
-                {/if}
-              </div>
-            {/if}
           </section>
-        </div>
+        {/if}
       </div>
     {:else}
     <div class="viewbar">
@@ -650,7 +553,7 @@
 
       <div class="views">
         <div class="segmented segmented--views">
-          {#each VIEWS as entry (entry.id)}
+          {#each VIEWS.filter(entry => entry.id !== 'home') as entry (entry.id)}
             <button
               class="segmented__item"
               aria-pressed={view === entry.id}
@@ -803,55 +706,9 @@
     background: var(--hairline);
   }
 
-  .density {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 2px;
-    border-radius: var(--radius-pill);
-    background: var(--surface-inset);
-    border: 1px solid var(--hairline);
-  }
-
-  .density__stop {
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 20px;
-    border-radius: var(--radius-pill);
-    color: var(--text-tertiary);
-  }
-
-  .density__stop:hover {
-    background: var(--surface-raised);
-  }
-
-  .density__stop[aria-pressed='true'] {
-    background: var(--surface);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
-  }
-
-  .density__block {
-    display: block;
-    border-radius: 2px;
-    background: currentColor;
-  }
-
-  .density__stop[aria-pressed='true'] .density__block {
-    background: var(--accent);
-  }
-
-  .density__hud {
-    padding-inline: 7px 5px;
-    font-size: var(--text-2xs);
-    color: var(--text-tertiary);
-    white-space: nowrap;
-  }
-
   /* Narrow windows drop the least important controls instead of crushing the
      selects into a single letter that overlaps the search field. */
   @media (max-width: 1160px) {
-    .toolbar__right .density,
     .toolbar__right .toolbar__sep,
     .found { display: none; }
   }
@@ -860,119 +717,89 @@
     .toolbar__left .t-num { display: none; }
   }
 
-  .home__head {
+  /* ── Home: one vertical stack, no left column ──────────────────────────── */
+
+  .home {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-panel);
+    padding: var(--gap-block) var(--gap-block) var(--gap-panel);
+  }
+
+  .shelf__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
     gap: var(--gap-row);
-    margin-bottom: var(--gap-panel);
+    margin-bottom: var(--gap-inline);
   }
 
-  .home__head > div:first-child {
+  .now__card {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .home__head :global(.segmented--views) {
-    padding: 3px;
-    background: var(--surface-inset);
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-pill);
-  }
-
-  .home__head :global(.segmented__item) {
-    padding: 5px 12px;
-    color: var(--text-secondary);
-    font-size: var(--text-xs);
-  }
-
-  .home__head :global(.segmented__item[aria-pressed='true']) {
-    background: var(--accent);
-    color: var(--on-accent);
-  }
-
-  .home__cols {
-    display: grid;
-    grid-template-columns: minmax(250px, 30%) minmax(0, 1fr);
-    gap: var(--gap-section);
-    align-items: start;
-  }
-
-  .home__panel {
+    align-items: center;
+    gap: var(--gap-panel);
     padding: var(--gap-row);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
     background: var(--surface);
   }
 
-  .home__empty {
-    padding: var(--gap-panel) 0;
-  }
-
-  .hero {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: var(--gap-row);
+  .now__cover {
+    width: clamp(96px, 12vw, 132px);
+    flex: 0 0 auto;
+    aspect-ratio: 1;
     border-radius: var(--radius-sm);
-    background: linear-gradient(140deg, var(--accent-soft), var(--surface-raised));
-  }
-
-  .hero__top {
-    display: flex;
-    gap: var(--gap-row);
-    min-width: 0;
-  }
-
-  .hero__cover {
-    width: 76px;
-    flex: 0 0 76px;
-    border-radius: var(--radius-xs);
     overflow: hidden;
     box-shadow: var(--shadow-2);
   }
 
-  .hero__body {
+  .now__body {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     min-width: 0;
+    max-width: 720px;
   }
 
-  .hero__title {
-    font-size: var(--text-base);
+  .now__title {
+    font-size: var(--text-lg);
     font-weight: var(--weight-semibold);
+    line-height: 1.25;
   }
 
-  .hero__chapter {
+  .now__chapter {
     color: var(--text-secondary);
   }
 
-  .hero__bar {
+  .now__bar {
     height: 4px;
+    margin-top: 4px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
     overflow: hidden;
   }
 
-  .hero__bar > span {
+  .now__bar > span {
     display: block;
     height: 100%;
     background: var(--accent);
   }
 
-  .hero__foot {
+  .now__foot {
     display: flex;
     justify-content: space-between;
   }
 
-  .hero__actions {
+  .now__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    margin-top: 4px;
+  }
+
+  .home__empty {
+    padding: var(--gap-panel) 0;
   }
 
   .queue {
@@ -1060,103 +887,19 @@
   }
 
   @media (max-width: 900px) {
-    .home__cols {
-      grid-template-columns: minmax(0, 1fr);
+    .now__card {
+      gap: var(--gap-row);
+      padding: var(--gap-inline);
     }
-  }
-
-  /* One segmented row replaces the four navigational cards: same information,
-     but it switches content in place instead of leaving the page. */
-  .home-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 3px;
-    margin-bottom: var(--gap-block);
-    border-radius: var(--radius-pill);
-    background: var(--surface-inset);
-    border: 1px solid var(--hairline);
-  }
-
-  .home-tabs__item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: var(--radius-pill);
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-  }
-
-  .home-tabs__item:hover {
-    color: var(--text);
-  }
-
-  .home-tabs__item[aria-pressed='true'] {
-    background: var(--accent);
-    color: var(--on-accent);
-    font-weight: var(--weight-medium);
-  }
-
-  .home-tabs__count {
-    font-size: var(--text-2xs);
-    opacity: 0.7;
-  }
-
-  .home-groups {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--gap-row);
-  }
-
-  .home-group {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    padding: var(--gap-inline) var(--gap-row);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline);
-    background: var(--surface);
-    text-align: left;
-    color: var(--text-tertiary);
-  }
-
-  .home-group:hover {
-    background: var(--surface-raised);
-    border-color: var(--accent-line);
-    color: var(--accent);
-  }
-
-  .home-group__cover {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    border-radius: var(--radius-xs);
-    overflow: hidden;
-  }
-
-  .home-group__text {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    font-size: var(--text-sm);
-    color: var(--text);
+    .now__cover {
+      width: 84px;
+    }
   }
 
   .home-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: var(--gap-block) var(--gap-panel);
-  }
-
-  .section__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-row);
-    margin-bottom: var(--gap-row);
   }
 
   .toolbar__right {
@@ -1213,10 +956,6 @@
     flex: 1 1 auto;
     min-height: 0;
     padding: var(--gap-block);
-  }
-
-  .section {
-    margin-bottom: var(--gap-section);
   }
 
   .viewbar {
