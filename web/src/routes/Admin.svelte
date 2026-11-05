@@ -21,6 +21,7 @@
   } from '../lib/ipc';
   import { session } from '../lib/state.svelte';
   import { t, type TranslationKey } from '../lib/i18n.svelte';
+  import Dropdown from '../components/Dropdown.svelte';
   import Icon from '../components/Icon.svelte';
 
   type Tab = 'libraries' | 'upload' | 'users' | 'tasks' | 'backups';
@@ -287,22 +288,35 @@
           <div class="upload__grid">
             <label class="field">
               <span class="field__label">{t('upload.library')}</span>
-              <select class="select" bind:value={upLibrary}>
-                <option value="">—</option>
-                {#each bookLibraries as entry (entry.id)}
-                  <option value={entry.id}>{entry.name}</option>
-                {/each}
-              </select>
+              <Dropdown
+                value={upLibrary}
+                options={[
+                  { value: '', label: '—' },
+                  ...bookLibraries.map(entry => ({ value: entry.id, label: entry.name })),
+                ]}
+                onSelect={next => {
+                  upLibrary = next;
+                  upFolder = '';
+                }}
+                label={t('upload.library')}
+                variant="field"
+                align="start"
+              />
             </label>
 
             <label class="field">
               <span class="field__label">{t('upload.folder')}</span>
-              <select class="select" bind:value={upFolder}>
-                <option value="">—</option>
-                {#each upFolders as folder (folder.id)}
-                  <option value={folder.id}>{folder.fullPath}</option>
-                {/each}
-              </select>
+              <Dropdown
+                value={upFolder}
+                options={[
+                  { value: '', label: '—' },
+                  ...upFolders.map(folder => ({ value: folder.id, label: folder.fullPath })),
+                ]}
+                onSelect={next => (upFolder = next)}
+                label={t('upload.folder')}
+                variant="field"
+                align="start"
+              />
             </label>
 
             <label class="field">

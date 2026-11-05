@@ -12,6 +12,7 @@
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
   import LibrarySwitcher from '../components/LibrarySwitcher.svelte';
+  import Dropdown from '../components/Dropdown.svelte';
   import type { IconName } from '../components/Icon.svelte';
 
   // Reload whenever the active library or server changes.
@@ -52,7 +53,7 @@
 
   function keyOf(item: (typeof library.items)[number], by: View): string {
     const meta = item.media?.metadata;
-    if (by === 'series') return meta?.seriesName?.trim() ?? '';
+    if (by === 'series') return seriesOf(item);
     if (by === 'authors') return meta?.authorName?.trim() ?? '';
     if (by === 'narrators') return meta?.narratorName?.trim() ?? '';
     return '';
@@ -71,6 +72,46 @@
     return [...map.entries()]
       .map(([name, items]) => ({ name, items }))
       .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
+  });
+
+  /** Largest group, so the list view can draw a comparable share bar. */
+  const maxGroupSize = $derived(
+    groups.reduce((max, entry) => Math.max(max, entry.items.length), 1),
+  );
+
+  /**
+   * Home keeps the two-column shape: the listening history stays put on the
+   * left, and the right side switches what it lists. The four category cards
+   * that used to live here navigated away; a segmented row answers the same
+   * question in place, so the rail stays the only way to leave the page.
+   */
+  let homeTab = $state<'books' | 'series' | 'authors' | 'narrators'>('books');
+
+  function categoryCount(by: View): number {
+    return new Set(library.items.map(item => keyOf(item, by)).filter(Boolean)).size;
+  }
+
+  const homeTabs = $derived([
+    { id: 'books' as const, key: 'library.books' as TranslationKey, count: library.items.length },
+    { id: 'series' as const, key: 'library.series' as TranslationKey, count: categoryCount('series') },
+    { id: 'authors' as const, key: 'library.authors' as TranslationKey, count: categoryCount('authors') },
+    { id: 'narrators' as const, key: 'library.narrators' as TranslationKey, count: categoryCount('narrators') },
+  ]);
+
+  /** Grouped categories for the right-hand panel, largest group first. */
+  const homeGroups = $derived.by(() => {
+    if (homeTab === 'books') return [];
+    const map = new Map<string, typeof library.items>();
+    for (const item of library.items) {
+      const key = keyOf(item, homeTab);
+      if (!key) continue;
+      const bucket = map.get(key);
+      if (bucket) bucket.push(item);
+      else map.set(key, [item]);
+    }
+    return [...map.entries()]
+      .map(([name, items]) => ({ name, items }))
+      .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name, 'zh-CN'));
   });
 
   /** Pinyin-aware, multi-word, ranked. A title hit beats an author hit. */
@@ -124,27 +165,6 @@
     const meta = item.media?.metadata;
     return meta?.series?.[0]?.name?.trim() || meta?.seriesName?.trim() || '';
   }
-
-  /** Series already started — only worth a shelf when more than one volume. */
-  const readingSeries = $derived.by(() => {
-    const map = new Map<string, { name: string; volumes: number; heard: number; cover: string }>();
-    for (const item of library.items) {
-      const name = seriesOf(item);
-      if (!name) continue;
-      const entry = map.get(name);
-      const heard = progress.fraction(item.id) > 0 ? 1 : 0;
-      if (entry) {
-        entry.volumes += 1;
-        entry.heard += heard;
-      } else {
-        map.set(name, { name, volumes: 1, heard, cover: item.id });
-      }
-    }
-    return [...map.values()]
-      .filter(entry => entry.volumes > 1 && entry.heard > 0)
-      .sort((a, b) => b.heard / b.volumes - a.heard / a.volumes)
-      .slice(0, 12);
-  });
 
   /** "今天 / 3 天前" — the shelf reads better with a date than with a timestamp. */
   function ago(at?: number): string {
@@ -374,18 +394,30 @@
       {#if query.trim()}<span class="t-small t-num t-accent found">{t('library.found', { count: visible.length })}</span>{/if}
     {/if}
 
-    <select class="select select--sm" bind:value={filter} aria-label={t('library.filter')} title={t('library.filter')}>
-      <option value="all">{t('library.filter.all')}</option>
-      <option value="unfinished">{t('library.filter.unfinished')}</option>
-      <option value="finished">{t('library.filter.finished')}</option>
-    </select>
+    <Dropdown
+      value={filter}
+      options={[
+        { value: 'all', label: t('library.filter.all') },
+        { value: 'unfinished', label: t('library.filter.unfinished') },
+        { value: 'finished', label: t('library.filter.finished') },
+      ]}
+      onSelect={next => (filter = next as 'all' | 'unfinished' | 'finished')}
+      label={t('library.filter')}
+      variant="field"
+    />
 
-    <select class="select select--sm" bind:value={sort} aria-label={t('library.sort')} title={t('library.sort')}>
-      <option value="recent">{t('library.sort.recent')}</option>
-      <option value="title">{t('library.sort.title')}</option>
-      <option value="author">{t('library.sort.author')}</option>
-      <option value="progress">{t('library.sort.progress')}</option>
-    </select>
+    <Dropdown
+      value={sort}
+      options={[
+        { value: 'recent', label: t('library.sort.recent') },
+        { value: 'title', label: t('library.sort.title') },
+        { value: 'author', label: t('library.sort.author') },
+        { value: 'progress', label: t('library.sort.progress') },
+      ]}
+      onSelect={next => (sort = next as 'recent' | 'title' | 'author' | 'progress')}
+      label={t('library.sort')}
+      variant="field"
+    />
 
     <span class="toolbar__sep"></span>
 
@@ -435,135 +467,153 @@
   {:else}
     {#if isHome}
       <div class="home">
-        {#if recent.length > 0}
-          {@const top = recent[0]}
-          {@const chapter = reading.chapterAt(top, progress.for(top.id)?.currentTime ?? 0)}
-          {@const pct = Math.round(progress.fraction(top.id) * 100)}
-          <section class="now">
-            <div class="shelf__head">
-              <h2 class="t-label t-accent">{t('home.inProgress')}</h2>
+        <aside class="home__side">
+          <section class="home__panel">
+            <div class="panel__head">
+              <h2 class="t-label">{t('library.continue')}</h2>
               <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'continue')}>
                 {t('continue.viewAll')} <Icon name="chevron-right" size={12} />
               </button>
             </div>
 
-            <div class="now__card">
-              <button class="now__cover" onclick={() => open(top)} title={title(top)}>
-                <Cover itemId={top.id} size={280} title={title(top)} />
-              </button>
-              <div class="now__body">
-                <h3 class="now__title clamp-2">{title(top)}</h3>
-                <p class="t-small t-tertiary truncate">{author(top)}</p>
-                {#if chapter}
-                  <p class="t-small truncate now__chapter" title={chapter.title}>
-                    {t('continue.chapter', { index: chapter.index, total: chapter.total })} · {chapter.title}
-                  </p>
-                {/if}
-                <div class="now__bar" aria-hidden="true"><span style:width="{pct}%"></span></div>
-                <div class="now__foot t-num t-small t-tertiary">
-                  <span>{formatLength((top.media?.duration ?? 0) * progress.fraction(top.id))} / {formatLength(top.media?.duration ?? 0)}</span>
-                  <span>{t('player.bookProgress', { pct })}</span>
+            {#if recent.length > 0}
+              {@const top = recent[0]}
+              {@const chapter = reading.chapterAt(top, progress.for(top.id)?.currentTime ?? 0)}
+              {@const pct = Math.round(progress.fraction(top.id) * 100)}
+              <div class="hero">
+                <div class="hero__top">
+                  <button class="hero__cover" onclick={() => open(top)} title={title(top)}>
+                    <Cover itemId={top.id} size={240} title={title(top)} />
+                  </button>
+                  <div class="hero__body">
+                    <span class="hero__tag">{t('home.inProgress')}</span>
+                    <h3 class="hero__title clamp-2">{title(top)}</h3>
+                    <span class="t-small t-tertiary truncate">{author(top)}</span>
+                    {#if chapter}
+                      <span class="t-small t-tertiary truncate" title={chapter.title}>
+                        {t('continue.chapter', { index: chapter.index, total: chapter.total })} · {chapter.title}
+                      </span>
+                    {/if}
+                  </div>
                 </div>
-                <div class="now__actions">
+
+                <div class="hero__bar" aria-hidden="true"><span style:width="{pct}%"></span></div>
+                <div class="hero__foot t-num t-small t-tertiary">
+                  <span>{formatLength((top.media?.duration ?? 0) * progress.fraction(top.id))} / {formatLength(top.media?.duration ?? 0)}</span>
+                  <span>{pct}%</span>
+                </div>
+
+                <div class="hero__actions">
                   <button class="btn btn--primary btn--sm" onclick={() => resume(top)}>
                     <Icon name="play" size={13} /> {t('home.resume')}
                   </button>
                   <button class="btn btn--quiet btn--sm" onclick={() => open(top)}>{t('home.details')}</button>
                 </div>
               </div>
-            </div>
 
-            {#if recent.length > 1}
-              <div class="queue">
-                {#each recent.slice(1, 7) as item (item.id)}
-                  {@const fraction = progress.fraction(item.id)}
-                  <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
-                    <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
-                    <span class="queue__text">
-                      <span class="truncate">{title(item)}</span>
-                      <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
-                    </span>
-                    <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
-                  </button>
-                {/each}
-              </div>
+              {#if recent.length > 1}
+                <div class="queue">
+                  {#each recent.slice(1, 6) as item (item.id)}
+                    {@const fraction = progress.fraction(item.id)}
+                    <button class="queue__row" onclick={() => resume(item)} oncontextmenu={event => openMenu(event, item)}>
+                      <span class="queue__cover"><Cover itemId={item.id} size={96} title={title(item)} /></span>
+                      <span class="queue__text">
+                        <span class="truncate">{title(item)}</span>
+                        <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
+                      </span>
+                      <span class="t-num t-small t-tertiary">{Math.round(fraction * 100)}%</span>
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            {:else}
+              <p class="t-small t-tertiary home__empty">{t('continue.empty')}</p>
             {/if}
           </section>
-        {:else}
-          <p class="t-small t-tertiary home__empty">{t('continue.empty')}</p>
-        {/if}
+        </aside>
 
-        <section class="shelf-block">
-          <div class="shelf__head">
-            <h2 class="t-label">{t('home.recentAdded')}</h2>
-            <button class="btn btn--quiet btn--sm" onclick={() => setView('books')}>
+        <section class="home__main">
+          <div class="home__bar">
+            <div class="home-tabs" role="group" aria-label={t('home.categories')}>
+              {#each homeTabs as entry (entry.id)}
+                <button
+                  class="home-tabs__item"
+                  aria-pressed={homeTab === entry.id}
+                  onclick={() => (homeTab = entry.id)}
+                >
+                  {t(entry.key)}
+                  <span class="home-tabs__count t-num">{entry.count}</span>
+                </button>
+              {/each}
+            </div>
+            <button class="btn btn--quiet btn--sm home__all" onclick={() => setView(homeTab)}>
               {t('home.viewAll')} <Icon name="chevron-right" size={12} />
             </button>
           </div>
-          <div class="home-grid">
-            {#each recentAdded as item (item.id)}
-              <button
-                class="tile"
-                onclick={() => open(item)}
-                oncontextmenu={event => openMenu(event, item)}
-              >
-                <Cover itemId={item.id} size={320} title={title(item)} />
-                <span class="tile__title">{title(item)}</span>
-                <span class="tile__meta">
-                  {[seriesOf(item), ago(item.addedAt)].filter(Boolean).join(' · ') || author(item)}
-                </span>
-              </button>
-            {/each}
-          </div>
-        </section>
 
-        {#if readingSeries.length > 0}
-          <section class="shelf-block">
-            <div class="shelf__head">
-              <h2 class="t-label">{t('home.readingSeries')}</h2>
-            </div>
+          {#if homeTab === 'books'}
             <div class="home-grid">
-              {#each readingSeries as entry (entry.name)}
+              {#each recentAdded as item (item.id)}
                 <button
                   class="tile"
-                  onclick={() => {
-                    setView('series');
-                    group = entry.name;
-                  }}
+                  onclick={() => open(item)}
+                  oncontextmenu={event => openMenu(event, item)}
                 >
-                  <Cover itemId={entry.cover} size={320} title={entry.name} />
-                  <span class="tile__title">{entry.name}</span>
-                  <span class="tile__meta t-accent">
-                    {t('home.seriesHeard', { total: entry.volumes, heard: entry.heard })}
+                  <Cover itemId={item.id} size={320} title={title(item)} />
+                  <span class="tile__title">{title(item)}</span>
+                  <span class="tile__meta">
+                    {[seriesOf(item), ago(item.addedAt)].filter(Boolean).join(' · ') || author(item)}
                   </span>
                 </button>
               {/each}
             </div>
-          </section>
-        {/if}
+          {:else}
+            <div class="home-groups">
+              {#each homeGroups as entry (entry.name)}
+                <button
+                  class="home-group"
+                  onclick={() => {
+                    setView(homeTab);
+                    group = entry.name;
+                  }}
+                >
+                  <span class="home-group__cover">
+                    <Cover itemId={entry.items[0].id} size={96} title={entry.name} />
+                  </span>
+                  <span class="home-group__text">
+                    <span class="truncate">{entry.name}</span>
+                    <span class="t-small t-tertiary t-num">
+                      {t('library.count', { count: entry.items.length })}
+                    </span>
+                  </span>
+                  <Icon name="chevron-right" size={13} />
+                </button>
+              {/each}
+              {#if homeGroups.length === 0}
+                <p class="t-small t-tertiary home__empty">{t('library.noGroups')}</p>
+              {/if}
+            </div>
+          {/if}
+        </section>
       </div>
     {:else}
     <div class="viewbar">
       <div class="viewbar__head">
         <h1 class="viewbar__title">{group ?? viewName}</h1>
-        <span class="t-small t-tertiary t-num">
+        <span class="viewbar__count t-small t-tertiary t-num">
           {t('library.count', { count: visible.length })}
         </span>
       </div>
 
-      <div class="views">
-        <div class="segmented segmented--views">
-          {#each VIEWS.filter(entry => entry.id !== 'home') as entry (entry.id)}
-            <button
-              class="segmented__item"
-              aria-pressed={view === entry.id}
-              onclick={() => setView(entry.id)}
-            >{t(entry.key)}</button>
-          {/each}
-        </div>
+      <div class="segmented segmented--views">
+        {#each VIEWS.filter(entry => entry.id !== 'home') as entry (entry.id)}
+          <button
+            class="segmented__item"
+            aria-pressed={view === entry.id}
+            onclick={() => setView(entry.id)}
+          >{t(entry.key)}</button>
+        {/each}
       </div>
-
-      <p class="t-small t-tertiary viewbar__hint">{t('library.viewHint')}</p>
     </div>
 
     {#if group}
@@ -579,32 +629,26 @@
           <Icon name="book" size={26} />
           <span class="empty__title">{t('library.noGroups')}</span>
         </div>
-      {:else if isList}
-        <div class="groups-list">
-          {#each groups as entry (entry.name)}
-            <button class="groups-list__row" onclick={() => (group = entry.name)}>
-              <span class="groups-list__cover">
-                <Cover itemId={entry.items[0].id} size={96} title={entry.name} />
-              </span>
-              <span class="groups-list__text">
-                <span class="truncate">{entry.name}</span>
-                <span class="t-small t-tertiary">{t('library.count', { count: entry.items.length })}</span>
-              </span>
-              <span class="t-num t-small t-tertiary">{entry.items.length}</span>
-              <Icon name="chevron-right" size={13} />
-            </button>
-          {/each}
-        </div>
       {:else}
-        <div class="groups">
+        <!-- One tree, two shapes. The old build swapped two different DOM
+             branches, so a layout click looked like it did nothing whenever
+             the two branches happened to render similar cards. -->
+        <div class="groups" class:groups--list={isList}>
           {#each groups as entry (entry.name)}
             <button class="group" onclick={() => (group = entry.name)}>
               <span class="group__cover">
-                <Cover itemId={entry.items[0].id} size={120} title={entry.name} />
+                <Cover itemId={entry.items[0].id} size={160} title={entry.name} />
               </span>
               <span class="group__text">
                 <span class="truncate group__name">{entry.name}</span>
-                <span class="t-small t-tertiary t-num">{entry.items.length}</span>
+                <span class="t-small t-tertiary t-num">
+                  {t('library.count', { count: entry.items.length })}
+                </span>
+              </span>
+              <!-- The share bar only exists in list mode: it is the one extra
+                   fact worth a row that a card has no space for. -->
+              <span class="group__share" aria-hidden="true">
+                <span style:width="{Math.round((entry.items.length / maxGroupSize) * 100)}%"></span>
               </span>
               <Icon name="chevron-right" size={13} />
             </button>
@@ -691,12 +735,20 @@
     background: var(--surface);
   }
 
+  /* The library name truncates on its own; the count must never wrap into a
+     second line ("书库共 41" / "本") when the row gets tight. */
   .toolbar__left {
     display: flex;
     align-items: center;
     gap: var(--gap-inline);
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
+    white-space: nowrap;
+  }
+
+  .toolbar__left .t-num {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .toolbar__sep {
@@ -717,85 +769,206 @@
     .toolbar__left .t-num { display: none; }
   }
 
-  /* ── Home: one vertical stack, no left column ──────────────────────────── */
+  /* ── Home: history on the left, one category switch on the right ────────── */
 
   .home {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-panel);
+    display: grid;
+    grid-template-columns: clamp(264px, 25%, 336px) minmax(0, 1fr);
+    gap: var(--gap-section);
+    align-items: start;
     padding: var(--gap-block) var(--gap-block) var(--gap-panel);
   }
 
-  .shelf__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-row);
-    margin-bottom: var(--gap-inline);
+  .home__side {
+    min-width: 0;
   }
 
-  .now__card {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-panel);
+  .home__panel {
     padding: var(--gap-row);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
     background: var(--surface);
   }
 
-  .now__cover {
-    width: clamp(96px, 12vw, 132px);
-    flex: 0 0 auto;
-    aspect-ratio: 1;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    box-shadow: var(--shadow-2);
-  }
-
-  .now__body {
+  .panel__head {
     display: flex;
-    flex: 1 1 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-inline);
+    margin-bottom: var(--gap-row);
+  }
+
+  .home__main {
+    display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--gap-block);
     min-width: 0;
-    max-width: 720px;
   }
 
-  .now__title {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-semibold);
-    line-height: 1.25;
+  .home__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--gap-row);
   }
 
-  .now__chapter {
+  .home-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    border: 1px solid var(--hairline);
+  }
+
+  .home-tabs__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
     color: var(--text-secondary);
   }
 
-  .now__bar {
+  .home-tabs__item:hover {
+    color: var(--text);
+  }
+
+  .home-tabs__item[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: var(--weight-medium);
+  }
+
+  .home-tabs__count {
+    font-size: var(--text-2xs);
+    opacity: 0.72;
+  }
+
+  .home__all {
+    flex: 0 0 auto;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--gap-row);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(140deg, var(--accent-soft), var(--surface-raised));
+  }
+
+  .hero__top {
+    display: flex;
+    gap: var(--gap-row);
+    min-width: 0;
+  }
+
+  .hero__cover {
+    width: 84px;
+    flex: 0 0 84px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+  }
+
+  .hero__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .hero__tag {
+    font-size: var(--text-2xs);
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+
+  .hero__title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    line-height: 1.3;
+  }
+
+  .hero__bar {
     height: 4px;
-    margin-top: 4px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
     overflow: hidden;
   }
 
-  .now__bar > span {
+  .hero__bar > span {
     display: block;
     height: 100%;
     background: var(--accent);
   }
 
-  .now__foot {
+  .hero__foot {
     display: flex;
     justify-content: space-between;
+    gap: var(--gap-inline);
   }
 
-  .now__actions {
+  .hero__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 4px;
+  }
+
+  .home-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+    gap: var(--gap-inline);
+  }
+
+  .home-group {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    padding: var(--gap-inline);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    text-align: left;
+    color: var(--text-tertiary);
+  }
+
+  .home-group:hover {
+    background: var(--surface-raised);
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+
+  .home-group__cover {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+
+  .home-group__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  /* Below this the two columns cannot both stay readable, so the history card
+     moves above the switch instead of being crushed to 200 px. */
+  @media (max-width: 1080px) {
+    .home {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .home__empty {
@@ -841,58 +1014,14 @@
     font-size: var(--text-sm);
   }
 
-  .groups-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .groups-list__row {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    padding: 7px var(--gap-row);
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    text-align: left;
-    color: var(--text-tertiary);
-  }
-
-  .groups-list__row:nth-child(odd) {
-    background: var(--surface);
-  }
-
-  .groups-list__row:hover {
-    background: var(--surface-raised);
-    border-color: var(--accent-line);
-    color: var(--accent);
-  }
-
-  .groups-list__cover {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    border-radius: var(--radius-xs);
-    overflow: hidden;
-  }
-
-  .groups-list__text {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    font-size: var(--text-sm);
-    color: var(--text);
-  }
-
   @media (max-width: 900px) {
-    .now__card {
-      gap: var(--gap-row);
+    .hero {
+      gap: 6px;
       padding: var(--gap-inline);
     }
-    .now__cover {
-      width: 84px;
+    .hero__cover {
+      width: 72px;
+      flex-basis: 72px;
     }
   }
 
@@ -937,14 +1066,6 @@
     padding-left: 32px;
   }
 
-  .select--sm {
-    width: auto;
-    min-width: 84px;
-    max-width: 112px;
-    height: var(--control-sm);
-    font-size: var(--text-xs);
-  }
-
   .segmented--tools .segmented__item {
     display: grid;
     place-items: center;
@@ -958,13 +1079,16 @@
     padding: var(--gap-block);
   }
 
+  /* Title on the left, view switch on the right. Centred stacking made a
+     four-item pill stretch across the page and read as a toolbar of its own. */
   .viewbar {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: var(--gap-row) 0 var(--gap-block);
-    margin-bottom: var(--gap-row);
+    justify-content: space-between;
+    gap: var(--gap-row);
+    flex-wrap: wrap;
+    padding-bottom: var(--gap-row);
+    margin-bottom: var(--gap-block);
     border-bottom: 1px solid var(--hairline);
   }
 
@@ -972,46 +1096,46 @@
     display: flex;
     align-items: baseline;
     gap: var(--gap-inline);
+    min-width: 0;
   }
 
   .viewbar__title {
     font-size: var(--text-xl);
     font-weight: var(--weight-semibold);
     letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .views {
-    display: flex;
-    justify-content: center;
-    width: 100%;
+  .viewbar__count {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   /* Active view gets a solid accent pill: a grey underline was invisible. */
-  .views :global(.segmented--views) {
+  .viewbar :global(.segmented--views) {
+    flex: 0 0 auto;
     gap: 2px;
     padding: 3px;
     background: var(--surface-inset);
     border: 1px solid var(--hairline);
   }
 
-  .views :global(.segmented__item) {
+  .viewbar :global(.segmented__item) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 16px;
+    padding: 5px 14px;
     font-size: var(--text-sm);
     color: var(--text-secondary);
   }
 
-  .views :global(.segmented__item[aria-pressed='true']) {
+  .viewbar :global(.segmented__item[aria-pressed='true']) {
     background: var(--accent);
     color: var(--on-accent);
     font-weight: var(--weight-medium);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.14);
-  }
-
-  .viewbar__hint {
-    font-size: var(--text-2xs);
   }
 
   .mini-bar {
@@ -1134,18 +1258,26 @@
     text-align: right;
   }
 
+  /* Grid: cover-forward cards. List: one row per group with a share bar. The
+     two shapes are deliberately far apart so the toolbar toggle is never
+     ambiguous. */
   .groups {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
     gap: var(--gap-row);
     margin-bottom: var(--gap-section);
   }
 
+  .groups--list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
   .group {
     display: flex;
-    align-items: center;
-    gap: var(--gap-row);
-    padding: var(--gap-inline) var(--gap-row);
+    flex-direction: column;
+    gap: var(--gap-inline);
+    padding: var(--gap-inline);
     border-radius: var(--radius-sm);
     border: 1px solid var(--hairline);
     background: var(--surface);
@@ -1160,16 +1292,14 @@
   }
 
   .group__cover {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: var(--radius-xs);
     overflow: hidden;
   }
 
   .group__text {
     display: flex;
-    flex: 1 1 auto;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
@@ -1179,6 +1309,53 @@
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     color: var(--text);
+  }
+
+  .group__share {
+    display: none;
+  }
+
+  .groups--list .group {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--gap-row);
+    padding: 6px var(--gap-row);
+    border-color: transparent;
+  }
+
+  .groups--list .group:nth-child(odd) {
+    background: var(--surface-inset);
+  }
+
+  .groups--list .group__cover {
+    width: 40px;
+    height: 40px;
+    aspect-ratio: auto;
+    flex: 0 0 40px;
+  }
+
+  .groups--list .group__text {
+    flex: 1 1 auto;
+  }
+
+  .groups--list .group__share {
+    display: block;
+    width: 128px;
+    height: 3px;
+    flex: 0 0 128px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .groups--list .group__share > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-line);
+  }
+
+  .groups--list .group:hover .group__share > span {
+    background: var(--accent);
   }
 
   .group-back {

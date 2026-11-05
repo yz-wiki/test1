@@ -2,6 +2,57 @@
 
 Notable user-facing changes to Skald. Dates are the build cut dates.
 
+## 2.16.0 (2026-11-05) — preview
+
+The transport bar stops saying the same thing four times, and the app grows one
+select control instead of borrowing the operating system's.
+
+### Transport bar: three numbers, not four
+
+The row showed `5:48`, `本章剩余 11:11`, `全书 1%` and `剩 16:59:20` — four
+answers to "how far in am I", all in different units. It now reads as three
+questions:
+
+1. **What is playing** — cover, title, chapter or episode name.
+2. **Where am I** — transport, then `5:48 ────── 17:00` on the chapter scale,
+   then `第 2 / 62 章` and `全书 1%`. No countdown anywhere.
+3. **What can I change** — volume, speed, sleep, expand.
+
+The chapter count is now the chapter-list button itself: one control, one
+meaning, and the separate list icon is gone. The list handles books with over a
+thousand chapters by scrolling (off-screen rows are skipped by the engine) and
+by offering a filter box once there are more than 60.
+
+Times went from 10.5 px at 42% opacity to 12 px at 66%, tabular, so the elapsed
+time and the chapter length are actually readable.
+
+### One select, drawn by us
+
+Every `<select>` in the app opened the OS menu — grey hover bar, square
+corners, system font. Speed, chapter ranges, filters, sort, theme base, audio
+device, log level, EQ preset and the upload form now share a single popover
+component with the app's own tokens and keyboard handling. The chapter-range
+picker is gone entirely: both the book page and the player show one continuous
+chapter list with a search field.
+
+### Home keeps the two-column shape
+
+Left: continue-listening card plus the rest of the queue. Right: 书籍 / 系列 /
+作者 / 播讲者, with what you picked listed underneath. The switch changes
+content in place; the rail remains the only way to leave the page.
+
+### Smaller fixes
+
+- The author/series/narrator views now switch between a card grid and a row
+  list for real — one DOM tree with a modifier class, not two branches that
+  looked alike. List rows add a share bar showing how large each group is.
+- The rail's statistics block was a bordered card reading like a stray
+  tooltip; it is now `已听 1 / 41` with a completion bar.
+- Book page: a 收藏 toggle (kept locally — Audiobookshelf has no favourite
+  field), and one stats row under the progress bar with 已听 / 剩余 / 进度.
+- The view switch sits on the title row instead of stretching a four-item pill
+  across the page.
+
 ## 2.15.0 (2026-11-05) — preview
 
 Home stops being a second copy of the library, the player gets one vertical

@@ -213,10 +213,21 @@
 
       <div class="rail__spacer"></div>
 
-      <div class="rail__stats t-num">
-        <span class="t-small">{t('library.total', { count: library.items.length })}</span>
-        <span class="t-small t-tertiary">{t('book.listened')} {finishedCount}</span>
-      </div>
+      {#if library.items.length > 0}
+        <!-- Was a bordered card with two bare lines ("书库共 41 本" / "已听 1")
+             floating at the foot of the rail, reading as a stray tooltip.
+             A quiet row with a completion bar says the same thing and belongs
+             to the rail. -->
+        <div class="rail__stats">
+          <div class="rail__stats-head">
+            <span class="t-small">{t('book.listened')}</span>
+            <span class="t-small t-num t-tertiary">{finishedCount} / {library.items.length}</span>
+          </div>
+          <div class="rail__stats-bar" aria-hidden="true">
+            <span style:width="{Math.round((finishedCount / library.items.length) * 100)}%"></span>
+          </div>
+        </div>
+      {/if}
 
       <div class="rail__group rail__group--foot">
         <span class="rail__label t-label">{t('nav.section.system')}</span>
@@ -369,13 +380,32 @@
   .rail__stats {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
     padding: var(--gap-inline) var(--gap-row);
     margin-bottom: 2px;
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    border: 1px solid var(--hairline);
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
+  }
+
+  .rail__stats-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--gap-inline);
+    white-space: nowrap;
+  }
+
+  .rail__stats-bar {
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .rail__stats-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
   }
 
   /* The global .nav-item lives in design/components.css. Only its rail-specific

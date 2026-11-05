@@ -39,7 +39,8 @@
     | 'palette'
     | 'activity'
     | 'minus'
-    | 'trash';
+    | 'trash'
+    | 'star';
 
   let { name, size = 16, filled = false }: {
     name: IconName;
@@ -96,6 +97,8 @@
   {:else if name === 'clock'}
     <circle cx="8" cy="8" r="5.4" />
     <path d="M8 4.9V8l2.2 1.4" />
+  {:else if name === 'star'}
+    <path d="M8 2.3l1.78 3.6 3.97.58-2.87 2.8.68 3.95L8 11.66l-3.56 1.57.68-3.95-2.87-2.8 3.97-.58z" />
   {:else if name === 'skip-back'}
     <path d="M3.4 3.4v9.2" />
     <path d="M12.6 3.6L5.4 8l7.2 4.4z" fill="currentColor" stroke="none" />

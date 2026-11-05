@@ -84,6 +84,7 @@
   function label(hz: number): string {
     return hz >= 1000 ? `${Math.round(hz / 1000)}k` : String(Math.round(hz));
   }
+  import Dropdown from './Dropdown.svelte';
 </script>
 
 <div class="card" style="max-width: 720px">
@@ -109,24 +110,23 @@
         <span class="setting__label">{t('eq.preset')}</span>
       </div>
       <div class="setting__control">
-        <select
-          class="select"
-          disabled={!enabled}
-          value={preset ?? ''}
-          onchange={event => {
-            const value = event.currentTarget.value;
-            if (value === '') {
+        <Dropdown
+          value={preset === null || preset === undefined ? '' : String(preset)}
+          options={[
+            { value: '', label: preset ?? t('eq.flat') },
+            ...presets.map(entry => ({ value: String(entry.index), label: entry.name })),
+          ]}
+          onSelect={next => {
+            if (next === '') {
               void reset();
               return;
             }
-            void usePreset(Number(value));
+            void usePreset(Number(next));
           }}
-        >
-          <option value="">{preset ?? t('eq.flat')}</option>
-          {#each presets as entry (entry.index)}
-            <option value={entry.index}>{entry.name}</option>
-          {/each}
-        </select>
+          disabled={!enabled}
+          label={t('eq.preset')}
+          variant="field"
+        />
       </div>
     </div>
 

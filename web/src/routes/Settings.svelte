@@ -13,6 +13,7 @@
     type Locale,
     type TranslationKey,
   } from '../lib/i18n.svelte';
+  import Dropdown from '../components/Dropdown.svelte';
   import {
     getAudioDevices,
     getCacheDir,
@@ -385,15 +386,13 @@ import LogsPanel from '../components/LogsPanel.svelte';
               <span class="setting__hint">{t('settings.theme')}</span>
             </div>
             <div class="setting__control">
-              <select
-                class="select custom__select"
+              <Dropdown
                 value={ui.customBase}
-                onchange={event => ui.setCustomBase(event.currentTarget.value as ThemeId)}
-              >
-                {#each BASE_THEMES as id (id)}
-                  <option value={id}>{t(THEME_KEYS[id])}</option>
-                {/each}
-              </select>
+                options={BASE_THEMES.map(id => ({ value: id, label: t(THEME_KEYS[id]) }))}
+                onSelect={next => ui.setCustomBase(next as ThemeId)}
+                label={t('theme.base')}
+                variant="field"
+              />
             </div>
           </div>
 
@@ -447,16 +446,16 @@ import LogsPanel from '../components/LogsPanel.svelte';
               <span class="setting__hint">{t('settings.audioHint')}</span>
             </div>
             <div class="setting__control">
-              <select
-                class="select"
+              <Dropdown
                 value={deviceId}
-                onchange={event => void chooseDevice(event.currentTarget.value)}
-              >
-                <option value="">{t('settings.audioDefault')}</option>
-                {#each devices as device (device.id)}
-                  <option value={device.id}>{device.name}</option>
-                {/each}
-              </select>
+                options={[
+                  { value: '', label: t('settings.audioDefault') },
+                  ...devices.map(device => ({ value: device.id, label: device.name })),
+                ]}
+                onSelect={next => void chooseDevice(next)}
+                label={t('settings.audio')}
+                variant="field"
+              />
             </div>
           </div>
         </div>
@@ -808,13 +807,6 @@ import LogsPanel from '../components/LogsPanel.svelte';
 
   .custom__hint {
     margin-bottom: var(--gap-row);
-  }
-
-  .custom__select {
-    width: auto;
-    min-width: 130px;
-    height: var(--control-sm);
-    font-size: var(--text-xs);
   }
 
   .custom__grid {

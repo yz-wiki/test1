@@ -7,6 +7,7 @@
   import Icon from '../components/Icon.svelte';
   import SeekBar from '../components/SeekBar.svelte';
   import ProgressLine from '../components/ProgressLine.svelte';
+  import Dropdown from '../components/Dropdown.svelte';
 
   /** The blurb lives beside the cover and folds; it is not a tab. */
   let tab = $state<'chapters' | 'bookmarks'>('chapters');
@@ -91,13 +92,20 @@
     return set;
   });
 
-  /** Thousands of chapters cannot all be mounted; show one range at a time. */
-  const CHUNK = 100;
-  let chapterPage = $state(0);
-  const chapterRanges = $derived(Math.max(1, Math.ceil(chapters.length / CHUNK)));
-  const shownChapters = $derived(
-    chapters.slice(chapterPage * CHUNK, (chapterPage + 1) * CHUNK),
-  );
+  /**
+   * A 1 274-chapter book does not need pagination — it needs a list you can
+   * scroll and type into. The range `<select>` was a second navigation model
+   * bolted onto the first one: you had to know which hundred your chapter was
+   * in before you could look for it. The rows are cheap to skip when they are
+   * off screen (`content-visibility`), so one continuous list is enough.
+   */
+  let chapterQuery = $state('');
+  const filteredChapters = $derived.by(() => {
+    const query = chapterQuery.trim().toLowerCase();
+    const rows = chapters.map((chapter, index) => ({ chapter, index }));
+    if (!query) return rows;
+    return rows.filter(row => row.chapter.title.toLowerCase().includes(query));
+  });
 
   /** Which chapter a bookmark falls in — the list says "1:12:30 · 第 12 集"
    *  instead of a bare timestamp the listener cannot place. */
@@ -110,12 +118,7 @@
   let listEl = $state<HTMLDivElement | null>(null);
   $effect(() => {
     const index = player.chapterIndex;
-    if (!listEl || index < 0 || chapters.length <= CHUNK) return;
-    const page = Math.floor(index / CHUNK);
-    if (page !== chapterPage) {
-      chapterPage = page;
-      return;
-    }
+    if (!listEl || index < 0 || chapterQuery.trim()) return;
     const row = listEl.querySelector<HTMLElement>(`[data-chapter="${index}"]`);
     row?.scrollIntoView({ block: 'center' });
   });
@@ -279,15 +282,13 @@
             onSeek={seekChapter}
             disabled={player.duration <= 0}
           />
-          <div class="transport__times t-num t-small t-tertiary">
-            <span>{formatDuration(chapterPos)}</span>
+          <div class="transport__times t-num t-small">
+            <span class="transport__time">{formatDuration(chapterPos)}</span>
             {#if chapterLine}
               <span class="transport__chapter truncate">{chapterLine}</span>
             {/if}
-            <span>
-              {t('player.chapterLeft', {
-                time: formatDuration(Math.max((chapterLength || player.duration) - chapterPos, 0)),
-              })}
+            <span class="transport__time transport__time--total">
+              {formatDuration(chapterLength || player.duration)}
             </span>
           </div>
 
@@ -302,7 +303,7 @@
                 marks={bookmarkFractions}
               />
               <span class="book-bar__pct t-small t-num t-tertiary">
-                {t('player.bookLeft', { time: formatDuration(Math.max(player.duration - player.position, 0)) })}
+                {t('player.bookTotal', { time: formatDuration(player.duration) })}
               </span>
             </div>
           {/if}
@@ -310,15 +311,13 @@
 
           <div class="transport__extras">
             <span class="t-label tools__label">{t('player.speed')}</span>
-            <div class="segmented">
-              {#each RATES as rate (rate)}
-                <button
-                  class="segmented__item"
-                  aria-pressed={player.rate === rate}
-                  onclick={() => void player.setRate(rate)}
-                >{rate}×</button>
-              {/each}
-            </div>
+            <Dropdown
+              value={String(player.rate)}
+              options={RATES.map(rate => ({ value: String(rate), label: `${rate}×` }))}
+              onSelect={next => void player.setRate(Number(next))}
+              label={t('player.speed')}
+              variant="field"
+            />
 
             <span class="tools__divider"></span>
 
@@ -440,26 +439,17 @@
               {/if}
             </div>
           {:else}
-          {#if chapters.length > CHUNK}
+          {#if chapters.length > 60}
             <div class="chapter-range">
               <span class="t-small t-tertiary t-num">
-                {t('book.chapterRange', {
-                  from: chapterPage * CHUNK + 1,
-                  to: Math.min((chapterPage + 1) * CHUNK, chapters.length),
-                  total: chapters.length,
-                })}
+                {t('player.chapterCount', { count: chapters.length })}
               </span>
-              <select
-                class="select"
-                value={chapterPage}
-                onchange={event => (chapterPage = Number(event.currentTarget.value))}
-              >
-                {#each Array(chapterRanges) as _, index (index)}
-                  <option value={index}>
-                    {index * CHUNK + 1}–{Math.min((index + 1) * CHUNK, chapters.length)}
-                  </option>
-                {/each}
-              </select>
+              <input
+                class="input chapter-range__search"
+                bind:value={chapterQuery}
+                placeholder={t('player.chapterSearch')}
+                spellcheck="false"
+              />
             </div>
           {/if}
 
@@ -468,26 +458,29 @@
               <p class="t-small t-tertiary" style="padding: var(--gap-row)">
                 {player.chaptersLoading ? t('player.loadingChapters') : t('player.noChapters')}
               </p>
+            {:else if filteredChapters.length === 0}
+              <p class="t-small t-tertiary" style="padding: var(--gap-row)">
+                {t('library.empty')}
+              </p>
             {:else}
-              {#each shownChapters as chapter, offset (chapter.start)}
-                {@const index = chapterPage * CHUNK + offset}
+              {#each filteredChapters as row (row.chapter.start)}
                 <button
                   class="chapter"
-                  data-chapter={index}
-                  aria-current={index === player.chapterIndex ? 'true' : undefined}
-                  onclick={() => void player.seek(chapter.start)}
+                  data-chapter={row.index}
+                  aria-current={row.index === player.chapterIndex ? 'true' : undefined}
+                  onclick={() => void player.seek(row.chapter.start)}
                 >
-                  <span class="chapter__index t-num">{index + 1}</span>
+                  <span class="chapter__index t-num">{row.index + 1}</span>
                   <span class="chapter__body">
-                    <span class="truncate chapter__title">{chapter.title}</span>
+                    <span class="truncate chapter__title">{row.chapter.title}</span>
                     <span class="t-small t-num t-tertiary">
-                      {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
+                      {formatDuration(row.chapter.start)} · {formatDuration(row.chapter.end - row.chapter.start)}
                     </span>
                   </span>
-                  {#if flaggedChapters.has(index)}
+                  {#if flaggedChapters.has(row.index)}
                     <span class="chapter__flag" aria-hidden="true" title={t('player.bookmarks')}></span>
                   {/if}
-                  {#if index === player.chapterIndex}
+                  {#if row.index === player.chapterIndex}
                     <span class="chapter__dot" aria-hidden="true"></span>
                   {/if}
                 </button>
@@ -735,6 +728,20 @@
     font-weight: var(--weight-medium);
   }
 
+  /* Same rule as the bar: the playhead and the endpoint are the only two times,
+     both tabular and legible, and neither of them is a countdown. */
+  .transport__time {
+    flex: 0 0 auto;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+
+  .transport__time--total {
+    color: var(--text-tertiary);
+  }
+
   .transport__buttons {
     display: flex;
     align-items: center;
@@ -955,8 +962,8 @@
     padding-bottom: var(--gap-inline);
   }
 
-  .chapter-range .select {
-    width: 120px;
+  .chapter-range__search {
+    width: 140px;
     height: var(--control-sm);
     font-size: var(--text-xs);
   }
@@ -969,6 +976,8 @@
     gap: 2px;
   }
 
+  /* One continuous list of up to a few thousand rows: the engine skips the
+     off-screen ones, so no paging control is needed. */
   .chapter {
     display: flex;
     align-items: center;
@@ -977,6 +986,8 @@
     border-radius: var(--radius-sm);
     text-align: left;
     color: var(--text-secondary);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 44px;
   }
 
   .chapter:hover {

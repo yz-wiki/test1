@@ -11,6 +11,7 @@
   import { logs, formatLogTime, type LogLevel } from '../lib/logs.svelte';
   import { openLogDir } from '../lib/ipc';
   import { t } from '../lib/i18n.svelte';
+  import Dropdown from './Dropdown.svelte';
   import Icon from './Icon.svelte';
 
   let listEl = $state<HTMLDivElement | null>(null);
@@ -87,11 +88,14 @@
   </div>
 
   <div class="logs__tools">
-    <select class="select select--sm" bind:value={logs.minLevel} aria-label={t('logs.level')}>
-      {#each LEVELS as level (level.id)}
-        <option value={level.id}>{t(level.key)}</option>
-      {/each}
-    </select>
+    <Dropdown
+      value={logs.minLevel}
+      options={LEVELS.map(level => ({ value: level.id, label: t(level.key) }))}
+      onSelect={next => (logs.minLevel = next as typeof logs.minLevel)}
+      label={t('logs.level')}
+      variant="field"
+      align="start"
+    />
 
     <input class="input input--sm" bind:value={logs.query} placeholder={t('logs.filter')} spellcheck="false" />
 

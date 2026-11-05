@@ -5,6 +5,7 @@
   import { chapterSpans, player } from '../lib/player.svelte';
   import { playItem } from '../lib/playFlow';
   import { downloads } from '../lib/downloads.svelte';
+  import { favorites } from '../lib/favorites.svelte';
   import { t, formatDuration, formatLength } from '../lib/i18n.svelte';
   import Cover from '../components/Cover.svelte';
   import Icon from '../components/Icon.svelte';
@@ -42,15 +43,18 @@
   const isFinished = $derived(saved?.isFinished ?? false);
   const download = $derived(ui.itemId ? downloads.forItem(ui.itemId) : undefined);
   const transfer = $derived(ui.itemId ? downloads.transfers[ui.itemId] : undefined);
-  /** Chapters run into the thousands; the list shows one range at a time. */
-  const PAGE = 100;
-  let chapterPage = $state(0);
-  const chapterRanges = $derived(Math.max(1, Math.ceil(chapters.length / PAGE)));
-  const shownChapters = $derived(
-    chapters.slice(chapterPage * PAGE, (chapterPage + 1) * PAGE),
-  );
-  const rangeLabel = (index: number) =>
-    `${index * PAGE + 1}–${Math.min((index + 1) * PAGE, chapters.length)}`;
+  /**
+   * A 1 274-chapter book wants a list you can scroll and type into, not a
+   * range picker that makes you guess which hundred your chapter lives in.
+   * Rows are `content-visibility: auto`, so the off-screen ones cost nothing.
+   */
+  let chapterQuery = $state('');
+  const shownChapters = $derived.by(() => {
+    const query = chapterQuery.trim().toLowerCase();
+    return chapters
+      .map((chapter, index) => ({ chapter, index }))
+      .filter(row => !query || row.chapter.title.toLowerCase().includes(query));
+  });
 
   const transferPct = $derived(
     transfer && transfer.totalBytes > 0
@@ -65,7 +69,7 @@
     loading = true;
     error = null;
     detail = null;
-    chapterPage = 0;
+    chapterQuery = '';
     fetchItem(session.serverUrl, itemId)
       .then(result => {
         if (!cancelled) detail = result;
@@ -286,14 +290,39 @@
             <div class="resume__bar" aria-hidden="true">
               <span style:width="{fraction * 100}%"></span>
             </div>
-            <div class="resume__foot t-num">
-              <span>{t('book.listened')} {formatLength((item.media?.duration ?? 0) * fraction)}</span>
-              <span>{Math.round(fraction * 100)}%</span>
+            <!-- Three numbers, one row: what is behind you, what is ahead,
+                 and the share. Everything else about the book lives in
+                 `facts` below, so this panel never grows into a dashboard. -->
+            <div class="stats">
+              <div class="stat">
+                <span class="stat__label">{t('book.listened')}</span>
+                <span class="stat__value t-num">
+                  {formatDuration((item.media?.duration ?? 0) * fraction)}
+                </span>
+              </div>
+              <div class="stat">
+                <span class="stat__label">{t('book.remaining')}</span>
+                <span class="stat__value t-num">
+                  {formatDuration((item.media?.duration ?? 0) * (1 - fraction))}
+                </span>
+              </div>
+              <div class="stat">
+                <span class="stat__label">{t('book.done')}</span>
+                <span class="stat__value t-num">{Math.round(fraction * 100)}%</span>
+              </div>
             </div>
           </div>
         {/if}
 
         <div class="side__actions">
+          <button
+            class="btn btn--quiet btn--sm"
+            aria-pressed={favorites.has(item.id)}
+            onclick={() => favorites.toggle(item.id)}
+          >
+            <Icon name="star" size={13} filled={favorites.has(item.id)} />
+            {favorites.has(item.id) ? t('book.favorited') : t('book.favorite')}
+          </button>
           {#if fraction > 0}
             <button class="btn btn--quiet btn--sm" onclick={() => play(0)}>{t('book.restart')}</button>
           {/if}
@@ -415,37 +444,33 @@
           >{t('book.files')}</button>
         </div>
           {#if tab === 'chapters'}
-            {#if chapters.length > PAGE}
+            {#if chapters.length > 1}
               <div class="range">
                 <span class="t-small t-tertiary t-num">
-                  {t('book.chapterRange', {
-                    from: chapterPage * PAGE + 1,
-                    to: Math.min((chapterPage + 1) * PAGE, chapters.length),
-                    total: chapters.length,
-                  })}
+                  {t('player.chapterCount', { count: chapters.length })}
                 </span>
                 <div class="range__jump">
+                  {#if chapters.length > 60}
+                    <input
+                      class="input range__search"
+                      bind:value={chapterQuery}
+                      placeholder={t('player.chapterSearch')}
+                      spellcheck="false"
+                    />
+                  {/if}
                   <button
                     class="btn btn--quiet btn--sm"
                     onclick={() => {
-                      const index = chapters.findIndex(
-                        entry => entry.start > (saved?.currentTime ?? 0),
-                      );
-                      chapterPage = Math.max(
-                        0,
-                        Math.floor((index < 0 ? chapters.length - 1 : Math.max(index - 1, 0)) / PAGE),
-                      );
+                      const at = chapters.findIndex(entry => entry.start > (saved?.currentTime ?? 0));
+                      const index = Math.max(at < 0 ? chapters.length - 1 : at - 1, 0);
+                      chapterQuery = '';
+                      requestAnimationFrame(() => {
+                        document
+                          .querySelector(`[data-chapter="${index}"]`)
+                          ?.scrollIntoView({ block: 'center' });
+                      });
                     }}
                   >{t('book.jumpToCurrent')}</button>
-                  <select
-                    class="select"
-                    value={chapterPage}
-                    onchange={event => (chapterPage = Number(event.currentTarget.value))}
-                  >
-                    {#each Array(chapterRanges) as _, index (index)}
-                      <option value={index}>{rangeLabel(index)}</option>
-                    {/each}
-                  </select>
                 </div>
               </div>
             {/if}
@@ -459,11 +484,12 @@
             <p class="t-small t-tertiary">{t('player.noChapters')}</p>
           {:else}
             <ul class="rows">
-              {#each shownChapters as chapter, offset (chapter.start)}
-                {@const index = chapterPage * PAGE + offset}
+              {#each shownChapters as row (row.chapter.start)}
+                {@const chapter = row.chapter}
+                {@const index = row.index}
                 {@const file = fileFor(chapter)}
                 <li class="chapter-row">
-                  <button class="row" onclick={() => play(chapter.start)}>
+                  <button class="row" data-chapter={index} onclick={() => play(chapter.start)}>
                     <span class="row__index t-num">{index + 1}</span>
                     <span class="row__body">
                       <span class="truncate row__title">{chapter.title}</span>
@@ -580,6 +606,13 @@
     gap: 6px;
   }
 
+  /* Saved state uses the accent, like every other "on" control in the app. */
+  .side__actions :global(.btn[aria-pressed='true']) {
+    color: var(--accent);
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+
   .resume {
     display: flex;
     flex-direction: column;
@@ -616,11 +649,42 @@
     background: var(--accent);
   }
 
-  .resume__foot {
+  /* Listening stats: one row of three equal cells under the progress bar.
+     Values are tabular and near-full strength; labels stay quiet, so the eye
+     reads the numbers first and the captions only when it needs them. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gap-inline);
+    margin-top: var(--gap-inline);
+    padding-top: var(--gap-inline);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .stat {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .stat:last-child {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .stat__label {
     font-size: var(--text-2xs);
     color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  .stat__value {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .facts {
@@ -742,7 +806,8 @@
     border: 0;
   }
 
-  .range .select {
+  .range__search {
+    width: 128px;
     height: var(--control-sm);
     font-size: var(--text-xs);
   }
@@ -762,6 +827,8 @@
     border-radius: var(--radius-sm);
     text-align: left;
     color: var(--text-secondary);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 44px;
   }
 
   .row:hover {
