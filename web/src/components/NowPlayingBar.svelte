@@ -274,12 +274,17 @@
         <button
           type="button"
           class="bar__play"
-          aria-label={player.playing ? t('player.pause') : t('player.play')}
-          title={player.playing ? t('player.pause') : t('player.play')}
+          class:loading={player.loading}
+          aria-label={player.loading ? t('player.opening') : player.playing ? t('player.pause') : t('player.play')}
+          title={player.loading ? t('player.opening') : player.playing ? t('player.pause') : t('player.play')}
           onclick={() => void player.toggle()}
           disabled={player.loading}
         >
-          <Icon name={player.playing ? 'pause' : 'play'} size={16} />
+          {#if player.loading}
+            <span class="bar__spin" aria-hidden="true"></span>
+          {:else}
+            <Icon name={player.playing ? 'pause' : 'play'} size={16} />
+          {/if}
         </button>
 
         <button
@@ -294,9 +299,12 @@
         </button>
       </div>
 
-      <!-- RIGHT: controls only. Volume + device form one "quick actions"
-           group, matching how system volume panels pair mute and output. -->
+      <!-- RIGHT: two groups, not six loose controls. Quick actions (mute +
+           volume + device) mirror a system volume panel; tools (speed, sleep,
+           expand) are commands. The gap between them is what stops a narrow
+           window from collapsing every control into one crowded strip. -->
       <div class="bar__right">
+        <div class="bar__quick">
         <div class="bar__volume">
           <button
             type="button"
@@ -320,9 +328,11 @@
         </div>
 
         <DevicePicker placement="up" />
+        </div>
 
         <span class="bar__sep"></span>
 
+        <div class="bar__tools">
         <Dropdown
           value={String(player.rate)}
           options={RATES.map(rate => ({ value: rate, label: `${rate}×` }))}
@@ -365,6 +375,7 @@
           title={t('player.openPlayer')}
           onclick={() => player.expand()}
         ><Icon name="expand" size={14} /></button>
+        </div>
       </div>
     </div>
 
@@ -471,6 +482,7 @@
   }
 
   .bar__play {
+    position: relative;
     display: grid;
     place-items: center;
     width: 34px;
@@ -481,6 +493,22 @@
     color: var(--on-accent);
     box-shadow: 0 2px 10px var(--accent-soft);
     transition: background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+  }
+
+  /* Opening a stream is not instant; a spinner on the button is the receipt
+     that the click registered, so a slow server no longer reads as a dead
+     control. */
+  .bar__spin {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid rgb(255 255 255 / 0.4);
+    border-top-color: var(--on-accent);
+    animation: bar-spin 0.7s linear infinite;
+  }
+
+  @keyframes bar-spin {
+    to { transform: rotate(360deg); }
   }
 
   .bar__play:hover:not(:disabled) {
@@ -532,8 +560,25 @@
     align-items: center;
     justify-content: flex-end;
     justify-self: end;
-    gap: 3px;
+    gap: 6px;
     min-width: 0;
+  }
+
+  /* Only the quick group may shrink. The tools keep their intrinsic width, so
+     speed / sleep / expand never land on top of the slider. */
+  .bar__quick {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .bar__tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
   }
 
   .bar__anchored {
@@ -611,13 +656,19 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 0;
+    flex: 0 1 auto;
     padding-right: 2px;
   }
 
   /* Longer and always labelled: a 84px hairline with a hidden number was
-     hard to find and harder to set precisely. */
+     hard to find and harder to set precisely. The width is a ceiling now, so
+     the slider gives space back before anything overlaps. */
   .bar__slider {
+    flex: 1 1 auto;
     width: 132px;
+    min-width: 56px;
+    max-width: 132px;
   }
 
   .bar__pct {
@@ -760,7 +811,8 @@
 
   @media (max-width: 1160px) {
     .bar__slider {
-      width: 92px;
+      width: 100%;
+      max-width: 92px;
     }
     .bar__chip-title {
       display: none;
@@ -773,7 +825,9 @@
   @media (max-width: 1040px) {
     /* Keep the volume reachable; give up its number and some length first. */
     .bar__slider {
-      width: 68px;
+      width: 100%;
+      max-width: 68px;
+      min-width: 44px;
     }
     .bar__pct {
       display: none;

@@ -85,6 +85,16 @@ pub async fn cleanup_owned_playback_sessions(
 pub async fn play_audio(
     state: tauri::State<'_, Arc<Mutex<SessionManager>>>,
 ) -> Result<(), String> {
+    // A source build may still be indexing LibVLC's plugins in the background;
+    // starting playback concurrently would make LibVLC scan them again. Bounded
+    // and off the async runtime, and a no-op for packaged builds that ship the
+    // cache. (This is the local half of "first play feels slow" — the network
+    // half is the play-session request.)
+    let _ = tokio::task::spawn_blocking(|| {
+        crate::wait_vlc_cache(std::time::Duration::from_millis(2500));
+    })
+    .await;
+
     // Clone the player Arc out of the lock before any async work — the tokio
     // MutexGuard must not be held across .await points.
     let player_arc = Arc::clone(&state.lock().await.player);
@@ -97,12 +107,13 @@ pub async fn play_audio(
             None    => Err("No audio player initialized".to_string()),
         }
     };
-    // LibVLC may need a moment to start after play() is called — the media
-    // loader runs on an internal LibVLC thread. Poll up to 2 s (20 × 100 ms)
-    // so the frontend's optimistic st.setPlaying(true) reflects actual state.
+    // LibVLC starts the media on an internal thread, so give it a short window
+    // to reach Playing. 40 ms steps (1 s ceiling) rather than 100 ms × 20: the
+    // frontend awaits this call before it can show the transport as live, and
+    // the coarse 100 ms grid was adding up to 2 s of dead time on a slow open.
     if play_result.is_ok() {
-        for _ in 0..20 {
-            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        for _ in 0..25 {
+            tokio::time::sleep(tokio::time::Duration::from_millis(40)).await;
             // Each lock/check/drop is synchronous — no guard held across await.
             let (is_playing, failed) = player_arc
                 .lock()

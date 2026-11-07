@@ -37,6 +37,58 @@ pub fn redact_url(url: &str) -> String {
     if cut < url.len() { format!("{}?…", &url[..cut]) } else { url.to_string() }
 }
 
+/// Held while LibVLC's module index (`plugins.dat`) is being rebuilt.
+///
+/// A build only happens when the packaged cache is missing — a source build, or
+/// a portable folder whose cache was deleted. LibVLC would otherwise start its
+/// own concurrent scan on the first `Instance::new()`, so the first play waits
+/// for ours instead of racing it.
+static VLC_CACHE_BUILD: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Index `plugins/` off the UI thread so the window is never blocked by it.
+pub fn spawn_vlc_cache_build(cache_gen: std::path::PathBuf, plugins: std::path::PathBuf) {
+    std::thread::spawn(move || {
+        let _guard = VLC_CACHE_BUILD.lock().unwrap_or_else(|e| e.into_inner());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            let mut cmd = std::process::Command::new(&cache_gen);
+            cmd.arg(&plugins);
+            cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+            match cmd.status() {
+                Ok(s) => log::info!(target: "skald::app",
+                    "built LibVLC plugin cache in the background (exit {:?})", s.code()),
+                Err(e) => log::warn!(target: "skald::app",
+                    "LibVLC plugin cache build failed: {e}"),
+            }
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = (cache_gen, plugins);
+        }
+    });
+}
+
+/// Block at most `timeout` until no cache build is running.
+///
+/// Returns immediately when nothing is running, which is the normal case: the
+/// shipped package already contains `plugins.dat`.
+pub fn wait_vlc_cache(timeout: std::time::Duration) {
+    let deadline = std::time::Instant::now() + timeout;
+    loop {
+        match VLC_CACHE_BUILD.try_lock() {
+            Ok(guard) => {
+                drop(guard);
+                return;
+            }
+            Err(std::sync::TryLockError::WouldBlock) if std::time::Instant::now() < deadline => {
+                std::thread::sleep(std::time::Duration::from_millis(40));
+            }
+            Err(_) => return,
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // WebKitGTK's DMA-BUF renderer can produce a fully transparent/black
@@ -192,18 +244,18 @@ pub fn run() {
             // Instance::new() call. Windows always ships this tree. Native Linux
             // packages intentionally leave VLC_PLUGIN_PATH alone so the system
             // LibVLC can use its distro-managed plugin discovery.
+            //
+            // When `plugins.dat` is missing, build it — but never here, because
+            // this runs before the window exists: a 190-DLL scan on a freshly
+            // unzipped portable folder was experienced as a blank window for
+            // several seconds. The job is handed to a background thread right
+            // after the window is up; `wait_vlc_cache` keeps the first play
+            // from racing it.
+            #[cfg_attr(not(windows), allow(unused_mut))]
+            let mut vlc_cache_job: Option<(std::path::PathBuf, std::path::PathBuf)> = None;
             if let Ok(resource_dir) = app.path().resource_dir() {
                 let plugins = resource_dir.join("plugins");
 
-                // Pre-build the LibVLC plugin cache (plugins.dat) when it's missing.
-                // Without it, libvlccore rebuilds the cache on the first Instance::new()
-                // (i.e. first playback) — on Windows that spawns the console-subsystem
-                // vlc-cache-gen and/or rescans every plugin, flashing command-prompt
-                // windows and adding a multi-second first-play delay. The NSIS installer
-                // builds this at install time for production; a dev run (no installer)
-                // has no cache, so build it here. Idempotent (skipped once present) and
-                // run WINDOWLESS. vlc-cache-gen needs libvlccore.dll in its own dir (it
-                // sits beside it in resource_dir) and an ABSOLUTE plugins path.
                 #[cfg(windows)]
                 {
                     std::env::set_var("VLC_PLUGIN_PATH", &plugins);
@@ -212,14 +264,7 @@ pub fn run() {
                         && plugins.is_dir()
                         && !plugins.join("plugins.dat").exists()
                     {
-                        let mut cmd = std::process::Command::new(&cache_gen);
-                        cmd.arg(&plugins);
-                        use std::os::windows::process::CommandExt;
-                        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
-                        match cmd.status() {
-                            Ok(s) => log::info!(target: "skald::app", "built LibVLC plugin cache (exit {:?})", s.code()),
-                            Err(e) => log::warn!(target: "skald::app", "LibVLC plugin cache build failed: {e}"),
-                        }
+                        vlc_cache_job = Some((cache_gen, plugins.clone()));
                     }
                 }
 
@@ -308,6 +353,13 @@ pub fn run() {
             // Confirm the handler was disabled at startup — regressing this silently
             // re-breaks all internal DOM drags (see CLAUDE.md critical lesson 12).
             log::info!(target: "skald::app", "opaque window '{}' created with file-drop handler disabled and general autofill off", win.label());
+
+            // The window is up: index LibVLC's plugins in the background instead
+            // of behind a blank screen. Packaged builds ship plugins.dat, so this
+            // is normally a no-op.
+            if let Some((cache_gen, plugins)) = vlc_cache_job {
+                spawn_vlc_cache_build(cache_gen, plugins);
+            }
 
             // Start the local-podcast auto-download scheduler (launch catch-up +
             // per-minute cron evaluation). No-op until a podcast enables it.

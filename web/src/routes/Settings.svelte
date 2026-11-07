@@ -27,6 +27,7 @@
   import EqPanel from '../components/EqPanel.svelte';
   import Icon from '../components/Icon.svelte';
 import LogsPanel from '../components/LogsPanel.svelte';
+  import { ACTIONS, bindingFromEvent, bindingLabel, keymap, type ActionId } from '../lib/keymap.svelte';
 
   /** Appearance + language are one concern (Display); account + server are
    *  one concern (Account & server). Fewer panes, less hunting. */
@@ -73,15 +74,60 @@ import LogsPanel from '../components/LogsPanel.svelte';
     custom: ['#f5f7fb', '#ffffff', '#3b6ef5'],
   };
 
-  const SHORTCUTS: { keys: string; key: TranslationKey }[] = [
-    { keys: 'Space / K', key: 'keys.playPause' },
-    { keys: '← / →', key: 'keys.seek' },
-    { keys: 'Shift + ← / →', key: 'keys.seekLong' },
-    { keys: '[ / ]', key: 'keys.step' },
-    { keys: 'Esc', key: 'keys.escape' },
-    { keys: 'Ctrl + F', key: 'keys.search' },
-    { keys: 'Ctrl + ,', key: 'keys.settings' },
-  ];
+  // ── Keyboard map ────────────────────────────────────────────────────────
+  // The list is data, not a hand-written table: the same ACTIONS array drives
+  // the global listener and this screen, so a rebound key cannot drift from
+  // what the app actually responds to.
+  let recording = $state<{ id: ActionId; index: number } | null>(null);
+  let keyConflict = $state<string | null>(null);
+
+  function beginRecord(id: ActionId, index: number): void {
+    recording = { id, index };
+    keyConflict = null;
+  }
+
+  function actionLabel(id: ActionId): string {
+    const action = ACTIONS.find(entry => entry.id === id);
+    return action ? t(action.label) : id;
+  }
+
+  function onRecordKey(event: KeyboardEvent): void {
+    if (!recording) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.code === 'Escape') {
+      recording = null;
+      return;
+    }
+    if (event.code === 'Backspace') {
+      const { id, index } = recording;
+      if (index >= 0) {
+        const binding = keymap.bindingsOf(id)[index];
+        if (binding) keymap.remove(id, binding);
+      }
+      recording = null;
+      return;
+    }
+
+    const binding = bindingFromEvent(event);
+    if (!binding) return;
+    const other = keymap.conflict(binding, recording.id);
+    if (other) {
+      keyConflict = t('keys.conflict', { action: actionLabel(other) });
+      return;
+    }
+    if (recording.index < 0) keymap.add(recording.id, binding);
+    else keymap.replace(recording.id, recording.index, binding);
+    recording = null;
+  }
+
+  $effect(() => {
+    if (!recording) return;
+    const handler = (event: KeyboardEvent) => onRecordKey(event);
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  });
 
   function initialSection(): Section {
     const raw = ui.settingsSection as string;
@@ -182,6 +228,50 @@ import LogsPanel from '../components/LogsPanel.svelte';
     }
   }
 </script>
+
+{#snippet keyRow(action: (typeof ACTIONS)[number])}
+  <div class="setting">
+    <div class="setting__main">
+      <span class="setting__label">{t(action.label)}</span>
+      {#if keymap.isCustom(action.id)}
+        <span class="setting__hint">{t('keys.customized')}</span>
+      {/if}
+    </div>
+    <div class="setting__control keymap__chips">
+      {#each keymap.bindingsOf(action.id) as binding, index (binding.code + index)}
+        <button
+          class="kbd kbd--key"
+          class:recording={recording?.id === action.id && recording?.index === index}
+          onclick={() => beginRecord(action.id, index)}
+          title={t('keys.rebind')}
+        >
+          {recording?.id === action.id && recording?.index === index
+            ? t('keys.press')
+            : bindingLabel(binding)}
+        </button>
+      {/each}
+      <button
+        class="kbd kbd--add"
+        class:recording={recording?.id === action.id && recording?.index === -1}
+        onclick={() => beginRecord(action.id, -1)}
+        title={t('keys.add')}
+        aria-label={t('keys.add')}
+      >
+        {recording?.id === action.id && recording?.index === -1 ? t('keys.press') : '+'}
+      </button>
+      {#if keymap.isCustom(action.id)}
+        <button
+          class="keymap__reset"
+          onclick={() => keymap.reset(action.id)}
+          title={t('keys.reset')}
+          aria-label={t('keys.reset')}
+        >
+          <Icon name="refresh" size={12} />
+        </button>
+      {/if}
+    </div>
+  </div>
+{/snippet}
 
 <div class="settings">
   <nav class="settings__nav" aria-label={t('settings.title')}>
@@ -508,19 +598,36 @@ import LogsPanel from '../components/LogsPanel.svelte';
       </section>
     {:else if section === 'keyboard'}
       <section class="card">
+        <div class="card__head keymap__head">
+          <span class="t-label">{t('keys.playbackGroup')}</span>
+          <span class="keymap__spacer"></span>
+          <button class="btn btn--quiet btn--sm" onclick={() => keymap.resetAll()}>
+            <Icon name="refresh" size={13} />
+            {t('keys.resetAll')}
+          </button>
+        </div>
         <div class="card__body">
-          {#each SHORTCUTS as row (row.keys)}
-            <div class="setting">
-              <div class="setting__main">
-                <span class="setting__label">{t(row.key)}</span>
-              </div>
-              <div class="setting__control">
-                <kbd class="kbd">{row.keys}</kbd>
-              </div>
-            </div>
+          {#each ACTIONS.filter(action => action.group === 'playback') as action (action.id)}
+            {@render keyRow(action)}
           {/each}
         </div>
       </section>
+
+      <section class="card">
+        <div class="card__head">
+          <span class="t-label">{t('keys.navigationGroup')}</span>
+        </div>
+        <div class="card__body">
+          {#each ACTIONS.filter(action => action.group === 'navigation') as action (action.id)}
+            {@render keyRow(action)}
+          {/each}
+        </div>
+      </section>
+
+      {#if keyConflict}
+        <p class="t-small form-error" role="alert">{keyConflict}</p>
+      {/if}
+      <p class="t-small t-tertiary keymap__hint">{t('keys.hint')}</p>
     {:else if section === 'account'}
       <section class="card">
         <div class="card__body">
@@ -987,6 +1094,70 @@ import LogsPanel from '../components/LogsPanel.svelte';
     font-family: var(--font-num);
     font-size: var(--text-xs);
     white-space: nowrap;
+  }
+
+  /* ── Keyboard map ─────────────────────────────────────────────────────── */
+  .keymap__head {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+  }
+
+  .keymap__spacer {
+    flex: 1 1 auto;
+  }
+
+  .keymap__chips {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .kbd--key,
+  .kbd--add {
+    cursor: pointer;
+    transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+      color var(--dur-1) var(--ease);
+  }
+
+  .kbd--key:hover,
+  .kbd--add:hover {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+
+  .kbd--add {
+    min-width: 24px;
+    padding-inline: 5px;
+    color: var(--text-tertiary);
+  }
+
+  .kbd.recording {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .keymap__reset {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-xs);
+    color: var(--text-tertiary);
+    transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  }
+
+  .keymap__reset:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .keymap__hint {
+    padding-inline: var(--gap-hair);
   }
 
   .dot {

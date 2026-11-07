@@ -44,6 +44,66 @@
 
   let open = $state(false);
   let root = $state<HTMLDivElement | null>(null);
+  let btnEl = $state<HTMLButtonElement | null>(null);
+  let menuEl = $state<HTMLDivElement | null>(null);
+
+  /**
+   * The menu is `position: fixed` and placed from the trigger's viewport rect.
+   *
+   * Absolute positioning inside the trigger looked correct until the control
+   * sat in a scrolling pane: the settings body clips its children, so the
+   * language list was cut off halfway down. Fixed coordinates escape every
+   * ancestor `overflow`, and the clamp below keeps the list inside the window
+   * on all four edges.
+   */
+  let pos = $state({ left: 0, top: 0, width: 0, maxHeight: 280, ready: false });
+
+  function place(): void {
+    if (!btnEl) return;
+    const rect = btnEl.getBoundingClientRect();
+    const gap = 6;
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const menuWidth = width
+      ? parseFloat(width)
+      : Math.max(rect.width, menuEl?.offsetWidth ?? 0, 160);
+    const menuHeight = menuEl?.offsetHeight ?? 0;
+
+    let left = align === 'start' ? rect.left : rect.right - menuWidth;
+    left = Math.min(Math.max(margin, left), Math.max(margin, vw - menuWidth - margin));
+
+    let top = placement === 'up' ? rect.top - menuHeight - gap : rect.bottom + gap;
+    if (top < margin) top = rect.bottom + gap;
+    if (menuHeight > 0 && top + menuHeight > vh - margin) {
+      top = Math.max(margin, rect.top - menuHeight - gap);
+    }
+
+    pos = {
+      left,
+      top,
+      width: menuWidth,
+      maxHeight: Math.max(120, Math.min(280, vh - top - margin)),
+      ready: true,
+    };
+  }
+
+  $effect(() => {
+    if (!open) {
+      pos = { left: 0, top: 0, width: 0, maxHeight: 280, ready: false };
+      return;
+    }
+    // One frame so the menu exists and has a measurable height.
+    const frame = requestAnimationFrame(place);
+    const follow = () => place();
+    window.addEventListener('resize', follow);
+    window.addEventListener('scroll', follow, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', follow);
+      window.removeEventListener('scroll', follow, true);
+    };
+  });
 
   function choose(next: string): void {
     open = false;
@@ -80,6 +140,7 @@
   <button
     type="button"
     class="drop__btn"
+    bind:this={btnEl}
     aria-haspopup="listbox"
     aria-expanded={open}
     aria-label={label || undefined}
@@ -94,10 +155,13 @@
   {#if open}
     <div
       class="drop__menu"
-      class:start={align === 'start'}
-      class:up={placement === 'up'}
       role="listbox"
-      style:width={width || undefined}
+      bind:this={menuEl}
+      style:left="{pos.left}px"
+      style:top="{pos.top}px"
+      style:width={pos.width ? `${pos.width}px` : undefined}
+      style:max-height="{pos.maxHeight}px"
+      style:visibility={pos.ready ? 'visible' : 'hidden'}
     >
       {#each rows as row (row.value)}
         <button
@@ -177,32 +241,21 @@
     transform: rotate(180deg);
   }
 
+  /* Fixed, not absolute: the coordinates come from place() and escape any
+     scrolling / clipping ancestor. */
   .drop__menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 60;
+    position: fixed;
+    z-index: 90;
     display: flex;
     flex-direction: column;
     gap: 1px;
-    min-width: 100%;
-    max-height: 280px;
+    max-height: 280px; /* replaced inline by the viewport-clamped value */
     overflow-y: auto;
     padding: 4px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--hairline-strong);
     background: var(--surface-overlay);
     box-shadow: var(--shadow-2);
-  }
-
-  .drop__menu.start {
-    right: auto;
-    left: 0;
-  }
-
-  .drop__menu.up {
-    top: auto;
-    bottom: calc(100% + 6px);
   }
 
   .drop__item {

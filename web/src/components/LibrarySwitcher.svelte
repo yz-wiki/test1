@@ -14,6 +14,45 @@
 
   let open = $state(false);
   let root = $state<HTMLDivElement | null>(null);
+  let btnEl = $state<HTMLButtonElement | null>(null);
+
+  /** The rail scrolls (`overflow-y: auto`), which clipped this popover the
+      moment it opened near the bottom of the list. Fixed coordinates measured
+      from the trigger escape that clip and stay inside the window. */
+  let popPos = $state({ left: 0, top: 0, width: 220, maxHeight: 320, ready: false });
+
+  function place(): void {
+    if (!btnEl) return;
+    const rect = btnEl.getBoundingClientRect();
+    const margin = 8;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const width = Math.min(280, Math.max(210, vw - 32));
+    const left = Math.min(Math.max(margin, rect.left), Math.max(margin, vw - width - margin));
+    const top = rect.bottom + 6;
+    popPos = {
+      left,
+      top,
+      width,
+      maxHeight: Math.max(160, Math.min(320, vh - top - margin)),
+      ready: true,
+    };
+  }
+
+  $effect(() => {
+    if (!open) {
+      popPos = { ...popPos, ready: false };
+      return;
+    }
+    const frame = requestAnimationFrame(place);
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  });
 
   onMount(() => {
     const onPointer = (event: PointerEvent) => {
@@ -39,6 +78,7 @@
 <div class="switcher" bind:this={root}>
   <button
     class="switcher__btn"
+    bind:this={btnEl}
     aria-label={t('library.switch')}
     title={t('library.switch')}
     aria-expanded={open}
@@ -50,7 +90,15 @@
   </button>
 
   {#if open}
-    <div class="pop" role="menu">
+    <div
+      class="pop"
+      role="menu"
+      style:left="{popPos.left}px"
+      style:top="{popPos.top}px"
+      style:width="{popPos.width}px"
+      style:max-height="{popPos.maxHeight}px"
+      style:visibility={popPos.ready ? 'visible' : 'hidden'}
+    >
       <div class="pop__head t-label">{t('library.switch')}</div>
       <div class="pop__list scroll-y">
         {#each session.libraries as lib (lib.id)}
@@ -110,14 +158,12 @@
     color: var(--text-tertiary);
   }
 
+  /* Fixed: the sidebar scrolls, so an absolute popover was clipped by its
+     own container. Coordinates come from place(). */
   .pop {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    z-index: 40;
-    width: max-content;
-    min-width: 210px;
-    max-width: min(280px, calc(100vw - 32px));
+    position: fixed;
+    z-index: 80;
+    overflow-y: auto;
     padding: 5px;
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline-strong);

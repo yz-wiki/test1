@@ -218,7 +218,10 @@
 .hl {
   position: relative;
   border-radius: var(--radius-sm);
-  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  transition:
+    background-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease),
+    box-shadow var(--dur-1) var(--ease);
 }
 
 .hl:hover {
@@ -230,20 +233,15 @@
   outline-offset: -2px;
 }
 
-.hl[aria-current='true'] {
+/* One ring for both "this is playing" and "this is selected".
+   The old current state drew a 3px bar on the left edge while the selected
+   state drew a 1px inset ring, so the same row changed size depending on which
+   state it was in — which read as two differently sized boxes. */
+.hl[aria-current='true'],
+.hl.selected {
   background: var(--accent-soft);
   color: var(--text);
-}
-
-.hl[aria-current='true']::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 18%;
-  bottom: 18%;
-  width: 3px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 
 .hl[aria-current='true']:hover {

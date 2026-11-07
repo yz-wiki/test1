@@ -2,6 +2,76 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.2 (2026-11-07) — instant open, real cards, one selection box
+
+### Opening something no longer looks broken
+
+- The portable package now ships LibVLC's `plugins.dat`. Without it the app
+  indexed ~190 plugin DLLs during startup, **before the window existed** — the
+  blank window and the "several seconds before anything plays" were the same
+  scan. `lib.rs` also moved the scan off the startup path: if the cache is
+  missing (source build), the window appears first and the index is built in the
+  background; the first play waits for it instead of racing LibVLC's own scan.
+- `play_audio` polls for the Playing state in 40 ms steps (1 s ceiling, was
+  100 ms × 20 = 2 s), so the transport stops waiting after the sound started.
+- Opening a title now shows the player screen and a spinner on the play button
+  immediately, instead of switching only after the stream was negotiated. A
+  failure collapses back out. Volume and rate commands no longer sit in front of
+  `play()`; they fire in parallel with it.
+
+### Library cards
+
+- The compact layout is a card, not a dense row: cover on the left, then title,
+  author and a metadata line (series · chapter · duration), with progress and a
+  chevron on the right. Home's book shelf uses the same three-line split.
+- Cards have a surface, a border, a 10 px gap and a 44 px cover, so the grid
+  reads as a collection instead of a spreadsheet. The layout picker now says
+  "Cards" instead of "Small cards".
+
+### Player and bar
+
+- Player right wing: sleep | device (icon only) | volume. The device label used
+  to print the full Windows device name, which is arbitrary length and pushed
+  the slider under the sleep button. The volume group is the only part allowed
+  to shrink.
+- The bar's right side is split into quick actions (mute + volume + device) and
+  commands (speed, sleep, expand); only the quick group shrinks, so nothing can
+  overlap at narrow widths.
+- Lower panels: `剩 {time}` / `共 {time}` were rendered with the placeholder
+  unfilled because those labels were written for inline values. They are now
+  plain labels (`Left` / `Total`) beside their own values, and the bookmark
+  input can no longer push the Add button out of the card.
+
+### Keyboard
+
+- The shortcut list is editable: click a key to re-record it, `Backspace`
+  clears it, `Esc` cancels, `+` adds a second binding, per-row and global
+  "restore defaults" are available, and a chord already in use reports which
+  action owns it.
+- New actions: volume ±5 %, mute, speed up/down, previous/next chapter. The
+  global listener reads the same `ACTIONS` table the settings screen renders,
+  so a rebind cannot drift from behaviour.
+
+### Logs
+
+- Content type is now a second highlight axis beside severity: network, sync,
+  media and interface rows get their own tint and a 2 px left edge. A failure
+  logged at DEBUG/INFO (timeout, refused, unauthorized) is painted as a failure
+  instead of hiding in the column.
+- Content chips filter the stream by type, including a "Failures" view.
+
+### Popovers
+
+- `Dropdown` and the library switcher are `position: fixed` with viewport
+  clamping. Both sat inside scrolling containers (`settings__body`, the rail),
+  which clipped their menus — the language list was cut in half.
+
+### Selection
+
+- `.hl` now uses one ring for both "playing" and "selected". The old current
+  state drew a 3 px bar on the left edge while selected drew a 1 px inset ring,
+  so the same row changed size with its state.
+
 ## 2.19.1 (2026-11-06) — one name everywhere, a much smaller runtime
 
 ### Every user-visible name is ADSplayer

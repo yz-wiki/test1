@@ -257,12 +257,16 @@
               </button>
               <button
                 class="transport__play"
-                aria-label={player.playing ? t('player.pause') : t('player.play')}
-                title={player.playing ? t('player.pause') : t('player.play')}
+                aria-label={player.loading ? t('player.opening') : player.playing ? t('player.pause') : t('player.play')}
+                title={player.loading ? t('player.opening') : player.playing ? t('player.pause') : t('player.play')}
                 onclick={() => void player.toggle()}
                 disabled={player.loading}
               >
-                <Icon name={player.playing ? 'pause' : 'play'} size={22} />
+                {#if player.loading}
+                  <span class="transport__spin" aria-hidden="true"></span>
+                {:else}
+                  <Icon name={player.playing ? 'pause' : 'play'} size={22} />
+                {/if}
               </button>
               <button
                 class="icon-btn"
@@ -328,6 +332,13 @@
               {/if}
             </div>
 
+            <span class="wing__sep" aria-hidden="true"></span>
+
+            <!-- Icon only: the previous label printed the full Windows device
+                 name, which is arbitrary length and pushed the slider under the
+                 sleep control. The name is still in the tooltip and the menu. -->
+            <DevicePicker placement="down" />
+
             <div class="transport__volume">
               <button
                 class="icon-btn icon-btn--sm"
@@ -351,8 +362,6 @@
                 {Math.round(player.volume * 100)}%
               </span>
             </div>
-
-            <DevicePicker placement="down" showLabel />
 
             </div>
           </div>
@@ -427,8 +436,8 @@
             </div>
             <div class="below__facts">
               <div><span class="t-small t-tertiary">{t('player.bookListened')}</span><span class="t-num">{formatDuration(player.position)}</span></div>
-              <div><span class="t-small t-tertiary">{t('player.bookLeft')}</span><span class="t-num">{formatDuration(Math.max(player.duration - player.position, 0))}</span></div>
-              <div><span class="t-small t-tertiary">{t('player.bookTotal')}</span><span class="t-num">{formatDuration(player.duration)}</span></div>
+              <div><span class="t-small t-tertiary">{t('player.factLeft')}</span><span class="t-num">{formatDuration(Math.max(player.duration - player.position, 0))}</span></div>
+              <div><span class="t-small t-tertiary">{t('player.factTotal')}</span><span class="t-num">{formatDuration(player.duration)}</span></div>
               <div><span class="t-small t-tertiary">{t('player.chapters')}</span><span class="t-num">{chapters.length}</span></div>
             </div>
           </div>
@@ -686,8 +695,18 @@
     .transport__top {
       gap: 4px;
     }
+    .transport__volume {
+      max-width: 124px;
+    }
     .transport__volume .volume {
-      width: 84px;
+      width: 72px;
+      min-width: 56px;
+      max-width: 72px;
+    }
+    /* The sleep button keeps its icon and drops the word, which is the first
+       thing that used to collide with the slider. */
+    .extra--sleep .btn {
+      padding-inline: 7px;
     }
   }
 
@@ -731,12 +750,29 @@
 
   .transport__wing--right {
     justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Only the volume group is allowed to shrink; every other control keeps its
+     intrinsic width, so the sleep menu and the device button can never be
+     pushed underneath the slider. */
+  .transport__wing--right > .extra--sleep { flex: 0 0 auto; }
+  .transport__wing--right > :global(.devpick) { flex: 0 0 auto; }
+
+  .wing__sep {
+    flex: 0 0 1px;
+    width: 1px;
+    height: 18px;
+    background: var(--hairline);
   }
 
   .transport__volume {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 176px;
   }
 
   /* ── Lower information band ────────────────────────────────────────────
@@ -858,8 +894,11 @@
     background: var(--accent);
   }
 
+  /* Grid, not flex: the add button used to be pushed out of the card when the
+     placeholder text made the input claim its full intrinsic width. */
   .below__add {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px;
     margin-top: auto;
@@ -867,8 +906,13 @@
   }
 
   .below__add .input {
+    width: 100%;
     min-width: 0;
-    flex: 1 1 auto;
+  }
+
+  .below__add .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   @media (max-width: 980px) {
@@ -936,6 +980,7 @@
   }
 
   .transport__play {
+    position: relative;
     display: grid;
     place-items: center;
     width: 52px;
@@ -944,6 +989,19 @@
     background: var(--accent);
     color: var(--on-accent);
     transition: background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+  }
+
+  .transport__spin {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2.5px solid rgb(255 255 255 / 0.4);
+    border-top-color: var(--on-accent);
+    animation: transport-spin 0.7s linear infinite;
+  }
+
+  @keyframes transport-spin {
+    to { transform: rotate(360deg); }
   }
 
   .transport__play:hover:not(:disabled) {
@@ -966,7 +1024,10 @@
   }
 
   .volume {
+    flex: 1 1 auto;
     width: 128px;
+    min-width: 64px;
+    max-width: 128px;
   }
 
   .volume__value {

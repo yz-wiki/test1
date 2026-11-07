@@ -252,6 +252,12 @@ class PlayerStore {
     this.position = startAt ?? (saved && !saved.isFinished ? saved.currentTime : 0);
     this.playing = false;
 
+    // Present the screen immediately: the licence for "continue listening" to
+    // feel instant is showing that the click landed. Waiting for the session
+    // request and the codec to open before switching screens is what made a
+    // slow server read as a dead button. Collapsed again below if it fails.
+    if (present) this.expanded = true;
+
     try {
       const result = await openPlaybackSession(
         session.serverUrl,
@@ -262,9 +268,14 @@ class PlayerStore {
       );
       this.sessionId = result.sessionId;
       if (result.currentTime > 0) this.position = result.currentTime;
-      if (this.rate !== 1) await setSpeedCommand(this.rate);
-      if (this.volume !== 1) await setVolumeCommand(Math.round(this.volume * 100));
+      // Rate and volume are independent of the media arriving. Fire them in
+      // parallel with the open instead of awaiting two IPC round-trips first.
+      const tune = Promise.all([
+        this.rate !== 1 ? setSpeedCommand(this.rate) : null,
+        this.volume !== 1 ? setVolumeCommand(Math.round(this.volume * 100)) : null,
+      ].filter(Boolean)).catch(() => undefined);
       await playAudio();
+      void tune;
       this.playing = true;
       if (present) this.expanded = true;
     } catch (error) {
@@ -276,6 +287,8 @@ class PlayerStore {
       }
       this.error = (error as Error).message;
       this.playing = false;
+      // Do not strand the listener on a player screen that has nothing to play.
+      if (present) this.expanded = false;
     } finally {
       this.loading = false;
     }

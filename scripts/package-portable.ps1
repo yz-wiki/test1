@@ -108,6 +108,41 @@ Write-Host ("plugins: {0} duplicate copies dropped, {1} dlls shipped" -f $dup, $
 $pluginDlls = @(Get-ChildItem -Path $stagePlugins -Recurse -File -Filter '*.dll').Count
 if ($pluginDlls -eq 0) { Die 'plugins tree staged with no DLLs' }
 
+# Pre-build LibVLC's module index (plugins.dat) into the package.
+#
+# Without it, lib.rs runs vlc-cache-gen during setup, before the window exists:
+# on a freshly unzipped portable folder that is a ~190 DLL scan which the user
+# experiences as a blank window for several seconds and a slow first play. With
+# the cache shipped, lib.rs skips the scan entirely (it only builds the cache
+# when the file is missing).
+#
+# Generated AFTER the duplicate pass so the index describes the tree that is
+# actually shipped. Failure is never fatal: the app still builds it on first
+# launch, exactly as before.
+$cacheGenExe = Join-Path $stage 'vlc-cache-gen.exe'
+$pluginsDat = Join-Path $stagePlugins 'plugins.dat'
+if (Test-Path $cacheGenExe) {
+    if (Test-Path $pluginsDat) { Remove-Item $pluginsDat -Force }
+    $env:VLC_PLUGIN_PATH = $stagePlugins
+    try {
+        $proc = Start-Process -FilePath $cacheGenExe `
+            -ArgumentList @("`"$stagePlugins`"") `
+            -WindowStyle Hidden -Wait -PassThru
+        if ((Test-Path $pluginsDat) -and (Get-Item $pluginsDat).Length -gt 0) {
+            Write-Host ("plugins.dat : {0:N0} KB pre-generated (first launch skips the scan)" -f ((Get-Item $pluginsDat).Length / 1KB))
+        }
+        else {
+            Write-Host ("plugins.dat : not produced (vlc-cache-gen exit {0}); the app will build it on first launch" -f $proc.ExitCode) -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host ("plugins.dat : generation failed ({0}); the app will build it on first launch" -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host 'plugins.dat : vlc-cache-gen.exe absent, skipping pre-generation' -ForegroundColor Yellow
+}
+
 New-Item -ItemType Directory -Force -Path $OutRoot | Out-Null
 $pattern = if ($Core) { 'ADSplayer_{0}_portable_core_win-x64.zip' } else { 'ADSplayer_{0}_portable_win-x64.zip' }
 $zip = Join-Path $OutRoot ($pattern -f $version)

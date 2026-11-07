@@ -40,6 +40,34 @@
     return 'other';
   }
 
+  /** A message that failed at something, whatever level it was logged at.
+      Plenty of real failures arrive as DEBUG from the IPC layer, and they were
+      invisible in a column of identically coloured rows. */
+  function looksLikeFailure(entry: { level: LogLevel; message: string }): boolean {
+    if (entry.level === 'error') return true;
+    return /(fail(ed|ure)?|error|timeout|timed out|refus(ed|ing)|denied|unauthori[sz]ed|forbidden|unreachable|EOF)/i
+      .test(entry.message);
+  }
+
+  let kindFilter = $state<LogKind | 'all' | 'error'>('all');
+
+  const KINDS: { id: LogKind | 'all' | 'error'; key: 'logs.kind.all' | 'logs.kind.network' | 'logs.kind.sync' | 'logs.kind.media' | 'logs.kind.ui' | 'logs.kind.error' }[] = [
+    { id: 'all', key: 'logs.kind.all' },
+    { id: 'error', key: 'logs.kind.error' },
+    { id: 'network', key: 'logs.kind.network' },
+    { id: 'sync', key: 'logs.kind.sync' },
+    { id: 'media', key: 'logs.kind.media' },
+    { id: 'ui', key: 'logs.kind.ui' },
+  ];
+
+  const rows = $derived(
+    logs.visible.filter(entry => {
+      if (kindFilter === 'all') return true;
+      if (kindFilter === 'error') return looksLikeFailure(entry);
+      return kindOf(entry.source) === kindFilter;
+    }),
+  );
+
   let listEl = $state<HTMLDivElement | null>(null);
   let notice = $state<string | null>(null);
   let noticeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -127,6 +155,16 @@
 
     <input class="input input--sm" bind:value={logs.query} placeholder={t('logs.filter')} spellcheck="false" />
 
+    <div class="logs__kinds" role="group" aria-label={t('logs.kind')}>
+      {#each KINDS as kind (kind.id)}
+        <button
+          class="logs__kind"
+          aria-pressed={kindFilter === kind.id}
+          onclick={() => (kindFilter = kind.id)}
+        >{t(kind.key)}</button>
+      {/each}
+    </div>
+
     <button class="btn btn--quiet btn--sm" onclick={() => logs.toggleFreeze()}>
       <Icon name={logs.frozen ? 'play' : 'pause'} size={13} />
       {logs.frozen ? t('logs.resume') : t('logs.freeze')}
@@ -153,13 +191,14 @@
   </p>
 
   <div class="logs__list scroll-y" bind:this={listEl}>
-    {#if logs.visible.length === 0}
+    {#if rows.length === 0}
       <p class="logs__empty t-small t-tertiary">{t('logs.empty')}</p>
     {:else}
-      {#each logs.visible as entry (entry.id)}
+      {#each rows as entry (entry.id)}
         <div class="line-wrap">
           <button
-            class="line hl hl-level-{entry.level} level-{entry.level}"
+            class="line hl hl-level-{entry.level} level-{entry.level} kind-{kindOf(entry.source)}"
+            class:fail={looksLikeFailure(entry) && entry.level !== 'error'}
             class:selected={selected === entry.id}
             aria-expanded={selected === entry.id}
             onclick={() => (selected = selected === entry.id ? null : entry.id)}
@@ -287,6 +326,37 @@
     flex: 1 1 auto;
   }
 
+  /* Content-type chips: the same axis the row colour uses, so filtering and
+     colouring never disagree. */
+  .logs__kinds {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+  }
+
+  .logs__kind {
+    height: 20px;
+    padding-inline: 7px;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  }
+
+  .logs__kind:hover {
+    color: var(--text);
+  }
+
+  .logs__kind[aria-pressed='true'] {
+    background: var(--surface-overlay);
+    color: var(--text);
+    box-shadow: var(--shadow-1);
+  }
+
   .logs__hint {
     font-size: var(--text-2xs);
   }
@@ -316,6 +386,7 @@
     width: 100%;
     padding: 2px 4px;
     border-radius: 2px;
+    border-left: 2px solid transparent;
     text-align: left;
     color: var(--text-secondary);
   }
@@ -369,6 +440,31 @@
   .line__dot.kind-ui { background: var(--accent); }
   .line__dot.kind-media { background: var(--warning); }
   .line__dot.kind-network { background: var(--info, var(--accent)); }
+
+  /* Second highlight axis: the *content* of the line, not its severity.
+     A 6px dot alone was not enough to scan a wall of DEBUG rows, so the type
+     also tints the message and draws a 2px edge on the left. The transparent
+     border on every row keeps the text columns aligned. */
+  .line.kind-network { border-left-color: rgb(76 141 255 / 0.75); }
+  .line.kind-sync    { border-left-color: rgb(52 199 123 / 0.75); }
+  .line.kind-media   { border-left-color: rgb(234 160 40 / 0.75); }
+  .line.kind-ui      { border-left-color: rgb(140 145 160 / 0.5); }
+
+  .line.kind-network .line__message { color: rgb(126 170 255); }
+  .line.kind-sync .line__message { color: rgb(110 214 160); }
+  .line.kind-media .line__message { color: rgb(233 188 110); }
+  .line.kind-ui .line__message { color: var(--text-secondary); }
+
+  /* A failure logged at DEBUG/INFO still reads as a failure. Placed last so it
+     wins over the content-type tint. */
+  .line.fail {
+    border-left-color: var(--danger);
+  }
+
+  .line.fail .line__message {
+    color: var(--danger);
+    font-weight: var(--weight-medium);
+  }
 
   /* The badge is filled for the levels that matter; DEBUG stays a quiet
      outline, so a wall of DEBUG rows does not compete with one ERROR. */

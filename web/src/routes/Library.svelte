@@ -592,8 +592,17 @@
                 </div>
 
                 <div class="hero__actions">
-                  <button class="btn btn--primary btn--sm" onclick={() => resume(top)}>
-                    <Icon name="play" size={13} /> {t('home.resume')}
+                  <button
+                    class="btn btn--primary btn--sm"
+                    disabled={player.loading && player.item?.id === top.id}
+                    onclick={() => resume(top)}
+                  >
+                    {#if player.loading && player.item?.id === top.id}
+                      <span class="hero__spin" aria-hidden="true"></span>
+                      {t('player.opening')}
+                    {:else}
+                      <Icon name="play" size={13} /> {t('home.resume')}
+                    {/if}
                   </button>
                   <button class="btn btn--quiet btn--sm" onclick={() => open(top)}>{t('home.details')}</button>
                 </div>
@@ -690,13 +699,24 @@
                   <Cover itemId={item.id} size={320} title={title(item)} />
                   <span class="tile__body">
                     <span class="tile__title">{title(item)}</span>
-                    <span class="tile__meta">
-                      {[seriesOf(item), author(item), ago(item.addedAt)].filter(Boolean).join(' · ')}
-                    </span>
-                    <span class="tile__extra t-small t-tertiary truncate">
-                      {[currentChapter(item), item.media?.metadata?.narratorName, formatLength(item.media?.duration ?? 0)]
-                        .filter(Boolean).join(' · ')}
-                    </span>
+                    {#if isCompact}
+                      <!-- Card mode separates the facts instead of running them
+                           together: name, then author, then series / date /
+                           duration on their own lines. -->
+                      <span class="tile__meta truncate">{author(item) || t('common.unknown')}</span>
+                      <span class="tile__extra t-small t-tertiary truncate">
+                        {[seriesOf(item), ago(item.addedAt), formatLength(item.media?.duration ?? 0)]
+                          .filter(Boolean).join(' · ')}
+                      </span>
+                    {:else}
+                      <span class="tile__meta">
+                        {[seriesOf(item), author(item), ago(item.addedAt)].filter(Boolean).join(' · ')}
+                      </span>
+                      <span class="tile__extra t-small t-tertiary truncate">
+                        {[currentChapter(item), item.media?.metadata?.narratorName, formatLength(item.media?.duration ?? 0)]
+                          .filter(Boolean).join(' · ')}
+                      </span>
+                    {/if}
                   </span>
                   {#if fraction > 0}
                     <span class="tile__badge t-num" class:done={progress.for(item.id)?.isFinished}>
@@ -861,11 +881,16 @@
         <span class="empty__body">{t('library.emptyHint')}</span>
       </div>
     {:else if isCompact}
-      <!-- The small-square card used by the author/series shelves, offered for
-           books as well. Same items, same sort/filter, third density only. -->
+      <!-- Compact is a card, not a dense table row: cover on the left, then
+           title / author / metadata as three separate lines. Cramming the
+           author, series and chapter into one run-on subtitle was what made
+           this view unreadable compared with the author shelf beside it. -->
       <div class="mini-grid">
         {#each visible as item (item.id)}
           {@const fraction = progress.fraction(item.id)}
+          {@const meta = [seriesOf(item), currentChapter(item), formatLength(item.media?.duration ?? 0)]
+            .filter(Boolean)
+            .join(' · ')}
           <button
             class="mini-card hl"
             aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
@@ -877,12 +902,15 @@
             </span>
             <span class="mini-card__text">
               <span class="truncate mini-card__title">{title(item)}</span>
-              <span class="t-small t-tertiary truncate">{currentChapter(item) || author(item)}</span>
+              <span class="t-small t-secondary truncate">{author(item) || t('common.unknown')}</span>
+              <span class="t-small t-tertiary truncate mini-card__meta">{meta}</span>
             </span>
-            {#if fraction > 0}
-              <span class="mini-card__pct t-num t-small">{Math.round(fraction * 100)}%</span>
-            {/if}
-            <Icon name="chevron-right" size={12} />
+            <span class="mini-card__side">
+              {#if fraction > 0}
+                <span class="mini-card__pct t-num t-small">{Math.round(fraction * 100)}%</span>
+              {/if}
+              <Icon name="chevron-right" size={12} />
+            </span>
           </button>
         {/each}
       </div>
@@ -1184,6 +1212,21 @@
     gap: 6px;
   }
 
+  /* The click already landed; show it while the stream is negotiated. */
+  .hero__spin {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+    border-radius: 50%;
+    border: 1.5px solid rgb(255 255 255 / 0.45);
+    border-top-color: var(--on-accent);
+    animation: hero-spin 0.7s linear infinite;
+  }
+
+  @keyframes hero-spin {
+    to { transform: rotate(360deg); }
+  }
+
   .home-groups {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
@@ -1352,16 +1395,17 @@
     border-color: var(--accent-line);
   }
 
-  /* ── Compact / small-square layout ───────────────────────────────────
-     The author shelf cards, offered for books too. One DOM tree per view,
-     one extra density — never a second collection of items. */
+  /* ── Compact / small-card layout ──────────────────────────────────────
+     The author shelf's card, offered for books too. Cards, not bare cells:
+     a surface, a border and real gaps are what make the grid read as a
+     collection rather than a spreadsheet. One DOM tree per view still. */
   .mini-grid,
   .home-grid--compact,
   .home-groups--compact,
   .groups--compact {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+    gap: 10px;
     align-content: start;
   }
 
@@ -1371,15 +1415,16 @@
   .groups--compact .group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
     min-width: 0;
-    padding: 6px 8px;
+    padding: 10px;
     border: 1px solid var(--hairline);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
     text-align: left;
     color: var(--text-secondary);
+    transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
   }
 
   .mini-card:hover,
@@ -1389,17 +1434,11 @@
     background: var(--surface-raised);
   }
 
+  /* Current / selected styling lives in the shared `.hl` layer, so a queue
+     row, a compact card and a dropdown item all share one ring geometry.
+     Only the border tint is component-specific. */
   .mini-card[aria-current='true'] {
-    background: var(--accent-soft);
     border-color: var(--accent-line);
-  }
-
-  /* Three distinct states, shared with the log and chapter lists:
-     plain hover is neutral, the open hover card is "selected" (outlined),
-     the playing row is "current" (accent edge). */
-  .queue__row.selected {
-    background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent-line);
   }
 
   .mini-card:focus-visible,
@@ -1413,11 +1452,23 @@
   .home-grid--compact .tile > :global(.cover),
   .home-groups--compact .home-group__cover,
   .groups--compact .group__cover {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    border-radius: var(--radius-xs);
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
+  }
+
+  .mini-card__side {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    color: var(--text-tertiary);
+  }
+
+  .mini-card__meta {
+    font-variant-numeric: tabular-nums;
   }
 
   .mini-card__text,
@@ -1451,6 +1502,12 @@
   .home-groups--compact .home-group__share,
   .groups--compact .group__share {
     display: none;
+  }
+
+  /* Card mode shows the third line (series / date / duration); grid mode
+     keeps it hidden and list mode reveals it again. */
+  .home-grid--compact .tile__extra {
+    display: block;
   }
 
   .home-grid--list {
