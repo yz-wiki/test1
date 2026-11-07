@@ -2,6 +2,37 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.3 (2026-11-08) — layout corrections and log readability
+
+- **Fixed a runaway render loop.** The library switcher's `$effect` spread the
+  very `popPos` state it was writing, so Svelte re-ran it forever and the log
+  viewer filled with `effect_update_depth_exceeded` errors. Identical log lines
+  in the same burst now collapse into one row with a `×N` counter.
+- **Logs highlight characters, not rows.** Removed the full-row WARN/ERROR
+  wash. Status words, durations, URLs, error words and the exact text-filter
+  match are coloured individually; content type tints the source word.
+- **Search is window-level.** The field now lives in the title bar, so it never
+  disappears on a book, settings or player route; Ctrl+F focuses it anywhere.
+  Chapter filters in the player and book detail no longer vanish below 60
+  chapters.
+- **Cards are horizontal again.** Compact book and group cards had inherited
+  `flex-direction: column` from their grid shapes, stacking a centred cover
+  above centred text. They are now cover-left / facts-right: title, series,
+  author, progress % and current chapter.
+- **Series group properly.** Trailing volume markers (`盗墓笔记 #1` … `#8`)
+  are stripped for grouping, so eight volumes read as one series of eight.
+  Group cards show author, total duration, a count badge and a listened bar.
+  The view switch sits on the centre line with no right-hand hint.
+- **Book detail.** The window scrollbar now drives only the right column; the
+  cover rail is pinned. Chapter/file switch is centred, the current chapter has
+  an accent edge, tinted row and "now at" badge.
+- **Now playing bar.** Chapter picker opens to the right of its chip and is no
+  longer clipped by the left rail; the control row is capped and centred;
+  transport icons share one pill with circular step buttons.
+- **Expanded player.** Information cards moved above the transport, which now
+  sits at the foot of the stage; cards are bordered boxes with a consistent
+  eyebrow / value / object / progress / facts hierarchy, on one 760 px axis.
+
 ## 2.19.2 (2026-11-07) — instant open, real cards, one selection box
 
 ### Opening something no longer looks broken

@@ -2,7 +2,7 @@
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { playItem } from '../lib/playFlow';
-  import { matchScore, preloadPinyin, textMatches } from '../lib/search';
+  import { matchScore, textMatches } from '../lib/search';
   import { reading } from '../lib/reading.svelte';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
@@ -22,8 +22,8 @@
     void library.load(session.serverUrl, session.activeLibraryId);
   });
 
-  let query = $state('');
-  let pinyinReady = $state(false);
+  /** The title bar owns the input; this page only reads the shared query. */
+  const query = $derived(ui.query);
   let sort = $state<'recent' | 'title' | 'author' | 'progress'>('recent');
   let filter = $state<'all' | 'unfinished' | 'finished'>('all');
 
@@ -53,9 +53,26 @@
     if (scroller) scroller.scrollTop = 0;
   }
 
+  /**
+   * ABS frequently stores each volume as its own series ("盗墓笔记 #1",
+   * "盗墓笔记 #2" …), which produced a wall of groups containing exactly one
+   * book. Strip a trailing volume marker so a shelf of #1–#8 reads as one
+   * series of eight books. The original name still appears on the book tile.
+   */
+  function seriesGroup(name: string): string {
+    const trimmed = name.trim();
+    return (
+      trimmed
+        .replace(/\s*[#＃]\s*\d+(?:\.\d+)?\s*$/, '')
+        .replace(/\s*[（(]\s*\d+\s*[)）]\s*$/, '')
+        .replace(/\s*第\s*\d+\s*[部卷册集篇]\s*$/, '')
+        .trim() || trimmed
+    );
+  }
+
   function keyOf(item: (typeof library.items)[number], by: View): string {
     const meta = item.media?.metadata;
-    if (by === 'series') return seriesOf(item);
+    if (by === 'series') return seriesGroup(seriesOf(item));
     if (by === 'authors') return meta?.authorName?.trim() ?? '';
     if (by === 'narrators') return meta?.narratorName?.trim() ?? '';
     return '';
@@ -72,7 +89,16 @@
       else map.set(key, [item]);
     }
     return [...map.entries()]
-      .map(([name, items]) => ({ name, items }))
+      .map(([name, items]) => {
+        const author =
+          items.find(item => item.media?.metadata?.authorName?.trim())?.media?.metadata?.authorName?.trim() ?? '';
+        const total = items.reduce((sum, item) => sum + (item.media?.duration ?? 0), 0);
+        const listened = items.length
+          ? items.reduce((sum, item) => sum + progress.fraction(item.id), 0) / items.length
+          : 0;
+        const finished = items.filter(item => progress.for(item.id)?.isFinished).length;
+        return { name, items, author, total, listened, finished };
+      })
       .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
   });
 
@@ -118,7 +144,7 @@
 
   /** Pinyin-aware, multi-word, ranked. A title hit beats an author hit. */
   const visible = $derived.by(() => {
-    void pinyinReady;
+    void ui.pinyinReady;
     const q = query.trim();
     const base = group && GROUPED
       ? library.items.filter(item => keyOf(item, view) === group)
@@ -188,7 +214,7 @@
     const series = new Set<string>();
     for (const item of library.items) {
       const name = item.media?.metadata?.authorName?.trim();
-      const groupName = seriesOf(item);
+      const groupName = seriesGroup(seriesOf(item));
       if (name && textMatches(name, q)) authors.add(name);
       if (groupName && textMatches(groupName, q)) series.add(groupName);
     }
@@ -196,7 +222,7 @@
   });
 
   function goToGroup(view: View, name: string): void {
-    query = '';
+    ui.query = '';
     setView(view);
     group = name;
   }
@@ -265,7 +291,6 @@
   const ROW_GAP = 24;
   const TEXT_H = 72;
 
-  let searchEl = $state<HTMLInputElement | null>(null);
   let scroller = $state<HTMLDivElement | null>(null);
   let gridEl = $state<HTMLDivElement | null>(null);
   let scrollTop = $state(0);
@@ -301,14 +326,8 @@
     scrollTop = (event.currentTarget as HTMLElement).scrollTop;
   }
 
-  $effect(() => {
-    void ui.focusSearch;
-    if (searchEl) {
-      searchEl.focus();
-      searchEl.select();
-    }
-  });
-
+  // Focus is handled by the title bar now — that component is mounted on
+  // every route, so Ctrl+F also works from settings or a book detail page.
   $effect(() => {
     void query;
     void ui.libraryView;
@@ -458,18 +477,9 @@
     <span class="t-small t-tertiary t-num">{t('library.total', { count: library.items.length })}</span>
   </div>
 
-  <div class="search">
-    <span class="search__icon"><Icon name="search" size={14} /></span>
-    <input
-      class="input"
-      bind:this={searchEl}
-      bind:value={query}
-      placeholder={t('library.search')}
-      title={t('library.searchHint')}
-      spellcheck="false"
-      onfocus={() => void preloadPinyin().then(() => (pinyinReady = true))}
-    />
-  </div>
+  <!-- Search lives in the title bar now: one field, always visible, shared
+       with every route. This row keeps only the library's own filters. -->
+  <div class="toolbar__spacer"></div>
 
   <div class="toolbar__right">
     {#if query.trim()}
@@ -700,13 +710,14 @@
                   <span class="tile__body">
                     <span class="tile__title">{title(item)}</span>
                     {#if isCompact}
-                      <!-- Card mode separates the facts instead of running them
-                           together: name, then author, then series / date /
-                           duration on their own lines. -->
-                      <span class="tile__meta truncate">{author(item) || t('common.unknown')}</span>
+                      <!-- Card mode is a horizontal object: cover on the left,
+                           then title / series+author / progress+chapter. -->
+                      <span class="tile__meta truncate">
+                        {[seriesOf(item), author(item)].filter(Boolean).join(' · ') || t('common.unknown')}
+                      </span>
                       <span class="tile__extra t-small t-tertiary truncate">
-                        {[seriesOf(item), ago(item.addedAt), formatLength(item.media?.duration ?? 0)]
-                          .filter(Boolean).join(' · ')}
+                        {[fraction > 0 ? `${Math.round(fraction * 100)}%` : '', currentChapter(item)]
+                          .filter(Boolean).join(' · ') || formatLength(item.media?.duration ?? 0)}
                       </span>
                     {:else}
                       <span class="tile__meta">
@@ -854,15 +865,29 @@
           class:groups--compact={isCompact}
         >
           {#each groups as entry (entry.name)}
+            {@const kind: ArtKind = view === 'authors' ? 'author' : view === 'series' ? 'series' : 'book'}
             <button class="group" onclick={() => (group = entry.name)}>
               <span class="group__cover">
-                <Cover itemId={entry.items[0].id} size={160} title={entry.name} />
+                <Cover
+                  itemId={entry.items[0].id}
+                  size={240}
+                  title={entry.name}
+                  artKind={kind}
+                  artId={entry.name}
+                />
+                <span class="group__badge t-num">{t('library.count', { count: entry.items.length })}</span>
               </span>
               <span class="group__text">
                 <span class="truncate group__name">{entry.name}</span>
-                <span class="t-small t-tertiary t-num">
-                  {t('library.count', { count: entry.items.length })}
+                <span class="t-small t-secondary truncate">{entry.author || t('common.unknown')}</span>
+                <span class="t-small t-tertiary t-num truncate group__facts">
+                  {formatLength(entry.total)}{#if entry.finished > 0} · {t('list.finished')} {entry.finished}{/if}
                 </span>
+              </span>
+              <!-- How much of the group has actually been heard: a series of
+                   one book and a series of eight should not look identical. -->
+              <span class="group__listened" aria-hidden="true">
+                <span style:width="{Math.round(entry.listened * 100)}%"></span>
               </span>
               <!-- The share bar only exists in list mode: it is the one extra
                    fact worth a row that a card has no space for. -->
@@ -888,9 +913,11 @@
       <div class="mini-grid">
         {#each visible as item (item.id)}
           {@const fraction = progress.fraction(item.id)}
-          {@const meta = [seriesOf(item), currentChapter(item), formatLength(item.media?.duration ?? 0)]
-            .filter(Boolean)
-            .join(' · ')}
+          {@const meta = [
+            fraction > 0 ? `${Math.round(fraction * 100)}%` : '',
+            currentChapter(item),
+          ].filter(Boolean).join(' · ') || formatLength(item.media?.duration ?? 0)}
+          {@const byline = [seriesOf(item), author(item)].filter(Boolean).join(' · ') || t('common.unknown')}
           <button
             class="mini-card hl"
             aria-current={player.item?.id === item.id && player.playing ? 'true' : undefined}
@@ -902,7 +929,7 @@
             </span>
             <span class="mini-card__text">
               <span class="truncate mini-card__title">{title(item)}</span>
-              <span class="t-small t-secondary truncate">{author(item) || t('common.unknown')}</span>
+              <span class="t-small t-secondary truncate">{byline}</span>
               <span class="t-small t-tertiary truncate mini-card__meta">{meta}</span>
             </span>
             <span class="mini-card__side">
@@ -1414,6 +1441,11 @@
   .home-groups--compact .home-group,
   .groups--compact .group {
     display: flex;
+    /* `flex-direction` MUST be reset. The grid shapes are columns; without an
+       explicit row here the cover stacks above centred text, which is the
+       "wrong layout" in the compact view. */
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
     gap: 10px;
     width: 100%;
@@ -1766,26 +1798,9 @@
     white-space: nowrap;
   }
 
-  .search {
-    position: relative;
-    flex: 1 1 320px;
-    min-width: 150px;
-    max-width: 420px;
-    margin-inline: auto;
-  }
-
-  .search__icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary);
-    pointer-events: none;
-  }
-
-  .search .input {
-    width: 100%;
-    padding-left: 32px;
+  .toolbar__spacer {
+    flex: 1 1 auto;
+    min-width: var(--gap-inline);
   }
 
   .segmented--tools .segmented__item {
@@ -1810,20 +1825,21 @@
     padding: 0;
   }
 
-  /* Title on the left, view switch on the right. Centred stacking made a
-     four-item pill stretch across the page and read as a toolbar of its own. */
+  /* Three equal tracks: heading on the left, the view switch on the centre
+     line, and an empty right track. No text hint or second control competes
+     with the switch at the far edge. */
   .viewbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: var(--gap-row);
-    flex-wrap: wrap;
     padding-bottom: var(--gap-row);
     margin-bottom: var(--gap-block);
     border-bottom: 1px solid var(--hairline);
   }
 
   .viewbar__head {
+    grid-column: 1;
     display: flex;
     align-items: baseline;
     gap: var(--gap-inline);
@@ -1846,11 +1862,24 @@
 
   /* Active view gets a solid accent pill: a grey underline was invisible. */
   .viewbar :global(.segmented--views) {
+    grid-column: 2;
+    justify-self: center;
     flex: 0 0 auto;
     gap: 2px;
     padding: 3px;
     background: var(--surface-inset);
     border: 1px solid var(--hairline);
+  }
+
+  @media (max-width: 900px) {
+    .viewbar {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--gap-inline);
+    }
+    .viewbar :global(.segmented--views) {
+      grid-column: 1;
+      justify-self: start;
+    }
   }
 
   .viewbar :global(.segmented__item) {
@@ -2023,10 +2052,27 @@
   }
 
   .group__cover {
+    position: relative;
+    display: block;
     width: 100%;
     aspect-ratio: 1;
     border-radius: var(--radius-xs);
     overflow: hidden;
+  }
+
+  /* Book count sits on the cover, so the text block can carry real facts
+     (author, total length, how much has been heard) instead of "共 1 本". */
+  .group__badge {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface-overlay);
+    box-shadow: var(--shadow-1);
+    color: var(--text);
+    font-size: var(--text-2xs);
   }
 
   .group__text {
@@ -2040,6 +2086,31 @@
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     color: var(--text);
+  }
+
+  .group__facts {
+    font-size: var(--text-2xs);
+  }
+
+  .group__listened {
+    display: block;
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    overflow: hidden;
+  }
+
+  .group__listened > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .groups--compact .group__badge,
+  .groups--compact .group__listened,
+  .groups--list .group__badge,
+  .groups--list .group__listened {
+    display: none;
   }
 
   .group__share {

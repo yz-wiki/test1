@@ -257,14 +257,20 @@
   background: var(--accent-soft);
 }
 
-/* Severity is a second, independent axis: the whole row tints, not just a
-   small badge, so a WARN/ERROR is visible while scrolling at speed. */
+/* Severity is a thin edge, not a tinted row. Highlighting belongs to the
+   *characters* (badge, status word, numbers, search matches) — a full-row
+   wash made an entire wall of DEBUG errors uniform red and hid the words
+   that actually identify the failure. */
 .hl-level-debug { box-shadow: inset 2px 0 0 var(--hairline-strong); }
 .hl-level-info  { box-shadow: inset 2px 0 0 var(--accent-line); }
-.hl-level-warn  { background: rgb(234 160 40 / 0.08); box-shadow: inset 2px 0 0 var(--warning); }
-.hl-level-error { background: rgb(220 60 60 / 0.10); box-shadow: inset 2px 0 0 var(--danger); }
-.hl-level-warn:hover  { background: rgb(234 160 40 / 0.14); }
-.hl-level-error:hover { background: rgb(220 60 60 / 0.16); }
+.hl-level-warn  { box-shadow: inset 2px 0 0 var(--warning); }
+.hl-level-error { box-shadow: inset 2px 0 0 var(--danger); }
+
+/* Keep the shared hover/current box model above the severity edge. */
+.hl-level-debug:hover,
+.hl-level-info:hover,
+.hl-level-warn:hover,
+.hl-level-error:hover { background: var(--surface-raised); }
 
 /* Volume: a taller track, a bigger thumb with a white ring and a soft halo.
    The reference is the iOS / Liquid Glass volume bar — one thumb you can

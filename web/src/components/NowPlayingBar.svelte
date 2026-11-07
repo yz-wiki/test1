@@ -394,12 +394,17 @@
     transition: background-color var(--dur-2) var(--ease);
   }
 
+  /* Facts, transport and tools no longer sit on the extreme window edges.
+     The seek track above stays full width; only the control row is capped,
+     so on a wide monitor the three groups read as one centred instrument. */
   .bar__row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-row);
     height: 56px;
+    width: min(1180px, 100%);
+    margin-inline: auto;
   }
 
   /* Starting a title in place: the bar lights up instead of the screen moving. */
@@ -429,11 +434,15 @@
     gap: 4px;
     min-width: 0;
     justify-self: start;
-    overflow: hidden;
+    /* No `overflow: hidden` here: the chapter picker is an absolute child of
+       .bar__anchored and was being clipped, so clicking the chapter chip
+       appeared to do nothing. Truncation belongs on the text, not the rail. */
   }
 
   .bar__left .bar__meta {
     flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .bar__left .bar__anchored {
@@ -474,11 +483,33 @@
 
   /* ── 2. Where am I ───────────────────────────────────────────────────── */
 
+  /* One pill, one centre line: the three transport controls read as a single
+     object instead of three loose glyphs. Circular step buttons and a common
+     stroke weight keep the icons visually the same size as the filled play. */
   .bar__transport {
     display: flex;
     align-items: center;
     gap: 2px;
     justify-self: center;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+  }
+
+  .bar__transport :global(svg) {
+    stroke-width: 1.7;
+  }
+
+  .bar__transport > .icon-btn--sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--text-tertiary);
+  }
+
+  .bar__transport > .icon-btn--sm:hover:not(:disabled) {
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   .bar__play {
@@ -598,7 +629,18 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-medium);
     white-space: nowrap;
+    overflow: hidden;
     transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+  }
+
+  .bar__chip-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar__chip-caret {
+    flex: 0 0 auto;
   }
 
   .bar__chip:hover,
@@ -726,9 +768,13 @@
   .jump {
     position: absolute;
     bottom: calc(100% + 10px);
-    right: 0;
+    /* The chip lives in the LEFT facts rail. Anchoring the panel to `right: 0`
+       pushed it off the left edge of the window on most layouts, so the list
+       could never be clicked. It now opens to the right of its trigger. */
+    left: 0;
+    right: auto;
     z-index: 40;
-    width: 320px;
+    width: min(340px, calc(100vw - 32px));
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-md);
@@ -838,8 +884,17 @@
   }
 
   @media (max-width: 880px) {
-    .bar__left .bar__anchored,
-    .bar__left .bar__sep {
+    /* Chapter switching must survive a narrow window: shrink the chip, never
+       remove the control. Dropping the anchored picker here is what made the
+       chapter list "disappear" on smaller layouts. */
+    .bar__left .bar__sep,
+    .bar__left .bar__book {
+      display: none;
+    }
+    .bar__left .bar__chip {
+      max-width: 120px;
+    }
+    .bar__left .bar__chip-title {
       display: none;
     }
   }

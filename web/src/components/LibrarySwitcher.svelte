@@ -41,7 +41,10 @@
 
   $effect(() => {
     if (!open) {
-      popPos = { ...popPos, ready: false };
+      // Never spread `popPos` here: reading the state we are about to write
+      // makes this effect its own dependency, and Svelte retries it until it
+      // throws `effect_update_depth_exceeded` on every frame.
+      popPos = { left: 0, top: 0, width: 220, maxHeight: 320, ready: false };
       return;
     }
     const frame = requestAnimationFrame(place);

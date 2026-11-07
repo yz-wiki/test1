@@ -19,6 +19,8 @@ export interface LogEntry {
   level: LogLevel;
   source: string;
   message: string;
+  /** Identical lines arriving in the same burst collapse into one row. */
+  repeat?: number;
 }
 
 const MAX = 800;
@@ -34,15 +36,37 @@ class LogStore {
   follow = $state(true);
 
   private seq = 0;
+  private lastKey = '';
+  private lastAt = 0;
 
   push(scope: LogScope, level: LogLevel, source: string, message: string): void {
+    const text = String(message).slice(0, 800);
+    const now = Date.now();
+    const key = `${scope}|${level}|${source}|${text}`;
+
+    // A runaway render loop can emit the same uncaught error every frame. One
+    // row with a counter says the same thing as 800 identical rows, without
+    // freezing the log viewer (and without hiding the first occurrence).
+    if (key === this.lastKey && now - this.lastAt < 600 && this.entries.length > 0) {
+      const next = [...this.entries];
+      const tail = next[next.length - 1];
+      if (tail && tail.scope === scope) {
+        next[next.length - 1] = { ...tail, at: now, repeat: (tail.repeat ?? 1) + 1 };
+        this.entries = next;
+        this.lastAt = now;
+        return;
+      }
+    }
+
+    this.lastKey = key;
+    this.lastAt = now;
     const entry: LogEntry = {
       id: ++this.seq,
-      at: Date.now(),
+      at: now,
       scope,
       level,
       source,
-      message: String(message).slice(0, 800),
+      message: text,
     };
     // Svelte $state arrays are proxies; assigning a new array keeps the tail
     // update cheap and guarantees the derived view re-runs.

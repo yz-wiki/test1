@@ -2,9 +2,11 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
+  import { preloadPinyin } from '../lib/search';
   import { BRAND } from '../lib/brand';
   import { t } from '../lib/i18n.svelte';
   import BrandMark from './BrandMark.svelte';
+  import Icon from './Icon.svelte';
 
   let { title = BRAND.name, subtitle = '' }: { title?: string; subtitle?: string } = $props();
 
@@ -17,6 +19,27 @@
     if (event.button !== 0) return;
     void win.startDragging();
   }
+
+  /** Search belongs to the window, not to the library route: typing on the
+      settings or book page must still find a book and bring the shelf back. */
+  function onSearch(value: string): void {
+    ui.query = value;
+    if (!value.trim()) return;
+    if (player.expanded) player.collapse();
+    if (ui.route !== 'library') ui.route = 'library';
+    // Home is a dashboard, not a result list. Keep series/authors/narrators
+    // as the search context when the user was already browsing one of them.
+    if (ui.libraryView === 'home') ui.setLibraryView('books');
+  }
+
+  // Ctrl+F works on every route because the field itself is always mounted.
+  // Skip the initial pass so opening the app does not steal keyboard focus.
+  $effect(() => {
+    if (ui.focusSearch === 0) return;
+    const el = document.getElementById('global-search') as HTMLInputElement | null;
+    el?.focus();
+    el?.select();
+  });
 </script>
 
 <header
@@ -33,6 +56,23 @@
         <span class="titlebar__sub truncate">{subtitle}</span>
       {/if}
     </div>
+  </div>
+
+  <div class="titlebar__spacer"></div>
+
+  <div class="titlebar__search" data-no-drag>
+    <span class="titlebar__search-icon" aria-hidden="true"><Icon name="search" size={14} /></span>
+    <input
+      id="global-search"
+      class="input"
+      value={ui.query}
+      oninput={event => onSearch(event.currentTarget.value)}
+      onfocus={() => void preloadPinyin().then(() => (ui.pinyinReady = true))}
+      placeholder={t('library.search')}
+      title={t('library.searchHint')}
+      aria-label={t('library.search')}
+      spellcheck="false"
+    />
   </div>
 
   <div class="titlebar__spacer"></div>
@@ -155,6 +195,44 @@
 
   .titlebar__spacer {
     flex: 1 1 auto;
+    min-width: var(--gap-inline);
+  }
+
+  /* Two equal spacers keep the field on the window centre line. It is part of
+     the title bar, so it survives every route change and folded rail state. */
+  .titlebar__search {
+    position: relative;
+    flex: 0 1 340px;
+    min-width: 148px;
+    max-width: 360px;
+    -webkit-app-region: no-drag;
+  }
+
+  .titlebar__search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+
+  .titlebar__search .input {
+    width: 100%;
+    height: 30px;
+    padding-left: 30px;
+    font-size: var(--text-xs);
+    background: var(--surface-inset);
+  }
+
+  .titlebar__search .input:focus {
+    background: var(--surface);
+  }
+
+  @media (max-width: 780px) {
+    .titlebar__username { display: none; }
+    .titlebar__search { flex-basis: 200px; }
   }
 
   .titlebar__controls {

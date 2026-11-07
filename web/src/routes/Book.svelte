@@ -93,6 +93,9 @@
   });
 
   /** The chapter the saved position falls in — what "already listened" means. */
+  /** No saved position means no "current" row to mark. Otherwise chapter 1
+      would look like it was playing on a book that was never opened. */
+  const hasPosition = $derived((saved?.currentTime ?? 0) > 0);
   const chapterIndexNow = $derived.by(() => {
     const at = saved?.currentTime ?? 0;
     for (let index = chapters.length - 1; index >= 0; index -= 1) {
@@ -251,7 +254,7 @@
 </script>
 
 {#if item}
-  <div class="page scroll-y">
+  <div class="page">
     <div class="topbar">
       <button class="btn btn--quiet btn--sm" onclick={() => (ui.route = 'library')}>
         <Icon name="chevron-left" size={14} />
@@ -451,52 +454,43 @@
           {/if}
         {/if}
 
+        <!-- Three equal tracks put the chapter/file switch on the centre line.
+             The count and the filter stay at the edges, and the old "jump to
+             current chapter" text link is gone: the current row now carries
+             its own marker, so there is nothing to explain on the right. -->
         <div class="chapter-head">
-        <div class="segmented tabs">
-          <button
-            class="segmented__item"
-            aria-pressed={tab === 'chapters'}
-            onclick={() => (tab = 'chapters')}
-          >{t('book.chapters')}</button>
-          <button
-            class="segmented__item"
-            aria-pressed={tab === 'files'}
-            onclick={() => (tab = 'files')}
-          >{t('book.files')}</button>
-        </div>
-          {#if tab === 'chapters'}
-            {#if chapters.length > 1}
-              <div class="range">
-                <span class="t-small t-tertiary t-num">
-                  {t('player.chapterCount', { count: chapters.length })}
-                </span>
-                <div class="range__jump">
-                  {#if chapters.length > 60}
-                    <input
-                      class="input range__search"
-                      bind:value={chapterQuery}
-                      placeholder={t('player.chapterSearch')}
-                      spellcheck="false"
-                    />
-                  {/if}
-                  <button
-                    class="btn btn--quiet btn--sm"
-                    onclick={() => {
-                      const at = chapters.findIndex(entry => entry.start > (saved?.currentTime ?? 0));
-                      const index = Math.max(at < 0 ? chapters.length - 1 : at - 1, 0);
-                      chapterQuery = '';
-                      requestAnimationFrame(() => {
-                        document
-                          .querySelector(`[data-chapter="${index}"]`)
-                          ?.scrollIntoView({ block: 'center' });
-                      });
-                    }}
-                  >{t('book.jumpToCurrent')}</button>
-                </div>
-              </div>
+          <div class="chapter-head__side">
+            {#if tab === 'chapters' && chapters.length > 0}
+              <span class="t-small t-tertiary t-num">
+                {t('player.chapterCount', { count: chapters.length })}
+              </span>
             {/if}
+          </div>
 
-          {/if}
+          <div class="segmented tabs">
+            <button
+              class="segmented__item"
+              aria-pressed={tab === 'chapters'}
+              onclick={() => (tab = 'chapters')}
+            >{t('book.chapters')}</button>
+            <button
+              class="segmented__item"
+              aria-pressed={tab === 'files'}
+              onclick={() => (tab = 'files')}
+            >{t('book.files')}</button>
+          </div>
+
+          <div class="chapter-head__side chapter-head__side--end">
+            {#if tab === 'chapters'}
+              <input
+                class="input range__search"
+                bind:value={chapterQuery}
+                placeholder={t('player.chapterSearch')}
+                title={t('player.chapterSearch')}
+                spellcheck="false"
+              />
+            {/if}
+          </div>
         </div>
 
 
@@ -509,8 +503,13 @@
                 {@const chapter = row.chapter}
                 {@const index = row.index}
                 {@const file = fileFor(chapter)}
-                <li class="chapter-row">
-                  <button class="row" data-chapter={index} onclick={() => play(chapter.start)}>
+                <li class="chapter-row" class:current={hasPosition && index === chapterIndexNow}>
+                  <button
+                    class="row hl"
+                    data-chapter={index}
+                    aria-current={hasPosition && index === chapterIndexNow ? 'true' : undefined}
+                    onclick={() => play(chapter.start)}
+                  >
                     <span class="row__index t-num">{index + 1}</span>
                     <span class="row__body">
                       <span class="truncate row__title">{chapter.title}</span>
@@ -518,6 +517,9 @@
                         {formatDuration(chapter.start)} · {formatDuration(chapter.end - chapter.start)}
                       </span>
                     </span>
+                    {#if hasPosition && index === chapterIndexNow}
+                      <span class="row__now"><span class="row__now-dot" aria-hidden="true"></span>{t('book.nowAt')}</span>
+                    {/if}
                   </button>
                   {#if file?.ino}
                     <button
@@ -577,21 +579,21 @@
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
+    /* The page itself never scrolls. Only the two columns below do, so the
+       window's scrollbar belongs to the chapter/file column on the right. */
+    overflow: hidden;
   }
 
   .page > * {
     flex: 0 0 auto;
   }
 
-  /* The back row must never be scrolled under by the cover or chapter list. */
+  /* The back row is outside both scroll areas and therefore always visible. */
   .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 12;
     display: flex;
     align-items: center;
     gap: var(--gap-row);
-    padding: 6px 0;
+    padding: 0 0 2px;
     background: var(--canvas);
   }
 
@@ -599,19 +601,23 @@
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);
     gap: var(--gap-section);
-    align-items: start;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  /* The cover and the buttons stay put while the description scrolls. */
+  /* The cover rail is pinned: it never moves with the chapter list. It only
+     scrolls inside itself when the window is too short for the metadata. */
   .detail__side {
-    position: sticky;
-    top: 0;
     display: flex;
     flex-direction: column;
     gap: var(--gap-row);
-    /* A rail that is at least most of the viewport leaves room for the file
-       metadata to be a real footer instead of floating after the buttons. */
-    min-height: min(78vh, 720px);
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
   }
 
   .side__cover {
@@ -751,12 +757,18 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* This is the only column the window scrollbar drives. */
   .detail__main {
     display: flex;
     flex-direction: column;
     gap: var(--gap-tight);
     min-width: 0;
-    max-width: 820px;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 8px;
+    max-width: 900px;
   }
 
   .description {
@@ -819,12 +831,48 @@
     border-radius: var(--radius-sm);
   }
 
-  .chapter-row:hover {
-    background: var(--surface-raised);
+  /* The row itself owns hover/current via `.hl`, so the li stays transparent
+     and never paints a second, overlapping highlight behind it. */
+  .chapter-row.current {
+    position: relative;
   }
 
-  .chapter-row .row:hover {
-    background: transparent;
+  .chapter-row.current::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+  }
+
+  .chapter-row.current .row__title,
+  .chapter-row.current .row__index {
+    color: var(--accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .row__now {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+  }
+
+  .row__now-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
   }
 
   .chapter-row__save {
@@ -832,45 +880,39 @@
     color: var(--text-tertiary);
   }
 
-  /* One sticky row owns both the tabs and the range picker. Two independent
-     sticky elements used to stack at different offsets and overlap the list. */
+  /* Equal side tracks keep the switch on the centre line. Sticky inside the
+     right column only, so it stays put while its chapter rows scroll. */
   .chapter-head {
     position: sticky;
-    top: 34px;
+    top: 0;
     z-index: 10;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-row);
-    flex-wrap: wrap;
     margin-top: var(--gap-row);
     padding: 6px 0;
     background: var(--canvas);
     border-bottom: 1px solid var(--hairline);
   }
 
-  .range {
+  .chapter-head__side {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--gap-row);
-    flex: 1 1 auto;
+    justify-content: flex-start;
     min-width: 0;
-    margin-left: auto;
-    padding: 2px 0;
-    background: transparent;
-    border: 0;
   }
 
+  .chapter-head__side--end {
+    justify-content: flex-end;
+  }
+
+  /* Always present: the filter used to vanish on books with fewer than 60
+     chapters, which looked like a broken search box. */
   .range__search {
-    width: 128px;
+    width: min(100%, 168px);
     height: var(--control-sm);
     font-size: var(--text-xs);
-  }
-
-  .range__jump {
-    display: flex;
-    align-items: center;
-    gap: var(--gap-inline);
   }
 
   .row {

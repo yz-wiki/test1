@@ -145,8 +145,10 @@ import LogsPanel from '../components/LogsPanel.svelte';
   }
 
   // Remember the pane so the account chip and Ctrl+, land where they were.
+  // Guard the write: this effect also reads the store, and an unconditional
+  // assignment would schedule itself again on every pass.
   $effect(() => {
-    ui.settingsSection = section;
+    if (ui.settingsSection !== section) ui.settingsSection = section;
   });
   let downloadsDir = $state('');
   let cacheDir = $state('');

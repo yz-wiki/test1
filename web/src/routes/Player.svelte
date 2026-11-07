@@ -512,26 +512,31 @@
               {/if}
             </div>
           {:else}
-          {#if chapters.length > 1}
-            <div class="chapter-tools">
+          <!-- The filter is unconditional. Hiding it below 60 chapters made the
+               search box "disappear" on short books; a one-chapter list simply
+               has nothing to filter, which is not a reason to move the field.
+               The switch sits on the centre line, with no text hint at the
+               right edge. -->
+          <div class="chapter-tools">
+            <div class="chapter-tools__side">
               <span class="t-small t-tertiary t-num">
                 {t('player.chapterCount', { count: chapters.length })}
               </span>
-              <div class="chapter-tools__right">
-                {#if chapters.length > 60}
-                  <input
-                    class="input chapter-search"
-                    bind:value={chapterQuery}
-                    placeholder={t('player.chapterSearch')}
-                    spellcheck="false"
-                  />
-                {/if}
-                <button class="btn btn--quiet btn--sm" onclick={jumpToCurrent}>
-                  {t('book.jumpToCurrent')}
-                </button>
-              </div>
+              <button
+                class="icon-btn icon-btn--sm"
+                title={t('book.jumpToCurrent')}
+                aria-label={t('book.jumpToCurrent')}
+                onclick={jumpToCurrent}
+              ><Icon name="activity" size={13} /></button>
             </div>
-          {/if}
+            <input
+              class="input chapter-search"
+              bind:value={chapterQuery}
+              placeholder={t('player.chapterSearch')}
+              spellcheck="false"
+            />
+            <div class="chapter-tools__side"></div>
+          </div>
 
           <div class="chapter-list scroll-y" bind:this={listEl}>
             {#if chapters.length === 0}
@@ -634,6 +639,10 @@
     padding: var(--gap-block);
   }
 
+  /* Reading order on screen: cover/blurb → information cards → transport.
+     The controls belong at the foot of the stage (like every player), while
+     the facts sit directly under what they describe. `order` swaps the two
+     bands without duplicating or re-parenting either DOM subtree. */
   .stage {
     display: flex;
     flex-direction: column;
@@ -643,6 +652,10 @@
     overflow-y: auto;
   }
 
+  .stage__head { order: 0; }
+  .below { order: 1; }
+  .transport { order: 2; }
+
   /* Cover and blurb share one band: the description is context for the title,
      not a separate document worth a tab of its own. */
   .stage__head {
@@ -651,7 +664,7 @@
     align-items: start;
     gap: var(--gap-section);
     width: 100%;
-    max-width: 620px;
+    max-width: 760px;
   }
 
   .stage__cover {
@@ -722,8 +735,10 @@
   /* Expanded player is centred on the window axis; the longer track also makes
      a 17-minute chapter adjustable at a useful granularity. */
   .transport {
-    width: min(720px, 100%);
+    width: min(760px, 100%);
     margin-inline: auto;
+    margin-top: auto;
+    padding-top: var(--gap-row);
     display: flex;
     flex-direction: column;
     gap: var(--gap-hair);
@@ -775,41 +790,55 @@
     max-width: 176px;
   }
 
-  /* ── Lower information band ────────────────────────────────────────────
-     The stage used to end after the transport, leaving half a window empty.
-     These panels grow with the available height instead of being pinned to
-     the top, and use the page surface (no standalone white card/border). */
+  /* ── Information band ──────────────────────────────────────────────────
+     Three independent white cards, one information hierarchy: an eyebrow
+     label, the number that matters, the object it belongs to, a progress
+     line, then the supporting facts. Cards keep their own box instead of
+     melting into the canvas. */
   .below {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
     gap: var(--gap-inline);
-    width: min(720px, 100%);
+    width: min(760px, 100%);
     margin-inline: auto;
-    flex: 1 1 auto;
-    min-height: 168px;
-    margin-top: var(--gap-section);
+    flex: 0 0 auto;
+    min-height: 0;
   }
 
   .below__card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
     min-height: 0;
     padding: var(--gap-row);
     border-radius: var(--radius-md);
-    background: var(--surface-raised);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
   }
 
   .below__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--text-tertiary);
   }
 
+  .below__label::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
   .below__big {
-    font-size: var(--text-lg);
+    font-size: var(--text-xl);
     font-weight: var(--weight-semibold);
     color: var(--text);
     line-height: 1.15;
+    letter-spacing: -0.01em;
   }
 
   .below__sub {
@@ -843,23 +872,32 @@
     margin-top: 2px;
   }
 
+  /* A ruled 2×2 spec sheet: labels stay tiny, values tabular and dark. */
   .below__facts {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px var(--gap-inline);
-    margin-top: 2px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px var(--gap-inline);
+    margin-top: 4px;
+    padding-top: 7px;
+    border-top: 1px solid var(--hairline);
   }
 
   .below__facts > div {
     display: flex;
     flex-direction: column;
+    gap: 1px;
     min-width: 0;
+  }
+
+  .below__facts .t-small {
+    font-size: var(--text-2xs);
   }
 
   .below__facts .t-num {
     font-size: var(--text-xs);
     color: var(--text);
     font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
   }
 
   .below__empty {
@@ -1096,25 +1134,27 @@
     flex: 1 1 0;
   }
 
+  /* Equal side tracks put the filter on the centre line of the docked panel. */
   .chapter-tools {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: var(--gap-inline);
     padding-bottom: var(--gap-inline);
     margin-bottom: var(--gap-inline);
     border-bottom: 1px solid var(--hairline);
   }
 
-  .chapter-tools__right {
+  .chapter-tools__side {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     min-width: 0;
   }
 
   .chapter-search {
-    width: 116px;
+    width: min(100%, 180px);
+    min-width: 92px;
     height: var(--control-sm);
     font-size: var(--text-xs);
   }
@@ -1141,11 +1181,16 @@
 
   /* Hover and current come from the shared `.hl` layer, identical to the
      bottom-bar chapter list, the queue and the log viewer. */
+  /* The row you are hearing must be findable at a glance even after scrolling
+     a thousand chapters: accent edge + tinted surface + bold index. */
   .chapter[aria-current='true'] {
     color: var(--text);
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px var(--accent-line);
   }
 
-  .chapter[aria-current='true'] .chapter__index {
+  .chapter[aria-current='true'] .chapter__index,
+  .chapter[aria-current='true'] .chapter__title {
     color: var(--accent);
     font-weight: var(--weight-semibold);
   }

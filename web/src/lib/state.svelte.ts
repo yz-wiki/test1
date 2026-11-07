@@ -257,8 +257,11 @@ class UiStore {
   route = $state<'library' | 'continue' | 'settings' | 'podcast' | 'book' | 'downloads' | 'admin'>('library');
   /** The item a detail route is showing. */
   itemId = $state<string | null>(null);
+  /** Global, window-level search. It lives here (not inside the library page)
+      so the field in the title bar never disappears when a route changes. */
   query = $state('');
-  /** Bumped when something asks the library search box for focus. */
+  pinyinReady = $state(false);
+  /** Bumped when something asks the global search box for focus. */
   focusSearch = $state(0);
   /** Which settings pane to open; set when the account chip is clicked. */
   settingsSection = $state('display');

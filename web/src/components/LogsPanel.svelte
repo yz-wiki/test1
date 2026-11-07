@@ -22,7 +22,7 @@
   } = $props();
 
   $effect(() => {
-    if (scope) logs.scope = scope;
+    if (scope && logs.scope !== scope) logs.scope = scope;
   });
 
   /** Selecting a line reveals its untruncated message and metadata. */
@@ -47,6 +47,50 @@
     if (entry.level === 'error') return true;
     return /(fail(ed|ure)?|error|timeout|timed out|refus(ed|ing)|denied|unauthori[sz]ed|forbidden|unreachable|EOF)/i
       .test(entry.message);
+  }
+
+  /** Highlight *characters*, not rows. A log line is a sentence: the status
+      word, the duration, the URL and the failing word are the parts worth a
+      colour. The text filter also marks the exact matched substring, the way
+      an editor would. */
+  interface Token {
+    text: string;
+    cls: string;
+  }
+
+  function escapeRe(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function tokenize(message: string, query: string): Token[] {
+    const q = query.trim();
+    const parts: string[] = [];
+    if (q) parts.push(`(${escapeRe(q)})`);
+    parts.push(
+      '(https?:\\/\\/[^\\s]+)',
+      '(\\b(?:failed|failure|error|errors|timeout|timed out|refused|denied|unauthori[sz]ed|forbidden|unreachable|uncaught|cancelled|eof)\\b)',
+      '(\\b(?:ok|success|succeeded|done|connected|ready|live)\\b)',
+      '(\\b\\d+(?:\\.\\d+)?\\s*(?:ms|s|sec|min|h|KB|MB|GB|%)\\b)',
+      '(\\b[A-Za-z]+(?:Error|Exception)\\b|effect_update_depth_exceeded)',
+    );
+    const re = new RegExp(parts.join('|'), 'gi');
+    const tokens: Token[] = [];
+    let last = 0;
+    for (const match of message.matchAll(re)) {
+      const at = match.index ?? 0;
+      if (at > last) tokens.push({ text: message.slice(last, at), cls: '' });
+      // Group 1 is the user's query (only present when a filter is set).
+      let cls = 'tok-num';
+      if (q && match[1]) cls = 'tok-hit';
+      else if (match[2]) cls = 'tok-url';
+      else if (match[3] || match[6]) cls = 'tok-bad';
+      else if (match[4]) cls = 'tok-ok';
+      else if (match[5]) cls = 'tok-num';
+      tokens.push({ text: match[0], cls });
+      last = at + match[0].length;
+    }
+    if (last < message.length) tokens.push({ text: message.slice(last), cls: '' });
+    return tokens;
   }
 
   let kindFilter = $state<LogKind | 'all' | 'error'>('all');
@@ -205,11 +249,13 @@
           >
             <span class="line__time t-num">{formatLogTime(entry.at)}</span>
             <span class="line__level">{entry.level.toUpperCase()}</span>
-            <span class="line__source">
+            <span class="line__source kind-{kindOf(entry.source)}">
               <span class="line__dot kind-{kindOf(entry.source)}" aria-hidden="true"></span>
               <span class="truncate">{entry.source}</span>
             </span>
-            <span class="line__message truncate">{entry.message}</span>
+            <span class="line__message truncate">
+              {#each tokenize(entry.message, logs.query) as token}<span class={token.cls}>{token.text}</span>{/each}{#if entry.repeat}<span class="tok-repeat t-num"> ×{entry.repeat}</span>{/if}
+            </span>
           </button>
           {#if selected === entry.id}
             <div class="line-detail">
@@ -218,7 +264,7 @@
                 <span>{t('logs.fullMessage')}</span>
                 <span>{t('logs.source')}: {entry.source}</span>
               </div>
-              <pre class="line-detail__body">{entry.message}</pre>
+              <pre class="line-detail__body">{#each tokenize(entry.message, logs.query) as token}<span class={token.cls}>{token.text}</span>{/each}</pre>
               <button
                 class="btn btn--quiet btn--sm"
                 onclick={() => void navigator.clipboard.writeText(entry.message)}
@@ -386,13 +432,12 @@
     width: 100%;
     padding: 2px 4px;
     border-radius: 2px;
-    border-left: 2px solid transparent;
     text-align: left;
     color: var(--text-secondary);
   }
 
-  /* Hover / selected / severity backgrounds all come from the shared `.hl`
-     layer now; only the message colour stays scoped to this component. */
+  /* The severity edge lives in the shared `.hl-level-*` layer. Everything
+     else in the row is neutral so the coloured characters can carry meaning. */
   .line__time {
     color: var(--text-tertiary);
   }
@@ -417,9 +462,6 @@
   .line.level-error .line__level { color: var(--danger); }
   .line.level-debug .line__level { opacity: 0.5; }
 
-  .line.level-warn .line__message { color: var(--warning); }
-  .line.level-error .line__message { color: var(--danger); }
-
   .line__source {
     display: flex;
     align-items: center;
@@ -427,6 +469,12 @@
     min-width: 0;
     color: var(--text-tertiary);
   }
+
+  /* Content type colours the source *word*, not the whole row. */
+  .line__source.kind-network { color: rgb(76 141 255); }
+  .line__source.kind-sync    { color: rgb(38 158 98); }
+  .line__source.kind-media   { color: rgb(180 118 20); }
+  .line__source.kind-ui      { color: var(--text-tertiary); }
 
   .line__dot {
     width: 6px;
@@ -441,29 +489,47 @@
   .line__dot.kind-media { background: var(--warning); }
   .line__dot.kind-network { background: var(--info, var(--accent)); }
 
-  /* Second highlight axis: the *content* of the line, not its severity.
-     A 6px dot alone was not enough to scan a wall of DEBUG rows, so the type
-     also tints the message and draws a 2px edge on the left. The transparent
-     border on every row keeps the text columns aligned. */
-  .line.kind-network { border-left-color: rgb(76 141 255 / 0.75); }
-  .line.kind-sync    { border-left-color: rgb(52 199 123 / 0.75); }
-  .line.kind-media   { border-left-color: rgb(234 160 40 / 0.75); }
-  .line.kind-ui      { border-left-color: rgb(140 145 160 / 0.5); }
-
-  .line.kind-network .line__message { color: rgb(126 170 255); }
-  .line.kind-sync .line__message { color: rgb(110 214 160); }
-  .line.kind-media .line__message { color: rgb(233 188 110); }
-  .line.kind-ui .line__message { color: var(--text-secondary); }
-
-  /* A failure logged at DEBUG/INFO still reads as a failure. Placed last so it
-     wins over the content-type tint. */
-  .line.fail {
-    border-left-color: var(--danger);
+  /* Character-level highlighting. Each log message is split into status
+     words, durations, URLs and error words; only those spans get colour.
+     The filter query marks its exact match the way an editor would. */
+  .tok-ok {
+    color: var(--positive);
+    font-weight: var(--weight-medium);
   }
 
-  .line.fail .line__message {
+  .tok-bad {
     color: var(--danger);
-    font-weight: var(--weight-medium);
+    font-weight: var(--weight-semibold);
+  }
+
+  .tok-num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tok-url {
+    color: var(--accent);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+  }
+
+  .tok-hit {
+    border-radius: 2px;
+    padding: 0 1px;
+    background: var(--warning);
+    color: #1c1c1c;
+    font-weight: var(--weight-semibold);
+  }
+
+  .tok-repeat {
+    color: var(--warning);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* A failure logged at DEBUG/INFO still reads as a failure: its badge gets a
+     ring, but the sentence keeps its own per-word colours. */
+  .line.fail .line__level {
+    box-shadow: 0 0 0 1px var(--danger);
   }
 
   /* The badge is filled for the levels that matter; DEBUG stays a quiet
@@ -513,9 +579,12 @@
     align-self: flex-start;
   }
 
+  /* Collapsed rows stay on one line; the expanded detail shows the full text. */
   .line__message {
-    white-space: pre-wrap;
-    word-break: break-word;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     color: var(--text);
   }
 
