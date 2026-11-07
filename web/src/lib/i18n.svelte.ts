@@ -218,6 +218,8 @@ const en = {
   'nav.section.browse': 'Browse',
   'nav.expand': 'Expand the sidebar',
   'nav.collapse': 'Collapse the sidebar',
+  'nav.back': 'Go back one level',
+  'nav.menu': 'Toggle the sidebar',
 
   'login.title': 'Sign in',
   'login.subtitle': 'Connect to your Audiobookshelf server.',
@@ -303,6 +305,7 @@ const en = {
   'keys.seekLong': 'Back / forward 90 s',
   'keys.step': 'Previous / next chapter or episode',
   'keys.escape': 'Leave the player',
+  'keys.goBack': 'Go back one level',
   'keys.search': 'Search the library',
   'keys.settings': 'Open settings',
   'keys.seekBack': 'Back 15 s',
@@ -735,6 +738,8 @@ const zh: Dict = {
   'nav.section.browse': '浏览',
   'nav.expand': '展开侧栏',
   'nav.collapse': '收起侧栏',
+  'nav.back': '返回上一级',
+  'nav.menu': '展开 / 收起侧栏',
 
   'login.title': '登录',
   'login.subtitle': '连接到你的 Audiobookshelf 服务器。',
@@ -820,6 +825,7 @@ const zh: Dict = {
   'keys.seekLong': '后退 / 前进 90 秒',
   'keys.step': '上一章 / 下一章、上一集 / 下一集',
   'keys.escape': '退出播放器',
+  'keys.goBack': '返回上一级',
   'keys.search': '搜索书库',
   'keys.settings': '打开设置',
   'keys.seekBack': '后退 15 秒',

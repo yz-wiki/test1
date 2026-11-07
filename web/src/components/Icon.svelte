@@ -42,7 +42,9 @@
     | 'trash'
     | 'star'
     | 'blocks'
-    | 'device';
+    | 'device'
+    | 'menu'
+    | 'arrow-left';
 
   let { name, size = 16, filled = false }: {
     name: IconName;
@@ -78,6 +80,10 @@
     <path d="M10.3 10.3l2.9 2.9" />
   {:else if name === 'chevron-left'}
     <path d="M9.8 3.6L5.4 8l4.4 4.4" />
+  {:else if name === 'arrow-left'}
+    <path d="M13 8H3.4M7 4.2L3.2 8l3.8 3.8" />
+  {:else if name === 'menu'}
+    <path d="M2.8 4.2h10.4M2.8 8h10.4M2.8 11.8h10.4" />
   {:else if name === 'chevron-right'}
     <path d="M6.2 3.6L10.6 8l-4.4 4.4" />
   {:else if name === 'headphones'}

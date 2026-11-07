@@ -118,6 +118,9 @@
       if (!open) return;
       if (event.key === 'Escape') {
         open = false;
+        // Keep this Esc for the popover; otherwise the global go-back
+        // shortcut sees no open layer and navigates away as well.
+        event.preventDefault();
         return;
       }
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;

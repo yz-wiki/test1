@@ -257,6 +257,16 @@ class UiStore {
   route = $state<'library' | 'continue' | 'settings' | 'podcast' | 'book' | 'downloads' | 'admin'>('library');
   /** The item a detail route is showing. */
   itemId = $state<string | null>(null);
+  /**
+   * In-place group drill-down. Clicking a series / author / narrator on the
+   * home dashboard (or inside a grouped shelf) expands its books on the same
+   * screen instead of navigating away. Kept here so Esc and the rail's back
+   * button can unwind it without reaching into a route component.
+   */
+  focusGroup = $state<{
+    tab: 'home' | 'books' | 'series' | 'authors' | 'narrators';
+    name: string;
+  } | null>(null);
   /** Global, window-level search. It lives here (not inside the library page)
       so the field in the title bar never disappears when a route changes. */
   query = $state('');

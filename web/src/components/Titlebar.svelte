@@ -7,8 +7,9 @@
   import { t } from '../lib/i18n.svelte';
   import BrandMark from './BrandMark.svelte';
   import Icon from './Icon.svelte';
+  import LibrarySwitcher from './LibrarySwitcher.svelte';
 
-  let { title = BRAND.name, subtitle = '' }: { title?: string; subtitle?: string } = $props();
+  let { title = BRAND.name }: { title?: string } = $props();
 
   const win = getCurrentWindow();
 
@@ -25,6 +26,9 @@
   function onSearch(value: string): void {
     ui.query = value;
     if (!value.trim()) return;
+    // A search is a fresh context: an open group shelf would otherwise keep
+    // its breadcrumb while the results came from the whole library.
+    ui.focusGroup = null;
     if (player.expanded) player.collapse();
     if (ui.route !== 'library') ui.route = 'library';
     // Home is a dashboard, not a result list. Keep series/authors/narrators
@@ -52,10 +56,14 @@
     <BrandMark size={22} label={t('app.name')} />
     <div class="titlebar__text">
       <span class="titlebar__title">{title}</span>
-      {#if subtitle}
-        <span class="titlebar__sub truncate">{subtitle}</span>
-      {/if}
     </div>
+  </div>
+
+  <!-- The library switcher belongs beside the brand: it is the same kind of
+       window-level context as the account chip, not a shelf filter. The old
+       copy sat in the library toolbar and disappeared on every other route. -->
+  <div class="titlebar__lib" data-no-drag>
+    <LibrarySwitcher />
   </div>
 
   <div class="titlebar__spacer"></div>
@@ -187,10 +195,24 @@
     font-weight: var(--weight-semibold);
   }
 
-  .titlebar__sub {
+  .titlebar__lib {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 0;
+    margin-left: 2px;
+    -webkit-app-region: no-drag;
+  }
+
+  .titlebar__lib :global(.switcher__btn) {
+    max-width: 150px;
+    padding: 4px 7px;
     font-size: var(--text-xs);
-    color: var(--text-tertiary);
-    max-width: 46ch;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 900px) {
+    .titlebar__lib :global(.switcher__btn span) { display: none; }
   }
 
   .titlebar__spacer {

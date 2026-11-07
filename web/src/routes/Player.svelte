@@ -517,25 +517,29 @@
                has nothing to filter, which is not a reason to move the field.
                The switch sits on the centre line, with no text hint at the
                right edge. -->
+          <!-- A flex row with a nowrap count. The old three-column grid gave
+               the count a fraction of a column, so "共 1030 章" wrapped into
+               three stacked glyphs. Locate-current now sits at the far right
+               as a labelled pill instead of an unexplained icon. -->
           <div class="chapter-tools">
-            <div class="chapter-tools__side">
-              <span class="t-small t-tertiary t-num">
-                {t('player.chapterCount', { count: chapters.length })}
-              </span>
-              <button
-                class="icon-btn icon-btn--sm"
-                title={t('book.jumpToCurrent')}
-                aria-label={t('book.jumpToCurrent')}
-                onclick={jumpToCurrent}
-              ><Icon name="activity" size={13} /></button>
-            </div>
+            <span class="chapter-tools__count t-small t-tertiary t-num">
+              {t('player.chapterCount', { count: chapters.length })}
+            </span>
             <input
               class="input chapter-search"
               bind:value={chapterQuery}
               placeholder={t('player.chapterSearch')}
               spellcheck="false"
             />
-            <div class="chapter-tools__side"></div>
+            <button
+              class="chapter-tools__locate"
+              title={t('book.jumpToCurrent')}
+              aria-label={t('book.jumpToCurrent')}
+              onclick={jumpToCurrent}
+            >
+              <Icon name="activity" size={13} />
+              <span>{t('book.jumpToCurrent')}</span>
+            </button>
           </div>
 
           <div class="chapter-list scroll-y" bind:this={listEl}>
@@ -1134,29 +1138,55 @@
     flex: 1 1 0;
   }
 
-  /* Equal side tracks put the filter on the centre line of the docked panel. */
+  /* One flex row: count (nowrap) · filter (grow) · locate (far right).
+     The previous equal-column grid squeezed the count into a narrow track,
+     splitting "共 1030 章" into three vertical lines. */
   .chapter-tools {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
-    gap: var(--gap-inline);
+    gap: 6px;
     padding-bottom: var(--gap-inline);
     margin-bottom: var(--gap-inline);
     border-bottom: 1px solid var(--hairline);
   }
 
-  .chapter-tools__side {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    min-width: 0;
+  .chapter-tools__count {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .chapter-search {
-    width: min(100%, 180px);
-    min-width: 92px;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 72px;
     height: var(--control-sm);
     font-size: var(--text-xs);
+  }
+
+  .chapter-tools__locate {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    height: var(--control-sm);
+    padding: 0 8px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-size: var(--text-2xs);
+    white-space: nowrap;
+  }
+
+  .chapter-tools__locate:hover {
+    color: var(--accent);
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+
+  .chapter-tools__locate span {
+    max-width: 7em;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .chapter-list {

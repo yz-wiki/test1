@@ -8,7 +8,7 @@
    * clamped to the viewport, and shows what each library actually is.
    */
   import { onMount } from 'svelte';
-  import { session } from '../lib/state.svelte';
+  import { session, ui } from '../lib/state.svelte';
   import { t } from '../lib/i18n.svelte';
   import Icon from './Icon.svelte';
 
@@ -62,7 +62,12 @@
       if (open && root && !root.contains(event.target as Node)) open = false;
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') open = false;
+      // Claim Esc only while this popover is open. preventDefault stops the
+      // global "go back" shortcut from also navigating the page underneath.
+      if (event.key === 'Escape' && open) {
+        open = false;
+        event.preventDefault();
+      }
     };
     window.addEventListener('pointerdown', onPointer, true);
     window.addEventListener('keydown', onKey);
@@ -73,6 +78,8 @@
   });
 
   function select(id: string): void {
+    // A group name from the old library must not stay as a breadcrumb here.
+    ui.focusGroup = null;
     session.selectLibrary(id);
     open = false;
   }

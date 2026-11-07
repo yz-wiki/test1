@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
+  import { goBack } from '../lib/navigation';
   import { t } from '../lib/i18n.svelte';
   import Titlebar from './Titlebar.svelte';
   import NowPlayingBar from './NowPlayingBar.svelte';
@@ -11,8 +12,6 @@
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
   type Route = 'library' | 'continue' | 'downloads' | 'settings' | 'admin';
-
-  const subtitle = $derived(session.activeLibrary?.name ?? t('app.name'));
 
   /**
    * The rail has two shapes and only one of them is mounted at a time. The old
@@ -65,21 +64,22 @@
   }
 </script>
 
-<Titlebar title={t('app.name')} {subtitle} />
+<Titlebar title={t('app.name')} />
 
 <div class="shell">
   <nav class="rail" class:compact aria-label={t('nav.section.browse')}>
-    <!-- The pin lives HERE in both shapes: same row, same hierarchy, same
-         hit area. It used to sit at the foot of the icon column when folded,
-         so folding moved the control that unfolds it. -->
+    <!-- The top slot belongs to navigation, not to layout. "Back" unwinds
+         the same stack as Esc; the fold toggle moved to the foot of the rail
+         and became a hamburger so it no longer reads as a second arrow. -->
     <div class="rail__head">
       <button
-        class="rail__pin"
-        aria-label={compact ? t('nav.expand') : t('nav.collapse')}
-        title={compact ? t('nav.expand') : t('nav.collapse')}
-        onclick={compact ? expandRail : collapseRail}
+        class="rail__back"
+        aria-label={t('nav.back')}
+        title={t('nav.back')}
+        onclick={() => void goBack()}
       >
-        <Icon name={compact ? 'chevron-right' : 'chevron-left'} size={13} />
+        <Icon name="arrow-left" size={14} />
+        {#if !compact}<span class="rail__head-text truncate">{t('nav.back')}</span>{/if}
       </button>
     </div>
 
@@ -269,6 +269,18 @@
         </button>
       </div>
     {/if}
+
+    <div class="rail__foot">
+      <button
+        class="rail__menu"
+        aria-label={compact ? t('nav.expand') : t('nav.collapse')}
+        title={compact ? t('nav.expand') : t('nav.collapse')}
+        onclick={compact ? expandRail : collapseRail}
+      >
+        <Icon name="menu" size={15} />
+        {#if !compact}<span class="rail__foot-text truncate">{t('nav.menu')}</span>{/if}
+      </button>
+    </div>
   </nav>
 
   <div class="main-col">
@@ -317,28 +329,78 @@
 
   .rail__head {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
-    min-height: 24px;
+    min-height: 26px;
   }
 
   .rail.compact .rail__head {
     justify-content: center;
   }
 
-  .rail__pin {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
+  .rail__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    min-width: 0;
+    height: 26px;
+    padding: 0 6px;
     border-radius: var(--radius-xs);
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
   }
 
-  .rail__pin:hover {
+  .rail__back:hover {
     background: var(--surface-raised);
     color: var(--text);
+  }
+
+  .rail.compact .rail__back {
+    justify-content: center;
+    width: 30px;
+    padding: 0;
+  }
+
+  .rail__head-text {
+    max-width: 130px;
+  }
+
+  /* Fold control: a hamburger at the foot, present in both shapes so folding
+     never moves the control that unfolds it. */
+  .rail__foot {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-top: var(--gap-inline);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .rail__menu {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: var(--radius-xs);
+    color: var(--text-tertiary);
+    font-size: var(--text-xs);
+  }
+
+  .rail__menu:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  .rail.compact .rail__menu {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .rail__foot-text {
+    min-width: 0;
   }
 
   .rail__icons {

@@ -11,7 +11,6 @@
   import { t, formatLength, type TranslationKey } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
-  import LibrarySwitcher from '../components/LibrarySwitcher.svelte';
   import Dropdown from '../components/Dropdown.svelte';
   import HoverCard from '../components/HoverCard.svelte';
   import { artwork, type ArtKind } from '../lib/artwork.svelte';
@@ -31,7 +30,9 @@
 
   /** The sidebar owns the view now; the page switcher is a second way in. */
   const view = $derived(ui.libraryView as View);
-  let group = $state<string | null>(null);
+  /** Group drill-down lives in the global store so Esc and the rail's back
+      button can unwind it without reaching into this component. */
+  const group = $derived(ui.focusGroup?.name ?? null);
 
   const VIEWS: { id: View; key: TranslationKey; icon: IconName }[] = [
     { id: 'home', key: 'library.home', icon: 'home' },
@@ -42,14 +43,22 @@
   ];
 
   const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
-  /** Home is a dashboard, not a 60-item grid with a shelf stapled on top. */
-  const isHome = $derived(view === 'home' && !group && !query.trim());
+  /** Home is a dashboard, not a 60-item grid with a shelf stapled on top.
+      A drilled-down group is still the dashboard: it expands in place. */
+  const isHome = $derived(view === 'home' && !query.trim());
 
   const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
 
   function setView(next: View): void {
     ui.setLibraryView(next);
-    group = null;
+    ui.focusGroup = null;
+    if (scroller) scroller.scrollTop = 0;
+  }
+
+  /** Switch the category shown on the dashboard without ever leaving it. */
+  function selectHomeTab(next: (typeof homeTabs)[number]['id']): void {
+    ui.focusGroup = null;
+    homeTab = next;
     if (scroller) scroller.scrollTop = 0;
   }
 
@@ -196,6 +205,17 @@
     return list;
   });
 
+  /** Books inside the group opened on the dashboard. The same series /
+      author / narrator key that built the group card is used here, so the
+      count on the card always matches the shelf that opens. */
+  const focusBooks = $derived.by(() => {
+    const focus = ui.focusGroup;
+    if (!focus) return [] as typeof library.items;
+    return library.items
+      .filter(item => keyOf(item, focus.tab) === focus.name)
+      .sort((a, b) => title(a).localeCompare(title(b), 'zh-CN'));
+  });
+
   /** Largest home group, so the list shape can draw a comparable share bar. */
   const maxHomeGroupSize = $derived(
     homeGroups.reduce((max, entry) => Math.max(max, entry.items.length), 1),
@@ -221,10 +241,10 @@
     return { authors: [...authors].slice(0, 10), series: [...series].slice(0, 10) };
   });
 
-  function goToGroup(view: View, name: string): void {
+  function goToGroup(next: View, name: string): void {
     ui.query = '';
-    setView(view);
-    group = name;
+    setView(next);
+    ui.focusGroup = { tab: next, name };
   }
 
   /** Local artwork is a client-side override; feedback stays in this page. */
@@ -471,21 +491,71 @@
   }
 </script>
 
+<!-- One tile shape for every book shelf on the dashboard, whether it is the
+     full shelf or a series / author / narrator opened in place. -->
+{#snippet bookTile(item: (typeof library.items)[number])}
+  {@const fraction = progress.fraction(item.id)}
+  <button
+    class="tile"
+    onclick={() => open(item)}
+    oncontextmenu={event => openMenu(event, item)}
+  >
+    <Cover itemId={item.id} size={320} title={title(item)} />
+    <span class="tile__body">
+      <span class="tile__title">{title(item)}</span>
+      {#if isCompact}
+        <span class="tile__meta truncate">
+          {[seriesOf(item), author(item)].filter(Boolean).join(' · ') || t('common.unknown')}
+        </span>
+        <span class="tile__extra t-small t-tertiary truncate">
+          {[fraction > 0 ? `${Math.round(fraction * 100)}%` : '', currentChapter(item)]
+            .filter(Boolean).join(' · ') || formatLength(item.media?.duration ?? 0)}
+        </span>
+      {:else}
+        <span class="tile__meta">
+          {[seriesOf(item), author(item), ago(item.addedAt)].filter(Boolean).join(' · ')}
+        </span>
+        <span class="tile__extra t-small t-tertiary truncate">
+          {[currentChapter(item), item.media?.metadata?.narratorName, formatLength(item.media?.duration ?? 0)]
+            .filter(Boolean).join(' · ')}
+        </span>
+      {/if}
+    </span>
+    {#if fraction > 0}
+      <span class="tile__badge t-num" class:done={progress.for(item.id)?.isFinished}>
+        {Math.round(fraction * 100)}%
+      </span>
+    {/if}
+    {#if artwork.has('book', item.id)}
+      <span class="tile__local">{t('brand.localOnly')}</span>
+    {/if}
+  </button>
+{/snippet}
+
 <div class="toolbar">
-  <div class="toolbar__left">
-    <LibrarySwitcher />
-    <span class="t-small t-tertiary t-num">{t('library.total', { count: library.items.length })}</span>
+  <!-- The category switch and the shelf tools share one row now. The brand
+       bar owns the library switcher, so this row is purely "what to show"
+       on the left and "how to show it" on the right. -->
+  <div class="shelf-tabs" role="group" aria-label={t('home.categories')}>
+    {#each homeTabs as entry (entry.id)}
+      <button
+        class="shelf-tabs__item"
+        aria-pressed={isHome ? homeTab === entry.id : view === entry.id}
+        onclick={() => (isHome ? selectHomeTab(entry.id) : setView(entry.id))}
+      >
+        {t(entry.key)}
+        <span class="shelf-tabs__count t-num">{entry.count}</span>
+      </button>
+    {/each}
   </div>
 
-  <!-- Search lives in the title bar now: one field, always visible, shared
-       with every route. This row keeps only the library's own filters. -->
   <div class="toolbar__spacer"></div>
 
-  <div class="toolbar__right">
-    {#if query.trim()}
-      {#if query.trim()}<span class="t-small t-num t-accent found">{t('library.found', { count: visible.length })}</span>{/if}
-    {/if}
+  {#if query.trim()}
+    <span class="t-small t-num t-accent found">{t('library.found', { count: visible.length })}</span>
+  {/if}
 
+  <div class="toolbar__right">
     <Dropdown
       value={filter}
       options={[
@@ -674,70 +744,40 @@
         </aside>
 
         <section class="home__main">
+          <!-- The category tabs moved up to the toolbar row. What remains is
+               the shelf's own heading, or a breadcrumb when a group is open
+               in place — the dashboard never navigates away. -->
           <div class="home__bar">
-            <span class="home__spacer" aria-hidden="true"></span>
-            <div class="home-tabs" role="group" aria-label={t('home.categories')}>
-              {#each homeTabs as entry (entry.id)}
-                <button
-                  class="home-tabs__item"
-                  aria-pressed={homeTab === entry.id}
-                  onclick={() => (homeTab = entry.id)}
-                >
-                  {t(entry.key)}
-                  <span class="home-tabs__count t-num">{entry.count}</span>
-                </button>
-              {/each}
-            </div>
-            <button class="btn btn--quiet btn--sm home__all" onclick={() => setView(homeTab)}>
-              {t('home.viewAll')} <Icon name="chevron-right" size={12} />
-            </button>
+            {#if ui.focusGroup}
+              {@const focus = ui.focusGroup}
+              <button class="btn btn--quiet btn--sm home__back" onclick={() => (ui.focusGroup = null)}>
+                <Icon name="arrow-left" size={13} /> {t('nav.back')}
+              </button>
+              <span class="home__bar-title truncate">
+                {focus.name}
+                <span class="t-small t-tertiary t-num">· {t('library.count', { count: focusBooks.length })}</span>
+              </span>
+            {:else}
+              <span class="home__bar-title t-label">
+                {t(homeTabs.find(entry => entry.id === homeTab)?.key ?? 'library.books')}
+              </span>
+            {/if}
+            <span class="home__bar-spacer" aria-hidden="true"></span>
+            {#if !ui.focusGroup}
+              <button class="btn btn--quiet btn--sm home__all" onclick={() => setView(homeTab)}>
+                {t('home.viewAll')} <Icon name="chevron-right" size={12} />
+              </button>
+            {/if}
           </div>
 
-          {#if homeTab === 'books'}
+          {#if ui.focusGroup || homeTab === 'books'}
             <div
               class="home-grid"
               class:home-grid--list={isList}
               class:home-grid--compact={isCompact}
             >
-              {#each homeBooks as item (item.id)}
-                {@const fraction = progress.fraction(item.id)}
-                <button
-                  class="tile"
-                  onclick={() => open(item)}
-                  oncontextmenu={event => openMenu(event, item)}
-                >
-                  <Cover itemId={item.id} size={320} title={title(item)} />
-                  <span class="tile__body">
-                    <span class="tile__title">{title(item)}</span>
-                    {#if isCompact}
-                      <!-- Card mode is a horizontal object: cover on the left,
-                           then title / series+author / progress+chapter. -->
-                      <span class="tile__meta truncate">
-                        {[seriesOf(item), author(item)].filter(Boolean).join(' · ') || t('common.unknown')}
-                      </span>
-                      <span class="tile__extra t-small t-tertiary truncate">
-                        {[fraction > 0 ? `${Math.round(fraction * 100)}%` : '', currentChapter(item)]
-                          .filter(Boolean).join(' · ') || formatLength(item.media?.duration ?? 0)}
-                      </span>
-                    {:else}
-                      <span class="tile__meta">
-                        {[seriesOf(item), author(item), ago(item.addedAt)].filter(Boolean).join(' · ')}
-                      </span>
-                      <span class="tile__extra t-small t-tertiary truncate">
-                        {[currentChapter(item), item.media?.metadata?.narratorName, formatLength(item.media?.duration ?? 0)]
-                          .filter(Boolean).join(' · ')}
-                      </span>
-                    {/if}
-                  </span>
-                  {#if fraction > 0}
-                    <span class="tile__badge t-num" class:done={progress.for(item.id)?.isFinished}>
-                      {Math.round(fraction * 100)}%
-                    </span>
-                  {/if}
-                  {#if artwork.has('book', item.id)}
-                    <span class="tile__local">{t('brand.localOnly')}</span>
-                  {/if}
-                </button>
+              {#each ui.focusGroup ? focusBooks : homeBooks as item (item.id)}
+                {@render bookTile(item)}
               {/each}
             </div>
           {:else}
@@ -754,10 +794,7 @@
                 {@const kind: ArtKind = homeTab === 'authors' ? 'author' : homeTab === 'series' ? 'series' : 'book'}
                 <button
                   class="home-group"
-                  onclick={() => {
-                    setView(homeTab);
-                    group = entry.name;
-                  }}
+                  onclick={() => (ui.focusGroup = { tab: homeTab, name: entry.name })}
                   oncontextmenu={event => menu.show(event, [
                     {
                       id: 'artGroup',
@@ -803,15 +840,9 @@
         </span>
       </div>
 
-      <div class="segmented segmented--views">
-        {#each VIEWS.filter(entry => entry.id !== 'home') as entry (entry.id)}
-          <button
-            class="segmented__item"
-            aria-pressed={view === entry.id}
-            onclick={() => setView(entry.id)}
-          >{t(entry.key)}</button>
-        {/each}
-      </div>
+      <!-- The category switch moved to the toolbar row, next to the filters
+           and layout buttons. Keeping a second copy here made two different
+           pills claim to be the current view. -->
     </div>
 
     {#if query.trim() && !group}
@@ -843,7 +874,7 @@
     {/if}
 
     {#if group}
-      <button class="btn btn--quiet btn--sm group-back" onclick={() => (group = null)}>
+      <button class="btn btn--quiet btn--sm group-back" onclick={() => (ui.focusGroup = null)}>
         <Icon name="chevron-left" size={14} />
         {viewName}
       </button>
@@ -866,7 +897,7 @@
         >
           {#each groups as entry (entry.name)}
             {@const kind: ArtKind = view === 'authors' ? 'author' : view === 'series' ? 'series' : 'book'}
-            <button class="group" onclick={() => (group = entry.name)}>
+            <button class="group" onclick={() => (ui.focusGroup = { tab: view, name: entry.name })}>
               <span class="group__cover">
                 <Cover
                   itemId={entry.items[0].id}
@@ -1013,26 +1044,50 @@
   .toolbar {
     display: flex;
     align-items: center;
-    gap: var(--gap-row);
+    flex-wrap: wrap;
+    gap: 6px var(--gap-row);
     padding: var(--gap-inline) var(--gap-block);
     border-bottom: 1px solid var(--hairline);
     background: var(--surface);
   }
 
-  /* The library name truncates on its own; the count must never wrap into a
-     second line ("书库共 41" / "本") when the row gets tight. */
-  .toolbar__left {
+  /* Category switch on the left, filters / sort / layout on the right: one
+     row owns both "what to show" and "how to show it". */
+  .shelf-tabs {
     display: flex;
-    align-items: center;
-    gap: var(--gap-inline);
     flex: 0 0 auto;
-    min-width: 0;
-    white-space: nowrap;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-inset);
+    border: 1px solid var(--hairline);
   }
 
-  .toolbar__left .t-num {
-    flex: 0 0 auto;
+  .shelf-tabs__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
     white-space: nowrap;
+    color: var(--text-secondary);
+  }
+
+  .shelf-tabs__item:hover {
+    color: var(--text);
+  }
+
+  .shelf-tabs__item[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: var(--weight-medium);
+  }
+
+  .shelf-tabs__count {
+    font-size: var(--text-2xs);
+    opacity: 0.72;
   }
 
   .toolbar__sep {
@@ -1047,10 +1102,6 @@
   @media (max-width: 1160px) {
     .toolbar__right .toolbar__sep,
     .found { display: none; }
-  }
-
-  @media (max-width: 940px) {
-    .toolbar__left .t-num { display: none; }
   }
 
   /* ── Home: history on the left, one category switch on the right ────────── */
@@ -1112,62 +1163,38 @@
      "view all" at the right edge. Two equal 1fr tracks keep the switch
      centred no matter how wide the shelf gets. */
   .home__bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
-    gap: var(--gap-row);
+    gap: var(--gap-inline);
     position: sticky;
     top: 0;
     z-index: 2;
+    min-width: 0;
     padding-bottom: var(--gap-inline);
     background: var(--canvas);
   }
 
-  .home__spacer {
-    min-width: 0;
-  }
-
-  .home__bar :global(.home-tabs) {
-    justify-self: center;
-  }
-
-  .home__all {
-    justify-self: end;
-  }
-
-  .home-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-pill);
-    background: var(--surface-inset);
-    border: 1px solid var(--hairline);
-  }
-
-  .home-tabs__item {
+  .home__bar-title {
     display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 13px;
-    border-radius: var(--radius-pill);
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-  }
-
-  .home-tabs__item:hover {
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
     color: var(--text);
   }
 
-  .home-tabs__item[aria-pressed='true'] {
-    background: var(--accent);
-    color: var(--on-accent);
-    font-weight: var(--weight-medium);
+  .home__bar-spacer {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
-  .home-tabs__count {
-    font-size: var(--text-2xs);
-    opacity: 0.72;
+  .home__back {
+    flex: 0 0 auto;
+  }
+
+  .home__all {
+    flex: 0 0 auto;
   }
 
   .hero {
@@ -1333,18 +1360,20 @@
   .queue__row {
     display: flex;
     align-items: center;
-    gap: var(--gap-inline);
-    padding: 5px;
+    gap: 10px;
+    padding: 7px;
     border-radius: var(--radius-sm);
     text-align: left;
   }
 
   /* Hover / selected come from the shared `.hl` vocabulary now, so the
-     highlighted row and the open hover card read as one state. */
+     highlighted row and the open hover card read as one state. A 32px stamp
+     made the book title and its chapter look like a tooltip; 44px gives the
+     two lines room to breathe without turning the history into a grid. */
   .queue__cover {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
     border-radius: var(--radius-xs);
     overflow: hidden;
   }
@@ -1431,7 +1460,7 @@
   .home-groups--compact,
   .groups--compact {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 10px;
     align-content: start;
   }
@@ -1447,10 +1476,10 @@
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     min-width: 0;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid var(--hairline);
     border-radius: var(--radius-md);
     background: var(--surface-raised);
@@ -1484,9 +1513,9 @@
   .home-grid--compact .tile > :global(.cover),
   .home-groups--compact .home-group__cover,
   .groups--compact .group__cover {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
     border-radius: var(--radius-sm);
     overflow: hidden;
   }
@@ -1829,8 +1858,7 @@
      line, and an empty right track. No text hint or second control competes
      with the switch at the far edge. */
   .viewbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
     gap: var(--gap-row);
     padding-bottom: var(--gap-row);
@@ -1839,7 +1867,6 @@
   }
 
   .viewbar__head {
-    grid-column: 1;
     display: flex;
     align-items: baseline;
     gap: var(--gap-inline);

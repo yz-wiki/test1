@@ -901,6 +901,8 @@
     align-items: center;
     justify-content: flex-start;
     min-width: 0;
+    /* The count must never wrap into stacked glyphs when the tabs grow. */
+    white-space: nowrap;
   }
 
   .chapter-head__side--end {

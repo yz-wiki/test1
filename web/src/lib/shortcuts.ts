@@ -9,6 +9,7 @@
 import { player } from './player.svelte';
 import { ui } from './state.svelte';
 import { keymap, type ActionId } from './keymap.svelte';
+import { goBack } from './navigation';
 
 const SKIP_SECONDS = 15;
 const LONG_SKIP_SECONDS = SKIP_SECONDS * 6;
@@ -93,10 +94,8 @@ function run(id: ActionId): boolean {
       player.collapse();
       ui.route = 'settings';
       return true;
-    case 'collapse':
-      if (!player.expanded) return false;
-      player.collapse();
-      return true;
+    case 'goBack':
+      return goBack();
     default:
       return false;
   }

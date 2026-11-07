@@ -133,9 +133,12 @@
       if (sleepOpen && !target?.closest('.bar__pop-anchor')) sleepOpen = false;
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || (!jumpOpen && !sleepOpen)) return;
       jumpOpen = false;
       sleepOpen = false;
+      // Esc belongs to the popover while it is open; the global go-back
+      // shortcut must not also navigate the page behind it.
+      event.preventDefault();
     };
     window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('keydown', onKey);
@@ -394,17 +397,18 @@
     transition: background-color var(--dur-2) var(--ease);
   }
 
-  /* Facts, transport and tools no longer sit on the extreme window edges.
-     The seek track above stays full width; only the control row is capped,
-     so on a wide monitor the three groups read as one centred instrument. */
+  /* One centred instrument. A capped three-column grid kept the facts and
+     the volume ~500px away from the play button on a wide monitor; the groups
+     now sit next to each other on the centre line and only shrink when the
+     window genuinely runs out of room. The seek track above stays full width. */
   .bar__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
-    gap: var(--gap-row);
+    justify-content: center;
+    gap: clamp(10px, 1.5vw, 22px);
     height: 56px;
-    width: min(1180px, 100%);
-    margin-inline: auto;
+    width: 100%;
+    min-width: 0;
   }
 
   /* Starting a title in place: the bar lights up instead of the screen moving. */
@@ -433,7 +437,7 @@
     align-items: center;
     gap: 4px;
     min-width: 0;
-    justify-self: start;
+    flex: 0 1 auto;
     /* No `overflow: hidden` here: the chapter picker is an absolute child of
        .bar__anchored and was being clipped, so clicking the chapter chip
        appeared to do nothing. Truncation belongs on the text, not the rail. */
@@ -490,7 +494,7 @@
     display: flex;
     align-items: center;
     gap: 2px;
-    justify-self: center;
+    flex: 0 0 auto;
     padding: 3px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
@@ -589,10 +593,10 @@
   .bar__right {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    justify-self: end;
+    justify-content: flex-start;
     gap: 6px;
     min-width: 0;
+    flex: 0 1 auto;
   }
 
   /* Only the quick group may shrink. The tools keep their intrinsic width, so
@@ -765,22 +769,24 @@
 
   /* ── Chapter list ────────────────────────────────────────────────────── */
 
+  /* The chapter sheet is a window-level object, not a chip accessory: fixed
+     coordinates put it on the window centre line and escape every overflow
+     clip in the bar. Its trigger is still inside .bar__anchored, so the
+     outside-click handler keeps working through the DOM tree. */
   .jump {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    /* The chip lives in the LEFT facts rail. Anchoring the panel to `right: 0`
-       pushed it off the left edge of the window on most layouts, so the list
-       could never be clicked. It now opens to the right of its trigger. */
-    left: 0;
-    right: auto;
-    z-index: 40;
-    width: min(340px, calc(100vw - 32px));
+    position: fixed;
+    left: 50%;
+    bottom: 84px;
+    transform: translateX(-50%);
+    z-index: 70;
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(460px, calc(100vh - 120px));
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-md);
     background: var(--surface-overlay);
     border: 1px solid var(--hairline-strong);
-    box-shadow: var(--shadow-3);
+    box-shadow: var(--shadow-3), 0 12px 32px rgb(0 0 0 / 0.14);
     overflow: hidden;
   }
 

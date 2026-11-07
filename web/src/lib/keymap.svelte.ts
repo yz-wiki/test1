@@ -24,7 +24,7 @@ export type ActionId =
   | 'speedUp'
   | 'search'
   | 'settings'
-  | 'collapse';
+  | 'goBack';
 
 export interface Binding {
   code: string;
@@ -66,7 +66,9 @@ export const ACTIONS: ActionDef[] = [
   { id: 'speedUp', label: 'keys.speedUp', group: 'playback', defaults: [chord('Equal')] },
   { id: 'search', label: 'keys.search', group: 'navigation', defaults: [chord('KeyF', { ctrl: true })], global: true },
   { id: 'settings', label: 'keys.settings', group: 'navigation', defaults: [chord('Comma', { ctrl: true })], global: true },
-  { id: 'collapse', label: 'keys.escape', group: 'navigation', defaults: [chord('Escape')] },
+  // Esc unwinds one level of navigation. Not `global`: while focus is in a
+  // field (including the shortcut recorder itself) Esc belongs to that field.
+  { id: 'goBack', label: 'keys.goBack', group: 'navigation', defaults: [chord('Escape')] },
 ];
 
 const STORAGE_KEY = 'skald.keymap';

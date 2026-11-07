@@ -2,6 +2,36 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.4 (2026-11-08) — one navigation stack, one shelf row
+
+- **Back is a first-class control.** The rail's top slot is now "go back one
+  level"; the fold toggle moved to the foot of the rail as a three-line menu.
+  Esc is an editable `Go back` shortcut that unwinds popovers, the expanded
+  player, an open group, a detail route, a search and finally the dashboard.
+  Popovers claim Esc with `preventDefault`, so closing one no longer also
+  navigates away.
+- **Groups open in place.** Clicking a series, author or narrator card on the
+  home dashboard now lists that group's books on the same screen with a
+  breadcrumb, instead of switching views. The drill-down state is global so
+  the rail button and Esc can both close it.
+- **One shelf row.** The library switcher moved next to the ADSplayer brand in
+  the title bar. Category tabs (books / series / authors / narrators) now share
+  a single row with filter, sort, layout and refresh; the duplicate view
+  switcher inside the shelf is gone.
+- **Bigger book rows and cards.** History covers grew from 32px to 44px and
+  compact card covers from 44px to 56px, with wider card padding and a larger
+  card grid minimum.
+- **Centred transport.** The bottom bar's facts, transport and quick controls
+  now form one centred flex group instead of three grid columns pinned to the
+  window edges. The chapter sheet is fixed to the window centre line, so it
+  cannot be clipped by the bar.
+- **Chapter tools.** A nowrap count and a right-aligned labelled "jump to
+  current" pill replace the three-column grid that wrapped `共 1030 章` into
+  three stacked glyphs.
+- **Device sheet.** Full-width rows with an icon well, current-output header
+  and a trailing check column; the native tooltip that duplicated the header
+  is gone.
+
 ## 2.19.3 (2026-11-08) — layout corrections and log readability
 
 - **Fixed a runaway render loop.** The library switcher's `$effect` spread the

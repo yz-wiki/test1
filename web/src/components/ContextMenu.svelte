@@ -5,7 +5,10 @@
   onMount(() => {
     const close = () => menu.hide();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') menu.hide();
+      if (event.key === 'Escape' && menu.open) {
+        menu.hide();
+        event.preventDefault();
+      }
     };
     // No pointerdown listener here on purpose: a capture-phase listener would
     // hide the menu before the item's click could land on it. The scrim below
