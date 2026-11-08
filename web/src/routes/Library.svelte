@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { listen } from '@tauri-apps/api/event';
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { playItem } from '../lib/playFlow';
@@ -13,11 +15,37 @@
   import Cover from '../components/Cover.svelte';
   import HoverCard from '../components/HoverCard.svelte';
   import { artwork, type ArtKind } from '../lib/artwork.svelte';
-  import type { IconName } from '../components/Icon.svelte';
 
   // Reload whenever the active library or server changes.
   $effect(() => {
     void library.load(session.serverUrl, session.activeLibraryId);
+  });
+
+  /**
+   * The ABS socket already forwards item_added / item_updated / item_removed.
+   * Listening to them here makes the shelf self-refreshing, so the manual
+   * refresh button is no longer needed: server changes land while the window
+   * is open, and a short debounce collapses a batch (a rescan emits dozens).
+   */
+  onMount(() => {
+    let offs: (() => void)[] = [];
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const reload = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(
+        () => void library.load(session.serverUrl, session.activeLibraryId, true),
+        250,
+      );
+    };
+    void Promise.all(
+      ['library-item-added', 'library-item-updated', 'library-item-removed'].map(name =>
+        listen(name, reload),
+      ),
+    ).then(fns => (offs = fns));
+    return () => {
+      if (timer) clearTimeout(timer);
+      offs.forEach(off => off());
+    };
   });
 
   /** The title bar owns the input, the filter, the sort and the layout switch;
@@ -36,21 +64,11 @@
       button can unwind it without reaching into this component. */
   const group = $derived(ui.focusGroup?.name ?? null);
 
-  const VIEWS: { id: View; key: TranslationKey; icon: IconName }[] = [
-    { id: 'home', key: 'library.home', icon: 'home' },
-    { id: 'books', key: 'library.books', icon: 'book' },
-    { id: 'series', key: 'library.series', icon: 'layers' },
-    { id: 'authors', key: 'library.authors', icon: 'user' },
-    { id: 'narrators', key: 'library.narrators', icon: 'mic' },
-  ];
-
   const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
   /** Home is a dashboard, not a 60-item grid with a shelf stapled on top.
       A query no longer kicks the user out to the books route: the right-hand
       shelf becomes the result list while the history rail stays put. */
   const isHome = $derived(view === 'home');
-
-  const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
 
   function setView(next: View): void {
     ui.setLibraryView(next);
@@ -457,12 +475,6 @@
           separatorBefore: true,
           action: () => void beginDownload(item, title(item), author(item)),
         },
-        {
-          id: 'downloadTo',
-          label: t('menu.downloadTo'),
-          disabled: busy,
-          action: () => void beginDownload(item, title(item), author(item), true),
-        },
         // A permanently greyed-out "Delete" read as a broken button. ABS has
         // no safe "delete this book" action for a player, so the only real
         // deletion here is the local download — and it is simply absent when
@@ -611,7 +623,7 @@
   {:else}
     {#if isHome}
       <div class="home" class:home--search={Boolean(normalizeQuery(query))}>
-        <aside class="home__side">
+        <aside class="home__side" data-hover-boundary>
           <section class="home__panel">
             <div class="panel__head">
               <h2 class="t-label">{t('library.continue')}</h2>
@@ -815,7 +827,7 @@
                   ])}
                 >
                   <span class="home-group__cover">
-                    <Cover itemId={entry.items[0].id} size={96} title={entry.name} artKind={kind} artId={entry.name} />
+                    <Cover itemId={entry.items[0].id} size={320} title={entry.name} artKind={kind} artId={entry.name} />
                   </span>
                   <span class="home-group__text">
                     <span class="truncate">{entry.name}</span>
@@ -829,7 +841,6 @@
                   {#if artwork.has(kind, entry.name)}
                     <span class="home-group__local">{t('brand.localOnly')}</span>
                   {/if}
-                  <Icon name="chevron-right" size={13} />
                 </button>
               {/each}
               {#if homeGroups.length === 0}
@@ -842,15 +853,32 @@
     {:else}
     <div class="viewbar">
       <div class="viewbar__head">
-        <h1 class="viewbar__title">{group ?? viewName}</h1>
-        <span class="viewbar__count t-small t-tertiary t-num">
-          {t('library.count', { count: visible.length })}
-        </span>
+        {#if group}
+          <button class="btn btn--quiet btn--sm" onclick={() => (ui.focusGroup = null)}>
+            <Icon name="arrow-left" size={13} /> {t('nav.back')}
+          </button>
+          <span class="viewbar__title truncate">{group}</span>
+        {/if}
       </div>
 
-      <!-- The category switch moved to the toolbar row, next to the filters
-           and layout buttons. Keeping a second copy here made two different
-           pills claim to be the current view. -->
+      <!-- The same centred category switch on every shelf. The old left-hand
+           "书籍 / 系列" heading duplicated it and pushed the pills off centre. -->
+      <div class="shelf-tabs" role="group" aria-label={t('home.categories')}>
+        {#each homeTabs as entry (entry.id)}
+          <button
+            class="shelf-tabs__item"
+            aria-pressed={view === entry.id}
+            onclick={() => setView(entry.id)}
+          >
+            {t(entry.key)}
+            <span class="shelf-tabs__count t-num">{entry.count}</span>
+          </button>
+        {/each}
+      </div>
+
+      <span class="viewbar__count t-small t-tertiary t-num">
+        {t('library.count', { count: visible.length })}
+      </span>
     </div>
 
     {#if query.trim() && !group}
@@ -859,13 +887,6 @@
         {t('search.groupBooks')}
         <span class="t-num">{t('home.showing', { count: visible.length })}</span>
       </div>
-    {/if}
-
-    {#if group}
-      <button class="btn btn--quiet btn--sm group-back" onclick={() => (ui.focusGroup = null)}>
-        <Icon name="chevron-left" size={14} />
-        {viewName}
-      </button>
     {/if}
 
     {#if GROUPED && group === null}
@@ -1074,9 +1095,13 @@
     display: grid;
     grid-template-columns: clamp(248px, 24%, 320px) minmax(0, 1fr);
     gap: var(--gap-section);
-    align-items: start;
+    /* The listening panel follows the WINDOW, not its own content: stretching
+       to the page height is what removes the dead space under it on a tall
+       monitor. The queue spreads its rows into the extra height. */
+    align-items: stretch;
+    min-height: 100%;
     flex: 0 0 auto;
-    min-height: 0;
+    min-width: 0;
     overflow: visible;
     padding: var(--gap-block) var(--gap-block) var(--gap-panel);
   }
@@ -1089,14 +1114,12 @@
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-    position: sticky;
-    top: 0;
   }
 
   .home__panel {
     display: flex;
     flex-direction: column;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     min-height: 0;
     min-width: 0;
     overflow: visible;
@@ -1915,7 +1938,8 @@
      line, and an empty right track. No text hint or second control competes
      with the switch at the far edge. */
   .viewbar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-row);
     padding-bottom: var(--gap-row);
@@ -1923,11 +1947,20 @@
     border-bottom: 1px solid var(--hairline);
   }
 
+  .viewbar .shelf-tabs {
+    justify-self: center;
+  }
+
+  .viewbar__count {
+    justify-self: end;
+  }
+
   .viewbar__head {
     display: flex;
     align-items: baseline;
     gap: var(--gap-inline);
     min-width: 0;
+    justify-self: start;
   }
 
   .viewbar__title {
@@ -2247,11 +2280,6 @@
     background: var(--accent);
   }
 
-  .group-back {
-    align-self: flex-start;
-    margin-bottom: var(--gap-row);
-  }
-
   .skeleton {
     aspect-ratio: 0.72;
     border-radius: var(--radius-md);
@@ -2263,5 +2291,71 @@
   @keyframes shimmer {
     from { background-position: 140% 0; }
     to { background-position: -40% 0; }
+  }
+
+  /* ── Group shelves use the BOOK tile, not a second card language ──────────
+     Series / author / narrator cards used to be 38px horizontal strips while
+     books were cover-forward tiles. In the default grid they now share the
+     same geometry; compact and list still have their own denser shapes. */
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) {
+    grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr));
+    gap: var(--gap-row);
+  }
+
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) .home-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 6px;
+    border-color: transparent;
+    background: transparent;
+    border-radius: var(--radius-md);
+  }
+
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) .home-group__cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    border-radius: var(--radius-md);
+  }
+
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) .home-group__text {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text);
+  }
+
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) .home-group__share,
+  .home-groups:not(.home-groups--list):not(.home-groups--compact) .home-group__local {
+    display: none;
+  }
+
+  /* The library-wide group page follows the same cover-forward rhythm. */
+  .groups {
+    grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr));
+  }
+
+  .group {
+    padding: 6px;
+    border-color: transparent;
+    background: transparent;
+    border-radius: var(--radius-md);
+  }
+
+  /* A tall window grows the listening panel; its rows spread into the extra
+     space instead of leaving a blank slab under the last book. */
+  .home__side .queue {
+    flex: 1 1 auto;
+    justify-content: space-around;
+  }
+
+  @media (max-width: 1080px) {
+    .home {
+      min-height: auto;
+    }
+    .home__side .queue {
+      justify-content: flex-start;
+    }
   }
 </style>

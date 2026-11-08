@@ -6,6 +6,8 @@
   import Icon from '../components/Icon.svelte';
 
   const rows = $derived(downloads.records);
+  const totalSize = $derived(rows.reduce((sum, row) => sum + row.fileSize, 0));
+  const active = $derived(Object.values(downloads.transfers));
 
   function title(itemId: string, fallback: string): string {
     const item = library.items.find(entry => entry.id === itemId);
@@ -13,6 +15,7 @@
   }
 
   function size(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) return '';
     const mb = bytes / 1048576;
     return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(0)} MB`;
   }
@@ -29,15 +32,20 @@
     <span class="t-small t-num t-tertiary">
       {t('downloads.count', { count: rows.length })}
     </span>
+    {#if totalSize > 0}
+      <span class="t-small t-num t-tertiary">
+        · {t('downloads.totalSize', { size: size(totalSize) })}
+      </span>
+    {/if}
     <div class="grow"></div>
     <button class="icon-btn" aria-label={t('library.refresh')} title={t('library.refresh')} onclick={() => void downloads.load()}>
       <Icon name="refresh" />
     </button>
   </div>
 
-  {#if Object.keys(downloads.transfers).length > 0}
+  {#if active.length > 0}
     <ul class="rows">
-      {#each Object.values(downloads.transfers) as transfer (transfer.itemId)}
+      {#each active as transfer (transfer.itemId)}
         {@const pct = transfer.totalBytes > 0
           ? Math.round((transfer.bytesDownloaded / transfer.totalBytes) * 100)
           : 0}
@@ -48,16 +56,23 @@
               <span class="truncate row__title">{transfer.title || transfer.itemId}</span>
               <span class="t-small t-tertiary t-num">
                 {t('downloads.downloading', { pct })}
+                {#if transfer.totalBytes > 0}
+                  · {size(transfer.bytesDownloaded)} / {size(transfer.totalBytes)}
+                {/if}
               </span>
               <span class="bar" aria-hidden="true"><span style:width="{pct}%"></span></span>
             </span>
+            <button
+              class="btn btn--quiet btn--sm"
+              onclick={() => void downloads.cancel(transfer.itemId)}
+            >{t('downloads.cancelTransfer')}</button>
           </div>
         </li>
       {/each}
     </ul>
   {/if}
 
-  {#if rows.length === 0 && Object.keys(downloads.transfers).length === 0}
+  {#if rows.length === 0 && active.length === 0}
     <div class="empty">
       <Icon name="book" size={26} />
       <span class="empty__title">{t('downloads.empty')}</span>
@@ -83,9 +98,14 @@
                 {#if record.serverDeleted}· <span class="warn">{t('downloads.deleted')}</span>{/if}
               </span>
             </span>
-            <button class="btn btn--quiet btn--sm" onclick={() => void downloads.remove(record.itemId)}>
-              {t('downloads.remove')}
-            </button>
+            <div class="row__actions">
+              <button class="btn btn--quiet btn--sm" onclick={() => void downloads.reveal(record.itemId)}>
+                {t('downloads.openFolder')}
+              </button>
+              <button class="btn btn--quiet btn--sm btn--danger" onclick={() => void downloads.remove(record.itemId)}>
+                {t('downloads.remove')}
+              </button>
+            </div>
           </div>
         </li>
       {/each}
@@ -191,5 +211,20 @@
 
   .form-error {
     color: var(--danger);
+  }
+
+  .row__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  .btn--danger {
+    color: var(--danger);
+  }
+
+  .btn--danger:hover {
+    background: var(--accent-soft);
   }
 </style>

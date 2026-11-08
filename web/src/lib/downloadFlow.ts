@@ -1,40 +1,25 @@
 /**
- * Downloading uses the configured destination without interrupting the user.
+ * One download path for the whole app.
  *
- * A native folder dialog is only opened when no directory has been configured,
- * or when the caller explicitly asks for one ("Download to…"). The directory
- * is changed in Settings > Storage, or from the context menu. This keeps the
- * system picker for the one thing it is genuinely better at — browsing disks,
- * UNC shares and virtual folders — without showing it on every download.
+ * Every entry point asks the same destination question before a byte moves.
+ * The native folder picker only opens when the user asks for a different
+ * location; the default path is a single click. This replaces the old split
+ * between a silent "Download" and "Download to…" that quietly rewrote the
+ * global download directory (and migrated existing downloads with it).
+ *
+ * Book page and shelf context menu both call this, so the two can never
+ * disagree about where a file went.
  */
-import { open } from '@tauri-apps/plugin-dialog';
-import { getDownloadsDir, setDownloadsDir, type LibraryItem } from './ipc';
+import { type LibraryItem } from './ipc';
 import { downloads } from './downloads.svelte';
-import { t } from './i18n.svelte';
+import { downloadPrompt } from './downloadPrompt.svelte';
 
 export async function beginDownload(
   item: LibraryItem,
   title: string,
   author: string,
-  chooseDestination = false,
 ): Promise<void> {
-  let current = '';
-  try {
-    current = await getDownloadsDir();
-  } catch {
-    current = '';
-  }
-
-  if (chooseDestination || !current) {
-    const chosen = await open({
-      directory: true,
-      multiple: false,
-      title: t('downloads.chooseDir'),
-      defaultPath: current || undefined,
-    });
-    if (typeof chosen !== 'string') return;
-    await setDownloadsDir(chosen);
-  }
-
+  const choice = await downloadPrompt.ask(title);
+  if (!choice) return;
   await downloads.start(item, title, author);
 }

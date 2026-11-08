@@ -27,6 +27,46 @@ impl AbsClient {
         resp.json().await.map_err(|e| e.to_string())
     }
 
+    /// DELETE /api/me/item/{id}/bookmark/{time}
+    /// ABS identifies a bookmark by its position in seconds (a second mark at
+    /// the same second is rejected), so no separate bookmark id is needed.
+    pub async fn delete_bookmark(&self, item_id: &str, time: f64) -> Result<(), String> {
+        let seconds = time.round() as i64;
+        let resp = self
+            .http
+            .delete(format!(
+                "{}/api/me/item/{item_id}/bookmark/{seconds}",
+                self.root()
+            ))
+            .header("Authorization", self.auth_header()?)
+            .send_refreshing(self)
+            .await?;
+        if !resp.status().is_success() {
+            return Err(format!("delete_bookmark failed: HTTP {}", resp.status()));
+        }
+        Ok(())
+    }
+
+    /// PATCH /api/me/item/{id}/bookmark — rename a mark without moving it.
+    pub async fn update_bookmark(
+        &self,
+        item_id: &str,
+        time: f64,
+        title: &str,
+    ) -> Result<(), String> {
+        let resp = self
+            .http
+            .patch(format!("{}/api/me/item/{item_id}/bookmark", self.root()))
+            .header("Authorization", self.auth_header()?)
+            .json(&serde_json::json!({ "time": time, "title": title }))
+            .send_refreshing(self)
+            .await?;
+        if !resp.status().is_success() {
+            return Err(format!("update_bookmark failed: HTTP {}", resp.status()));
+        }
+        Ok(())
+    }
+
     /// PATCH /api/me/progress/{libraryItemId}/{episodeId?}
     ///
     /// For a book, `episode_id` is `None` and the path is the plain item form.

@@ -39,7 +39,17 @@ class SessionStore {
     this.libraries.find(library => library.id === this.activeLibraryId) ?? this.libraries[0] ?? null,
   );
 
-  /** Restore the previous session, if the keyring still holds a token. */
+  /**
+   * Restore the previous session. Only the *local* keyring check may block
+   * startup: a wedged server used to hold the boot screen open for minutes,
+   * because getMe() and loadLibraries() each waited on a 30 s read timeout
+   * while the splash was the only thing on screen.
+   *
+   * The shell is offline-first: draw it from the stored session immediately,
+   * then reconcile the profile and libraries in the background. Screens
+   * already handle an empty library and surface `session.error` when the
+   * server never answers.
+   */
   async bootstrap(): Promise<void> {
     this.serverUrl = localStorage.getItem(KEY_SERVER) ?? '';
     if (!this.serverUrl) return;
@@ -51,23 +61,27 @@ class SessionStore {
     }
     if (!token) return;
 
-    // Restoring the token is not the same as knowing who the user is: without
-    // this the sidebar showed "Unknown" and the admin entry stayed hidden.
+    this.authenticated = true;
+    void this.restoreServerState();
+  }
+
+  /** Background half of bootstrap. Never awaited by the window. */
+  private async restoreServerState(): Promise<void> {
     try {
       const me = await getMe(this.serverUrl);
       this.user = { id: me.id, username: me.username, type: me.type };
     } catch (reason) {
-      // A *dead* token must not be treated as a live session — that is what left
-      // every screen showing "Not authenticated" with no way back to sign-in.
+      // A *dead* token must not be treated as a live session — that is what
+      // left every screen showing "Not authenticated" with no way back to
+      // sign-in. A network failure is different: keep the shell and let
+      // loadLibraries() report it through `session.error`.
       const message = (reason as Error).message;
       if (/not authenticated|no token|expired/i.test(message)) {
         this.expire();
         return;
       }
-      // Anything else (server down, timeout) still deserves a shell to browse.
     }
 
-    this.authenticated = true;
     await this.loadLibraries();
   }
 

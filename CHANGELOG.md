@@ -2,6 +2,17 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.7 (2026-11-09) — startup resilience, centred chrome, one download path
+
+- **Startup no longer waits for the server.** The boot screen used to stay up while `getMe` and `fetchLibraries` each waited on a 30 s read timeout, and a dead endpoint retried `/auth/refresh` on every command (the log shows 429 storms). The window now renders from the stored session immediately and reconciles in the background, with a 4 s hard cap on the splash and a dismissible offline banner. A retryable refresh failure sets a 60 s cooldown so one wedged endpoint cannot stall every later request.
+- **Centred chrome.** The title bar is a `1fr auto 1fr` grid: brand + library switcher left, search field on the window centre line, shelf tools + account + window buttons right. The manual refresh button is gone — `item_added / item_updated / item_removed` socket events now refresh the shelf with a 250 ms debounce. Layout-switch icons are centred in equal cells. The category pills are centred on every shelf, not just the dashboard, and the redundant left-hand "书籍" heading is gone.
+- **One card language.** Series / author / narrator cards on the dashboard now use the same cover-forward tile geometry as books; hover cards stay inside the listening panel instead of spilling over the adjacent grid. The continue-listening panel stretches to the page height and spreads its rows, so a tall window no longer leaves a blank slab under the last book.
+- **Transport geometry.** The bar is a three-track grid: book label hard left, chapter facts centred in the remaining left track, volume centred between the play cluster and the right-hand tools. Both outer tracks are proportional, so folding the sidebar recomputes the midpoints automatically. The play capsule gained a hairline, inner shadow and a surface ring around the primary button.
+- **Book detail.** The description is always shown in a fixed-height box (scrolls without a visible slider), so the chapter toolbar starts at the same y for every book. The file-info rail now adds series, genres, total size, formats, added date and download state. The per-chapter "save this audio file" button is removed — one book, one download path.
+- **One download path.** "Download" and "Download to…" are merged. Every entry point asks the same question in an app modal showing the current folder, with "download here" or "choose another folder…" (native picker only on demand). The dialog states that choosing another folder changes the default and migrates existing downloads. The Downloads page gained total size, transferred/total bytes, cancel, and "open folder".
+- **Bookmark management.** Bookmarks in the player card are all listed (not just the last four) and support jump, inline rename and delete through the ABS `PATCH / DELETE /api/me/item/{id}/bookmark` routes. "Next chapter" now shows the destination chapter's name.
+- **Server notice.** When the ABS endpoint is unreachable the shell still opens; a dismissible banner shows the error and offers a retry.
+
 ## 2.19.6 (2026-11-08) — chrome-level shelf tools, one search story, fluid history
 
 - **Shelf tools moved into the window chrome.** Filter / sort / layout / refresh and the library count now share the title bar with the global search field instead of owning a second row below it. Filter and sort became window-level state, so a route change no longer resets them or lets two pages rank the same query differently.

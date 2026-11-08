@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createBookmark } from '../lib/ipc';
+  import { createBookmark, deleteBookmark, updateBookmark } from '../lib/ipc';
   import { progress, session } from '../lib/state.svelte';
   import { player, RATES } from '../lib/player.svelte';
   import { t, formatDuration } from '../lib/i18n.svelte';
@@ -35,6 +35,33 @@
   }
   let markLabel = $state('');
   let markError = $state<string | null>(null);
+  /** Bookmark management: the time in seconds is the bookmark's identity. */
+  let editingMark = $state<number | null>(null);
+  let editingLabel = $state('');
+
+  async function removeMark(mark: { time: number }): Promise<void> {
+    if (!item || !session.serverUrl) return;
+    markError = null;
+    try {
+      await deleteBookmark(session.serverUrl, item.id, mark.time);
+      await progress.load(session.serverUrl, true);
+    } catch (reason) {
+      markError = (reason as Error).message;
+    }
+  }
+
+  async function renameMark(mark: { time: number; title: string }): Promise<void> {
+    const title = editingLabel.trim();
+    editingMark = null;
+    if (!item || !session.serverUrl || !title || title === mark.title) return;
+    markError = null;
+    try {
+      await updateBookmark(session.serverUrl, item.id, mark.time, title);
+      await progress.load(session.serverUrl, true);
+    } catch (reason) {
+      markError = (reason as Error).message;
+    }
+  }
 
   async function addMark(): Promise<void> {
     if (!item || !session.serverUrl) return;
@@ -162,6 +189,13 @@
     chapters.length > 0
       ? `${Math.max(player.chapterIndex, 0) + 1} / ${chapters.length}`
       : '—',
+  );
+
+  /** "Next chapter" is far more useful when it says where it goes. */
+  const nextChapter = $derived(
+    chapters.length > 0 && player.chapterIndex + 1 < chapters.length
+      ? chapters[player.chapterIndex + 1]
+      : null,
   );
 
   const description = $derived(
@@ -421,7 +455,12 @@
             </div>
             {#if player.canStepForward}
               <button class="btn btn--quiet btn--sm below__action" onclick={() => void player.step(1)}>
-                {t('player.nextChapterGo')}
+                <span class="below__next">
+                  <span class="t-small t-tertiary">{t('player.nextChapterGo')}</span>
+                  {#if nextChapter}
+                    <span class="truncate below__next-title">{nextChapter.title}</span>
+                  {/if}
+                </span>
                 <Icon name="chevron-right" size={12} />
               </button>
             {/if}
@@ -450,12 +489,39 @@
               </div>
             {:else}
               <div class="below__marks scroll-y">
-                {#each marks.slice(-4).reverse() as mark (mark.time + mark.title)}
-                  <button class="below__mark hl" onclick={() => void player.seek(mark.time)}>
-                    <span class="below__mark-dot" aria-hidden="true"></span>
-                    <span class="truncate">{mark.title}</span>
-                    <span class="t-num t-small t-tertiary">{formatDuration(mark.time)}</span>
-                  </button>
+                {#each [...marks].reverse() as mark (mark.time + mark.title)}
+                  <div class="below__mark-row hl">
+                    {#if editingMark === mark.time}
+                      <input
+                        class="input input--sm below__mark-input"
+                        bind:value={editingLabel}
+                        onkeydown={event => {
+                          if (event.key === 'Enter') void renameMark(mark);
+                          if (event.key === 'Escape') editingMark = null;
+                        }}
+                      />
+                      <button class="btn btn--sm" onclick={() => void renameMark(mark)}>
+                        {t('bookmark.save')}
+                      </button>
+                    {:else}
+                      <button class="below__mark" onclick={() => void player.seek(mark.time)}>
+                        <span class="below__mark-dot" aria-hidden="true"></span>
+                        <span class="truncate">{mark.title}</span>
+                        <span class="t-num t-small t-tertiary">{formatDuration(mark.time)}</span>
+                      </button>
+                      <button
+                        class="below__mark-action t-small"
+                        title={t('bookmark.rename')}
+                        onclick={() => { editingMark = mark.time; editingLabel = mark.title; }}
+                      >{t('bookmark.rename')}</button>
+                      <button
+                        class="icon-btn icon-btn--sm"
+                        title={t('bookmark.delete')}
+                        aria-label={t('bookmark.delete')}
+                        onclick={() => void removeMark(mark)}
+                      ><Icon name="trash" size={12} /></button>
+                    {/if}
+                  </div>
                 {/each}
               </div>
             {/if}
@@ -947,15 +1013,58 @@
     overflow-y: auto;
   }
 
+  /* One row owns the jump target and its two management actions, so the
+     hover/selection box is the same size for every bookmark. */
+  .below__mark-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    border-radius: var(--radius-xs);
+  }
+
   .below__mark {
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 3px 5px;
     text-align: left;
     font-size: var(--text-xs);
     color: var(--text-secondary);
+  }
+
+  .below__mark-action {
+    flex: 0 0 auto;
+    padding: 2px 4px;
+    border-radius: var(--radius-xs);
+    color: var(--text-tertiary);
+  }
+
+  .below__mark-action:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .below__mark-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .below__next {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .below__next-title {
+    max-width: 100%;
+    font-weight: var(--weight-medium);
+    color: var(--text);
   }
 
   .below__mark-dot {

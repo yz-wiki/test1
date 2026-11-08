@@ -211,6 +211,7 @@
         </button>
 
         {#if entries.length > 0}
+          <div class="bar__facts">
           <div class="bar__anchored" bind:this={jumpEl}>
             <button
               type="button"
@@ -284,6 +285,7 @@
             </span>
           {/if}
           <span class="bar__sep"></span>
+          </div>
         {/if}
 
       </div>
@@ -359,8 +361,6 @@
         <DevicePicker placement="up" />
         </div>
 
-        <span class="bar__sep"></span>
-
         <div class="bar__tools">
         <Dropdown
           value={String(player.rate)}
@@ -427,10 +427,14 @@
      the book sits on the left edge and the speed / tools on the right edge.
      `space-between` plus 1fr on both sides is the flex version of a
      `1fr auto 1fr` grid: no group can drift into the middle. */
+  /* Three proportional tracks. The middle transport stays fixed on the
+     window centre line; the two 1fr tracks re-divide themselves whenever the
+     sidebar folds or the window resizes, so the volume group keeps sitting
+     exactly halfway between the play button and the right-hand tools. */
   .bar__row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: clamp(10px, 1.5vw, 22px);
     height: 56px;
     width: 100%;
@@ -458,15 +462,23 @@
   /* Left track: facts. It used to hold only the 40px cover + title, leaving
      half the window empty while six controls fought over the right track. */
   .bar__left {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    justify-content: flex-start;
     gap: 4px;
     min-width: 0;
-    flex: 1 1 0;
-    /* No `overflow: hidden` here: the chapter picker is an absolute child of
+    /* No `overflow: hidden` here: the chapter picker is a fixed child of
        .bar__anchored and was being clipped, so clicking the chapter chip
        appeared to do nothing. Truncation belongs on the text, not the rail. */
+  }
+
+  /* Book label hard left, chapter facts centred in the remaining left track. */
+  .bar__facts {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
   }
 
   /* 1.5x the old shrink-to-fit chip (≈168px → 252px): the full title and its
@@ -523,11 +535,13 @@
   .bar__transport {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     flex: 0 0 auto;
-    padding: 3px;
+    padding: 4px;
+    border: 1px solid var(--hairline);
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 4%), 0 2px 8px rgb(0 0 0 / 5%);
   }
 
   .bar__transport :global(svg) {
@@ -550,13 +564,14 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
-    margin-inline: 2px;
+    width: 36px;
+    height: 36px;
+    margin-inline: 3px;
     border-radius: 50%;
     background: var(--accent);
     color: var(--on-accent);
-    box-shadow: 0 2px 10px var(--accent-soft);
+    /* A surface-coloured ring separates the primary action from the pill. */
+    box-shadow: 0 0 0 3px var(--surface), 0 3px 12px var(--accent-soft);
     transition: background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
   }
 
@@ -620,33 +635,33 @@
 
   /* ── 3. What can I change ────────────────────────────────────────────── */
 
+  /* Right track: a flexible cell for volume, then the fixed tools. The
+     volume group is centred in that cell — i.e. midway between the transport
+     and the speed / sleep / expand cluster — instead of hugging either end. */
   .bar__right {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
-    flex: 1 1 0;
   }
 
-  /* Only the quick group may shrink. The tools keep their intrinsic width, so
-     speed / sleep / expand never land on top of the slider. */
   .bar__quick {
     display: flex;
     align-items: center;
+    justify-self: center;
     gap: 4px;
     min-width: 0;
-    flex: 0 1 auto;
   }
 
-  /* Speed / sleep / expand hug the right edge; volume stays with the quick
-     actions on the inner side, so the two groups never trade places. */
   .bar__tools {
     display: flex;
     align-items: center;
+    justify-self: end;
     gap: 2px;
-    flex: 0 0 auto;
-    margin-left: auto;
+    min-width: 0;
+    padding-left: 8px;
+    border-left: 1px solid var(--hairline);
   }
 
   .bar__anchored {

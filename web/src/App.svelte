@@ -21,6 +21,7 @@
   import Player from './routes/Player.svelte';
   import Shell from './components/Shell.svelte';
   import ContextMenu from './components/ContextMenu.svelte';
+  import DownloadDialog from './components/DownloadDialog.svelte';
 
   let booting = $state(true);
   let uninstallShortcuts: (() => void) | null = null;
@@ -71,14 +72,26 @@
     void listen('auth-expired', () => session.expire());
     uninstallAuth = () => window.removeEventListener(AUTH_LOST, onAuthLost);
     try {
-      await session.bootstrap();
+      // Bootstrap itself is offline-first, but a wedged IPC (keyring, plugin,
+      // WebView startup) must not be able to trap the window on the splash
+      // either. Hard cap: show a real screen after 4 s and let the restore
+      // finish in the background — Svelte will fill the shell in when it does.
+      const BOOT_CAP_MS = 4000;
+      await Promise.race([
+        session.bootstrap(),
+        new Promise<void>(resolve => setTimeout(resolve, BOOT_CAP_MS)),
+      ]);
       logs.app(
         'info',
         'auth',
         session.authenticated
-          ? `signed in as ${session.user?.username ?? 'unknown'} on ${session.serverUrl}`
+          ? `session restored for ${session.user?.username ?? 'unknown'} on ${session.serverUrl}`
           : 'no stored session',
       );
+    } catch (error) {
+      // A thrown bootstrap used to escape onMount as an unhandled rejection
+      // and leave `booting` true forever.
+      logs.app('error', 'boot', `session restore failed: ${String(error)}`);
     } finally {
       booting = false;
     }
@@ -153,7 +166,26 @@
   </Shell>
 {/if}
 
+{#if session.authenticated && session.error}
+  <div class="offline" role="status">
+    <span class="offline__dot" aria-hidden="true"></span>
+    <div class="offline__text">
+      <strong>{t('app.offline')}</strong>
+      <span class="offline__detail truncate">{session.error}</span>
+    </div>
+    <button class="offline__action" onclick={() => void session.loadLibraries()}>
+      {t('library.retry')}
+    </button>
+    <button
+      class="offline__action offline__action--close"
+      aria-label={t('app.dismiss')}
+      onclick={() => (session.error = null)}
+    >×</button>
+  </div>
+{/if}
+
 <ContextMenu />
+<DownloadDialog />
 
 <style>
   .boot {
@@ -161,5 +193,67 @@
     place-items: center;
     height: calc(100vh / var(--ui-scale, 1));
     background: var(--canvas);
+  }
+
+  /* The server may be down while the shell is perfectly usable. Say so
+     without blocking the shelf, and let one click re-run the reconciliation. */
+  .offline {
+    position: fixed;
+    right: 18px;
+    bottom: 104px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(360px, calc(100vw - 36px));
+    padding: 10px 12px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 14%);
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .offline__dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #d9822b;
+  }
+
+  .offline__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .offline__detail {
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+
+  .offline__action {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .offline__action:hover {
+    background: var(--accent-soft);
+  }
+
+  .offline__action--close {
+    padding-inline: 7px;
+    font-size: 15px;
+    line-height: 1;
   }
 </style>

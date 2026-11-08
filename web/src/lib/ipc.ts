@@ -220,6 +220,17 @@ export const uploadMedia = (
 export const createBookmark = (serverUrl: string, itemId: string, time: number, title: string) =>
   call<Bookmark>('create_bookmark', { serverUrl, itemId, time, title });
 
+/** A bookmark's identity is its position in seconds; renaming keeps the time. */
+export const deleteBookmark = (serverUrl: string, itemId: string, time: number) =>
+  call<void>('delete_bookmark', { serverUrl, itemId, time });
+
+export const updateBookmark = (
+  serverUrl: string,
+  itemId: string,
+  time: number,
+  title: string,
+) => call<void>('update_bookmark', { serverUrl, itemId, time, title });
+
 // ─── Sync ────────────────────────────────────────────────────────────────────
 
 export interface ListeningSession {
@@ -451,6 +462,11 @@ export const downloadItem = (
 ) => call<string>('download_item', { serverUrl, itemId, fileName, title, author });
 
 export const removeDownload = (itemId: string) => call<void>('remove_download', { itemId });
+
+/** Rust already owns the cancellation token and the Explorer reveal helper. */
+export const cancelDownload = (itemId: string) => call<void>('cancel_download', { itemId });
+export const revealDownloadLocation = (itemId: string) =>
+  call<void>('reveal_download_location', { itemId });
 
 /** Offline playback: LibVLC reads the file directly, and the listening is
  *  queued for the server instead of streamed against a live session. */

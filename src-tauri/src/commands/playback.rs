@@ -334,6 +334,31 @@ pub async fn create_bookmark(
 }
 
 #[tauri::command]
+pub async fn delete_bookmark(
+    server_url: String,
+    item_id: String,
+    time: f64,
+) -> Result<(), String> {
+    AbsClient::authenticated(server_url)
+        .await?
+        .delete_bookmark(&item_id, time)
+        .await
+}
+
+#[tauri::command]
+pub async fn update_bookmark(
+    server_url: String,
+    item_id: String,
+    time: f64,
+    title: String,
+) -> Result<(), String> {
+    AbsClient::authenticated(server_url)
+        .await?
+        .update_bookmark(&item_id, time, &title)
+        .await
+}
+
+#[tauri::command]
 pub async fn delete_progress(
     server_url: String,
     item_id: String,

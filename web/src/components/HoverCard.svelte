@@ -26,6 +26,7 @@
   let open = $state(false);
   let x = $state(0);
   let y = $state(0);
+  let popWidth = $state(0);
   let anchorTop = $state(0);
   let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -33,8 +34,18 @@
     if (!host) return;
     const rect = host.getBoundingClientRect();
     const gap = 10;
-    const toRight = rect.right + gap + width <= window.innerWidth - 8;
-    x = toRight ? rect.right + gap : Math.max(8, rect.left - width - gap);
+    // A caller can mark the panel that owns the row. The card then stays
+    // inside that panel instead of drifting over the adjacent book grid —
+    // where its text used to sit on top of the covers.
+    const boundary = host.closest('[data-hover-boundary]');
+    const limit = boundary
+      ? Math.min(window.innerWidth - 8, boundary.getBoundingClientRect().right - 8)
+      : window.innerWidth - 8;
+    popWidth = Math.min(width, Math.max(180, limit - 16));
+
+    const toRight = rect.right + gap + popWidth <= limit;
+    const preferred = toRight ? rect.right + gap : rect.left - popWidth - gap;
+    x = Math.max(8, Math.min(preferred, limit - popWidth));
     anchorTop = rect.top;
     y = Math.max(8, rect.top - 12);
   }
@@ -81,7 +92,7 @@
     bind:this={popEl}
     style:left="{x}px"
     style:top="{y}px"
-    style:width="{width}px"
+    style:width="{popWidth || width}px"
     role="tooltip"
   >
     {@render pop()}

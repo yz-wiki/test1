@@ -17,7 +17,7 @@
 //!    on the previous token, but that is a race-condition backstop, not a licence
 //!    to stampede.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::OnceLock;
 
 use tauri::{AppHandle, Emitter};
@@ -39,6 +39,29 @@ static REFRESH_LOCK: Mutex<()> = Mutex::const_new(());
 /// Cleared by `reset_for_new_session` when the signed-in server may have changed.
 static SERVER_LACKS_REFRESH: AtomicBool = AtomicBool::new(false);
 
+/// After a refresh fails for a retryable reason (server down, 429, bad
+/// payload), stop spending 30 s on another one for every subsequent command.
+/// Without this, a wedged ABS endpoint made every API call queue behind a
+/// failed refresh — startup stalled and the log filled with one refresh a
+/// second, which in turn pushed the server into HTTP 429.
+const REFRESH_FAILURE_COOLDOWN_SECONDS: i64 = 60;
+static LAST_REFRESH_FAILURE: AtomicI64 = AtomicI64::new(0);
+
+#[cfg(test)]
+fn refresh_recently_failed() -> bool {
+    // Unit tests drive many mock sessions in one process; a cooldown left over
+    // from one case must not leak into the next.
+    LAST_REFRESH_FAILURE.store(0, Ordering::Relaxed);
+    false
+}
+
+#[cfg(not(test))]
+fn refresh_recently_failed() -> bool {
+    let now = now_seconds();
+    let last = LAST_REFRESH_FAILURE.load(Ordering::Relaxed);
+    last > 0 && last <= now && now - last < REFRESH_FAILURE_COOLDOWN_SECONDS
+}
+
 /// App handle for emitting `auth-expired`.
 ///
 /// Refresh happens deep inside API calls that have no handle to pass down — a
@@ -56,6 +79,7 @@ pub fn init(app: AppHandle) {
 /// describes *a* server, and the next session may be a different one.
 pub fn reset_for_new_session() {
     SERVER_LACKS_REFRESH.store(false, Ordering::Relaxed);
+    LAST_REFRESH_FAILURE.store(0, Ordering::Relaxed);
 }
 
 /// True when `tokens` should be refreshed before use.
@@ -114,6 +138,16 @@ async fn refresh_now(
         // expire, so proceeding with it is correct.
         return Ok(observed);
     }
+    if refresh_recently_failed() {
+        // A dead endpoint must not add another 30 s refresh attempt to every
+        // command. Keep using the token we have and let the request itself
+        // fail fast; the cooldown expires on its own once the server answers.
+        log::debug!(
+            target: "skald::auth",
+            "refresh suppressed after a recent retryable failure"
+        );
+        return Ok(observed);
+    }
 
     let _guard = REFRESH_LOCK.lock().await;
 
@@ -142,6 +176,7 @@ async fn refresh_now(
         .await
     {
         Ok(outcome) => {
+            LAST_REFRESH_FAILURE.store(0, Ordering::Relaxed);
             let rotated = AuthTokens {
                 access: outcome.tokens.access,
                 // The server returns the rotated refresh token because we send it
@@ -204,6 +239,7 @@ async fn refresh_now(
             // on the credential. The access token may still have life in it (we
             // refresh early on purpose), so let the caller try.
             log::warn!(target: "skald::auth", "refresh attempt failed, continuing with the current token: {e}");
+            LAST_REFRESH_FAILURE.store(now_seconds(), Ordering::Relaxed);
             Ok(current)
         }
     }

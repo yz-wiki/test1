@@ -53,21 +53,20 @@
   onmousedown={drag}
   ondblclick={() => void win.toggleMaximize()}
 >
-  <div class="titlebar__brand">
-    <BrandMark size={22} label={t('app.name')} />
-    <div class="titlebar__text">
-      <span class="titlebar__title">{title}</span>
+  <div class="titlebar__left">
+    <div class="titlebar__brand">
+      <BrandMark size={22} label={t('app.name')} />
+      <div class="titlebar__text">
+        <span class="titlebar__title">{title}</span>
+      </div>
+    </div>
+
+    <!-- The library switcher belongs beside the brand: it is window-level
+         context, not a shelf filter. -->
+    <div class="titlebar__lib" data-no-drag>
+      <LibrarySwitcher />
     </div>
   </div>
-
-  <!-- The library switcher belongs beside the brand: it is the same kind of
-       window-level context as the account chip, not a shelf filter. The old
-       copy sat in the library toolbar and disappeared on every other route. -->
-  <div class="titlebar__lib" data-no-drag>
-    <LibrarySwitcher />
-  </div>
-
-  <div class="titlebar__spacer"></div>
 
   <div class="titlebar__search" data-no-drag>
     <span class="titlebar__search-icon" aria-hidden="true"><Icon name="search" size={14} /></span>
@@ -87,6 +86,7 @@
   <!-- The shelf controls share the window chrome with the global field: one
        line owns the library context, the query and how the shelf is shown.
        Filter / sort are ui state, so this bar can own them on every route. -->
+  <div class="titlebar__right">
   {#if ui.route === 'library'}
     <div class="titlebar__tools" data-no-drag>
       <span class="titlebar__count t-label t-num">
@@ -137,16 +137,8 @@
         ><Icon name="rows" size={13} /></button>
       </div>
 
-      <button
-        class="titlebar__refresh"
-        aria-label={t('library.refresh')}
-        title={t('library.refresh')}
-        onclick={() => void library.load(session.serverUrl, session.activeLibraryId, true)}
-      ><Icon name="refresh" size={14} /></button>
     </div>
   {/if}
-
-  <div class="titlebar__spacer"></div>
 
   <!-- The account lives here rather than at the bottom of the rail: it is
        window-level, not library-level, and it stays put when the rail folds. -->
@@ -192,6 +184,7 @@
       </svg>
     </button>
   </div>
+  </div>
 </header>
 
 <style>
@@ -227,8 +220,13 @@
     font-size: var(--text-xs);
   }
 
+  /* Three tracks: left context, a genuinely window-centred search field, and
+     the right-hand shelf tools + account + window buttons. `1fr auto 1fr`
+     keeps the field on the centre line even when the rail folds, because the
+     bar spans the whole window rather than the content column. */
   .titlebar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-row);
     height: 46px;
@@ -237,6 +235,23 @@
     border-bottom: 1px solid var(--hairline);
     background: var(--canvas);
     -webkit-app-region: drag;
+  }
+
+  .titlebar__left,
+  .titlebar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+    min-width: 0;
+  }
+
+  .titlebar__left {
+    justify-self: start;
+  }
+
+  .titlebar__right {
+    justify-self: end;
+    justify-content: flex-end;
   }
 
   .titlebar__brand {
@@ -278,18 +293,11 @@
     .titlebar__lib :global(.switcher__btn span) { display: none; }
   }
 
-  .titlebar__spacer {
-    flex: 1 1 auto;
-    min-width: var(--gap-inline);
-  }
-
-  /* Two equal spacers keep the field on the window centre line. It is part of
-     the title bar, so it survives every route change and folded rail state. */
   .titlebar__search {
     position: relative;
-    flex: 0 1 340px;
-    min-width: 148px;
-    max-width: 360px;
+    width: clamp(180px, 26vw, 340px);
+    min-width: 0;
+    justify-self: center;
     -webkit-app-region: no-drag;
   }
 
@@ -348,35 +356,28 @@
     padding: 2px;
   }
 
+  /* Three equal, centred icon cells: the glyphs used to sit off-axis inside
+     buttons whose width followed the icon rather than the control. */
   .titlebar__tools :global(.segmented__item) {
-    height: 24px;
-    padding-inline: 7px;
-    font-size: var(--text-2xs);
-  }
-
-  .titlebar__refresh {
     display: grid;
     place-items: center;
     width: 28px;
-    height: 28px;
-    border-radius: var(--radius-sm);
-    color: var(--text-tertiary);
-  }
-
-  .titlebar__refresh:hover {
-    background: var(--surface-raised);
-    color: var(--text);
+    height: 24px;
+    padding: 0;
+    font-size: var(--text-2xs);
   }
 
   /* Drop information, never overlap it: the count goes first, then the two
-     selects shrink, and below 1020px only layout + refresh remain (the values
-     still live in ui and are applied by the shelf). */
+     selects shrink, and on narrow windows only the layout switch remains
+     (filter/sort still live in ui and are applied by the shelf). The shelf
+     itself refreshes from the server's socket events, so there is no manual
+     refresh button to protect. */
   @media (max-width: 1180px) {
     .titlebar__count { display: none; }
   }
 
   @media (max-width: 1240px) {
-    .titlebar__search { flex-basis: 220px; }
+    .titlebar__search { width: clamp(170px, 22vw, 240px); }
     .titlebar__tools :global(.drop__value) {
       max-width: 62px;
       overflow: hidden;
@@ -384,16 +385,15 @@
     }
   }
 
-  @media (max-width: 1020px) {
-    /* Keep both selects usable rather than dropping a whole control: the
-       current value truncates to its first characters, the menu still shows
-       every option and the title attribute names the field. */
-    .titlebar__tools :global(.drop__value) { max-width: 38px; }
+  @media (max-width: 1080px) {
+    /* The shelf filter/sort are still applied from ui state; the selects are
+       the first thing to go so the centred field and layout switch survive. */
+    .titlebar__tools :global(.drop) { display: none; }
   }
 
   @media (max-width: 780px) {
     .titlebar__username { display: none; }
-    .titlebar__search { flex-basis: 190px; min-width: 120px; }
+    .titlebar__search { width: clamp(130px, 20vw, 190px); }
   }
 
   .titlebar__controls {

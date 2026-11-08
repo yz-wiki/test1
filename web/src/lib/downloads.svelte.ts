@@ -12,6 +12,8 @@ import {
   getDownloads,
   getDownloadsDir,
   removeDownload,
+  cancelDownload,
+  revealDownloadLocation,
   type DownloadRecord,
   type LibraryItem,
 } from './ipc';
@@ -152,6 +154,26 @@ class DownloadsStore {
     try {
       await removeDownload(itemId);
       await this.load();
+    } catch (reason) {
+      this.error = (reason as Error).message;
+    }
+  }
+
+  /** Cancel an in-flight transfer; Rust emits `download-cancelled` as well,
+   *  so dropping it here is only the optimistic local half. */
+  async cancel(itemId: string): Promise<void> {
+    try {
+      await cancelDownload(itemId);
+      this.dropTransfer(itemId);
+    } catch (reason) {
+      this.error = (reason as Error).message;
+    }
+  }
+
+  /** Open the downloaded folder in Explorer. */
+  async reveal(itemId: string): Promise<void> {
+    try {
+      await revealDownloadLocation(itemId);
     } catch (reason) {
       this.error = (reason as Error).message;
     }

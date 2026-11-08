@@ -14,7 +14,6 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let tab = $state<'chapters' | 'files'>('chapters');
-  let expanded = $state(false);
   let editing = $state(false);
   let saving = $state(false);
   let form = $state({
@@ -107,9 +106,35 @@
     chapters[chapterIndexNow]?.title ?? formatDuration(saved?.currentTime ?? 0),
   );
 
+  /** File-level facts fill the metadata rail when a book has almost no tags. */
+  const totalFileSize = $derived(
+    files.reduce((sum, file) => sum + (file.metadata?.size ?? 0), 0),
+  );
+  const fileFormats = $derived(
+    [
+      ...new Set(
+        files
+          .map(file => file.metadata?.filename?.split('.').pop()?.toUpperCase())
+          .filter((ext): ext is string => Boolean(ext)),
+      ),
+    ]
+      .slice(0, 4)
+      .join(' / '),
+  );
+
   /** Labels, not a bare stack of values: "zh / 1274 章" read as noise. */
   const facts = $derived(
     [
+      series ? { label: t('meta.series'), value: series } : null,
+      meta?.genres?.length
+        ? { label: t('meta.genres'), value: meta.genres.slice(0, 3).join(' · ') }
+        : null,
+      totalFileSize > 0 ? { label: t('downloads.size'), value: size(totalFileSize) } : null,
+      fileFormats ? { label: t('book.format'), value: fileFormats } : null,
+      item?.addedAt
+        ? { label: t('book.added'), value: new Date(item.addedAt).toLocaleDateString() }
+        : null,
+      download ? { label: t('downloads.title'), value: t('downloads.downloaded') } : null,
       meta?.narratorName ? { label: t('meta.narrators'), value: meta.narratorName } : null,
       meta?.publisher ? { label: t('meta.publisher'), value: meta.publisher } : null,
       meta?.publishedYear ? { label: t('meta.year'), value: meta.publishedYear } : null,
@@ -213,34 +238,6 @@
     if (!item) return;
     try {
       await beginDownload(item, meta?.title ?? item.id, meta?.authorName ?? '');
-    } catch (reason) {
-      error = (reason as Error).message;
-    }
-  }
-
-  /** The audio file that contains a chapter — the unit a single download is. */
-  function fileFor(chapter: { start: number; end: number }) {
-    const files = item?.media?.audioFiles ?? [];
-    return files.find(
-      file =>
-        chapter.start >= (file.startOffset ?? 0) - 0.5 &&
-        chapter.start < (file.startOffset ?? 0) + (file.duration || 0) - 0.5,
-    );
-  }
-
-  async function downloadChapter(chapter: { start: number; end: number }): Promise<void> {
-    const file = fileFor(chapter);
-    if (!item || !session.serverUrl || !file?.ino) {
-      error = t('downloads.noFile');
-      return;
-    }
-    try {
-      await downloads.saveChapter(
-        session.serverUrl,
-        item.id,
-        file.ino,
-        file.metadata?.filename ?? `${file.ino}.mp3`,
-      );
     } catch (reason) {
       error = (reason as Error).message;
     }
@@ -424,14 +421,12 @@
             </div>
           </section>
         {:else}
-          <p class="t-body selectable description" class:clamped={!expanded}>
+          <!-- Always expanded, but a fixed box: the chapter toolbar below must
+               start at the same y no matter how long the blurb is. Long text
+               scrolls inside the box (no visible slider). -->
+          <p class="t-body selectable description">
             {meta?.description || t('book.noDescription')}
           </p>
-          {#if meta?.description && meta.description.length > 320}
-            <button class="btn btn--quiet btn--sm align-start" onclick={() => (expanded = !expanded)}>
-              {expanded ? t('book.less') : t('book.more')}
-            </button>
-          {/if}
           {#if meta?.genres?.length}
             <div class="chips">
               {#each meta.genres as genre (genre)}
@@ -502,7 +497,6 @@
               {#each shownChapters as row (row.chapter.start)}
                 {@const chapter = row.chapter}
                 {@const index = row.index}
-                {@const file = fileFor(chapter)}
                 <li class="chapter-row" class:current={hasPosition && index === chapterIndexNow}>
                   <button
                     class="row hl"
@@ -521,20 +515,6 @@
                       <span class="row__now"><span class="row__now-dot" aria-hidden="true"></span>{t('book.nowAt')}</span>
                     {/if}
                   </button>
-                  {#if file?.ino}
-                    <button
-                      class="icon-btn icon-btn--sm chapter-row__save"
-                      title={t('downloads.downloadChapter')}
-                      aria-label={t('downloads.downloadChapter')}
-                      onclick={() => void downloadChapter(chapter)}
-                      disabled={item ? downloads.hasChapter(item.id, file.ino!) : false}
-                    >
-                      <Icon
-                        name={item && downloads.hasChapter(item.id, file.ino!) ? 'check' : 'download'}
-                        size={14}
-                      />
-                    </button>
-                  {/if}
                 </li>
               {/each}
             </ul>
@@ -772,19 +752,17 @@
   }
 
   .description {
+    display: block;
+    height: clamp(104px, 15vh, 176px);
     margin-top: var(--gap-row);
+    padding-right: 4px;
+    line-height: 1.6;
+    overflow-y: auto;
+    scrollbar-width: none;
   }
 
-  .clamped {
-    display: -webkit-box;
-    -webkit-line-clamp: 8;
-    line-clamp: 8;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .align-start {
-    align-self: flex-start;
+  .description::-webkit-scrollbar {
+    display: none;
   }
 
   .chips {
@@ -873,11 +851,6 @@
     height: 5px;
     border-radius: 50%;
     background: currentColor;
-  }
-
-  .chapter-row__save {
-    margin-right: var(--gap-inline);
-    color: var(--text-tertiary);
   }
 
   /* Equal side tracks keep the switch on the centre line. Sticky inside the

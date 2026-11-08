@@ -447,6 +447,8 @@ pub fn run() {
             commands::update_item_tracks,
             commands::fetch_listening_stats,
             commands::create_bookmark,
+            commands::delete_bookmark,
+            commands::update_bookmark,
             commands::update_progress,
             commands::sync_session,
             commands::close_session,
