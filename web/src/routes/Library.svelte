@@ -2,7 +2,7 @@
   import { library, progress, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { playItem } from '../lib/playFlow';
-  import { matchScore, textMatches } from '../lib/search';
+  import { matchScore, normalizeQuery, textMatches } from '../lib/search';
   import { reading } from '../lib/reading.svelte';
   import { menu, type MenuItem } from '../lib/menu.svelte';
   import { beginDownload } from '../lib/downloadFlow';
@@ -11,7 +11,6 @@
   import { t, formatLength, type TranslationKey } from '../lib/i18n.svelte';
   import Icon from '../components/Icon.svelte';
   import Cover from '../components/Cover.svelte';
-  import Dropdown from '../components/Dropdown.svelte';
   import HoverCard from '../components/HoverCard.svelte';
   import { artwork, type ArtKind } from '../lib/artwork.svelte';
   import type { IconName } from '../components/Icon.svelte';
@@ -21,10 +20,13 @@
     void library.load(session.serverUrl, session.activeLibraryId);
   });
 
-  /** The title bar owns the input; this page only reads the shared query. */
+  /** The title bar owns the input, the filter, the sort and the layout switch;
+      this page only reads the shared values. Nothing here resets when a route
+      change unmounts the shelf, which is what made two pages rank a query
+      differently. */
   const query = $derived(ui.query);
-  let sort = $state<'recent' | 'title' | 'author' | 'progress'>('recent');
-  let filter = $state<'all' | 'unfinished' | 'finished'>('all');
+  const sort = $derived(ui.librarySort);
+  const filter = $derived(ui.libraryFilter);
 
   type View = 'home' | 'books' | 'series' | 'authors' | 'narrators';
 
@@ -167,7 +169,14 @@
         if (score > 0) scored.set(item.id, score);
         return score > 0;
       });
-      return hits.sort((a, b) => (scored.get(b.id) ?? 0) - (scored.get(a.id) ?? 0));
+      return hits.sort((a, b) => {
+        const delta = (scored.get(b.id) ?? 0) - (scored.get(a.id) ?? 0);
+        if (delta) return delta;
+        // Equal relevance: an in-progress book beats an untouched one, then
+        // a stable title order. Search results must not shuffle on every key.
+        const live = (id: string) => Number(Boolean(progress.for(id) && !progress.for(id)?.isFinished));
+        return live(b.id) - live(a.id) || title(a).localeCompare(title(b), 'zh-CN');
+      });
     }
 
     let list: typeof library.items = [...base];
@@ -229,29 +238,50 @@
   );
 
   /**
-   * Search keeps its existing ranked/pinyin matching. Only the presentation
-   * changes: matching author and series names become clickable group chips
-   * above the book results, so a query that names a person or a series does
-   * not force the user to read through a flat list of covers.
+   * One search story for the dashboard and the library shelves: the same
+   * ranked book list, plus the series / author / narrator names that matched.
+   * A name opens its books in place — no route jump, no second query — so Esc
+   * and the rail's back button unwind it like any other group.
    */
-  const matchedNames = $derived.by(() => {
-    const q = query.trim();
-    if (!q) return { authors: [] as string[], series: [] as string[] };
-    const authors = new Set<string>();
-    const series = new Set<string>();
+  type FacetTab = 'series' | 'authors' | 'narrators';
+  const FACETS: { tab: FacetTab; key: TranslationKey }[] = [
+    { tab: 'series', key: 'search.groupSeries' },
+    { tab: 'authors', key: 'search.groupAuthors' },
+    { tab: 'narrators', key: 'search.groupNarrators' },
+  ];
+
+  const facets = $derived.by(() => {
+    const words = normalizeQuery(query).toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [] as { tab: FacetTab; key: TranslationKey; names: string[] }[];
+    const found = new Map<FacetTab, Set<string>>(FACETS.map(entry => [entry.tab, new Set<string>()]));
     for (const item of library.items) {
-      const name = item.media?.metadata?.authorName?.trim();
-      const groupName = seriesGroup(seriesOf(item));
-      if (name && textMatches(name, q)) authors.add(name);
-      if (groupName && textMatches(groupName, q)) series.add(groupName);
+      const names: [FacetTab, string][] = [
+        ['series', seriesGroup(seriesOf(item))],
+        ['authors', author(item)],
+        ['narrators', item.media?.metadata?.narratorName?.trim() ?? ''],
+      ];
+      for (const [tab, name] of names) {
+        // AND across words, exactly like matchScore does for books.
+        if (name && words.every(word => textMatches(name, word))) found.get(tab)?.add(name);
+      }
     }
-    return { authors: [...authors].slice(0, 10), series: [...series].slice(0, 10) };
+    return FACETS.map(entry => ({
+      tab: entry.tab,
+      key: entry.key,
+      names: [...(found.get(entry.tab) ?? [])]
+        .sort((a, b) => a.length - b.length || a.localeCompare(b, 'zh-CN'))
+        .slice(0, 8),
+    }));
   });
 
-  function goToGroup(next: View, name: string): void {
+  /** Empty facet rows are noise: a query for a title rarely names a narrator. */
+  const activeFacets = $derived(facets.filter(entry => entry.names.length > 0));
+
+  function focusFacet(tab: FacetTab, name: string): void {
     ui.query = '';
-    setView(next);
-    ui.focusGroup = { tab: next, name };
+    if (!isHome) setView(tab);
+    ui.focusGroup = { tab, name };
+    if (scroller) scroller.scrollTop = 0;
   }
 
   /** Local artwork is a client-side override; feedback stays in this page. */
@@ -539,78 +569,29 @@
   </button>
 {/snippet}
 
-<div class="toolbar">
-  <!-- Top row owns only "how to show it": filter, sort, layout, refresh.
-       The category switch lives above the shelf it controls, centred. -->
-  <span class="toolbar__lead t-label t-num">{t('library.total', { count: library.items.length })}</span>
-
-  <div class="toolbar__spacer"></div>
-
-  {#if query.trim()}
-    <span class="t-small t-num t-accent found">{t('library.found', { count: visible.length })}</span>
-  {/if}
-
-  <div class="toolbar__right">
-    <Dropdown
-      value={filter}
-      options={[
-        { value: 'all', label: t('library.filter.all') },
-        { value: 'unfinished', label: t('library.filter.unfinished') },
-        { value: 'finished', label: t('library.filter.finished') },
-      ]}
-      onSelect={next => (filter = next as 'all' | 'unfinished' | 'finished')}
-      label={t('library.filter')}
-      variant="field"
-    />
-
-    <Dropdown
-      value={sort}
-      options={[
-        { value: 'recent', label: t('library.sort.recent') },
-        { value: 'title', label: t('library.sort.title') },
-        { value: 'author', label: t('library.sort.author') },
-        { value: 'progress', label: t('library.sort.progress') },
-      ]}
-      onSelect={next => (sort = next as 'recent' | 'title' | 'author' | 'progress')}
-      label={t('library.sort')}
-      variant="field"
-    />
-
-    <span class="toolbar__sep"></span>
-
-    <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.hint')}>
-      <button
-        class="segmented__item"
-        aria-pressed={!isList && !isCompact}
-        title={t('library.layout.grid')}
-        onclick={() => ui.setLibraryLayout('grid')}
-      ><Icon name="grid" size={14} /></button>
-      <button
-        class="segmented__item"
-        aria-pressed={isCompact}
-        title={t('library.layout.compact')}
-        onclick={() => ui.setLibraryLayout('compact')}
-      ><Icon name="blocks" size={14} /></button>
-      <button
-        class="segmented__item"
-        aria-pressed={isList}
-        title={t('library.layout.list')}
-        onclick={() => ui.setLibraryLayout('list')}
-      ><Icon name="rows" size={14} /></button>
+<!-- One facet strip for both the dashboard and the library shelves: the same
+     ranked query, the same names, the same in-place drill-down. -->
+{#snippet facetChips()}
+  {#if activeFacets.length > 0}
+    <div class="search-groups">
+      {#each activeFacets as facet (facet.tab)}
+        <div class="search-groups__row">
+          <span class="search-groups__label t-label">{t(facet.key)}</span>
+          {#each facet.names as name (name)}
+            <button class="search-groups__chip" onclick={() => focusFacet(facet.tab, name)}>
+              {name}
+            </button>
+          {/each}
+        </div>
+      {/each}
+      <p class="search-groups__hint t-small t-tertiary">{t('search.groupHint')}</p>
     </div>
+  {/if}
+{/snippet}
 
-    <span class="toolbar__sep"></span>
-
-    <button
-      class="icon-btn"
-      aria-label={t('library.refresh')}
-      title={t('library.refresh')}
-      onclick={() => void library.load(session.serverUrl, session.activeLibraryId, true)}
-    >
-      <Icon name="refresh" />
-    </button>
-  </div>
-</div>
+<!-- Library-wide filter / sort / layout / refresh now live in the title bar
+     on the same line as the global search field. The page keeps only the
+     shelf-level category switch and the results themselves. -->
 
 <div class="page scroll-y" class:page--home={isHome} bind:this={scroller} onscroll={onScroll}>
   {#if library.error}
@@ -629,7 +610,7 @@
     </div>
   {:else}
     {#if isHome}
-      <div class="home">
+      <div class="home" class:home--search={Boolean(normalizeQuery(query))}>
         <aside class="home__side">
           <section class="home__panel">
             <div class="panel__head">
@@ -790,6 +771,10 @@
             </div>
           </div>
 
+          {#if query.trim()}
+            {@render facetChips()}
+          {/if}
+
           {#if query.trim() || ui.focusGroup || homeTab === 'books'}
             <div
               class="home-grid"
@@ -869,27 +854,7 @@
     </div>
 
     {#if query.trim() && !group}
-      <div class="search-groups">
-        <div class="search-groups__row">
-          <span class="search-groups__label t-label">{t('search.groupAuthors')}</span>
-          {#each matchedNames.authors as name (name)}
-            <button class="search-groups__chip" onclick={() => goToGroup('authors', name)}>{name}</button>
-          {/each}
-          {#if matchedNames.authors.length === 0}
-            <span class="t-small t-tertiary">{t('search.noAuthor')}</span>
-          {/if}
-        </div>
-        <div class="search-groups__row">
-          <span class="search-groups__label t-label">{t('search.groupSeries')}</span>
-          {#each matchedNames.series as name (name)}
-            <button class="search-groups__chip" onclick={() => goToGroup('series', name)}>{name}</button>
-          {/each}
-          {#if matchedNames.series.length === 0}
-            <span class="t-small t-tertiary">{t('search.noSeries')}</span>
-          {/if}
-        </div>
-        <p class="search-groups__hint t-small t-tertiary">{t('search.groupHint')}</p>
-      </div>
+      {@render facetChips()}
       <div class="search-groups__head t-label">
         {t('search.groupBooks')}
         <span class="t-num">{t('home.showing', { count: visible.length })}</span>
@@ -1064,18 +1029,8 @@
 {/if}
 
 <style>
-  .toolbar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px var(--gap-row);
-    padding: var(--gap-inline) var(--gap-block);
-    border-bottom: 1px solid var(--hairline);
-    background: var(--surface);
-  }
-
-  /* Category switch on the left, filters / sort / layout on the right: one
-     row owns both "what to show" and "how to show it". */
+  /* The window chrome owns filter / sort / layout / refresh. What remains on
+     this page is the shelf's own category switch. */
   .shelf-tabs {
     display: flex;
     flex: 0 0 auto;
@@ -1113,31 +1068,11 @@
     opacity: 0.72;
   }
 
-  .toolbar__lead {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    color: var(--text-tertiary);
-  }
-
-  .toolbar__sep {
-    width: 1px;
-    height: 20px;
-    margin-inline: 2px;
-    background: var(--hairline);
-  }
-
-  /* Narrow windows drop the least important controls instead of crushing the
-     selects into a single letter that overlaps the search field. */
-  @media (max-width: 1160px) {
-    .toolbar__right .toolbar__sep,
-    .found { display: none; }
-  }
-
   /* ── Home: history on the left, one category switch on the right ────────── */
 
   .home {
     display: grid;
-    grid-template-columns: clamp(264px, 25%, 336px) minmax(0, 1fr);
+    grid-template-columns: clamp(248px, 24%, 320px) minmax(0, 1fr);
     gap: var(--gap-section);
     align-items: start;
     flex: 0 0 auto;
@@ -1339,7 +1274,7 @@
 
   .home-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(216px, 100%), 1fr));
     gap: var(--gap-inline);
   }
 
@@ -1380,10 +1315,10 @@
   }
 
   /* Below this the two columns cannot both stay readable, so the history card
-     moves above the switch instead of being crushed to 200 px. */
+     moves above the shelf. Its shape then follows the WINDOW: with width to
+     spare the hero and the queue sit side by side; narrow or short windows
+     drop information instead of growing a second scrollbar. */
   @media (max-width: 1080px) {
-    /* One column: give scrolling back to the page, so neither panel is
-       squeezed into half a viewport. */
     .page.page--home {
       display: block;
       overflow-y: auto;
@@ -1394,10 +1329,82 @@
       overflow: visible;
       padding: 0;
     }
+    .home__side {
+      position: static;
+    }
     .home__panel,
     .home__main {
       overflow: visible;
     }
+    .home__panel {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(0, 1.2fr);
+      align-content: start;
+      gap: var(--gap-row);
+    }
+    .panel__head {
+      grid-column: 1 / -1;
+      margin-bottom: 0;
+    }
+    .hero {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .queue {
+      grid-column: 2;
+      grid-row: 2;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      align-content: start;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+    .home__empty {
+      grid-column: 1 / -1;
+    }
+    /* Results are the point while searching: collapse the queue so the shelf
+       is not pushed below the fold on a small window. */
+    .home--search .home__panel {
+      display: flex;
+    }
+    .home--search .queue {
+      display: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .home__panel,
+    .home--search .home__panel {
+      display: flex;
+    }
+    .queue {
+      display: flex;
+      margin-top: var(--gap-row);
+      padding-top: var(--gap-row);
+      border-top: 1px solid var(--hairline);
+    }
+  }
+
+  /* Height-driven layout. The page is the only scroll surface, so a shorter
+     window drops its oldest history rows rather than adding a slider inside
+     the card. HoverCard owns the .hovercard wrapper around each row. */
+  @media (max-height: 900px) {
+    .queue > :global(.hovercard):nth-child(n + 5) { display: none; }
+  }
+
+  @media (max-height: 760px) {
+    .queue > :global(.hovercard):nth-child(n + 4) { display: none; }
+    .hero__foot { display: none; }
+  }
+
+  @media (max-height: 640px) {
+    .queue > :global(.hovercard):nth-child(n + 3) { display: none; }
+    .hero__cover { width: 64px; flex-basis: 64px; }
+  }
+
+  @media (max-height: 520px) {
+    .queue { display: none; }
   }
 
   .home__empty {
@@ -1463,9 +1470,11 @@
     }
   }
 
+  /* min() keeps a narrow right-hand column from overflowing its track: a
+     fixed 148px floor is wider than the whole shelf on a small window. */
   .home-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr));
     gap: var(--gap-block) var(--gap-panel);
   }
 
@@ -1525,7 +1534,7 @@
   .home-groups--compact,
   .groups--compact {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: 10px;
     align-content: start;
   }
@@ -1879,30 +1888,6 @@
     background: var(--surface-overlay);
     box-shadow: var(--shadow-3);
     color: var(--text);
-  }
-
-  .toolbar__right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-
-  .found {
-    white-space: nowrap;
-  }
-
-  .toolbar__spacer {
-    flex: 1 1 auto;
-    min-width: var(--gap-inline);
-  }
-
-  .segmented--tools .segmented__item {
-    display: grid;
-    place-items: center;
-    padding-inline: 9px;
   }
 
   .page {

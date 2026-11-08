@@ -247,6 +247,21 @@ class UiStore {
       return saved === 'list' || saved === 'compact' ? saved : 'grid';
     })(),
   );
+  /** Filter / sort moved into the window chrome, so they are window-level
+      state rather than a local variable inside the (unmountable) library
+      route. Both survive a route change together with the search query. */
+  libraryFilter = $state<'all' | 'unfinished' | 'finished'>(
+    (() => {
+      const saved = localStorage.getItem('skald.libraryFilter');
+      return saved === 'unfinished' || saved === 'finished' ? saved : 'all';
+    })(),
+  );
+  librarySort = $state<'recent' | 'title' | 'author' | 'progress'>(
+    (() => {
+      const saved = localStorage.getItem('skald.librarySort');
+      return saved === 'title' || saved === 'author' || saved === 'progress' ? saved : 'recent';
+    })(),
+  );
   tileSize = $state(Number(localStorage.getItem('skald.tileSize')) || 148);
   /** null = use the theme's own accent. */
   accent = $state<string | null>(localStorage.getItem('skald.accent'));
@@ -302,6 +317,16 @@ class UiStore {
   setLibraryLayout(layout: 'grid' | 'compact' | 'list'): void {
     this.libraryLayout = layout;
     localStorage.setItem('skald.libraryLayout', layout);
+  }
+
+  setLibraryFilter(value: 'all' | 'unfinished' | 'finished'): void {
+    this.libraryFilter = value;
+    localStorage.setItem('skald.libraryFilter', value);
+  }
+
+  setLibrarySort(value: 'recent' | 'title' | 'author' | 'progress'): void {
+    this.librarySort = value;
+    localStorage.setItem('skald.librarySort', value);
   }
 
   setTileSize(size: number): void {

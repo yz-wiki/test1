@@ -193,6 +193,23 @@
            playing", not in the control cluster. Moving them here fills the
            empty left track and takes ~200px of pressure off the right one. -->
       <div class="bar__left">
+        <!-- Book first, hard against the left edge. It is the label for the
+             whole bar, so it gets a fixed, wider box rather than sharing a
+             centre cluster with the transport and the speed control. -->
+        <button class="bar__meta hl" onclick={() => player.expand()} title={t('player.expand')}>
+          <div class="bar__cover">
+            <Cover itemId={item.id} size={96} title={player.showTitle} />
+          </div>
+          <div class="bar__text">
+            <span class="truncate bar__title">{player.title}</span>
+            {#if flash}
+              <span class="truncate t-small bar__started">{t('player.started')}</span>
+            {:else}
+              <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+            {/if}
+          </div>
+        </button>
+
         {#if entries.length > 0}
           <div class="bar__anchored" bind:this={jumpEl}>
             <button
@@ -269,21 +286,6 @@
           <span class="bar__sep"></span>
         {/if}
 
-        <!-- Book button sits at the right end of the facts rail, next to the
-             transport, instead of being stranded at the far left edge. -->
-        <button class="bar__meta hl" onclick={() => player.expand()} title={t('player.expand')}>
-          <div class="bar__cover">
-            <Cover itemId={item.id} size={96} title={player.showTitle} />
-          </div>
-          <div class="bar__text">
-            <span class="truncate bar__title">{player.title}</span>
-            {#if flash}
-              <span class="truncate t-small bar__started">{t('player.started')}</span>
-            {:else}
-              <span class="truncate t-small t-tertiary">{player.subtitle}</span>
-            {/if}
-          </div>
-        </button>
       </div>
 
       <div class="bar__transport">
@@ -421,14 +423,14 @@
     transition: background-color var(--dur-2) var(--ease);
   }
 
-  /* One centred instrument. A capped three-column grid kept the facts and
-     the volume ~500px away from the play button on a wide monitor; the groups
-     now sit next to each other on the centre line and only shrink when the
-     window genuinely runs out of room. The seek track above stays full width. */
+  /* Two equal outer tracks keep the transport on the window centre line while
+     the book sits on the left edge and the speed / tools on the right edge.
+     `space-between` plus 1fr on both sides is the flex version of a
+     `1fr auto 1fr` grid: no group can drift into the middle. */
   .bar__row {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: clamp(10px, 1.5vw, 22px);
     height: 56px;
     width: 100%;
@@ -447,7 +449,6 @@
     align-items: center;
     gap: var(--gap-inline);
     min-width: 0;
-    justify-self: start;
     padding: 4px;
     margin-left: -4px;
     border-radius: var(--radius-sm);
@@ -459,16 +460,20 @@
   .bar__left {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 4px;
     min-width: 0;
-    flex: 0 1 auto;
+    flex: 1 1 0;
     /* No `overflow: hidden` here: the chapter picker is an absolute child of
        .bar__anchored and was being clipped, so clicking the chapter chip
        appeared to do nothing. Truncation belongs on the text, not the rail. */
   }
 
+  /* 1.5x the old shrink-to-fit chip (≈168px → 252px): the full title and its
+     subtitle are readable, and the box no longer changes width with the text. */
   .bar__left .bar__meta {
-    flex: 0 1 auto;
+    flex: 0 1 252px;
+    width: 252px;
     min-width: 0;
     overflow: hidden;
   }
@@ -492,6 +497,7 @@
 
   .bar__text {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 1px;
     min-width: 0;
@@ -617,10 +623,10 @@
   .bar__right {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 6px;
     min-width: 0;
-    flex: 0 1 auto;
+    flex: 1 1 0;
   }
 
   /* Only the quick group may shrink. The tools keep their intrinsic width, so
@@ -633,11 +639,14 @@
     flex: 0 1 auto;
   }
 
+  /* Speed / sleep / expand hug the right edge; volume stays with the quick
+     actions on the inner side, so the two groups never trade places. */
   .bar__tools {
     display: flex;
     align-items: center;
     gap: 2px;
     flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .bar__anchored {
@@ -893,8 +902,9 @@
     .bar__chip-title {
       display: none;
     }
-    .bar__meta {
-      max-width: 190px;
+    .bar__left .bar__meta {
+      flex-basis: 200px;
+      width: 200px;
     }
   }
 
@@ -911,6 +921,10 @@
     .bar__left .bar__chip {
       max-width: 132px;
     }
+    .bar__left .bar__meta {
+      flex-basis: 168px;
+      width: 168px;
+    }
   }
 
   @media (max-width: 880px) {
@@ -925,6 +939,13 @@
       max-width: 120px;
     }
     .bar__left .bar__chip-title {
+      display: none;
+    }
+    .bar__left .bar__meta {
+      flex-basis: 132px;
+      width: 132px;
+    }
+    .bar__left .bar__meta .t-small {
       display: none;
     }
   }

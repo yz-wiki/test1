@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { session, ui } from '../lib/state.svelte';
+  import { library, session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { preloadPinyin } from '../lib/search';
   import { BRAND } from '../lib/brand';
@@ -8,6 +8,7 @@
   import BrandMark from './BrandMark.svelte';
   import Icon from './Icon.svelte';
   import LibrarySwitcher from './LibrarySwitcher.svelte';
+  import Dropdown from './Dropdown.svelte';
 
   let { title = BRAND.name }: { title?: string } = $props();
 
@@ -82,6 +83,68 @@
       spellcheck="false"
     />
   </div>
+
+  <!-- The shelf controls share the window chrome with the global field: one
+       line owns the library context, the query and how the shelf is shown.
+       Filter / sort are ui state, so this bar can own them on every route. -->
+  {#if ui.route === 'library'}
+    <div class="titlebar__tools" data-no-drag>
+      <span class="titlebar__count t-label t-num">
+        {t('library.total', { count: library.items.length })}
+      </span>
+
+      <Dropdown
+        value={ui.libraryFilter}
+        options={[
+          { value: 'all', label: t('library.filter.all') },
+          { value: 'unfinished', label: t('library.filter.unfinished') },
+          { value: 'finished', label: t('library.filter.finished') },
+        ]}
+        onSelect={next => ui.setLibraryFilter(next as 'all' | 'unfinished' | 'finished')}
+        label={t('library.filter')}
+      />
+
+      <Dropdown
+        value={ui.librarySort}
+        options={[
+          { value: 'recent', label: t('library.sort.recent') },
+          { value: 'title', label: t('library.sort.title') },
+          { value: 'author', label: t('library.sort.author') },
+          { value: 'progress', label: t('library.sort.progress') },
+        ]}
+        onSelect={next => ui.setLibrarySort(next as 'recent' | 'title' | 'author' | 'progress')}
+        label={t('library.sort')}
+      />
+
+      <div class="segmented segmented--tools" role="group" aria-label={t('library.layout.hint')}>
+        <button
+          class="segmented__item"
+          aria-pressed={ui.libraryLayout === 'grid'}
+          title={t('library.layout.grid')}
+          onclick={() => ui.setLibraryLayout('grid')}
+        ><Icon name="grid" size={13} /></button>
+        <button
+          class="segmented__item"
+          aria-pressed={ui.libraryLayout === 'compact'}
+          title={t('library.layout.compact')}
+          onclick={() => ui.setLibraryLayout('compact')}
+        ><Icon name="blocks" size={13} /></button>
+        <button
+          class="segmented__item"
+          aria-pressed={ui.libraryLayout === 'list'}
+          title={t('library.layout.list')}
+          onclick={() => ui.setLibraryLayout('list')}
+        ><Icon name="rows" size={13} /></button>
+      </div>
+
+      <button
+        class="titlebar__refresh"
+        aria-label={t('library.refresh')}
+        title={t('library.refresh')}
+        onclick={() => void library.load(session.serverUrl, session.activeLibraryId, true)}
+      ><Icon name="refresh" size={14} /></button>
+    </div>
+  {/if}
 
   <div class="titlebar__spacer"></div>
 
@@ -252,9 +315,85 @@
     background: var(--surface);
   }
 
+  /* Shelf controls on the same line as the field. The title bar is the drag
+     handle, so the whole group opts out; compact variants fit a 46px bar. */
+  .titlebar__tools {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+    min-width: 0;
+    -webkit-app-region: no-drag;
+  }
+
+  .titlebar__count {
+    margin-right: 3px;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+  }
+
+  .titlebar__tools :global(.drop__btn) {
+    height: 30px;
+    padding: 0 6px 0 8px;
+    border: 1px solid var(--hairline);
+    background: var(--surface-inset);
+    font-size: var(--text-xs);
+  }
+
+  .titlebar__tools :global(.drop__btn:hover) {
+    border-color: var(--hairline-strong);
+  }
+
+  .titlebar__tools :global(.segmented--tools) {
+    padding: 2px;
+  }
+
+  .titlebar__tools :global(.segmented__item) {
+    height: 24px;
+    padding-inline: 7px;
+    font-size: var(--text-2xs);
+  }
+
+  .titlebar__refresh {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+  }
+
+  .titlebar__refresh:hover {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  /* Drop information, never overlap it: the count goes first, then the two
+     selects shrink, and below 1020px only layout + refresh remain (the values
+     still live in ui and are applied by the shelf). */
+  @media (max-width: 1180px) {
+    .titlebar__count { display: none; }
+  }
+
+  @media (max-width: 1240px) {
+    .titlebar__search { flex-basis: 220px; }
+    .titlebar__tools :global(.drop__value) {
+      max-width: 62px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  @media (max-width: 1020px) {
+    /* Keep both selects usable rather than dropping a whole control: the
+       current value truncates to its first characters, the menu still shows
+       every option and the title attribute names the field. */
+    .titlebar__tools :global(.drop__value) { max-width: 38px; }
+  }
+
   @media (max-width: 780px) {
     .titlebar__username { display: none; }
-    .titlebar__search { flex-basis: 200px; }
+    .titlebar__search { flex-basis: 190px; min-width: 120px; }
   }
 
   .titlebar__controls {

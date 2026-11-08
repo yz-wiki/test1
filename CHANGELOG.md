@@ -2,6 +2,13 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.6 (2026-11-08) — chrome-level shelf tools, one search story, fluid history
+
+- **Shelf tools moved into the window chrome.** Filter / sort / layout / refresh and the library count now share the title bar with the global search field instead of owning a second row below it. Filter and sort became window-level state, so a route change no longer resets them or lets two pages rank the same query differently.
+- **Transport edges.** The cover/title button is the first object on the left and 1.5x wider than the old shrink-to-fit chip; the speed / sleep / expand group is pinned to the right edge. Two equal outer flex tracks keep the play cluster on the window centre line.
+- **One search story.** The dashboard and the library shelves use the same ranked result set and the same clickable series / author / narrator facets, which open their books in place. Matching reads `series[]` as well as the legacy `seriesName`, weighs literal prefixes above pinyin hits, and breaks score ties in favour of books already in progress. Empty facet rows are omitted.
+- **Fluid continue-listening.** Width and height media queries switch the history panel between a sticky column, a hero + queue row and a compact single column; short windows drop the oldest rows instead of growing a nested scrollbar. During a search on a narrow window the queue collapses so results stay above the fold. Narrow shelves can no longer overflow their grid track.
+
 ## 2.19.5 (2026-11-08) — dashboard layout and selection geometry
 
 - **Category switch moved to the shelf.** `书籍 / 系列 / 作者 / 播讲` now sits

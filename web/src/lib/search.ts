@@ -67,9 +67,14 @@ function latinForms(text: string): Latin {
   return value;
 }
 
+/** An IME often leaves full-width spaces behind; treat them as word breaks. */
+export function normalizeQuery(query: string): string {
+  return query.replace(/[\u3000\ufeff]/g, ' ').trim();
+}
+
 /** Substring match against the text, its pinyin, or its pinyin initials. */
 export function textMatches(text: string, query: string): boolean {
-  const needle = query.trim().toLowerCase();
+  const needle = normalizeQuery(query).toLowerCase();
   if (!needle) return true;
   if (text.toLowerCase().includes(needle)) return true;
 
@@ -77,6 +82,27 @@ export function textMatches(text: string, query: string): boolean {
   if (!compact) return true;
   const { full, initials } = latinForms(text);
   return full.includes(compact) || initials.includes(compact);
+}
+
+/**
+ * How well one field matches one word. A literal prefix is worth more than a
+ * bare substring, and a pinyin hit less than a literal one — otherwise
+ * "san" would pull every book whose author contains 三 above an exact title.
+ */
+function fieldScore(text: string, word: string, weight: number): number {
+  const lower = text.toLowerCase().trim();
+  const needle = word.replace(/\s+/g, '').toLowerCase();
+  if (!lower || !needle) return 0;
+  if (lower === needle) return weight * 2.4;
+  if (lower.startsWith(needle)) return weight * 1.8;
+  if (lower.includes(needle)) return weight * 1.2;
+
+  const { full, initials } = latinForms(text);
+  if (full === needle) return weight * 1.5;
+  if (full.startsWith(needle) || initials === needle) return weight * 1.2;
+  if (full.includes(needle)) return weight * 0.9;
+  if (initials.startsWith(needle) || initials.includes(needle)) return weight * 0.75;
+  return 0;
 }
 
 /** The searchable fields of a library item, joined once per id. */
@@ -109,26 +135,29 @@ export function matchesQuery(item: LibraryItem, query: string): boolean {
  * letters puts the book you meant at the top instead of somewhere in a list.
  */
 export function matchScore(item: LibraryItem, query: string): number {
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const words = normalizeQuery(query).toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 0) return 1;
 
   const meta = item.media?.metadata;
-  const fields: [string | undefined, number][] = [
-    [meta?.title, 10],
-    [meta?.authorName, 6],
-    [meta?.seriesName, 5],
-    [meta?.subtitle, 4],
-    [meta?.narratorName, 4],
+  // ABS 2.6+ keeps series in `series[]`; the legacy `seriesName` alone made
+  // whole shelves unreachable by their own series name.
+  const series =
+    (meta?.series ?? []).map(entry => entry.name?.trim()).filter(Boolean).join(' ') ||
+    meta?.seriesName?.trim() ||
+    '';
+  const fields: [string, number][] = [
+    [meta?.title ?? '', 12],
+    [meta?.authorName ?? '', 7],
+    [series, 6],
+    [meta?.narratorName ?? '', 5],
+    [meta?.subtitle ?? '', 3],
   ];
 
   let total = 0;
   for (const word of words) {
     let best = 0;
     for (const [text, weight] of fields) {
-      if (!text || !textMatches(text, word)) continue;
-      const lower = text.toLowerCase();
-      const quality = lower === word ? 2 : lower.startsWith(word) ? 1.5 : 1;
-      best = Math.max(best, weight * quality);
+      if (text) best = Math.max(best, fieldScore(text, word, weight));
     }
     // One word with no hit anywhere disqualifies the item.
     if (best === 0) return 0;
