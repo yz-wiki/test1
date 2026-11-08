@@ -445,7 +445,9 @@
           <div class="below__card below__card--marks">
             <span class="below__label t-label">{t('player.belowMarks')}</span>
             {#if marks.length === 0}
-              <p class="below__empty t-small t-tertiary">{t('player.noMarks')}</p>
+              <div class="below__empty-box">
+                <p class="below__empty t-small t-tertiary">{t('player.noMarks')}</p>
+              </div>
             {:else}
               <div class="below__marks scroll-y">
                 {#each marks.slice(-4).reverse() as mark (mark.time + mark.title)}
@@ -810,49 +812,60 @@
     min-height: 0;
   }
 
+  /* Equal-height panels with a common ruled header. Numbers, progress, and
+     the footer action all land on the same baseline across the three cards. */
   .below__card {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     min-width: 0;
-    min-height: 0;
-    padding: var(--gap-row);
+    min-height: 188px;
+    box-sizing: border-box;
+    padding: 13px 15px 12px;
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
     background: var(--surface);
+    box-shadow: var(--shadow-1);
   }
 
   .below__label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--hairline);
     color: var(--text-tertiary);
   }
 
   .below__label::before {
     content: '';
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
     border-radius: 50%;
     background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   .below__big {
+    margin-top: 7px;
     font-size: var(--text-xl);
     font-weight: var(--weight-semibold);
     color: var(--text);
-    line-height: 1.15;
+    line-height: 1.1;
     letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
   }
 
   .below__sub {
+    min-height: 16px;
     font-size: var(--text-xs);
     color: var(--text-secondary);
   }
 
   .below__bar {
-    height: 5px;
-    margin-top: auto;
+    height: 4px;
+    margin-top: 12px;
     border-radius: var(--radius-pill);
     background: var(--surface-inset);
     overflow: hidden;
@@ -869,27 +882,32 @@
   .below__pair {
     display: flex;
     justify-content: space-between;
+    margin-top: 5px;
+    font-size: var(--text-2xs);
+    color: var(--text-tertiary);
   }
 
   .below__action {
     align-self: flex-start;
-    margin-top: 2px;
+    margin-top: auto;
+    padding-inline: 0;
+    color: var(--accent);
   }
 
   /* A ruled 2×2 spec sheet: labels stay tiny, values tabular and dark. */
   .below__facts {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px var(--gap-inline);
-    margin-top: 4px;
-    padding-top: 7px;
+    gap: 7px var(--gap-inline);
+    margin-top: auto;
+    padding-top: 10px;
     border-top: 1px solid var(--hairline);
   }
 
   .below__facts > div {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
     min-width: 0;
   }
 
@@ -904,8 +922,20 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Empty state is a real surface, not a floating line of grey text. */
+  .below__empty-box {
+    display: grid;
+    place-items: center;
+    flex: 1 1 auto;
+    min-height: 62px;
+    margin-top: 10px;
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+  }
+
   .below__empty {
-    margin: var(--gap-row) 0;
+    margin: 0;
   }
 
   .below__marks {
@@ -944,16 +974,19 @@
     align-items: center;
     gap: 6px;
     margin-top: auto;
-    padding-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
   }
 
   .below__add .input {
     width: 100%;
     min-width: 0;
+    font-size: var(--text-xs);
   }
 
   .below__add .btn {
     flex: 0 0 auto;
+    padding-inline: 9px;
     white-space: nowrap;
   }
 

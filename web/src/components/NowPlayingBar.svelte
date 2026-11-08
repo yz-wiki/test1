@@ -49,6 +49,21 @@
   let jumpEl = $state<HTMLDivElement | null>(null);
   let jumpList = $state<HTMLDivElement | null>(null);
   let jumpQuery = $state('');
+  let chipEl = $state<HTMLButtonElement | null>(null);
+  /** Horizontal centre of the chapter chip, in viewport coordinates. The
+      picker is anchored to its trigger instead of the window axis: centred
+      on the window it floated away from the chip that opened it. */
+  let jumpX = $state(0);
+
+  function placeJump(): void {
+    if (!chipEl) return;
+    const rect = chipEl.getBoundingClientRect();
+    const width = Math.min(380, window.innerWidth - 32);
+    const half = width / 2;
+    const centre = rect.left + rect.width / 2;
+    jumpX = Math.max(half + 12, Math.min(window.innerWidth - half - 12, centre));
+  }
+
   let sleepOpen = $state(false);
   let volumeActive = $state(false);
   let volumeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -140,11 +155,16 @@
       // shortcut must not also navigate the page behind it.
       event.preventDefault();
     };
+    const onResize = () => {
+      if (jumpOpen) placeJump();
+    };
     window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
     };
   });
 </script>
@@ -173,31 +193,18 @@
            playing", not in the control cluster. Moving them here fills the
            empty left track and takes ~200px of pressure off the right one. -->
       <div class="bar__left">
-        <button class="bar__meta hl" onclick={() => player.expand()} title={t('player.expand')}>
-          <div class="bar__cover">
-            <Cover itemId={item.id} size={96} title={player.showTitle} />
-          </div>
-          <div class="bar__text">
-            <span class="truncate bar__title">{player.title}</span>
-            {#if flash}
-              <span class="truncate t-small bar__started">{t('player.started')}</span>
-            {:else}
-              <span class="truncate t-small t-tertiary">{player.subtitle}</span>
-            {/if}
-          </div>
-        </button>
-
         {#if entries.length > 0}
-          <span class="bar__sep"></span>
           <div class="bar__anchored" bind:this={jumpEl}>
             <button
               type="button"
               class="bar__chip"
+              bind:this={chipEl}
               aria-haspopup="dialog"
               aria-expanded={jumpOpen}
               onclick={() => {
                 jumpOpen = !jumpOpen;
                 jumpQuery = '';
+                if (jumpOpen) placeJump();
               }}
             >
               <span class="bar__chip-mark" aria-hidden="true"></span>
@@ -209,7 +216,7 @@
             </button>
 
             {#if jumpOpen}
-              <div class="jump" role="dialog" aria-label={t('player.chapters')}>
+              <div class="jump" role="dialog" aria-label={t('player.chapters')} style:left="{jumpX}px">
                 <div class="jump__head">
                   <span class="t-label">
                     {player.kind === 'episode' ? t('podcast.episodes', { count: entries.length }) : t('player.chapters')}
@@ -259,7 +266,24 @@
               {t('player.bookProgress', { pct: Math.round(player.progress * 100) })}
             </span>
           {/if}
+          <span class="bar__sep"></span>
         {/if}
+
+        <!-- Book button sits at the right end of the facts rail, next to the
+             transport, instead of being stranded at the far left edge. -->
+        <button class="bar__meta hl" onclick={() => player.expand()} title={t('player.expand')}>
+          <div class="bar__cover">
+            <Cover itemId={item.id} size={96} title={player.showTitle} />
+          </div>
+          <div class="bar__text">
+            <span class="truncate bar__title">{player.title}</span>
+            {#if flash}
+              <span class="truncate t-small bar__started">{t('player.started')}</span>
+            {:else}
+              <span class="truncate t-small t-tertiary">{player.subtitle}</span>
+            {/if}
+          </div>
+        </button>
       </div>
 
       <div class="bar__transport">

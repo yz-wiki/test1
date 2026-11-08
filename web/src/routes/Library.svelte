@@ -44,8 +44,9 @@
 
   const GROUPED = $derived(view === 'series' || view === 'authors' || view === 'narrators');
   /** Home is a dashboard, not a 60-item grid with a shelf stapled on top.
-      A drilled-down group is still the dashboard: it expands in place. */
-  const isHome = $derived(view === 'home' && !query.trim());
+      A query no longer kicks the user out to the books route: the right-hand
+      shelf becomes the result list while the history rail stays put. */
+  const isHome = $derived(view === 'home');
 
   const viewName = $derived(t(VIEWS.find(entry => entry.id === view)?.key ?? 'library.home'));
 
@@ -215,6 +216,12 @@
       .filter(item => keyOf(item, focus.tab) === focus.name)
       .sort((a, b) => title(a).localeCompare(title(b), 'zh-CN'));
   });
+
+  /** One source for the right-hand shelf: a query turns the dashboard into a
+      result list in place, otherwise an opened group or the category shelf. */
+  const shelfItems = $derived(
+    query.trim() ? visible : ui.focusGroup ? focusBooks : homeBooks,
+  );
 
   /** Largest home group, so the list shape can draw a comparable share bar. */
   const maxHomeGroupSize = $derived(
@@ -533,21 +540,9 @@
 {/snippet}
 
 <div class="toolbar">
-  <!-- The category switch and the shelf tools share one row now. The brand
-       bar owns the library switcher, so this row is purely "what to show"
-       on the left and "how to show it" on the right. -->
-  <div class="shelf-tabs" role="group" aria-label={t('home.categories')}>
-    {#each homeTabs as entry (entry.id)}
-      <button
-        class="shelf-tabs__item"
-        aria-pressed={isHome ? homeTab === entry.id : view === entry.id}
-        onclick={() => (isHome ? selectHomeTab(entry.id) : setView(entry.id))}
-      >
-        {t(entry.key)}
-        <span class="shelf-tabs__count t-num">{entry.count}</span>
-      </button>
-    {/each}
-  </div>
+  <!-- Top row owns only "how to show it": filter, sort, layout, refresh.
+       The category switch lives above the shelf it controls, centred. -->
+  <span class="toolbar__lead t-label t-num">{t('library.total', { count: library.items.length })}</span>
 
   <div class="toolbar__spacer"></div>
 
@@ -748,37 +743,65 @@
                the shelf's own heading, or a breadcrumb when a group is open
                in place — the dashboard never navigates away. -->
           <div class="home__bar">
-            {#if ui.focusGroup}
-              {@const focus = ui.focusGroup}
-              <button class="btn btn--quiet btn--sm home__back" onclick={() => (ui.focusGroup = null)}>
-                <Icon name="arrow-left" size={13} /> {t('nav.back')}
-              </button>
-              <span class="home__bar-title truncate">
-                {focus.name}
-                <span class="t-small t-tertiary t-num">· {t('library.count', { count: focusBooks.length })}</span>
-              </span>
+            <div class="home__bar-lead">
+              {#if query.trim()}
+                <span class="home__bar-title t-label t-num">{t('library.found', { count: visible.length })}</span>
+              {:else if ui.focusGroup}
+                {@const focus = ui.focusGroup}
+                <button class="btn btn--quiet btn--sm home__back" onclick={() => (ui.focusGroup = null)}>
+                  <Icon name="arrow-left" size={13} /> {t('nav.back')}
+                </button>
+                <span class="home__bar-title truncate">
+                  {focus.name}
+                  <span class="t-small t-tertiary t-num">· {t('library.count', { count: focusBooks.length })}</span>
+                </span>
+              {:else}
+                <span class="home__bar-title t-label">
+                  {t(homeTabs.find(entry => entry.id === homeTab)?.key ?? 'library.books')}
+                </span>
+              {/if}
+            </div>
+
+            <!-- The category switch belongs to the shelf it filters, centred
+                 above the right-hand display rather than in the top toolbar. -->
+            {#if !query.trim()}
+              <div class="shelf-tabs" role="group" aria-label={t('home.categories')}>
+                {#each homeTabs as entry (entry.id)}
+                  <button
+                    class="shelf-tabs__item"
+                    aria-pressed={isHome ? homeTab === entry.id : view === entry.id}
+                    onclick={() => (isHome ? selectHomeTab(entry.id) : setView(entry.id))}
+                  >
+                    {t(entry.key)}
+                    <span class="shelf-tabs__count t-num">{entry.count}</span>
+                  </button>
+                {/each}
+              </div>
             {:else}
-              <span class="home__bar-title t-label">
-                {t(homeTabs.find(entry => entry.id === homeTab)?.key ?? 'library.books')}
-              </span>
+              <span aria-hidden="true"></span>
             {/if}
-            <span class="home__bar-spacer" aria-hidden="true"></span>
-            {#if !ui.focusGroup}
-              <button class="btn btn--quiet btn--sm home__all" onclick={() => setView(homeTab)}>
-                {t('home.viewAll')} <Icon name="chevron-right" size={12} />
-              </button>
-            {/if}
+
+            <div class="home__bar-trail">
+              {#if !ui.focusGroup && !query.trim()}
+                <button class="btn btn--quiet btn--sm home__all" onclick={() => setView(homeTab)}>
+                  {t('home.viewAll')} <Icon name="chevron-right" size={12} />
+                </button>
+              {/if}
+            </div>
           </div>
 
-          {#if ui.focusGroup || homeTab === 'books'}
+          {#if query.trim() || ui.focusGroup || homeTab === 'books'}
             <div
               class="home-grid"
               class:home-grid--list={isList}
               class:home-grid--compact={isCompact}
             >
-              {#each ui.focusGroup ? focusBooks : homeBooks as item (item.id)}
+              {#each shelfItems as item (item.id)}
                 {@render bookTile(item)}
               {/each}
+              {#if query.trim() && visible.length === 0}
+                <p class="t-small t-tertiary home__empty">{t('library.empty')}</p>
+              {/if}
             </div>
           {:else}
             <!-- The "long bar grid" and the "long tag" in the screenshots are
@@ -1090,6 +1113,12 @@
     opacity: 0.72;
   }
 
+  .toolbar__lead {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+  }
+
   .toolbar__sep {
     width: 1px;
     height: 20px;
@@ -1110,30 +1139,32 @@
     display: grid;
     grid-template-columns: clamp(264px, 25%, 336px) minmax(0, 1fr);
     gap: var(--gap-section);
-    align-items: stretch;
-    flex: 1 1 auto;
+    align-items: start;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     padding: var(--gap-block) var(--gap-block) var(--gap-panel);
   }
 
-  /* The left column owns the full height of the window. Resizing no longer
-     leaves a blank gap under the history card; if the queue grows past the
-     space, the card scrolls inside itself instead of pushing the page. */
+  /* No nested scrollbars in the history card: everything is laid out at its
+     natural height and the page itself owns the single scroll. The rail stays
+     pinned so the shelf can be read without losing the "continue" list. */
   .home__side {
     display: flex;
     flex-direction: column;
     min-width: 0;
     min-height: 0;
+    position: sticky;
+    top: 0;
   }
 
   .home__panel {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    min-width: 0;
+    overflow: visible;
     padding: var(--gap-row);
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
@@ -1154,24 +1185,43 @@
     gap: var(--gap-block);
     min-width: 0;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: 4px;
+    overflow: visible;
   }
 
-  /* Three grid tracks: an empty one, the switch on the centre line, and
-     "view all" at the right edge. Two equal 1fr tracks keep the switch
-     centred no matter how wide the shelf gets. */
+  /* Three tracks over the shelf: heading / breadcrumb on the left, the
+     category switch centred on the shelf's own axis, "view all" at the right.
+     Two equal 1fr tracks keep the switch centred regardless of shelf width. */
   .home__bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-inline);
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 3;
     min-width: 0;
-    padding-bottom: var(--gap-inline);
+    padding: 2px 0 var(--gap-inline);
     background: var(--canvas);
+  }
+
+  .home__bar .shelf-tabs {
+    justify-self: center;
+  }
+
+  .home__bar-lead,
+  .home__bar-trail {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-inline);
+    min-width: 0;
+  }
+
+  .home__bar-lead {
+    justify-self: start;
+  }
+
+  .home__bar-trail {
+    justify-self: end;
   }
 
   .home__bar-title {
@@ -1184,17 +1234,23 @@
     color: var(--text);
   }
 
-  .home__bar-spacer {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .home__back {
-    flex: 0 0 auto;
-  }
-
+  .home__back,
   .home__all {
     flex: 0 0 auto;
+  }
+
+  @media (max-width: 900px) {
+    .home__bar {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .home__bar .shelf-tabs {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+    .home__bar-trail {
+      grid-column: 2;
+      grid-row: 1;
+    }
   }
 
   .hero {
@@ -1357,11 +1413,20 @@
     border-top: 1px solid var(--hairline);
   }
 
+  /* Every row must own the same box. A button without `width: 100%` is
+     shrink-to-fit, so hover / selected / focus rings were drawn around boxes
+     of different widths depending on how long the book title happened to be.
+     The transparent 1px border matches the compact card's box exactly. */
   .queue__row {
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
+    min-width: 0;
+    min-height: 60px;
+    box-sizing: border-box;
     padding: 7px;
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     text-align: left;
   }
@@ -1502,11 +1567,13 @@
     border-color: var(--accent-line);
   }
 
+  /* Same 1px geometry as `.hl.selected`'s inset ring, so a focused row and a
+     hovered/selected row no longer look like differently sized boxes. */
   .mini-card:focus-visible,
   .queue__row:focus-visible,
   .list__row:focus-visible {
-    outline: 2px solid var(--accent-line);
-    outline-offset: -2px;
+    outline: 1px solid var(--accent-line);
+    outline-offset: -1px;
   }
 
   .mini-card__cover,
@@ -1845,13 +1912,18 @@
     padding: var(--gap-block);
   }
 
-  /* Home is its own viewport: the page must not scroll, or the history card
-     on the left drifts away while the shelf on the right is being read. */
+  /* One scroll surface for the whole dashboard. No slider inside the history
+     card and none beside the shelf: content is simply shown at full height. */
   .page.page--home {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 0;
+    scrollbar-width: none;
+  }
+
+  .page.page--home::-webkit-scrollbar {
+    display: none;
   }
 
   /* Three equal tracks: heading on the left, the view switch on the centre
@@ -1972,6 +2044,9 @@
     grid-template-columns: 44px minmax(0, 1fr) 84px 140px 82px;
     align-items: center;
     gap: var(--gap-row);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 8px var(--gap-row);
     border-radius: var(--radius-sm);
     border: 1px solid transparent;

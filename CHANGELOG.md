@@ -2,6 +2,33 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.5 (2026-11-08) — dashboard layout and selection geometry
+
+- **Category switch moved to the shelf.** `书籍 / 系列 / 作者 / 播讲` now sits
+  centred above the right-hand display area instead of in the top toolbar;
+  filter / sort / layout / refresh keep the top row with a library count on the
+  left. The heading / breadcrumb and `查看全部` flank the switch in a three-track
+  grid that wraps to two rows on narrow windows.
+- **Search stays on the dashboard.** Typing in the global field no longer
+  switches `libraryView` to `books`; the home shelf becomes the result list in
+  place while the continue-listening rail remains visible. Results use the same
+  ranked/pinyin matching and the same tile shape.
+- **No nested sliders on the dashboard.** The history panel and shelf no longer
+  own scroll containers; the page is the single scroll surface, the rail is
+  sticky, and scrollbars are hidden. History rows render at natural height.
+- **One box for every selectable row.** `.queue__row` was shrink-to-fit, so its
+  hover / selected / focus rings were drawn around boxes of different widths.
+  All rows now use `width: 100%`, a 1px transparent border, a shared min-height
+  and a 1px focus outline matching the selected inset ring.
+- **Chapter picker follows its trigger.** The popover is centred on the chapter
+  chip (viewport-clamped, recomputed on resize) instead of the window axis.
+- **Book button sits next to the transport.** The cover/title button moved to
+  the right end of the facts rail, leaving chapter facts on the left.
+- **Player info cards restyled.** Ruled headers with a haloed dot, tabular
+  numbers, slimmer progress tracks, aligned footer actions / spec sheet / add
+  row, and a dashed empty state for bookmarks; the add button no longer crowds
+  the card edge.
+
 ## 2.19.4 (2026-11-08) — one navigation stack, one shelf row
 
 - **Back is a first-class control.** The rail's top slot is now "go back one

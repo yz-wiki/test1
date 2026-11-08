@@ -228,9 +228,12 @@
   background: var(--surface-raised);
 }
 
+/* Keep the focus ring the same 1px geometry as the current/selected inset
+   ring. A 2px outline made a focused row look like a larger box than the
+   row one pixel below it. */
 .hl:focus-visible {
-  outline: 2px solid var(--accent-line);
-  outline-offset: -2px;
+  outline: 1px solid var(--accent-line);
+  outline-offset: -1px;
 }
 
 /* One ring for both "this is playing" and "this is selected".

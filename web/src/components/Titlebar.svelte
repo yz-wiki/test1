@@ -31,9 +31,9 @@
     ui.focusGroup = null;
     if (player.expanded) player.collapse();
     if (ui.route !== 'library') ui.route = 'library';
-    // Home is a dashboard, not a result list. Keep series/authors/narrators
-    // as the search context when the user was already browsing one of them.
-    if (ui.libraryView === 'home') ui.setLibraryView('books');
+    // Results render in place: on the dashboard the right-hand shelf becomes
+    // the result list, and grouped views filter their own rows. Typing must
+    // never bounce the dashboard to the books route.
   }
 
   // Ctrl+F works on every route because the field itself is always mounted.
