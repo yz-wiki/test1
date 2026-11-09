@@ -73,14 +73,14 @@
   function setView(next: View): void {
     ui.setLibraryView(next);
     ui.focusGroup = null;
-    if (scroller) scroller.scrollTop = 0;
+    resetScroll();
   }
 
   /** Switch the category shown on the dashboard without ever leaving it. */
   function selectHomeTab(next: (typeof homeTabs)[number]['id']): void {
     ui.focusGroup = null;
     homeTab = next;
-    if (scroller) scroller.scrollTop = 0;
+    resetScroll();
   }
 
   /**
@@ -299,7 +299,7 @@
     ui.query = '';
     if (!isHome) setView(tab);
     ui.focusGroup = { tab, name };
-    if (scroller) scroller.scrollTop = 0;
+    resetScroll();
   }
 
   /** Local artwork is a client-side override; feedback stays in this page. */
@@ -367,7 +367,15 @@
   const TEXT_H = 72;
 
   let scroller = $state<HTMLDivElement | null>(null);
+  /** On a wide dashboard the shelf, not the page, owns the scrollbar. */
+  let homeMainEl = $state<HTMLElement | null>(null);
   let gridEl = $state<HTMLDivElement | null>(null);
+
+  /** Both panes must go back to the top when the view or the query changes. */
+  function resetScroll(): void {
+    if (scroller) scroller.scrollTop = 0;
+    if (homeMainEl) homeMainEl.scrollTop = 0;
+  }
   let scrollTop = $state(0);
   let viewportH = $state(0);
   let gridWidth = $state(0);
@@ -450,7 +458,9 @@
   $effect(() => {
     void query;
     void ui.libraryView;
-    if (scroller && scroller.scrollTop > 0) scroller.scrollTop = 0;
+    if ((scroller?.scrollTop ?? 0) > 0 || (homeMainEl?.scrollTop ?? 0) > 0) {
+      resetScroll();
+    }
   });
 
   const columns = $derived(Math.max(1, Math.floor((gridWidth + GAP) / (minW + GAP))));
@@ -775,7 +785,7 @@
           </section>
         </aside>
 
-        <section class="home__main">
+        <section class="home__main" bind:this={homeMainEl}>
           <!-- The category tabs moved up to the toolbar row. What remains is
                the shelf's own heading, or a breadcrumb when a group is open
                in place — the dashboard never navigates away. -->
@@ -2420,6 +2430,47 @@
     .home__side .queue {
       flex: 0 0 auto;
       overflow: visible;
+    }
+  }
+
+  /* Wide windows: the listening rail and the book shelf are two INDEPENDENT
+     panes. The page itself stops scrolling and the right-hand shelf owns the
+     only shelf scrollbar, so dragging it can never move 继续收听. Forcing the
+     grid row to 1fr gives the rail a viewport-height box — that is also the
+     height the queue's ResizeObserver measures, so the row budget still
+     follows the window. Narrow windows keep the single page scroll above.
+     HoverCard popovers are position: fixed, so they escape both panes. */
+  @media (min-width: 1081px) {
+    .page.page--home {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .home {
+      flex: 1 1 auto;
+      height: 100%;
+      min-height: 0;
+      grid-template-rows: minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .home__side {
+      overflow: hidden;
+    }
+
+    .home__panel {
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+
+    .home__main {
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
     }
   }
 </style>

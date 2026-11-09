@@ -2,6 +2,13 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.9 (2026-11-09) — independent scroll panes, no stray system tooltip
+
+- **The dashboard is two panes, not one long page.** The whole `.page--home` used to be the only scroll surface, so dragging the book shelf's slider scrolled the continue-listening panel out of view too (the rail's `position: sticky` had been lost in an earlier refactor, leaving only a `position: static` override for narrow windows). On windows wider than 1080px the page no longer scrolls: the grid row is pinned to `minmax(0, 1fr)`, the right-hand shelf owns its own scrollbar, and the listening rail keeps a viewport-height box with its own contained scroll for very short windows. Narrow windows keep the existing single page scroll with the rail stacked above the shelf.
+- `resetScroll()` now returns both panes to the top on view, category, facet and query changes, so switching tabs cannot leave the shelf scrolled halfway down.
+- The continue-listening queue's resize observer still measures the same viewport-height rail, so the row budget continues to follow the window. Virtualisation is untouched: it only applies to the non-dashboard `.grid` branch.
+- **No more stray system tooltip on the close button.** With "close to tray" enabled, hovering the red × showed the bare product name in a Windows-drawn white box that spilled outside the undecorated window's right edge. The `title` is gone; the three window glyphs need no tooltip and keep their `aria-label` for accessibility.
+
 ## 2.19.8 (2026-11-09) — shelf polish and a working bookmark delete
 
 - **Bookmark delete actually deletes.** ABS matches a bookmark by its exact position in seconds; the delete request rounded the position to whole seconds, so fractional marks were never found and the trash button looked inert. The exact value is sent first, with an integer-form retry for servers that store rounded seconds, and the row is removed locally before the refetch so a stale `/api/me` snapshot cannot resurrect it. "Rename" is now a pencil icon beside the trash instead of a text label.

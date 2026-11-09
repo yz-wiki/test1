@@ -173,10 +173,13 @@
         <rect x="2.2" y="2.2" width="5.6" height="5.6" rx="1" stroke="currentColor" stroke-width="1.1" fill="none" />
       </svg>
     </button>
+    <!-- No native `title` here. When "close to tray" is on, the old tooltip
+         showed the bare product name ("ADSplayer") in a system-drawn white
+         box that spilled outside the undecorated window's right edge. These
+         three glyphs are universally understood; aria-label covers a11y. -->
     <button
       class="winbtn winbtn--close"
       aria-label="Close"
-      title={ui.closeToTray ? t('app.name') : undefined}
       onclick={() => void (ui.closeToTray ? win.hide() : win.close())}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
