@@ -61,6 +61,13 @@
   --radius-xl: 20px;
   --radius-pill: 999px;
 
+  /* Window chrome. These are OS-level colours/geometry, not theme accents, so
+     they deliberately do not change between themes: the close button keeps
+     the Windows 11 hover red and the caption corner matches the system DWM
+     rounding instead of leaving a square notch at the top right. */
+  --win-close-hover: #e81123;
+  --window-corner: 8px;
+
   /* ── Control sizes ────────────────────────────────────────────────────── */
   --control-sm: 26px;
   --control-md: 32px;

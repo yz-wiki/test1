@@ -677,7 +677,7 @@
   {:else}
     {#if isHome}
       <div class="home" class:home--search={Boolean(normalizeQuery(query))}>
-        <aside class="home__side" data-hover-boundary bind:this={sideEl}>
+        <aside class="home__side" bind:this={sideEl}>
           <section class="home__panel">
             <div class="panel__head">
               <h2 class="t-label">{t('library.continue')}</h2>

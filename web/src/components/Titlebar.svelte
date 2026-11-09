@@ -165,12 +165,12 @@
       onclick={() => void (ui.closeToTray ? win.hide() : win.minimize())}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-        <path d="M2 5h6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+        <path d="M2 5h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
       </svg>
     </button>
     <button class="winbtn" aria-label="Maximize" onclick={() => void win.toggleMaximize()}>
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-        <rect x="2.2" y="2.2" width="5.6" height="5.6" rx="1" stroke="currentColor" stroke-width="1.1" fill="none" />
+        <rect x="2.2" y="2.2" width="5.6" height="5.6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none" />
       </svg>
     </button>
     <!-- No native `title` here. When "close to tray" is on, the old tooltip
@@ -183,7 +183,7 @@
       onclick={() => void (ui.closeToTray ? win.hide() : win.close())}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-        <path d="M2.6 2.6l4.8 4.8M7.4 2.6L2.6 7.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+        <path d="M2.6 2.6l4.8 4.8M7.4 2.6L2.6 7.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
       </svg>
     </button>
   </div>
@@ -236,6 +236,7 @@
     flex: 0 0 46px;
     padding: 0 var(--gap-block) 0 var(--gap-panel);
     border-bottom: 1px solid var(--hairline);
+    border-top-right-radius: var(--window-corner);
     background: var(--canvas);
     -webkit-app-region: drag;
   }
@@ -407,12 +408,14 @@
     -webkit-app-region: no-drag;
   }
 
+  /* Caption glyphs are ink, not muted decoration: the same hairline weight as
+     a native Windows caption, on a transparent hit area until hovered. */
   .winbtn {
     display: grid;
     place-items: center;
     width: 44px;
     height: 100%;
-    color: var(--text-tertiary);
+    color: var(--text);
     transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
   }
 
@@ -421,8 +424,15 @@
     color: var(--text);
   }
 
+  /* The last hit area owns the window's rounded top-right corner. Without it
+     a hover filled a square that poked through the DWM rounding as a diagonal
+     notch, and the dim `--danger` accent read as a brown-red patch. */
+  .titlebar__controls .winbtn:last-child {
+    border-top-right-radius: var(--window-corner);
+  }
+
   .winbtn--close:hover {
-    background: var(--danger);
+    background: var(--win-close-hover);
     color: #fff;
   }
 </style>
