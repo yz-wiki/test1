@@ -29,22 +29,39 @@ impl AbsClient {
 
     /// DELETE /api/me/item/{id}/bookmark/{time}
     /// ABS identifies a bookmark by its position in seconds (a second mark at
-    /// the same second is rejected), so no separate bookmark id is needed.
+    /// the same second is rejected), so no separate id is needed. The path
+    /// must carry the *unrounded* value we created the bookmark with: ABS
+    /// matches `Number(req.params.time) === bookmark.time`, so rounding a
+    /// fractional position to whole seconds silently deletes nothing — which
+    /// is why the trash button appeared to do nothing. Older ABS builds store
+    /// rounded seconds, so a non-success answer gets one integer-form retry.
     pub async fn delete_bookmark(&self, item_id: &str, time: f64) -> Result<(), String> {
-        let seconds = time.round() as i64;
+        let base = format!("{}/api/me/item/{item_id}/bookmark/", self.root());
+        let auth = self.auth_header()?;
+        let exact = time.to_string();
         let resp = self
             .http
-            .delete(format!(
-                "{}/api/me/item/{item_id}/bookmark/{seconds}",
-                self.root()
-            ))
-            .header("Authorization", self.auth_header()?)
+            .delete(format!("{base}{exact}"))
+            .header("Authorization", auth.clone())
             .send_refreshing(self)
             .await?;
-        if !resp.status().is_success() {
-            return Err(format!("delete_bookmark failed: HTTP {}", resp.status()));
+        if resp.status().is_success() {
+            return Ok(());
         }
-        Ok(())
+        let rounded = (time.round() as i64).to_string();
+        if rounded != exact {
+            let retry = self
+                .http
+                .delete(format!("{base}{rounded}"))
+                .header("Authorization", auth)
+                .send_refreshing(self)
+                .await?;
+            if retry.status().is_success() {
+                return Ok(());
+            }
+            return Err(format!("delete_bookmark failed: HTTP {}", retry.status()));
+        }
+        Err(format!("delete_bookmark failed: HTTP {}", resp.status()))
     }
 
     /// PATCH /api/me/item/{id}/bookmark — rename a mark without moving it.

@@ -2,6 +2,14 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.8 (2026-11-09) — shelf polish and a working bookmark delete
+
+- **Bookmark delete actually deletes.** ABS matches a bookmark by its exact position in seconds; the delete request rounded the position to whole seconds, so fractional marks were never found and the trash button looked inert. The exact value is sent first, with an integer-form retry for servers that store rounded seconds, and the row is removed locally before the refetch so a stale `/api/me` snapshot cannot resurrect it. "Rename" is now a pencil icon beside the trash instead of a text label.
+- **Continue listening follows the window.** A tall window used to spread one or two history rows across the whole panel with `space-around`, leaving one book floating in a blank slab. A resize observer now measures the rail and renders only the whole rows that fit, so resizing the window reveals or drops the oldest entries; rows keep their natural height.
+- **No overlap in the title bar.** The "N in this library" label was the first thing to spill out of the right-hand grid track over the centred search field. It is gone (the view bar still reports the count), the search now gives up width before the tools do, and the narrow-window breakpoints were moved up so filter/sort drop out earlier.
+- **"Next chapter" is one row in one box.** The label, chapter name and chevron sat on a two-line stack where a long chapter name collided with the label; they now share a single bordered pill with the chapter name truncated.
+- **One card language for groups.** The chevron that occupied its own row under every series / author / narrator tile is gone, as is the one in compact book cards — the whole tile is the click target. A late unscoped `.groups` rule was overriding the compact and list grid columns, shrinking group cards to 148px chips with three-character titles; grid, compact and list are now scoped independently, and compact group cards match the book card's 300px column floor, 56px cover and padding.
+
 ## 2.19.7 (2026-11-09) — startup resilience, centred chrome, one download path
 
 - **Startup no longer waits for the server.** The boot screen used to stay up while `getMe` and `fetchLibraries` each waited on a 30 s read timeout, and a dead endpoint retried `/auth/refresh` on every command (the log shows 429 storms). The window now renders from the stored session immediately and reconciles in the background, with a 4 s hard cap on the splash and a dismissible offline banner. A retryable refresh failure sets a 60 s cooldown so one wedged endpoint cannot stall every later request.

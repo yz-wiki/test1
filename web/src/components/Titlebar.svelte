@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { library, session, ui } from '../lib/state.svelte';
+  import { session, ui } from '../lib/state.svelte';
   import { player } from '../lib/player.svelte';
   import { preloadPinyin } from '../lib/search';
   import { BRAND } from '../lib/brand';
@@ -89,10 +89,10 @@
   <div class="titlebar__right">
   {#if ui.route === 'library'}
     <div class="titlebar__tools" data-no-drag>
-      <span class="titlebar__count t-label t-num">
-        {t('library.total', { count: library.items.length })}
-      </span>
-
+      <!-- No shelf count here. The right-hand track shares one grid row with a
+           window-centred search field; on a narrow window the extra label was
+           the first thing to spill left over the input and overlap its text.
+           The shelf already reports its size in the view bar. -->
       <Dropdown
         value={ui.libraryFilter}
         options={[
@@ -334,10 +334,12 @@
     -webkit-app-region: no-drag;
   }
 
-  .titlebar__count {
-    margin-right: 3px;
-    white-space: nowrap;
-    color: var(--text-tertiary);
+  /* The right track must never be wider than its `1fr` share: overflowing it
+     draws the first tool on top of the centred search field. Keep the account
+     and window buttons rigid and let the search give up width first. */
+  .titlebar__account,
+  .titlebar__controls {
+    flex: 0 0 auto;
   }
 
   .titlebar__tools :global(.drop__btn) {
@@ -367,17 +369,15 @@
     font-size: var(--text-2xs);
   }
 
-  /* Drop information, never overlap it: the count goes first, then the two
-     selects shrink, and on narrow windows only the layout switch remains
-     (filter/sort still live in ui and are applied by the shelf). The shelf
-     itself refreshes from the server's socket events, so there is no manual
-     refresh button to protect. */
-  @media (max-width: 1180px) {
-    .titlebar__count { display: none; }
+  /* Shrink the search first, then the labels, then the selects. Nothing is
+     allowed to spill out of the right track over the input (a "11 本" label
+     used to sit half-hidden behind the field on a 1400px window). The view bar
+     already shows the shelf count, so no information is lost. */
+  @media (max-width: 1320px) {
+    .titlebar__search { width: clamp(150px, 18vw, 220px); }
   }
 
   @media (max-width: 1240px) {
-    .titlebar__search { width: clamp(170px, 22vw, 240px); }
     .titlebar__tools :global(.drop__value) {
       max-width: 62px;
       overflow: hidden;
@@ -385,13 +385,13 @@
     }
   }
 
-  @media (max-width: 1080px) {
-    /* The shelf filter/sort are still applied from ui state; the selects are
-       the first thing to go so the centred field and layout switch survive. */
+  @media (max-width: 1180px) {
+    /* Filter/sort remain applied from ui state; the selects are the first
+       controls to go so the centred field and layout switch survive. */
     .titlebar__tools :global(.drop) { display: none; }
   }
 
-  @media (max-width: 780px) {
+  @media (max-width: 900px) {
     .titlebar__username { display: none; }
     .titlebar__search { width: clamp(130px, 20vw, 190px); }
   }

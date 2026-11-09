@@ -517,6 +517,24 @@ class ProgressStore {
       .sort((a, b) => a.time - b.time);
   }
 
+  /**
+   * Optimistic bookmark edits. `/api/me` is a snapshot of the user object and
+   * may still be served from a cache right after a write, so the row must go
+   * away (or change its label) immediately instead of waiting for a refetch
+   * that can briefly restore the old value.
+   */
+  removeBookmark(itemId: string, time: number): void {
+    this.marks = this.marks.filter(
+      mark => !(mark.libraryItemId === itemId && mark.time === time),
+    );
+  }
+
+  renameBookmark(itemId: string, time: number, title: string): void {
+    this.marks = this.marks.map(mark =>
+      mark.libraryItemId === itemId && mark.time === time ? { ...mark, title } : mark,
+    );
+  }
+
   reset(): void {
     this.rows = [];
     this.marks = [];

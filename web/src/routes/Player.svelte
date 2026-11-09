@@ -44,7 +44,10 @@
     markError = null;
     try {
       await deleteBookmark(session.serverUrl, item.id, mark.time);
-      await progress.load(session.serverUrl, true);
+      // Drop the row locally first: a refetch of /api/me can still return the
+      // pre-delete snapshot, which made the trash button look like a no-op.
+      progress.removeBookmark(item.id, mark.time);
+      void progress.load(session.serverUrl, true);
     } catch (reason) {
       markError = (reason as Error).message;
     }
@@ -57,7 +60,8 @@
     markError = null;
     try {
       await updateBookmark(session.serverUrl, item.id, mark.time, title);
-      await progress.load(session.serverUrl, true);
+      progress.renameBookmark(item.id, mark.time, title);
+      void progress.load(session.serverUrl, true);
     } catch (reason) {
       markError = (reason as Error).message;
     }
@@ -454,13 +458,11 @@
               <span>{formatDuration(chapterLength || player.duration)}</span>
             </div>
             {#if player.canStepForward}
-              <button class="btn btn--quiet btn--sm below__action" onclick={() => void player.step(1)}>
-                <span class="below__next">
-                  <span class="t-small t-tertiary">{t('player.nextChapterGo')}</span>
-                  {#if nextChapter}
-                    <span class="truncate below__next-title">{nextChapter.title}</span>
-                  {/if}
-                </span>
+              <button class="below__next" onclick={() => void player.step(1)} aria-label={t('player.nextChapter')}>
+                <span class="below__next-label">{t('player.nextChapterGo')}</span>
+                {#if nextChapter}
+                  <span class="truncate below__next-title">{nextChapter.title}</span>
+                {/if}
                 <Icon name="chevron-right" size={12} />
               </button>
             {/if}
@@ -510,12 +512,13 @@
                         <span class="t-num t-small t-tertiary">{formatDuration(mark.time)}</span>
                       </button>
                       <button
-                        class="below__mark-action t-small"
+                        class="icon-btn icon-btn--sm below__mark-icon"
                         title={t('bookmark.rename')}
+                        aria-label={t('bookmark.rename')}
                         onclick={() => { editingMark = mark.time; editingLabel = mark.title; }}
-                      >{t('bookmark.rename')}</button>
+                      ><Icon name="pencil" size={12} /></button>
                       <button
-                        class="icon-btn icon-btn--sm"
+                        class="icon-btn icon-btn--sm below__mark-icon"
                         title={t('bookmark.delete')}
                         aria-label={t('bookmark.delete')}
                         onclick={() => void removeMark(mark)}
@@ -953,11 +956,46 @@
     color: var(--text-tertiary);
   }
 
-  .below__action {
-    align-self: flex-start;
+  /* "Next chapter" is one row in one box. The old two-line stack put a long
+     chapter name directly under the label, so the two strings collided on a
+     narrow card. Everything now shares a single baseline with ellipsis. */
+  .below__next {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
     margin-top: auto;
-    padding-inline: 0;
-    color: var(--accent);
+    padding: 6px 9px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+    text-align: left;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  }
+
+  .below__next:hover {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+
+  .below__next-label {
+    flex: 0 0 auto;
+    font-size: var(--text-2xs);
+  }
+
+  .below__next > :global(svg) {
+    flex: 0 0 auto;
+  }
+
+  .below__next-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--text);
   }
 
   /* A ruled 2×2 spec sheet: labels stay tiny, values tabular and dark. */
@@ -1035,14 +1073,14 @@
     color: var(--text-secondary);
   }
 
-  .below__mark-action {
+  /* Two quiet icon actions (pencil / trash) instead of a text label plus an
+     icon: the row keeps one height and the time stays readable. */
+  .below__mark-icon {
     flex: 0 0 auto;
-    padding: 2px 4px;
-    border-radius: var(--radius-xs);
     color: var(--text-tertiary);
   }
 
-  .below__mark-action:hover {
+  .below__mark-icon:hover {
     color: var(--accent);
     background: var(--accent-soft);
   }
@@ -1050,21 +1088,6 @@
   .below__mark-input {
     flex: 1 1 auto;
     min-width: 0;
-  }
-
-  .below__next {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .below__next-title {
-    max-width: 100%;
-    font-weight: var(--weight-medium);
-    color: var(--text);
   }
 
   .below__mark-dot {

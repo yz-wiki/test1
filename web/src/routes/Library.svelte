@@ -397,6 +397,50 @@
     return () => observer.disconnect();
   });
 
+  // ─── Continue-listening queue: capacity follows the WINDOW ──────────────
+  // Stretching a few rows across a tall panel left one book floating in the
+  // middle of a blank slab. Instead the rail is measured and only whole rows
+  // that actually fit are rendered, so growing the window reveals more of the
+  // history and shrinking it drops the oldest entries. The queue itself keeps
+  // a fixed flex height, so hiding rows cannot feed back into the measurement.
+  const QUEUE_MAX = 5;
+  const QUEUE_ROW_H = 60;
+  const QUEUE_GAP = 2;
+  let sideEl = $state<HTMLElement | null>(null);
+  let queueLimit = $state(QUEUE_MAX);
+
+  $effect(() => {
+    const side = sideEl;
+    if (!side || typeof ResizeObserver === 'undefined') return;
+    let last = -1;
+    const measure = () => {
+      // Under 1080px the panel becomes a two-column grid; CSS owns the row
+      // count there and all five rows fit without a height budget.
+      if (window.innerWidth <= 1080) {
+        if (last !== QUEUE_MAX) { last = QUEUE_MAX; queueLimit = QUEUE_MAX; }
+        return;
+      }
+      const queue = side.querySelector<HTMLElement>('.queue');
+      if (!queue) return;
+      const style = getComputedStyle(queue);
+      // clientHeight already excludes borders, only padding is still inside.
+      const inset =
+        (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const row = queue.querySelector<HTMLElement>('.queue__row');
+      const rowH = row?.getBoundingClientRect().height || QUEUE_ROW_H;
+      const available = queue.clientHeight - inset;
+      const next = Math.max(
+        0,
+        Math.min(QUEUE_MAX, Math.floor((available + QUEUE_GAP) / (rowH + QUEUE_GAP))),
+      );
+      if (next !== last) { last = next; queueLimit = next; }
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(side);
+    measure();
+    return () => observer.disconnect();
+  });
+
   function onScroll(event: Event): void {
     scrollTop = (event.currentTarget as HTMLElement).scrollTop;
   }
@@ -623,7 +667,7 @@
   {:else}
     {#if isHome}
       <div class="home" class:home--search={Boolean(normalizeQuery(query))}>
-        <aside class="home__side" data-hover-boundary>
+        <aside class="home__side" data-hover-boundary bind:this={sideEl}>
           <section class="home__panel">
             <div class="panel__head">
               <h2 class="t-label">{t('library.continue')}</h2>
@@ -677,8 +721,8 @@
               </div>
 
               {#if recent.length > 1}
-                <div class="queue">
-                  {#each recent.slice(1, 6) as item (item.id)}
+                <div class="queue" class:queue--empty={queueLimit === 0}>
+                  {#each recent.slice(1, 1 + queueLimit) as item (item.id)}
                     {@const fraction = progress.fraction(item.id)}
                     <HoverCard>
                       {#snippet children(isOpen)}
@@ -934,7 +978,8 @@
               <span class="group__share" aria-hidden="true">
                 <span style:width="{Math.round((entry.items.length / maxGroupSize) * 100)}%"></span>
               </span>
-              <Icon name="chevron-right" size={13} />
+              <!-- The whole tile is the target: a chevron on its own row was
+                   redundant and added a ragged extra line under every card. -->
             </button>
           {/each}
         </div>
@@ -972,12 +1017,11 @@
               <span class="t-small t-secondary truncate">{byline}</span>
               <span class="t-small t-tertiary truncate mini-card__meta">{meta}</span>
             </span>
-            <span class="mini-card__side">
-              {#if fraction > 0}
+            {#if fraction > 0}
+              <span class="mini-card__side">
                 <span class="mini-card__pct t-num t-small">{Math.round(fraction * 100)}%</span>
-              {/if}
-              <Icon name="chevron-right" size={12} />
-            </span>
+              </span>
+            {/if}
           </button>
         {/each}
       </div>
@@ -1379,6 +1423,9 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
       align-content: start;
+      flex: 0 0 auto;
+      min-height: 0;
+      overflow: visible;
       margin-top: 0;
       padding-top: 0;
       border-top: 0;
@@ -1409,25 +1456,16 @@
     }
   }
 
-  /* Height-driven layout. The page is the only scroll surface, so a shorter
-     window drops its oldest history rows rather than adding a slider inside
-     the card. HoverCard owns the .hovercard wrapper around each row. */
-  @media (max-height: 900px) {
-    .queue > :global(.hovercard):nth-child(n + 5) { display: none; }
-  }
-
+  /* The row budget is measured from the rail's real height by the observer
+     above, so these rules only trim the hero on short windows and leave more
+     of that height to whole queue rows. Hiding rows with nth-child here would
+     double-apply the limit and could never recover on a resize. */
   @media (max-height: 760px) {
-    .queue > :global(.hovercard):nth-child(n + 4) { display: none; }
     .hero__foot { display: none; }
   }
 
   @media (max-height: 640px) {
-    .queue > :global(.hovercard):nth-child(n + 3) { display: none; }
     .hero__cover { width: 64px; flex-basis: 64px; }
-  }
-
-  @media (max-height: 520px) {
-    .queue { display: none; }
   }
 
   .home__empty {
@@ -1437,10 +1475,18 @@
   .queue {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 2px;
     margin-top: var(--gap-row);
     padding-top: var(--gap-row);
     border-top: 1px solid var(--hairline);
+  }
+
+  /* No rows fit: do not leave a lone divider hanging below the hero. */
+  .queue--empty {
+    margin-top: 0;
+    padding-top: 0;
+    border-top-color: transparent;
   }
 
   /* Every row must own the same box. A button without `width: 100%` is
@@ -2331,23 +2377,40 @@
     display: none;
   }
 
-  /* The library-wide group page follows the same cover-forward rhythm. */
-  .groups {
+  /* The library-wide group page follows the same cover-forward rhythm as the
+     book shelf — but ONLY in grid mode. This block sits late in the cascade,
+     so the scoping is essential: unscoped, `.groups` also overrode the 300px
+     compact columns and the single-column list, squeezing group cards into
+     148px chips whose titles were truncated to three characters. */
+  .groups:not(.groups--list):not(.groups--compact) {
     grid-template-columns: repeat(auto-fill, minmax(min(148px, 100%), 1fr));
   }
 
-  .group {
+  .groups.groups--compact {
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: 10px;
+    align-content: start;
+  }
+
+  .groups.groups--list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .groups:not(.groups--list):not(.groups--compact) .group {
     padding: 6px;
     border-color: transparent;
     background: transparent;
     border-radius: var(--radius-md);
   }
 
-  /* A tall window grows the listening panel; its rows spread into the extra
-     space instead of leaving a blank slab under the last book. */
+  /* The queue owns the rail's leftover height but never stretches its rows.
+     `min-height: 0` + `overflow: hidden` stop an over-full queue from growing
+     the panel, which keeps the measured height independent of the row count. */
   .home__side .queue {
     flex: 1 1 auto;
-    justify-content: space-around;
+    min-height: 0;
+    overflow: hidden;
+    justify-content: flex-start;
   }
 
   @media (max-width: 1080px) {
@@ -2355,7 +2418,8 @@
       min-height: auto;
     }
     .home__side .queue {
-      justify-content: flex-start;
+      flex: 0 0 auto;
+      overflow: visible;
     }
   }
 </style>

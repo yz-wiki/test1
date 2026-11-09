@@ -40,6 +40,7 @@
     | 'activity'
     | 'minus'
     | 'trash'
+    | 'pencil'
     | 'star'
     | 'blocks'
     | 'device'
@@ -179,6 +180,9 @@
     <path d="M3.4 8h9.2" />
   {:else if name === 'trash'}
     <path d="M3.4 4.6h9.2M6.2 4.6V3h3.6v1.6M4.6 4.6l.6 8.4h5.6l.6-8.4" />
+  {:else if name === 'pencil'}
+    <path d="M3 13l.8-2.9 7-7a1.5 1.5 0 012.1 0l.9.9a1.5 1.5 0 010 2.1l-7 7L3 13z" />
+    <path d="M9.7 4.2l2.1 2.1" />
   {:else if name === 'dots'}
     <circle cx="4" cy="8" r="1.1" fill="currentColor" stroke="none" />
     <circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none" />
