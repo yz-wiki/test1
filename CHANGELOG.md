@@ -2,6 +2,12 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.11 (2026-11-10) — visible caption hover, clipped corner, cover-height blurb
+
+- **Minimise / maximise now have a visible hover state.** Their background used `--surface-raised`, only 3–7 RGB steps from `--canvas` in the light themes, so hovering them appeared to do nothing. They now use a neutral ink wash (`color-mix` on `--text`) that adapts to every theme, plus a slightly stronger `:active` state; the close button gets a darker red on press.
+- **The close button's top-right corner is clipped with the window.** Rounding only the last button left a square hover fill that DWM's window rounding cut into a staircase of white pixels. The whole controls group now owns `overflow: hidden` and the shared 8px corner radius, so the red fill ends in a clean arc.
+- **The book blurb is capped at the cover's real height.** The old `clamp(104px, 15vh, 176px)` cap was viewport-based (and `vh` is itself scaled by the app's root zoom), so a long synopsis could grow past the square cover and push the chapter toolbar down. A `ResizeObserver` now measures `.side__cover`'s `clientHeight` and feeds `--cover-h` to the blurb: short descriptions keep their natural height, long ones scroll in place with a visible thin slider. The `scrollbar-width: none` / hidden `::-webkit-scrollbar` rules are gone. The two-column detail layout is unchanged.
+
 ## 2.19.10 (2026-11-09) — hover card placement and native caption chrome
 
 - **The hover card no longer covers the row that opened it.** It used to clamp itself inside a `data-hover-boundary` panel: the listening rail is only ~300px wide, so a 292px card could never fit beside the row, the right-hand test failed, and the left-hand fallback collapsed to `x = 8px` — the card landed on top of the entire continue-listening list. Placement now prefers the space immediately to the right of the row, falls back to the left, and only on a very narrow window shrinks into the remaining gap; the viewport is the only limit. Vertical placement stays aligned with the row and clamped to the window.

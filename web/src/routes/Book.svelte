@@ -16,6 +16,24 @@
   let tab = $state<'chapters' | 'files'>('chapters');
   let editing = $state(false);
   let saving = $state(false);
+
+  /** The blurb must never be taller than the square cover beside it. A `vh`
+      cap ignored the real cover size, so a long synopsis pushed the chapter
+      toolbar down. Measure the cover and hand its height to CSS instead. */
+  let coverEl = $state<HTMLElement | null>(null);
+  let coverH = $state(0);
+
+  $effect(() => {
+    const el = coverEl;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    // clientHeight is in layout pixels, so the app's root zoom cannot skew it.
+    const measure = () => { coverH = el.clientHeight; };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    measure();
+    return () => observer.disconnect();
+  });
+
   let form = $state({
     title: '',
     subtitle: '',
@@ -265,7 +283,7 @@
     <div class="detail">
       <!-- Left: the object itself, plus everything you can do to it. -->
       <aside class="detail__side">
-        <div class="side__cover">
+        <div class="side__cover" bind:this={coverEl}>
           <Cover itemId={item.id} size={480} radius="var(--radius-md)" title={meta?.title ?? ''} />
         </div>
 
@@ -421,10 +439,13 @@
             </div>
           </section>
         {:else}
-          <!-- Always expanded, but a fixed box: the chapter toolbar below must
-               start at the same y no matter how long the blurb is. Long text
-               scrolls inside the box (no visible slider). -->
-          <p class="t-body selectable description">
+          <!-- Always expanded, but capped at the cover's measured height so
+               the chapter toolbar below starts at the same y for every book.
+               Long text scrolls inside this box and shows its own slider. -->
+          <p
+            class="t-body selectable description"
+            style={coverH > 0 ? `--cover-h: ${coverH}px` : undefined}
+          >
             {meta?.description || t('book.noDescription')}
           </p>
           {#if meta?.genres?.length}
@@ -751,18 +772,39 @@
     max-width: 900px;
   }
 
+  /* The blurb is capped at the measured cover height (--cover-h is set from
+     the cover's ResizeObserver), not at an arbitrary vh value. Short blurbs
+     keep their natural height; long ones scroll in place with a visible thin
+     slider, so the right column never grows taller than the object it
+     describes and the chapter toolbar keeps a constant y. */
   .description {
     display: block;
-    height: clamp(104px, 15vh, 176px);
+    flex: 0 0 auto;
+    max-height: var(--cover-h, 256px);
     margin-top: var(--gap-row);
-    padding-right: 4px;
+    padding-right: 10px;
     line-height: 1.6;
     overflow-y: auto;
-    scrollbar-width: none;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text) 26%, transparent) transparent;
   }
 
   .description::-webkit-scrollbar {
-    display: none;
+    width: 6px;
+  }
+
+  .description::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .description::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--text) 26%, transparent);
+  }
+
+  .description::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--text) 42%, transparent);
   }
 
   .chips {

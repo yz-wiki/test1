@@ -405,6 +405,12 @@
     align-items: center;
     height: 100%;
     margin-right: calc(var(--gap-block) * -1);
+    /* The group clips all three hit areas to the window's rounded corner.
+       Rounding only the last button was not enough: DWM clips the window
+       itself, so a square hover fill still showed up as a staircase of white
+       pixels at the top right. */
+    overflow: hidden;
+    border-top-right-radius: var(--window-corner);
     -webkit-app-region: no-drag;
   }
 
@@ -419,9 +425,16 @@
     transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
   }
 
+  /* `--surface-raised` is only 3–7 RGB steps away from `--canvas` in the
+     light themes, so minimising/maximising looked like it had no hover state
+     at all. A neutral ink wash adapts to every theme and stays visible. */
   .winbtn:hover {
-    background: var(--surface-raised);
+    background: color-mix(in srgb, var(--text) 9%, transparent);
     color: var(--text);
+  }
+
+  .winbtn:active {
+    background: color-mix(in srgb, var(--text) 15%, transparent);
   }
 
   /* The last hit area owns the window's rounded top-right corner. Without it
@@ -433,6 +446,11 @@
 
   .winbtn--close:hover {
     background: var(--win-close-hover);
+    color: #fff;
+  }
+
+  .winbtn--close:active {
+    background: color-mix(in srgb, var(--win-close-hover) 82%, black);
     color: #fff;
   }
 </style>
