@@ -263,6 +263,26 @@
         </div>
 
         <div class="transport">
+          <SeekBar
+            value={chapterFraction}
+            size="lg"
+            label={t('player.progressOf', {
+              done: formatDuration(chapterPos),
+              total: formatDuration(chapterLength || player.duration),
+            })}
+            onSeek={seekChapter}
+            disabled={player.duration <= 0}
+          />
+          <div class="transport__times t-num t-small t-tertiary">
+            <span class="transport__t">{formatDuration(chapterPos)}</span>
+            {#if chapterLine}
+              <span class="transport__chapter truncate">{chapterLine}</span>
+            {/if}
+            <span class="transport__t">
+              {formatDuration(chapterLength || player.duration)}
+            </span>
+          </div>
+
           <div class="transport__top">
             <div class="transport__wing">
               <Dropdown
@@ -402,26 +422,6 @@
             </div>
 
             </div>
-          </div>
-
-          <SeekBar
-            value={chapterFraction}
-            size="lg"
-            label={t('player.progressOf', {
-              done: formatDuration(chapterPos),
-              total: formatDuration(chapterLength || player.duration),
-            })}
-            onSeek={seekChapter}
-            disabled={player.duration <= 0}
-          />
-          <div class="transport__times t-num t-small t-tertiary">
-            <span class="transport__t">{formatDuration(chapterPos)}</span>
-            {#if chapterLine}
-              <span class="transport__chapter truncate">{chapterLine}</span>
-            {/if}
-            <span class="transport__t">
-              {formatDuration(chapterLength || player.duration)}
-            </span>
           </div>
 
           {#if !isEpisode && chapters.length > 1}
@@ -809,10 +809,14 @@
 
   /* Expanded player is centred on the window axis; the longer track also makes
      a 17-minute chapter adjustable at a useful granularity. */
+  /* `margin-top: auto` used to pin the whole transport to the very bottom of
+     the stage, leaving a large dead band between the information cards and
+     the controls. A bounded gap keeps it in the lower third but noticeably
+     higher, and still leaves a little breathing room on a tall window. */
   .transport {
     width: min(760px, 100%);
     margin-inline: auto;
-    margin-top: auto;
+    margin-top: clamp(20px, 6vh, 72px);
     padding-top: var(--gap-row);
     display: flex;
     flex-direction: column;
@@ -822,13 +826,16 @@
   /* Three tracks: speed on the left, the play cluster on the centre line,
      sleep + volume on the right. Tools no longer sit in their own bordered
      card at the bottom of the stage. */
+  /* The seek bar and its times now sit ABOVE the play cluster, so the space
+     belongs above this row rather than below it. */
   .transport__top {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--gap-inline);
     min-height: 58px;
-    margin-bottom: var(--gap-inline);
+    margin-top: var(--gap-inline);
+    margin-bottom: 0;
   }
 
   .transport__wing {

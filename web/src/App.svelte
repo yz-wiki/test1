@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
+  import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
   import { progress, session, ui } from './lib/state.svelte';
   import { player } from './lib/player.svelte';
   import { downloads } from './lib/downloads.svelte';
@@ -29,7 +30,72 @@
   let uninstallAuth: (() => void) | null = null;
   let uninstallLogs: (() => void) | null = null;
 
+  /**
+   * Reopen at the size the user last chose, centred on the display. Sizes are
+   * stored in LOGICAL pixels, so moving between monitors with a different DPI
+   * scale cannot inflate the window. A maximised window is never recorded:
+   * restoring that size later would give an unmaximised window covering the
+   * whole screen. Only size is persisted — position is always re-centred.
+   */
+  const WINDOW_SIZE_KEY = 'skald.window.size';
+  const MIN_W = 1024;
+  const MIN_H = 640;
+  let unlistenResize: (() => void) | null = null;
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function restoreWindowGeometry(): Promise<void> {
+    // `getCurrentWindow()` itself can fail when the bundle is served as a
+    // plain web page (dev server / unit tests); keep that out of the console
+    // as an unhandled rejection too.
+    let win: ReturnType<typeof getCurrentWindow>;
+    try {
+      win = getCurrentWindow();
+    } catch (reason) {
+      logs.app('debug', 'window', `no native window: ${String(reason)}`);
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(WINDOW_SIZE_KEY);
+      const saved = raw ? (JSON.parse(raw) as { w?: number; h?: number }) : null;
+      const w = saved?.w ?? 0;
+      const h = saved?.h ?? 0;
+      if (w >= MIN_W && h >= MIN_H) {
+        await win.setSize(new LogicalSize(w, h));
+      }
+      await win.center();
+    } catch (reason) {
+      logs.app('warn', 'window', `geometry restore skipped: ${String(reason)}`);
+    }
+
+    try {
+      unlistenResize = await win.onResized(() => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          void (async () => {
+            try {
+              if (await win.isMaximized()) return;
+              const factor = await win.scaleFactor();
+              const physical = await win.innerSize();
+              const w = Math.round(physical.width / factor);
+              const h = Math.round(physical.height / factor);
+              if (w < MIN_W || h < MIN_H) return;
+              localStorage.setItem(WINDOW_SIZE_KEY, JSON.stringify({ w, h }));
+            } catch {
+              // Geometry bookkeeping must never interrupt playback.
+            }
+          })();
+        }, 400);
+      });
+    } catch (reason) {
+      logs.app('warn', 'window', `resize listener unavailable: ${String(reason)}`);
+    }
+  }
+
   onMount(async () => {
+    // Apply the saved geometry while the splash is still up, so the window
+    // never visibly jumps from its 1280×800 default.
+    void restoreWindowGeometry();
     uninstallShortcuts = installShortcuts();
     logs.app('info', 'boot', 'window created');
 
@@ -106,6 +172,9 @@
     uninstallAuth = null;
     uninstallLogs?.();
     uninstallLogs = null;
+    unlistenResize?.();
+    unlistenResize = null;
+    if (resizeTimer) clearTimeout(resizeTimer);
   });
 
   let lastSocket = '';

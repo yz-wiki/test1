@@ -157,7 +157,9 @@
       meta?.publisher ? { label: t('meta.publisher'), value: meta.publisher } : null,
       meta?.publishedYear ? { label: t('meta.year'), value: meta.publishedYear } : null,
       meta?.language ? { label: t('meta.language'), value: meta.language } : null,
-      formatLength(item?.media?.duration ?? 0)
+      // `formatLength(0)` renders a dash; a value-less row is worse than no
+      // row at all, so only books with a known duration advertise one.
+      (item?.media?.duration ?? 0) > 0
         ? { label: t('player.duration'), value: formatLength(item?.media?.duration ?? 0) }
         : null,
       chapters.length > 0
@@ -379,7 +381,7 @@
             <dl class="facts">
               {#each facts as fact (fact.label)}
                 <dt class="t-small t-tertiary">{fact.label}</dt>
-                <dd class="t-small t-num truncate">{fact.value}</dd>
+                <dd class="t-small t-num truncate" title={fact.value}>{fact.value}</dd>
               {/each}
             </dl>
           </div>
@@ -621,9 +623,13 @@
     padding-right: 4px;
   }
 
+  /* `flex-shrink: 0` is essential: the rail is a flex column with a fixed
+     height, so without it a long metadata stack squeezes this square into a
+     wide strip and the button below appears to cover the artwork. */
   .side__cover {
     width: 100%;
     aspect-ratio: 1;
+    flex: 0 0 auto;
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-2);
@@ -723,8 +729,11 @@
     white-space: nowrap;
   }
 
+  /* Follow the action group instead of being pinned to the bottom of the
+     rail: `margin-top: auto` opened a large dead band above the metadata on
+     a tall window. */
   .facts-wrap {
-    margin-top: auto;
+    margin-top: var(--gap-row);
     padding-top: var(--gap-row);
     border-top: 1px solid var(--hairline);
   }
@@ -737,13 +746,16 @@
     color: var(--text-tertiary);
   }
 
-  /* Label left, value right-aligned: a two-column spec sheet, not a run of
-     loose text. Tabular values keep the row edges straight. */
+  /* A compact spec sheet: a fixed narrow label column and values aligned in
+     one straight column right beside it. Right-aligning at the far edge of a
+     260px rail left a wide blank gutter that made label→value hard to scan;
+     the darker value ink restores the hierarchy the gutter used to provide. */
   .facts {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: 5.5em minmax(0, 1fr);
     align-items: baseline;
-    gap: 7px var(--gap-inline);
+    column-gap: 10px;
+    row-gap: 5px;
   }
 
   .facts dt {
@@ -753,8 +765,8 @@
 
   .facts dd {
     margin: 0;
-    text-align: right;
-    color: var(--text-secondary);
+    min-width: 0;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
   }
 

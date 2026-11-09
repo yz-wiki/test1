@@ -2,6 +2,14 @@
 
 Notable user-facing changes to ADSplayer. Dates are the build cut dates.
 
+## 2.19.12 (2026-11-10) — remembered window geometry, transport order, metadata polish
+
+- **The window remembers its size and reopens centred.** Resizing now persists width/height to `localStorage` (debounced 400 ms, in logical pixels so a DPI change cannot inflate it). On launch the saved size is applied while the splash is still up, then the window is centred. Maximised windows are never recorded — restoring one would produce an unmaximised window covering the whole display. Position is deliberately not persisted: every launch is centred.
+- **Close button matches the reference caption.** Pixel sampling showed the intended hover is a ~30px block inset 4px from the top with a 10px rounded top-right corner — not a full-height square. A pseudo-element now draws that block while the button keeps its full 46px hit area, which is what removes the visible corner staircase. The red is `#cf222e` (sampled) rather than `#e81123`, `--window-corner` is 10px, and the generic button wash is suppressed on the close button so only the red block appears. The minimise glyph also gained stroke weight to match the square and X after antialiasing.
+- **Expanded player: controls higher, seek bar above the play cluster.** `margin-top: auto` pinned the transport to the very bottom of the stage and opened a large dead band under the three information cards; it is now a bounded `clamp(20px, 6vh, 72px)`. The chapter seek bar and its times moved above the play/pause row, and the row's spacing moved with it.
+- **The cover is no longer squeezed.** `.side__cover` was a flex child without `flex-shrink: 0`, so a long metadata rail compressed the square artwork into a wide strip and the button below appeared to cover it. That also fed a wrong height into the blurb's `--cover-h`; fixing the box restores both.
+- **Tighter file-info sheet.** The label/value list uses a fixed narrow label column with values aligned immediately beside it, instead of pushing every value to the far right of a 260px rail. Rows are tighter, values use darker ink and expose their full text on hover, empty durations no longer render a `—` row, and the block follows the action group instead of being pinned to the bottom of the rail.
+
 ## 2.19.11 (2026-11-10) — visible caption hover, clipped corner, cover-height blurb
 
 - **Minimise / maximise now have a visible hover state.** Their background used `--surface-raised`, only 3–7 RGB steps from `--canvas` in the light themes, so hovering them appeared to do nothing. They now use a neutral ink wash (`color-mix` on `--text`) that adapts to every theme, plus a slightly stronger `:active` state; the close button gets a darker red on press.

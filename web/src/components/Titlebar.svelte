@@ -165,7 +165,9 @@
       onclick={() => void (ui.closeToTray ? win.hide() : win.minimize())}
     >
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-        <path d="M2 5h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+        <!-- A single hairline reads lighter than the square/X strokes after
+             antialiasing; give the minimise glyph a touch more weight. -->
+        <path d="M2 5h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
       </svg>
     </button>
     <button class="winbtn" aria-label="Maximize" onclick={() => void win.toggleMaximize()}>
@@ -444,13 +446,46 @@
     border-top-right-radius: var(--window-corner);
   }
 
-  .winbtn--close:hover {
-    background: var(--win-close-hover);
+  /* Reference caption: the close hover is a ~30px block inset 4px from the
+     top with a rounded top-right corner — NOT a full-height square covering
+     the whole 46px hit area. A pseudo-element draws that smaller block while
+     the button keeps its full clickable height. */
+  .winbtn--close {
+    position: relative;
+    border-top-right-radius: var(--window-corner);
+  }
+
+  .winbtn--close::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 0;
+    left: 0;
+    height: 30px;
+    border-top-right-radius: 10px;
+    background: transparent;
+    transition: background var(--dur-1) var(--ease);
+    pointer-events: none;
+  }
+
+  /* The generic winbtn hover/active wash must not also paint the full-height
+     area behind the red block. */
+  .winbtn--close:hover,
+  .winbtn--close:active {
+    background: transparent;
     color: #fff;
   }
 
-  .winbtn--close:active {
+  .winbtn--close:hover::before {
+    background: var(--win-close-hover);
+  }
+
+  .winbtn--close:active::before {
     background: color-mix(in srgb, var(--win-close-hover) 82%, black);
-    color: #fff;
+  }
+
+  .winbtn--close > :global(svg) {
+    position: relative;
+    z-index: 1;
   }
 </style>
